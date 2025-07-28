@@ -118,7 +118,7 @@ pub struct Pagination {
 impl Pagination {
     /// Creates a new pagination info.
     pub fn new(page: u32, per_page: u32, total: u32) -> Self {
-        let total_pages = (total + per_page - 1) / per_page; // Ceiling division
+        let total_pages = total.div_ceil(per_page); // Ceiling division
         Self {
             page,
             per_page,
@@ -269,6 +269,7 @@ pub struct AudioAction {
 
 /// Response from message sending operations
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Default)]
 pub struct MessageResponse {
     /// The ID of the sent message
     pub id: Option<Snowflake>,
@@ -290,15 +291,6 @@ impl MessageResponse {
     }
 }
 
-impl Default for MessageResponse {
-    fn default() -> Self {
-        Self {
-            id: None,
-            timestamp: None,
-            extra: None,
-        }
-    }
-}
 
 #[cfg(test)]
 mod tests {

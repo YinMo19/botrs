@@ -159,7 +159,7 @@ impl Message {
 
     /// Returns true if this message has content.
     pub fn has_content(&self) -> bool {
-        self.content.as_ref().map_or(false, |c| !c.is_empty())
+        self.content.as_ref().is_some_and(|c| !c.is_empty())
     }
 
     /// Returns true if this message has attachments.
@@ -176,7 +176,7 @@ impl Message {
     pub fn is_from_bot(&self) -> bool {
         self.author
             .as_ref()
-            .map_or(false, |a| a.bot.unwrap_or(false))
+            .is_some_and(|a| a.bot.unwrap_or(false))
     }
 }
 
@@ -866,21 +866,21 @@ impl MessageAttachment {
     pub fn is_image(&self) -> bool {
         self.content_type
             .as_ref()
-            .map_or(false, |ct| ct.starts_with("image/"))
+            .is_some_and(|ct| ct.starts_with("image/"))
     }
 
     /// Returns true if this attachment is a video.
     pub fn is_video(&self) -> bool {
         self.content_type
             .as_ref()
-            .map_or(false, |ct| ct.starts_with("video/"))
+            .is_some_and(|ct| ct.starts_with("video/"))
     }
 
     /// Returns true if this attachment is an audio file.
     pub fn is_audio(&self) -> bool {
         self.content_type
             .as_ref()
-            .map_or(false, |ct| ct.starts_with("audio/"))
+            .is_some_and(|ct| ct.starts_with("audio/"))
     }
 }
 

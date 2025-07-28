@@ -1,3 +1,6 @@
+// the api indeed have a lot of arguments
+#![allow(clippy::too_many_arguments)]
+
 //! # BotRS - Rust QQ Bot Framework
 //!
 //! BotRS is a Rust implementation of the QQ Guild Bot API framework, inspired by the Python botpy library.

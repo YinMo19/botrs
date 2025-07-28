@@ -118,7 +118,7 @@ impl Guild {
     pub fn has_description(&self) -> bool {
         self.description
             .as_ref()
-            .map_or(false, |desc| !desc.is_empty())
+            .is_some_and(|desc| !desc.is_empty())
     }
 }
 
@@ -359,7 +359,7 @@ impl Member {
 
     /// Returns true if the member is a bot.
     pub fn is_bot(&self) -> bool {
-        self.user.as_ref().map_or(false, |u| u.is_bot())
+        self.user.as_ref().is_some_and(|u| u.is_bot())
     }
 
     /// Gets the member's roles.
