@@ -88,7 +88,7 @@ impl BotApi {
     /// Guild information.
     pub async fn get_guild(&self, token: &Token, guild_id: &str) -> Result<Guild> {
         debug!("Getting guild {}", guild_id);
-        let path = format!("/guilds/{}", guild_id);
+        let path = format!("/guilds/{guild_id}");
         let response = self.http.get(token, &path, None::<&()>).await?;
         Ok(serde_json::from_value(response)?)
     }
@@ -155,7 +155,7 @@ impl BotApi {
     /// Guild roles information.
     pub async fn get_guild_roles(&self, token: &Token, guild_id: &str) -> Result<GuildRoles> {
         debug!("Getting guild roles for {}", guild_id);
-        let path = format!("/guilds/{}/roles", guild_id);
+        let path = format!("/guilds/{guild_id}/roles");
         let response = self.http.get(token, &path, None::<&()>).await?;
         Ok(serde_json::from_value(response)?)
     }
@@ -194,7 +194,7 @@ impl BotApi {
             body.insert("hoist", json!(if hoist { 1 } else { 0 }));
         }
 
-        let path = format!("/guilds/{}/roles", guild_id);
+        let path = format!("/guilds/{guild_id}/roles");
         let response = self
             .http
             .post(token, &path, None::<&()>, Some(&body))
@@ -238,7 +238,7 @@ impl BotApi {
             body.insert("hoist", json!(if hoist { 1 } else { 0 }));
         }
 
-        let path = format!("/guilds/{}/roles/{}", guild_id, role_id);
+        let path = format!("/guilds/{guild_id}/roles/{role_id}");
         let response = self
             .http
             .put(token, &path, None::<&()>, Some(&body))
@@ -264,7 +264,7 @@ impl BotApi {
         role_id: &str,
     ) -> Result<()> {
         debug!("Deleting guild role {} in {}", role_id, guild_id);
-        let path = format!("/guilds/{}/roles/{}", guild_id, role_id);
+        let path = format!("/guilds/{guild_id}/roles/{role_id}");
         self.http.delete(token, &path, None::<&()>).await?;
         Ok(())
     }
@@ -301,7 +301,7 @@ impl BotApi {
             json!({ "channel": { "id": null } })
         };
 
-        let path = format!("/guilds/{}/members/{}/roles/{}", guild_id, user_id, role_id);
+        let path = format!("/guilds/{guild_id}/members/{user_id}/roles/{role_id}");
         self.http
             .put(token, &path, None::<&()>, Some(&body))
             .await?;
@@ -340,7 +340,7 @@ impl BotApi {
             json!({ "channel": { "id": null } })
         };
 
-        let path = format!("/guilds/{}/members/{}/roles/{}", guild_id, user_id, role_id);
+        let path = format!("/guilds/{guild_id}/members/{user_id}/roles/{role_id}");
         self.http.delete(token, &path, Some(&body)).await?;
         Ok(())
     }
@@ -365,7 +365,7 @@ impl BotApi {
         user_id: &str,
     ) -> Result<Member> {
         debug!("Getting guild member {} in {}", user_id, guild_id);
-        let path = format!("/guilds/{}/members/{}", guild_id, user_id);
+        let path = format!("/guilds/{guild_id}/members/{user_id}");
         let response = self.http.get(token, &path, None::<&()>).await?;
         Ok(serde_json::from_value(response)?)
     }
@@ -395,7 +395,7 @@ impl BotApi {
         params.insert("after", after.unwrap_or("0").to_string());
         params.insert("limit", limit.unwrap_or(1).to_string());
 
-        let path = format!("/guilds/{}/members", guild_id);
+        let path = format!("/guilds/{guild_id}/members");
         let response = self.http.get(token, &path, Some(&params)).await?;
         Ok(serde_json::from_value(response)?)
     }
@@ -433,7 +433,7 @@ impl BotApi {
             "delete_history_msg_days": delete_days
         });
 
-        let path = format!("/guilds/{}/members/{}", guild_id, user_id);
+        let path = format!("/guilds/{guild_id}/members/{user_id}");
         self.http.delete(token, &path, Some(&body)).await?;
         Ok(())
     }
@@ -452,7 +452,7 @@ impl BotApi {
     /// Channel information.
     pub async fn get_channel(&self, token: &Token, channel_id: &str) -> Result<Channel> {
         debug!("Getting channel {}", channel_id);
-        let path = format!("/channels/{}", channel_id);
+        let path = format!("/channels/{channel_id}");
         let response = self.http.get(token, &path, None::<&()>).await?;
         Ok(serde_json::from_value(response)?)
     }
@@ -469,7 +469,7 @@ impl BotApi {
     /// List of channels.
     pub async fn get_channels(&self, token: &Token, guild_id: &str) -> Result<Vec<Channel>> {
         debug!("Getting channels for guild {}", guild_id);
-        let path = format!("/guilds/{}/channels", guild_id);
+        let path = format!("/guilds/{guild_id}/channels");
         let response = self.http.get(token, &path, None::<&()>).await?;
         Ok(serde_json::from_value(response)?)
     }
@@ -534,7 +534,7 @@ impl BotApi {
             body["application_id"] = json!(app);
         }
 
-        let path = format!("/guilds/{}/channels", guild_id);
+        let path = format!("/guilds/{guild_id}/channels");
         let response = self
             .http
             .post(token, &path, None::<&()>, Some(&body))
@@ -586,7 +586,7 @@ impl BotApi {
             body["speak_permission"] = json!(speak);
         }
 
-        let path = format!("/channels/{}", channel_id);
+        let path = format!("/channels/{channel_id}");
         let response = self
             .http
             .put(token, &path, None::<&()>, Some(&body))
@@ -606,7 +606,7 @@ impl BotApi {
     /// The deleted channel.
     pub async fn delete_channel(&self, token: &Token, channel_id: &str) -> Result<Channel> {
         debug!("Deleting channel {}", channel_id);
-        let path = format!("/channels/{}", channel_id);
+        let path = format!("/channels/{channel_id}");
         let response = self.http.delete(token, &path, None::<&()>).await?;
         Ok(serde_json::from_value(response)?)
     }
@@ -631,7 +631,7 @@ impl BotApi {
         message_id: &str,
     ) -> Result<Message> {
         debug!("Getting message {} in channel {}", message_id, channel_id);
-        let path = format!("/channels/{}/messages/{}", channel_id, message_id);
+        let path = format!("/channels/{channel_id}/messages/{message_id}");
         let response = self.http.get(token, &path, None::<&()>).await?;
         Ok(serde_json::from_value(response)?)
     }
@@ -706,7 +706,7 @@ impl BotApi {
             body["keyboard"] = serde_json::to_value(keyboard)?;
         }
 
-        let path = format!("/channels/{}/messages", channel_id);
+        let path = format!("/channels/{channel_id}/messages");
         let response = self
             .http
             .post(token, &path, None::<&()>, Some(&body))
@@ -788,7 +788,7 @@ impl BotApi {
             body["keyboard"] = serde_json::to_value(keyboard)?;
         }
 
-        let path = format!("/v2/groups/{}/messages", group_openid);
+        let path = format!("/v2/groups/{group_openid}/messages");
         let response = self
             .http
             .post(token, &path, None::<&()>, Some(&body))
@@ -870,7 +870,7 @@ impl BotApi {
             body["keyboard"] = serde_json::to_value(keyboard)?;
         }
 
-        let path = format!("/v2/users/{}/messages", openid);
+        let path = format!("/v2/users/{openid}/messages");
         let response = self
             .http
             .post(token, &path, None::<&()>, Some(&body))
@@ -948,7 +948,7 @@ impl BotApi {
             body["keyboard"] = serde_json::to_value(keyboard)?;
         }
 
-        let path = format!("/dms/{}/messages", guild_id);
+        let path = format!("/dms/{guild_id}/messages");
         let response = self
             .http
             .post(token, &path, None::<&()>, Some(&body))
@@ -1017,7 +1017,7 @@ impl BotApi {
             .to_string(),
         );
 
-        let path = format!("/channels/{}/messages/{}", channel_id, message_id);
+        let path = format!("/channels/{channel_id}/messages/{message_id}");
         self.http.delete(token, &path, Some(&params)).await?;
         Ok(())
     }
@@ -1042,7 +1042,7 @@ impl BotApi {
         audio_control: &AudioAction,
     ) -> Result<()> {
         debug!("Updating audio in channel {}", channel_id);
-        let path = format!("/channels/{}/audio", channel_id);
+        let path = format!("/channels/{channel_id}/audio");
         let _response = self
             .http
             .post(token, &path, None::<&()>, Some(audio_control))
@@ -1062,7 +1062,7 @@ impl BotApi {
     /// Success indication.
     pub async fn on_microphone(&self, token: &Token, channel_id: &str) -> Result<()> {
         debug!("Turning on microphone in channel {}", channel_id);
-        let path = format!("/channels/{}/mic", channel_id);
+        let path = format!("/channels/{channel_id}/mic");
         self.http
             .put(token, &path, None::<&()>, None::<&()>)
             .await?;
@@ -1081,7 +1081,7 @@ impl BotApi {
     /// Success indication.
     pub async fn off_microphone(&self, token: &Token, channel_id: &str) -> Result<()> {
         debug!("Turning off microphone in channel {}", channel_id);
-        let path = format!("/channels/{}/mic", channel_id);
+        let path = format!("/channels/{channel_id}/mic");
         self.http.delete(token, &path, None::<&()>).await?;
         Ok(())
     }
@@ -1114,7 +1114,7 @@ impl BotApi {
             "mute_seconds": mute_seconds
         });
 
-        let path = format!("/guilds/{}/mute", guild_id);
+        let path = format!("/guilds/{guild_id}/mute");
         self.http
             .put(token, &path, None::<&()>, Some(&body))
             .await?;
@@ -1139,7 +1139,7 @@ impl BotApi {
             "mute_seconds": "0"
         });
 
-        let path = format!("/guilds/{}/mute", guild_id);
+        let path = format!("/guilds/{guild_id}/mute");
         self.http
             .put(token, &path, None::<&()>, Some(&body))
             .await?;
@@ -1174,7 +1174,7 @@ impl BotApi {
             "mute_seconds": mute_seconds
         });
 
-        let path = format!("/guilds/{}/members/{}/mute", guild_id, user_id);
+        let path = format!("/guilds/{guild_id}/members/{user_id}/mute");
         self.http
             .put(token, &path, None::<&()>, Some(&body))
             .await?;
@@ -1202,7 +1202,7 @@ impl BotApi {
             "Getting channel permissions for user {} in channel {}",
             user_id, channel_id
         );
-        let path = format!("/channels/{}/members/{}/permissions", channel_id, user_id);
+        let path = format!("/channels/{channel_id}/members/{user_id}/permissions");
         let response = self.http.get(token, &path, None::<&()>).await?;
         Ok(serde_json::from_value(response)?)
     }
@@ -1228,7 +1228,7 @@ impl BotApi {
             "Getting channel permissions for role {} in channel {}",
             role_id, channel_id
         );
-        let path = format!("/channels/{}/roles/{}/permissions", channel_id, role_id);
+        let path = format!("/channels/{channel_id}/roles/{role_id}/permissions");
         let response = self.http.get(token, &path, None::<&()>).await?;
         Ok(serde_json::from_value(response)?)
     }
@@ -1259,8 +1259,7 @@ impl BotApi {
             message_id, channel_id
         );
         let path = format!(
-            "/channels/{}/messages/{}/reactions/{}/{}",
-            channel_id, message_id, emoji_type, emoji_id
+            "/channels/{channel_id}/messages/{message_id}/reactions/{emoji_type}/{emoji_id}"
         );
         self.http
             .put(token, &path, None::<&()>, None::<&()>)
@@ -1294,8 +1293,7 @@ impl BotApi {
             message_id, channel_id
         );
         let path = format!(
-            "/channels/{}/messages/{}/reactions/{}/{}",
-            channel_id, message_id, emoji_type, emoji_id
+            "/channels/{channel_id}/messages/{message_id}/reactions/{emoji_type}/{emoji_id}"
         );
         self.http.delete(token, &path, None::<&()>).await?;
         Ok(())
@@ -1319,7 +1317,7 @@ impl BotApi {
         message_id: &str,
     ) -> Result<Value> {
         debug!("Pinning message {} in channel {}", message_id, channel_id);
-        let path = format!("/channels/{}/pins/{}", channel_id, message_id);
+        let path = format!("/channels/{channel_id}/pins/{message_id}");
         let response = self
             .http
             .put(token, &path, None::<&()>, Some(&json!({})))
@@ -1345,7 +1343,7 @@ impl BotApi {
         message_id: &str,
     ) -> Result<()> {
         debug!("Unpinning message {} in channel {}", message_id, channel_id);
-        let path = format!("/channels/{}/pins/{}", channel_id, message_id);
+        let path = format!("/channels/{channel_id}/pins/{message_id}");
         self.http.delete(token, &path, None::<&()>).await?;
         Ok(())
     }
@@ -1362,7 +1360,7 @@ impl BotApi {
     /// Pinned messages.
     pub async fn get_pins(&self, token: &Token, channel_id: &str) -> Result<Value> {
         debug!("Getting pinned messages in channel {}", channel_id);
-        let path = format!("/channels/{}/pins", channel_id);
+        let path = format!("/channels/{channel_id}/pins");
         let response = self.http.get(token, &path, None::<&()>).await?;
         Ok(response)
     }
@@ -1396,7 +1394,7 @@ impl BotApi {
             "srv_send_msg": srv_send_msg.unwrap_or(false)
         });
 
-        let path = format!("/v2/groups/{}/files", group_openid);
+        let path = format!("/v2/groups/{group_openid}/files");
         let response = self
             .http
             .post(token, &path, None::<&()>, Some(&body))
@@ -1433,7 +1431,7 @@ impl BotApi {
             "srv_send_msg": srv_send_msg.unwrap_or(false)
         });
 
-        let path = format!("/v2/users/{}/files", openid);
+        let path = format!("/v2/users/{openid}/files");
         let response = self
             .http
             .post(token, &path, None::<&()>, Some(&body))
