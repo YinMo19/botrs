@@ -130,13 +130,31 @@ impl Message {
     /// Reply to this message
     pub async fn reply(
         &self,
-        _content: &str,
+        api: &crate::api::BotApi,
+        token: &crate::token::Token,
+        content: &str,
     ) -> Result<crate::models::api::MessageResponse, crate::error::BotError> {
-        // This would need to be implemented with the actual API call
-        // For now, returning a placeholder error
-        Err(crate::error::BotError::NotImplemented(
-            "Message reply not implemented".to_string(),
-        ))
+        if let (Some(channel_id), Some(msg_id)) = (&self.channel_id, &self.id) {
+            api.post_message(
+                token,
+                channel_id,
+                Some(content),
+                None,                     // embed
+                None,                     // ark
+                None,                     // message_reference
+                None,                     // image
+                None,                     // file_image
+                Some(msg_id),             // msg_id for reply
+                self.event_id.as_deref(), // event_id
+                None,                     // markdown
+                None,                     // keyboard
+            )
+            .await
+        } else {
+            Err(crate::error::BotError::InvalidData(
+                "Missing channel_id or message_id for reply".to_string(),
+            ))
+        }
     }
 
     /// Returns true if this message has content.
@@ -284,13 +302,31 @@ impl DirectMessage {
     /// Reply to this direct message
     pub async fn reply(
         &self,
-        _content: &str,
+        api: &crate::api::BotApi,
+        token: &crate::token::Token,
+        content: &str,
     ) -> Result<crate::models::api::MessageResponse, crate::error::BotError> {
-        // This would need to be implemented with the actual API call
-        // For now, returning a placeholder error
-        Err(crate::error::BotError::NotImplemented(
-            "DirectMessage reply not implemented".to_string(),
-        ))
+        if let (Some(guild_id), Some(msg_id)) = (&self.guild_id, &self.id) {
+            api.post_dms(
+                token,
+                guild_id,
+                Some(content),
+                None,                     // embed
+                None,                     // ark
+                None,                     // message_reference
+                None,                     // image
+                None,                     // file_image
+                Some(msg_id),             // msg_id for reply
+                self.event_id.as_deref(), // event_id
+                None,                     // markdown
+                None,                     // keyboard
+            )
+            .await
+        } else {
+            Err(crate::error::BotError::InvalidData(
+                "Missing guild_id or message_id for DM reply".to_string(),
+            ))
+        }
     }
 }
 
@@ -391,13 +427,32 @@ impl GroupMessage {
     /// Reply to this group message
     pub async fn reply(
         &self,
-        _content: &str,
+        api: &crate::api::BotApi,
+        token: &crate::token::Token,
+        content: &str,
     ) -> Result<crate::models::api::MessageResponse, crate::error::BotError> {
-        // This would need to be implemented with the actual API call
-        // For now, returning a placeholder error
-        Err(crate::error::BotError::NotImplemented(
-            "GroupMessage reply not implemented".to_string(),
-        ))
+        if let (Some(group_openid), Some(msg_id)) = (&self.group_openid, &self.id) {
+            api.post_group_message(
+                token,
+                group_openid,
+                Some(0), // msg_type: text
+                Some(content),
+                None,                     // embed
+                None,                     // ark
+                None,                     // message_reference
+                None,                     // media
+                Some(msg_id),             // msg_id for reply
+                Some(1),                  // msg_seq
+                self.event_id.as_deref(), // event_id
+                None,                     // markdown
+                None,                     // keyboard
+            )
+            .await
+        } else {
+            Err(crate::error::BotError::InvalidData(
+                "Missing group_openid or message_id for group reply".to_string(),
+            ))
+        }
     }
 }
 
@@ -491,13 +546,35 @@ impl C2CMessage {
     /// Reply to this C2C message
     pub async fn reply(
         &self,
-        _content: &str,
+        api: &crate::api::BotApi,
+        token: &crate::token::Token,
+        content: &str,
     ) -> Result<crate::models::api::MessageResponse, crate::error::BotError> {
-        // This would need to be implemented with the actual API call
-        // For now, returning a placeholder error
-        Err(crate::error::BotError::NotImplemented(
-            "C2CMessage reply not implemented".to_string(),
-        ))
+        if let (Some(user_openid), Some(msg_id)) = (
+            self.author.as_ref().and_then(|a| a.user_openid.as_ref()),
+            &self.id,
+        ) {
+            api.post_c2c_message(
+                token,
+                user_openid,
+                Some(0), // msg_type: text
+                Some(content),
+                None,                     // embed
+                None,                     // ark
+                None,                     // message_reference
+                None,                     // media
+                Some(msg_id),             // msg_id for reply
+                Some(1),                  // msg_seq
+                self.event_id.as_deref(), // event_id
+                None,                     // markdown
+                None,                     // keyboard
+            )
+            .await
+        } else {
+            Err(crate::error::BotError::InvalidData(
+                "Missing user_openid or message_id for C2C reply".to_string(),
+            ))
+        }
     }
 }
 
@@ -853,4 +930,262 @@ mod tests {
         message.author.as_mut().unwrap().bot = Some(false);
         assert!(!message.is_from_bot());
     }
+}
+
+/// Ark template message structure.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct Ark {
+    /// Template ID
+    pub template_id: Option<u32>,
+    /// Keyboard data
+    pub kv: Option<Vec<ArkKv>>,
+}
+
+/// Ark key-value pair.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ArkKv {
+    /// Key
+    pub key: Option<String>,
+    /// Value
+    pub value: Option<String>,
+    /// Object data
+    pub obj: Option<Vec<ArkObj>>,
+}
+
+/// Ark object structure.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ArkObj {
+    /// Object key-value pairs
+    pub obj_kv: Option<Vec<ArkObjKv>>,
+}
+
+/// Ark object key-value pair.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ArkObjKv {
+    /// Key
+    pub key: Option<String>,
+    /// Value
+    pub value: Option<String>,
+}
+
+/// Embed message structure.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct Embed {
+    /// Title of the embed
+    pub title: Option<String>,
+    /// Description of the embed
+    pub description: Option<String>,
+    /// URL of the embed
+    pub url: Option<String>,
+    /// Timestamp of the embed
+    pub timestamp: Option<String>,
+    /// Color of the embed
+    pub color: Option<u32>,
+    /// Footer information
+    pub footer: Option<EmbedFooter>,
+    /// Image information
+    pub image: Option<EmbedImage>,
+    /// Thumbnail information
+    pub thumbnail: Option<EmbedThumbnail>,
+    /// Video information
+    pub video: Option<EmbedVideo>,
+    /// Provider information
+    pub provider: Option<EmbedProvider>,
+    /// Author information
+    pub author: Option<EmbedAuthor>,
+    /// Fields in the embed
+    pub fields: Option<Vec<EmbedField>>,
+}
+
+/// Embed footer structure.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct EmbedFooter {
+    /// Footer text
+    pub text: Option<String>,
+    /// Footer icon URL
+    pub icon_url: Option<String>,
+}
+
+/// Embed image structure.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct EmbedImage {
+    /// Image URL
+    pub url: Option<String>,
+    /// Image width
+    pub width: Option<u32>,
+    /// Image height
+    pub height: Option<u32>,
+}
+
+/// Embed thumbnail structure.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct EmbedThumbnail {
+    /// Thumbnail URL
+    pub url: Option<String>,
+    /// Thumbnail width
+    pub width: Option<u32>,
+    /// Thumbnail height
+    pub height: Option<u32>,
+}
+
+/// Embed video structure.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct EmbedVideo {
+    /// Video URL
+    pub url: Option<String>,
+    /// Video width
+    pub width: Option<u32>,
+    /// Video height
+    pub height: Option<u32>,
+}
+
+/// Embed provider structure.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct EmbedProvider {
+    /// Provider name
+    pub name: Option<String>,
+    /// Provider URL
+    pub url: Option<String>,
+}
+
+/// Embed author structure.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct EmbedAuthor {
+    /// Author name
+    pub name: Option<String>,
+    /// Author URL
+    pub url: Option<String>,
+    /// Author icon URL
+    pub icon_url: Option<String>,
+}
+
+/// Embed field structure.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct EmbedField {
+    /// Field name
+    pub name: Option<String>,
+    /// Field value
+    pub value: Option<String>,
+    /// Whether field is inline
+    pub inline: Option<bool>,
+}
+
+/// Keyboard message structure.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct Keyboard {
+    /// Keyboard content
+    pub content: Option<KeyboardContent>,
+}
+
+/// Keyboard content structure.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct KeyboardContent {
+    /// Rows of buttons
+    pub rows: Option<Vec<KeyboardRow>>,
+}
+
+/// Keyboard row structure.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct KeyboardRow {
+    /// Buttons in this row
+    pub buttons: Option<Vec<KeyboardButton>>,
+}
+
+/// Keyboard button structure.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct KeyboardButton {
+    /// Button ID
+    pub id: Option<String>,
+    /// Button render data
+    pub render_data: Option<KeyboardButtonRenderData>,
+    /// Button action
+    pub action: Option<KeyboardButtonAction>,
+}
+
+/// Keyboard button render data.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct KeyboardButtonRenderData {
+    /// Button label
+    pub label: Option<String>,
+    /// Button visited label
+    pub visited_label: Option<String>,
+    /// Button style
+    pub style: Option<u32>,
+}
+
+/// Keyboard button action.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct KeyboardButtonAction {
+    /// Action type
+    #[serde(rename = "type")]
+    pub action_type: Option<u32>,
+    /// Permission data
+    pub permission: Option<KeyboardButtonPermission>,
+    /// Click limit per user
+    pub click_limit: Option<u32>,
+    /// Action data
+    pub data: Option<String>,
+    /// Reply flag
+    pub reply: Option<bool>,
+    /// Enter flag
+    pub enter: Option<bool>,
+}
+
+/// Keyboard button permission.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct KeyboardButtonPermission {
+    /// Permission type
+    #[serde(rename = "type")]
+    pub permission_type: Option<u32>,
+    /// Specify role IDs
+    pub specify_role_ids: Option<Vec<String>>,
+    /// Specify user IDs
+    pub specify_user_ids: Option<Vec<String>>,
+}
+
+/// Keyboard payload structure for API requests.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct KeyboardPayload {
+    /// Keyboard content
+    pub content: serde_json::Value,
+}
+
+/// Markdown message payload.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct MarkdownPayload {
+    /// Template ID
+    pub template_id: Option<String>,
+    /// Custom template ID
+    pub custom_template_id: Option<String>,
+    /// Template parameters
+    pub params: Option<Vec<MarkdownParam>>,
+    /// Markdown content
+    pub content: Option<String>,
+}
+
+/// Markdown parameter.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct MarkdownParam {
+    /// Parameter key
+    pub key: Option<String>,
+    /// Parameter values
+    pub values: Option<Vec<String>>,
+}
+
+/// Media message structure.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct Media {
+    /// File info
+    pub file_info: Option<String>,
+    /// TTL (time to live)
+    pub ttl: Option<u32>,
+}
+
+/// Message reference structure.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct Reference {
+    /// Referenced message ID
+    pub message_id: Option<String>,
+    /// Whether to ignore getting reference message error
+    pub ignore_get_message_error: Option<bool>,
 }

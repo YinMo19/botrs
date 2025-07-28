@@ -83,15 +83,18 @@ pub trait EventHandler: Send + Sync {
 pub struct Context {
     /// API client for making requests
     pub api: Arc<BotApi>,
+    /// Authentication token
+    pub token: Token,
     /// Bot information
     pub bot_info: Option<BotInfo>,
 }
 
 impl Context {
     /// Creates a new context.
-    pub fn new(api: Arc<BotApi>) -> Self {
+    pub fn new(api: Arc<BotApi>, token: Token) -> Self {
         Self {
             api,
+            token,
             bot_info: None,
         }
     }
@@ -129,6 +132,7 @@ impl<H: EventHandler + 'static> Client<H> {
     /// * `token` - Authentication token
     /// * `intents` - Intent flags for events to receive
     /// * `handler` - Event handler implementation
+    /// * `is_sandbox` - Whether to use sandbox environment
     ///
     /// # Examples
     ///
@@ -149,13 +153,12 @@ impl<H: EventHandler + 'static> Client<H> {
     ///     let token = Token::new("app_id", "secret");
     ///     let intents = Intents::default();
     ///     let handler = MyHandler;
-    ///     let client = Client::new(token, intents, handler)?;
+    ///     let client = Client::new(token, intents, handler, false)?;
     ///     Ok(())
     /// }
     /// ```
-    pub fn new(token: Token, intents: Intents, handler: H) -> Result<Self> {
+    pub fn new(token: Token, intents: Intents, handler: H, is_sandbox: bool) -> Result<Self> {
         let timeout = crate::DEFAULT_TIMEOUT;
-        let is_sandbox = false;
 
         let http = HttpClient::new(timeout, is_sandbox)?;
         let api = Arc::new(BotApi::new(http.clone()));
@@ -228,7 +231,7 @@ impl<H: EventHandler + 'static> Client<H> {
     ///     let token = Token::new("app_id", "secret");
     ///     let intents = Intents::default();
     ///     let handler = MyHandler;
-    ///     let mut client = Client::new(token, intents, handler)?;
+    ///     let mut client = Client::new(token, intents, handler, false)?;
     ///     client.start().await?;
     ///     Ok(())
     /// }
@@ -248,7 +251,7 @@ impl<H: EventHandler + 'static> Client<H> {
         info!("Gateway URL: {}", gateway_info.url);
 
         // Create context
-        let ctx = Context::new(self.api.clone()).with_bot_info(bot_info);
+        let ctx = Context::new(self.api.clone(), self.token.clone()).with_bot_info(bot_info);
 
         // Set up event channel
         let (event_sender, mut event_receiver) = mpsc::unbounded_channel();

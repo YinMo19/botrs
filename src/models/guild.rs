@@ -140,7 +140,103 @@ impl HasName for Guild {
     }
 }
 
+/// Guild roles response wrapper.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct GuildRoles {
+    /// List of roles in the guild
+    pub roles: Vec<GuildRole>,
+    /// Number of roles
+    pub role_num_limit: Option<String>,
+}
+
+impl GuildRoles {
+    /// Creates a new guild roles wrapper.
+    pub fn new(roles: Vec<GuildRole>) -> Self {
+        Self {
+            roles,
+            role_num_limit: None,
+        }
+    }
+}
+
 /// Represents a role in a guild.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct GuildRole {
+    /// The role's unique ID
+    pub id: Option<Snowflake>,
+    /// The role's name
+    pub name: Option<String>,
+    /// The role's color (ARGB hex as decimal)
+    pub color: Option<u32>,
+    /// Whether this role is displayed separately in the member list
+    pub hoist: Option<bool>,
+    /// The number of members with this role
+    pub number: Option<u32>,
+    /// The number of online members with this role
+    pub member_limit: Option<u32>,
+}
+
+impl GuildRole {
+    /// Creates a new role.
+    pub fn new() -> Self {
+        Self {
+            id: None,
+            name: None,
+            color: None,
+            hoist: None,
+            number: None,
+            member_limit: None,
+        }
+    }
+
+    /// Returns true if this role is hoisted (displayed separately).
+    pub fn is_hoisted(&self) -> bool {
+        self.hoist.unwrap_or(false)
+    }
+
+    /// Gets the role's color as a hex value.
+    pub fn color_hex(&self) -> Option<String> {
+        self.color.map(|c| format!("#{:06X}", c))
+    }
+
+    /// Gets the number of members with this role.
+    pub fn member_count(&self) -> u32 {
+        self.number.unwrap_or(0)
+    }
+
+    /// Gets the member limit for this role.
+    pub fn get_member_limit(&self) -> u32 {
+        self.member_limit.unwrap_or(0)
+    }
+
+    /// Returns true if the role has reached its member limit.
+    pub fn is_at_member_limit(&self) -> bool {
+        match (self.number, self.member_limit) {
+            (Some(current), Some(limit)) => current >= limit,
+            _ => false,
+        }
+    }
+}
+
+impl Default for GuildRole {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl HasId for GuildRole {
+    fn id(&self) -> Option<&Snowflake> {
+        self.id.as_ref()
+    }
+}
+
+impl HasName for GuildRole {
+    fn name(&self) -> &str {
+        self.name.as_deref().unwrap_or("")
+    }
+}
+
+/// Represents a role in a guild (legacy type alias).
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Role {
     /// The role's unique ID
@@ -216,6 +312,9 @@ impl HasName for Role {
         self.name.as_deref().unwrap_or("")
     }
 }
+
+// Type alias for backward compatibility
+pub type Roles = Vec<Role>;
 
 /// Represents a member of a guild.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

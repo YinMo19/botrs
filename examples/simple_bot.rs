@@ -2,7 +2,7 @@
 //!
 //! This example shows how to create a basic QQ Guild bot that responds to messages.
 
-use botrs::{Client, Context, EventHandler, Intents, Message, Ready, Token};
+use botrs::{api::BotApi, Client, Context, EventHandler, Intents, Message, Ready, Token};
 
 use tracing::{info, warn};
 
@@ -18,7 +18,7 @@ impl EventHandler for SimpleHandler {
     }
 
     /// Called when a message is created (@ mentions).
-    async fn message_create(&self, _ctx: Context, message: Message) {
+    async fn message_create(&self, ctx: Context, message: Message) {
         // Ignore messages from bots
         if message.is_from_bot() {
             return;
@@ -65,7 +65,7 @@ impl EventHandler for SimpleHandler {
         // Send response if we have one
         if let Some(response_text) = response {
             // Try to reply using the message's reply method
-            match message.reply(&response_text).await {
+            match message.reply(&ctx.api, &ctx.token, &response_text).await {
                 Ok(_) => info!("Successfully sent reply"),
                 Err(e) => warn!("Failed to send reply: {}", e),
             }
@@ -118,7 +118,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let handler = SimpleHandler;
 
     // Create client
-    let mut client = Client::new(token, intents, handler)?;
+    let mut client = Client::new(token, intents, handler, true)?;
 
     info!("Client created, starting bot...");
 

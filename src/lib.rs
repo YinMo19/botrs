@@ -27,7 +27,7 @@
 ///     let token = Token::new("your_app_id", "your_secret");
 ///     let intents = Intents::default();
 ///     let handler = MyHandler;
-///     let mut client = Client::new(token, intents, handler)?;
+///     let mut client = Client::new(token, intents, handler, false)?;
 ///     client.start().await?;
 ///     Ok(())
 /// }
