@@ -92,8 +92,10 @@ impl HasName for Robot {
 
 /// Represents the robot's online status.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
-#[serde(rename_all = "lowercase")]
+#[serde(from = "u8", into = "u8")]
 pub enum RobotStatus {
+    /// Offline
+    Offline,
     /// Online and active
     Online,
     /// Away/idle
@@ -102,8 +104,34 @@ pub enum RobotStatus {
     Dnd,
     /// Invisible/offline
     Invisible,
-    /// Offline
-    Offline,
+    /// Unknown status
+    Unknown(u8),
+}
+
+impl From<u8> for RobotStatus {
+    fn from(value: u8) -> Self {
+        match value {
+            0 => Self::Offline,
+            1 => Self::Online,
+            2 => Self::Idle,
+            3 => Self::Dnd,
+            4 => Self::Invisible,
+            other => Self::Unknown(other),
+        }
+    }
+}
+
+impl From<RobotStatus> for u8 {
+    fn from(status: RobotStatus) -> Self {
+        match status {
+            RobotStatus::Offline => 0,
+            RobotStatus::Online => 1,
+            RobotStatus::Idle => 2,
+            RobotStatus::Dnd => 3,
+            RobotStatus::Invisible => 4,
+            RobotStatus::Unknown(value) => value,
+        }
+    }
 }
 
 impl RobotStatus {

@@ -1175,103 +1175,137 @@ impl<H: EventHandler + 'static> Client<H> {
 
         match event.event_type.as_deref() {
             Some("READY") => {
-                if let Ok(ready) = serde_json::from_value::<Ready>(event.data) {
-                    info!("Bot is ready! Session ID: {}", ready.session_id);
-                    self.handler.ready(ctx, ready).await;
+                if let Some(data) = event.data {
+                    if let Ok(ready) = serde_json::from_value::<Ready>(data) {
+                        info!("Bot is ready! Session ID: {}", ready.session_id);
+                        self.handler.ready(ctx, ready).await;
+                    }
                 }
             }
             Some("AT_MESSAGE_CREATE") => {
-                if let Ok(message) = serde_json::from_value::<Message>(event.data) {
-                    self.handler.message_create(ctx, message).await;
+                if let Some(data) = event.data {
+                    if let Ok(message) = serde_json::from_value::<Message>(data) {
+                        self.handler.message_create(ctx, message).await;
+                    }
                 }
             }
             Some("DIRECT_MESSAGE_CREATE") => {
-                if let Ok(message) = serde_json::from_value::<DirectMessage>(event.data) {
-                    self.handler.direct_message_create(ctx, message).await;
+                if let Some(data) = event.data {
+                    if let Ok(message) = serde_json::from_value::<DirectMessage>(data) {
+                        self.handler.direct_message_create(ctx, message).await;
+                    }
                 }
             }
             Some("GROUP_AT_MESSAGE_CREATE") => {
-                debug!(
-                    "Attempting to parse GROUP_AT_MESSAGE_CREATE data: {:?}",
-                    event.data
-                );
-                match serde_json::from_value::<GroupMessage>(event.data.clone()) {
-                    Ok(message) => {
-                        debug!("Successfully parsed GroupMessage: {:?}", message);
-                        self.handler.group_message_create(ctx, message).await;
-                    }
-                    Err(e) => {
-                        error!("Failed to parse GroupMessage: {}", e);
-                        debug!(
-                            "Raw event data: {}",
-                            serde_json::to_string_pretty(&event.data).unwrap_or_default()
-                        );
+                if let Some(data) = event.data {
+                    debug!(
+                        "Attempting to parse GROUP_AT_MESSAGE_CREATE data: {:?}",
+                        data
+                    );
+                    match serde_json::from_value::<GroupMessage>(data.clone()) {
+                        Ok(message) => {
+                            debug!("Successfully parsed GroupMessage: {:?}", message);
+                            self.handler.group_message_create(ctx, message).await;
+                        }
+                        Err(e) => {
+                            error!("Failed to parse GROUP_AT_MESSAGE_CREATE: {}", e);
+                            debug!(
+                                "Raw event data: {}",
+                                serde_json::to_string_pretty(&data).unwrap_or_default()
+                            );
+                        }
                     }
                 }
             }
             Some("C2C_MESSAGE_CREATE") => {
-                if let Ok(message) = serde_json::from_value::<C2CMessage>(event.data) {
-                    self.handler.c2c_message_create(ctx, message).await;
+                if let Some(data) = event.data {
+                    if let Ok(message) = serde_json::from_value::<C2CMessage>(data) {
+                        self.handler.c2c_message_create(ctx, message).await;
+                    }
                 }
             }
             Some("PUBLIC_MESSAGE_DELETE") => {
-                if let Ok(message) = serde_json::from_value::<Message>(event.data) {
-                    self.handler.message_delete(ctx, message).await;
+                if let Some(data) = event.data {
+                    if let Ok(message) = serde_json::from_value::<Message>(data) {
+                        self.handler.message_delete(ctx, message).await;
+                    }
                 }
             }
             Some("GUILD_CREATE") => {
-                if let Ok(guild) = serde_json::from_value::<Guild>(event.data) {
-                    self.handler.guild_create(ctx, guild).await;
+                if let Some(data) = event.data {
+                    if let Ok(guild) = serde_json::from_value::<Guild>(data) {
+                        self.handler.guild_create(ctx, guild).await;
+                    }
                 }
             }
             Some("GUILD_UPDATE") => {
-                if let Ok(guild) = serde_json::from_value::<Guild>(event.data) {
-                    self.handler.guild_update(ctx, guild).await;
+                if let Some(data) = event.data {
+                    if let Ok(guild) = serde_json::from_value::<Guild>(data) {
+                        self.handler.guild_update(ctx, guild).await;
+                    }
                 }
             }
             Some("GUILD_DELETE") => {
-                if let Ok(guild) = serde_json::from_value::<Guild>(event.data) {
-                    self.handler.guild_delete(ctx, guild).await;
+                if let Some(data) = event.data {
+                    if let Ok(guild) = serde_json::from_value::<Guild>(data) {
+                        self.handler.guild_delete(ctx, guild).await;
+                    }
                 }
             }
             Some("CHANNEL_CREATE") => {
-                if let Ok(channel) = serde_json::from_value::<Channel>(event.data) {
-                    self.handler.channel_create(ctx, channel).await;
+                if let Some(data) = event.data {
+                    if let Ok(channel) = serde_json::from_value::<Channel>(data) {
+                        self.handler.channel_create(ctx, channel).await;
+                    }
                 }
             }
             Some("CHANNEL_UPDATE") => {
-                if let Ok(channel) = serde_json::from_value::<Channel>(event.data) {
-                    self.handler.channel_update(ctx, channel).await;
+                if let Some(data) = event.data {
+                    if let Ok(channel) = serde_json::from_value::<Channel>(data) {
+                        self.handler.channel_update(ctx, channel).await;
+                    }
                 }
             }
             Some("CHANNEL_DELETE") => {
-                if let Ok(channel) = serde_json::from_value::<Channel>(event.data) {
-                    self.handler.channel_delete(ctx, channel).await;
+                if let Some(data) = event.data {
+                    if let Ok(channel) = serde_json::from_value::<Channel>(data) {
+                        self.handler.channel_delete(ctx, channel).await;
+                    }
                 }
             }
             Some("GUILD_MEMBER_ADD") => {
-                if let Ok(member) = serde_json::from_value::<Member>(event.data) {
-                    self.handler.guild_member_add(ctx, member).await;
+                if let Some(data) = event.data {
+                    if let Ok(member) = serde_json::from_value::<Member>(data) {
+                        self.handler.guild_member_add(ctx, member).await;
+                    }
                 }
             }
             Some("GUILD_MEMBER_UPDATE") => {
-                if let Ok(member) = serde_json::from_value::<Member>(event.data) {
-                    self.handler.guild_member_update(ctx, member).await;
+                if let Some(data) = event.data {
+                    if let Ok(member) = serde_json::from_value::<Member>(data) {
+                        self.handler.guild_member_update(ctx, member).await;
+                    }
                 }
             }
             Some("GUILD_MEMBER_REMOVE") => {
-                if let Ok(member) = serde_json::from_value::<Member>(event.data) {
-                    self.handler.guild_member_remove(ctx, member).await;
+                if let Some(data) = event.data {
+                    if let Ok(member) = serde_json::from_value::<Member>(data) {
+                        self.handler.guild_member_remove(ctx, member).await;
+                    }
                 }
             }
             Some("MESSAGE_AUDIT_PASS") => {
-                if let Ok(audit) = serde_json::from_value::<MessageAudit>(event.data) {
-                    self.handler.message_audit_pass(ctx, audit).await;
+                if let Some(data) = event.data {
+                    if let Ok(audit) = serde_json::from_value::<MessageAudit>(data) {
+                        self.handler.message_audit_pass(ctx, audit).await;
+                    }
                 }
             }
             Some("MESSAGE_AUDIT_REJECT") => {
-                if let Ok(audit) = serde_json::from_value::<MessageAudit>(event.data) {
-                    self.handler.message_audit_reject(ctx, audit).await;
+                if let Some(data) = event.data {
+                    if let Ok(audit) = serde_json::from_value::<MessageAudit>(data) {
+                        self.handler.message_audit_reject(ctx, audit).await;
+                    }
                 }
             }
             _ => {

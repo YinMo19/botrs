@@ -11,7 +11,7 @@ pub struct GatewayEvent {
     pub event_type: Option<String>,
     /// The event data
     #[serde(rename = "d")]
-    pub data: serde_json::Value,
+    pub data: Option<serde_json::Value>,
     /// The sequence number
     #[serde(rename = "s")]
     pub sequence: Option<u64>,
