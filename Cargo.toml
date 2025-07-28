@@ -1,0 +1,58 @@
+[package]
+name = "botrs"
+version = "0.1.0"
+edition = "2021"
+authors = ["botrs contributors"]
+description = "A Rust QQ Bot framework based on QQ Guild Bot API"
+license = "MIT"
+repository = "https://github.com/your-repo/botrs"
+keywords = ["qq", "bot", "guild", "api", "async"]
+categories = ["api-bindings", "asynchronous", "network-programming"]
+
+[dependencies]
+# Async runtime
+tokio = { version = "1.0", features = ["full"] }
+tokio-tungstenite = { version = "0.20", features = ["native-tls"] }
+
+# HTTP client
+reqwest = { version = "0.11", features = ["json", "stream"] }
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# WebSocket and networking
+url = "2.4"
+futures-util = "0.3"
+
+# Error handling
+thiserror = "1.0"
+anyhow = "1.0"
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# Utilities
+uuid = { version = "1.0", features = ["v4"] }
+chrono = { version = "0.4", features = ["serde"] }
+base64 = "0.21"
+async-trait = "0.1"
+
+# Optional features for examples
+clap = { version = "4.0", optional = true, features = ["derive"] }
+
+[dev-dependencies]
+tokio-test = "0.4"
+
+[features]
+default = []
+examples = ["clap"]
+
+[[example]]
+name = "simple_bot"
+required-features = ["examples"]
+
+[lib]
+name = "botrs"
+path = "src/lib.rs"
