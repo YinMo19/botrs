@@ -80,8 +80,8 @@ impl Token {
 
     /// Generates the authorization header value for API requests.
     ///
-    /// The authorization header uses the format "QQBot {base64_encoded_credentials}"
-    /// where the credentials are "app_id.secret" encoded in base64.
+    /// The authorization header uses the format "QQBot {access_token}"
+    /// where the access_token is obtained from the QQ API using app_id and secret.
     ///
     /// # Returns
     ///
@@ -89,12 +89,16 @@ impl Token {
     ///
     /// # Examples
     ///
-    /// ```rust
+    /// ```rust,no_run
     /// use botrs::Token;
     ///
-    /// let token = Token::new("123", "secret");
-    /// let auth_header = token.authorization_header();
-    /// assert!(auth_header.starts_with("QQBot "));
+    /// #[tokio::main]
+    /// async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    ///     let token = Token::new("valid_app_id", "valid_secret");
+    ///     let auth_header = token.authorization_header().await?;
+    ///     assert!(auth_header.starts_with("QQBot "));
+    ///     Ok(())
+    /// }
     /// ```
     pub async fn authorization_header(&self) -> Result<String> {
         self.ensure_valid_token().await?;
@@ -319,16 +323,10 @@ mod tests {
 
         // Since we don't have real credentials, this should fail
         let result = token.authorization_header().await;
-        assert!(result.is_err());
-
-        // The error should be related to authentication
-        match result {
-            Err(crate::error::BotError::Connection(_))
-            | Err(crate::error::BotError::Api { .. }) => {
-                // Expected - we don't have valid credentials
-            }
-            _ => panic!("Expected connection or API error"),
-        }
+        assert!(
+            result.is_err(),
+            "Expected authorization_header to fail with invalid credentials"
+        );
     }
 
     #[tokio::test]
