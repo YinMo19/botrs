@@ -2,7 +2,7 @@
 //!
 //! This example shows how to create a basic QQ Guild bot that responds to messages.
 
-use botrs::{api::BotApi, Client, Context, EventHandler, Intents, Message, Ready, Token};
+use botrs::{Client, Context, EventHandler, Intents, Message, Ready, Token};
 
 use tracing::{info, warn};
 
@@ -68,6 +68,56 @@ impl EventHandler for SimpleHandler {
             match message.reply(&ctx.api, &ctx.token, &response_text).await {
                 Ok(_) => info!("Successfully sent reply"),
                 Err(e) => warn!("Failed to send reply: {}", e),
+            }
+        }
+    }
+
+    /// Called when a group message is created.
+    async fn group_message_create(&self, ctx: Context, message: botrs::GroupMessage) {
+        // Get message content
+        let content = match &message.content {
+            Some(content) => content,
+            None => return,
+        };
+
+        info!(
+            "Received group message from {}: {}",
+            message
+                .author
+                .as_ref()
+                .and_then(|a| a.member_openid.as_deref())
+                .unwrap_or("Unknown"),
+            content
+        );
+
+        // Respond to specific commands
+        let response = match content.trim().to_lowercase().as_str() {
+            "!ping" => Some("Pong! 🏓".to_string()),
+            "!hello" => Some("Hello there! 👋".to_string()),
+            "!help" => Some(
+                "Available commands:\n• !ping - Test bot responsiveness\n• !hello - Get a greeting\n• !info - Get bot information"
+                    .to_string(),
+            ),
+            "!info" => Some(
+                "I'm a simple QQ Guild bot built with BotRS! 🤖\nWritten in Rust for performance and safety."
+                    .to_string(),
+            ),
+            _ => {
+                // Echo back messages that mention the bot
+                if content.contains("bot") || content.contains("机器人") {
+                    Some(format!("You mentioned me! You said: {}", content))
+                } else {
+                    None
+                }
+            }
+        };
+
+        // Send response if we have one
+        if let Some(response_text) = response {
+            // Use the reply method to properly respond to the group message
+            match message.reply(&ctx.api, &ctx.token, &response_text).await {
+                Ok(_) => info!("Successfully sent group message reply"),
+                Err(e) => warn!("Failed to send group message reply: {}", e),
             }
         }
     }

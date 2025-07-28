@@ -13,7 +13,7 @@ use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::{mpsc, Mutex};
-use tokio::time::{interval, sleep};
+use tokio::time::interval;
 use tokio_tungstenite::{connect_async, tungstenite::Message, MaybeTlsStream, WebSocketStream};
 use tracing::{debug, error, info, warn};
 use url::Url;
@@ -40,6 +40,8 @@ pub struct Gateway {
     is_ready: Arc<AtomicBool>,
     /// Whether we can reconnect
     can_reconnect: Arc<AtomicBool>,
+    /// Atomic heartbeat interval for sharing between tasks
+    heartbeat_interval_ms: Arc<AtomicU64>,
 }
 
 impl Gateway {
@@ -74,10 +76,11 @@ impl Gateway {
             intents,
             shard,
             session_id: None,
-            last_seq: Arc::new(AtomicU64::new(0)),
             heartbeat_interval: None,
+            last_seq: Arc::new(AtomicU64::new(0)),
             is_ready: Arc::new(AtomicBool::new(false)),
             can_reconnect: Arc::new(AtomicBool::new(true)),
+            heartbeat_interval_ms: Arc::new(AtomicU64::new(30000)),
         }
     }
 
@@ -90,13 +93,44 @@ impl Gateway {
     /// # Returns
     ///
     /// Result indicating success or failure.
+    /// Connects to the WebSocket gateway with auto-reconnect logic.
     pub async fn connect(
         &mut self,
         event_sender: mpsc::UnboundedSender<GatewayEvent>,
     ) -> Result<()> {
-        info!("Connecting to gateway: {}", self.url);
+        loop {
+            info!("[botrs] 启动中...");
+            info!("Connecting to gateway: {}", self.url);
 
-        // Parse and validate URL
+            match self.try_connect(&event_sender).await {
+                Ok(_) => {
+                    info!("[botrs] 连接正常结束");
+                }
+                Err(e) => {
+                    error!("[botrs] 连接错误: {}", e);
+                }
+            }
+
+            // Check if we should reconnect
+            if !self.can_reconnect.load(Ordering::Relaxed) {
+                error!("[botrs] 无法重连，停止连接尝试");
+                break;
+            }
+
+            // Wait before reconnecting
+            info!("[botrs] 等待5秒后重连...");
+            tokio::time::sleep(Duration::from_secs(5)).await;
+        }
+
+        Ok(())
+    }
+
+    /// Single connection attempt
+    async fn try_connect(
+        &mut self,
+        event_sender: &mpsc::UnboundedSender<GatewayEvent>,
+    ) -> Result<()> {
+        // Parse gateway URL
         let url = Url::parse(&self.url).map_err(BotError::Url)?;
 
         // Connect to WebSocket
@@ -104,7 +138,7 @@ impl Gateway {
         info!("Connected to gateway successfully");
 
         // Start the main event loop
-        self.run_event_loop(ws_stream, event_sender).await
+        self.run_event_loop(ws_stream, event_sender.clone()).await
     }
 
     /// Runs the main WebSocket event loop.
@@ -115,49 +149,6 @@ impl Gateway {
     ) -> Result<()> {
         let (write_stream, mut read) = ws_stream.split();
         let write = Arc::new(Mutex::new(write_stream));
-
-        // Set up heartbeat task
-        let heartbeat_task = {
-            let last_seq = self.last_seq.clone();
-            let is_ready = self.is_ready.clone();
-            let write_clone = write.clone();
-            let heartbeat_interval = self.heartbeat_interval.unwrap_or(30000);
-
-            async move {
-                loop {
-                    // Wait for heartbeat interval to be set
-                    while !is_ready.load(Ordering::Relaxed) {
-                        sleep(Duration::from_millis(100)).await;
-                    }
-
-                    let mut heartbeat_timer = interval(Duration::from_millis(heartbeat_interval));
-
-                    loop {
-                        heartbeat_timer.tick().await;
-
-                        let seq = last_seq.load(Ordering::Relaxed);
-                        let heartbeat = GatewayEvent {
-                            event_type: None,
-                            data: serde_json::json!(seq),
-                            sequence: None,
-                            opcode: opcodes::HEARTBEAT,
-                        };
-
-                        if let Ok(payload) = serde_json::to_string(&heartbeat) {
-                            debug!("Sending heartbeat with seq: {}", seq);
-                            let mut writer = write_clone.lock().await;
-                            if let Err(e) = writer.send(Message::Text(payload)).await {
-                                error!("Failed to send heartbeat: {}", e);
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
-        };
-
-        // Spawn heartbeat task
-        tokio::spawn(heartbeat_task);
 
         // Main message handling loop
         while let Some(message) = read.next().await {
@@ -186,7 +177,7 @@ impl Gateway {
                         warn!("Close code: {}, reason: {}", frame.code, frame.reason);
                         self.handle_close_code(frame.code.into()).await;
                     }
-                    break;
+                    return Ok(()); // Return to trigger reconnection
                 }
                 Ok(Message::Ping(data)) => {
                     debug!("Received ping, sending pong");
@@ -250,11 +241,17 @@ impl Gateway {
                                 info!("Bot is ready! Session ID: {}", ready.session_id);
                                 self.session_id = Some(ready.session_id.clone());
                                 self.is_ready.store(true, Ordering::Relaxed);
+
+                                // Start heartbeat task after READY, similar to Python implementation
+                                self.start_heartbeat_task(write.clone());
                             }
                         }
                         "RESUMED" => {
                             info!("Session resumed successfully");
                             self.is_ready.store(true, Ordering::Relaxed);
+
+                            // Start heartbeat task after RESUMED as well
+                            self.start_heartbeat_task(write.clone());
                         }
                         _ => {}
                     }
@@ -269,14 +266,14 @@ impl Gateway {
                 // Server requesting heartbeat
                 debug!("Server requested heartbeat");
                 let seq = self.last_seq.load(Ordering::Relaxed);
-                let heartbeat = GatewayEvent {
-                    event_type: None,
-                    data: serde_json::json!(seq),
-                    sequence: None,
-                    opcode: opcodes::HEARTBEAT,
-                };
 
-                if let Ok(payload) = serde_json::to_string(&heartbeat) {
+                // Create immediate heartbeat payload
+                let heartbeat_payload = serde_json::json!({
+                    "op": opcodes::HEARTBEAT,
+                    "d": seq
+                });
+
+                if let Ok(payload) = serde_json::to_string(&heartbeat_payload) {
                     let mut writer = write.lock().await;
                     if let Err(e) = writer.send(Message::Text(payload)).await {
                         error!("Failed to send immediate heartbeat: {}", e);
@@ -301,10 +298,12 @@ impl Gateway {
                 // Hello message with heartbeat interval
                 if let Ok(hello) = serde_json::from_value::<Hello>(event.data) {
                     info!(
-                        "Received Hello, heartbeat interval: {}ms",
+                        "Received Hello, heartbeat interval: {}ms (using 30000ms like Python)",
                         hello.heartbeat_interval
                     );
                     self.heartbeat_interval = Some(hello.heartbeat_interval);
+                    // Note: We store the server's suggestion but use 30000ms like Python
+                    self.heartbeat_interval_ms.store(30000, Ordering::Relaxed);
 
                     // Send identify or resume
                     if let Err(e) = self.send_identify(write).await {
@@ -375,24 +374,28 @@ impl Gateway {
         Ok(())
     }
 
-    /// Handles WebSocket close codes.
-    async fn handle_close_code(&mut self, code: u16) {
-        match code {
-            4004 => {
-                // Authentication failed
-                warn!("Authentication failed, clearing token");
-                // Token should be refreshed
-            }
-            9001 | 9005 => {
-                // Invalid reconnect codes
-                warn!("Invalid reconnect code: {}, creating new session", code);
-                self.session_id = None;
-                self.last_seq.store(0, Ordering::Relaxed);
-                self.can_reconnect.store(false, Ordering::Relaxed);
-            }
-            _ => {
-                debug!("WebSocket closed with code: {}", code);
-            }
+    /// Handles close codes and determines reconnection behavior
+    async fn handle_close_code(&mut self, close_code: u16) {
+        let invalid_reconnect_codes = [9001, 9005];
+        let auth_fail_codes = [4004];
+
+        if auth_fail_codes.contains(&close_code) {
+            info!("[botrs] 鉴权失败，重置token...");
+            // Reset session for auth failure
+            self.session_id = None;
+            self.last_seq.store(0, Ordering::Relaxed);
+        }
+
+        if invalid_reconnect_codes.contains(&close_code)
+            || !self.can_reconnect.load(Ordering::Relaxed)
+        {
+            info!("[botrs] 无法重连，创建新连接!");
+            self.session_id = None;
+            self.last_seq.store(0, Ordering::Relaxed);
+            self.can_reconnect.store(false, Ordering::Relaxed);
+        } else {
+            info!("[botrs] 连接断开，准备重连...");
+            self.can_reconnect.store(true, Ordering::Relaxed);
         }
     }
 
@@ -414,6 +417,50 @@ impl Gateway {
     /// Gets the last sequence number.
     pub fn last_sequence(&self) -> u64 {
         self.last_seq.load(Ordering::Relaxed)
+    }
+}
+
+impl Gateway {
+    /// Starts the heartbeat task with fixed 30-second interval (matching Python implementation).
+    fn start_heartbeat_task(
+        &self,
+        write: Arc<Mutex<futures_util::stream::SplitSink<WsStream, Message>>>,
+    ) {
+        let last_seq = self.last_seq.clone();
+
+        tokio::spawn(async move {
+            // Use fixed 30-second interval like Python version
+            let interval_ms = 30000;
+            info!("[botrs] 心跳维持启动... interval: {}ms", interval_ms);
+            let mut heartbeat_timer = interval(Duration::from_millis(interval_ms));
+
+            loop {
+                heartbeat_timer.tick().await;
+
+                let seq = last_seq.load(Ordering::Relaxed);
+
+                // Create heartbeat payload matching Python implementation
+                let heartbeat_payload = serde_json::json!({
+                    "op": opcodes::HEARTBEAT,
+                    "d": seq
+                });
+
+                if let Ok(payload) = serde_json::to_string(&heartbeat_payload) {
+                    debug!("Sending heartbeat with seq: {}", seq);
+                    let mut writer = write.lock().await;
+                    if let Err(e) = writer.send(Message::Text(payload)).await {
+                        error!("Failed to send heartbeat: {}", e);
+                        break;
+                    }
+                } else {
+                    // Check if connection is closed
+                    let writer = write.lock().await;
+                    drop(writer);
+                    debug!("[botrs] 连接已关闭!");
+                    return;
+                }
+            }
+        });
     }
 }
 

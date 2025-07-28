@@ -8,9 +8,8 @@ use crate::http::HttpClient;
 use crate::models::{
     api::{AudioAction, BotInfo, GatewayResponse, MessageResponse},
     channel::{Channel, ChannelPermissions, ChannelSubType, ChannelType},
-    guild::{Guild, GuildRole, GuildRoles},
+    guild::{Guild, GuildRole, GuildRoles, Member},
     message::{Ark, Embed, Keyboard, KeyboardPayload, MarkdownPayload, Media, Message, Reference},
-    user::Member,
 };
 use crate::token::Token;
 use base64::Engine;

@@ -369,6 +369,11 @@ cargo run --example simple_bot --features examples -- your_app_id your_secret
 - 🔄 性能优化和内存使用优化
 - 🔄 更多 QQ 频道 API 功能支持
 
+### 依然存在的问题
+目前代码是从 python 版本重写来的，测试非常少（几乎没有）。作者自己的 bot 并没有申请很多权限，因此关于 Ark，以及企业级的一些功能都没有进行测试。不过基础的 reply 群聊消息之类的 api 还是经过测试了的。如果有测试，告诉我相关的错误，那么我会尽量的改掉 bug。
+
+从目前的情况来看，python 版本中也用到了一些不太准确，可能改动了 api 的地方。但是 python 本身的校验机制是很松的，不像这里使用的 serde 库，在 parse 的时候一个字段对不上直接失败。因此如果有一些消息返回失败，或者哪里很明显的 parse 失败了，请在 issue 中告诉我。如果你能解决掉，那么非常欢迎 pr。
+
 ## 与 Python botpy 的对比
 
 BotRS 的设计灵感来自 Python 的 [botpy](https://github.com/tencent-connect/botpy) 库，但提供了以下优势：

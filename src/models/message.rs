@@ -346,8 +346,10 @@ pub struct GroupMessage {
     /// Referenced message information
     pub message_reference: Option<MessageReference>,
     /// Users mentioned in this message
+    #[serde(default)]
     pub mentions: Vec<GroupMessageUser>,
     /// Attachments in this message
+    #[serde(default)]
     pub attachments: Vec<MessageAttachment>,
     /// Global message sequence number
     pub msg_seq: Option<u64>,
@@ -358,6 +360,7 @@ pub struct GroupMessage {
     /// Group OpenID
     pub group_openid: Option<String>,
     /// Event ID from the gateway
+    #[serde(skip)]
     pub event_id: Option<String>,
 }
 
@@ -441,16 +444,16 @@ impl GroupMessage {
                 None,                     // ark
                 None,                     // message_reference
                 None,                     // media
-                Some(msg_id),             // msg_id for reply
-                Some(1),                  // msg_seq
+                Some(msg_id), // msg_id for reply - this is the key for reply functionality
+                None,         // msg_seq - let server handle this
                 self.event_id.as_deref(), // event_id
-                None,                     // markdown
-                None,                     // keyboard
+                None,         // markdown
+                None,         // keyboard
             )
             .await
         } else {
             Err(crate::error::BotError::InvalidData(
-                "Missing group_openid or message_id for group reply".to_string(),
+                "Missing group_openid or message_id for reply".to_string(),
             ))
         }
     }
@@ -720,18 +723,27 @@ impl DirectMessageUser {
 
 /// User information in a group message.
 /// Represents a user in a group message.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct GroupMessageUser {
+    /// The user's ID
+    pub id: Option<String>,
     /// The member's OpenID in the group
     pub member_openid: Option<String>,
+    /// The union OpenID
+    pub union_openid: Option<String>,
 }
 
 impl GroupMessageUser {
     /// Creates a new group message user from API data.
     pub fn from_data(data: serde_json::Value) -> Self {
         Self {
+            id: data.get("id").and_then(|v| v.as_str()).map(String::from),
             member_openid: data
                 .get("member_openid")
+                .and_then(|v| v.as_str())
+                .map(String::from),
+            union_openid: data
+                .get("union_openid")
                 .and_then(|v| v.as_str())
                 .map(String::from),
         }

@@ -8,7 +8,9 @@ use crate::error::{BotError, Result};
 use crate::gateway::Gateway;
 use crate::http::HttpClient;
 use crate::intents::Intents;
+use crate::models::channel::{ChannelSubType, ChannelType};
 use crate::models::gateway::GatewayEvent;
+use crate::models::guild::{GuildRole, GuildRoles, Member as GuildMember};
 use crate::models::*;
 use crate::token::Token;
 use std::sync::Arc;
@@ -103,6 +105,875 @@ impl Context {
     pub fn with_bot_info(mut self, bot_info: BotInfo) -> Self {
         self.bot_info = Some(bot_info);
         self
+    }
+
+    /// Sends a message to a channel.
+    ///
+    /// # Arguments
+    ///
+    /// * `channel_id` - The channel ID to send the message to
+    /// * `content` - Message content
+    ///
+    /// # Returns
+    ///
+    /// The sent message response.
+    pub async fn send_message(&self, channel_id: &str, content: &str) -> Result<MessageResponse> {
+        self.api
+            .post_message(
+                &self.token,
+                channel_id,
+                Some(content),
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+            )
+            .await
+    }
+
+    /// Sends a message with embed to a channel.
+    ///
+    /// # Arguments
+    ///
+    /// * `channel_id` - The channel ID to send the message to
+    /// * `content` - Optional message content
+    /// * `embed` - Embed to send
+    ///
+    /// # Returns
+    ///
+    /// The sent message response.
+    pub async fn send_message_with_embed(
+        &self,
+        channel_id: &str,
+        content: Option<&str>,
+        embed: &Embed,
+    ) -> Result<MessageResponse> {
+        self.api
+            .post_message(
+                &self.token,
+                channel_id,
+                content,
+                Some(embed),
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+            )
+            .await
+    }
+
+    /// Sends a reply to a message.
+    ///
+    /// # Arguments
+    ///
+    /// * `channel_id` - The channel ID to send the reply to
+    /// * `content` - Reply content
+    /// * `message_id` - The message ID to reply to
+    ///
+    /// # Returns
+    ///
+    /// The sent message response.
+    pub async fn reply_message(
+        &self,
+        channel_id: &str,
+        content: &str,
+        message_id: &str,
+    ) -> Result<MessageResponse> {
+        let reference = Reference {
+            message_id: Some(message_id.to_string()),
+            ignore_get_message_error: Some(true),
+        };
+
+        self.api
+            .post_message(
+                &self.token,
+                channel_id,
+                Some(content),
+                None,
+                None,
+                Some(&reference),
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+            )
+            .await
+    }
+
+    /// Sends a group message.
+    ///
+    /// # Arguments
+    ///
+    /// * `group_openid` - The group OpenID
+    /// * `content` - Message content
+    ///
+    /// # Returns
+    ///
+    /// The sent group message response.
+    pub async fn send_group_message(
+        &self,
+        group_openid: &str,
+        content: &str,
+    ) -> Result<MessageResponse> {
+        self.api
+            .post_group_message(
+                &self.token,
+                group_openid,
+                Some(0), // Text message type
+                Some(content),
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+            )
+            .await
+    }
+
+    /// Sends a C2C (client-to-client) message.
+    ///
+    /// # Arguments
+    ///
+    /// * `openid` - The user's OpenID
+    /// * `content` - Message content
+    ///
+    /// # Returns
+    ///
+    /// The sent C2C message response.
+    pub async fn send_c2c_message(&self, openid: &str, content: &str) -> Result<MessageResponse> {
+        self.api
+            .post_c2c_message(
+                &self.token,
+                openid,
+                Some(0), // Text message type
+                Some(content),
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+            )
+            .await
+    }
+
+    /// Gets guild information.
+    ///
+    /// # Arguments
+    ///
+    /// * `guild_id` - The guild ID
+    ///
+    /// # Returns
+    ///
+    /// Guild information.
+    pub async fn get_guild(&self, guild_id: &str) -> Result<Guild> {
+        self.api.get_guild(&self.token, guild_id).await
+    }
+
+    /// Gets channel information.
+    ///
+    /// # Arguments
+    ///
+    /// * `channel_id` - The channel ID
+    ///
+    /// # Returns
+    ///
+    /// Channel information.
+    pub async fn get_channel(&self, channel_id: &str) -> Result<Channel> {
+        self.api.get_channel(&self.token, channel_id).await
+    }
+
+    /// Gets message information.
+    ///
+    /// # Arguments
+    ///
+    /// * `channel_id` - The channel ID
+    /// * `message_id` - The message ID
+    ///
+    /// # Returns
+    ///
+    /// The message.
+    pub async fn get_message(&self, channel_id: &str, message_id: &str) -> Result<Message> {
+        self.api
+            .get_message(&self.token, channel_id, message_id)
+            .await
+    }
+
+    /// Recalls (deletes) a message.
+    ///
+    /// # Arguments
+    ///
+    /// * `channel_id` - The channel ID
+    /// * `message_id` - The message ID to recall
+    /// * `hide_tip` - Whether to hide the recall tip
+    ///
+    /// # Returns
+    ///
+    /// Result indicating success or failure.
+    pub async fn recall_message(
+        &self,
+        channel_id: &str,
+        message_id: &str,
+        hide_tip: bool,
+    ) -> Result<()> {
+        self.api
+            .recall_message(&self.token, channel_id, message_id, Some(hide_tip))
+            .await
+    }
+
+    /// Adds a reaction to a message.
+    ///
+    /// # Arguments
+    ///
+    /// * `channel_id` - The channel ID
+    /// * `message_id` - The message ID
+    /// * `emoji_type` - The emoji type (1 for system emoji, 2 for custom emoji)
+    /// * `emoji_id` - The emoji ID
+    ///
+    /// # Returns
+    ///
+    /// Result indicating success or failure.
+    pub async fn add_reaction(
+        &self,
+        channel_id: &str,
+        message_id: &str,
+        emoji_type: u32,
+        emoji_id: &str,
+    ) -> Result<()> {
+        self.api
+            .put_reaction(&self.token, channel_id, message_id, emoji_type, emoji_id)
+            .await
+    }
+
+    /// Removes a reaction from a message.
+    ///
+    /// # Arguments
+    ///
+    /// * `channel_id` - The channel ID
+    /// * `message_id` - The message ID
+    /// * `emoji_type` - The emoji type (1 for system emoji, 2 for custom emoji)
+    /// * `emoji_id` - The emoji ID
+    ///
+    /// # Returns
+    ///
+    /// Result indicating success or failure.
+    pub async fn remove_reaction(
+        &self,
+        channel_id: &str,
+        message_id: &str,
+        emoji_type: u32,
+        emoji_id: &str,
+    ) -> Result<()> {
+        self.api
+            .delete_reaction(&self.token, channel_id, message_id, emoji_type, emoji_id)
+            .await
+    }
+
+    /// Gets the current user's guilds.
+    ///
+    /// # Arguments
+    ///
+    /// * `guild_id` - Optional starting guild ID
+    /// * `limit` - Number of guilds to return (1-100, default 100)
+    /// * `desc` - Whether to return results in descending order
+    ///
+    /// # Returns
+    ///
+    /// List of guilds.
+    pub async fn get_guilds(
+        &self,
+        guild_id: Option<&str>,
+        limit: Option<u32>,
+        desc: Option<bool>,
+    ) -> Result<Vec<Guild>> {
+        self.api
+            .get_guilds(&self.token, guild_id, limit, desc)
+            .await
+    }
+
+    /// Gets channels in a guild.
+    ///
+    /// # Arguments
+    ///
+    /// * `guild_id` - The guild ID
+    ///
+    /// # Returns
+    ///
+    /// List of channels.
+    pub async fn get_channels(&self, guild_id: &str) -> Result<Vec<Channel>> {
+        self.api.get_channels(&self.token, guild_id).await
+    }
+
+    /// Creates a new channel in a guild.
+    ///
+    /// # Arguments
+    ///
+    /// * `guild_id` - The guild ID
+    /// * `name` - Channel name
+    /// * `channel_type` - Channel type
+    /// * `sub_type` - Channel sub type
+    /// * `position` - Channel position
+    /// * `parent_id` - Parent channel ID for category channels
+    /// * `private_type` - Private type (0=public, 1=private, 2=voice private)
+    /// * `private_user_ids` - List of user IDs for private channels
+    /// * `speak_permission` - Speak permission (0=invalid, 1=all members, 2=members with role)
+    /// * `application_id` - Application ID for application channels
+    ///
+    /// # Returns
+    ///
+    /// The created channel.
+    pub async fn create_channel(
+        &self,
+        guild_id: &str,
+        name: &str,
+        channel_type: ChannelType,
+        sub_type: ChannelSubType,
+        position: Option<u32>,
+        parent_id: Option<&str>,
+        private_type: Option<u32>,
+        private_user_ids: Option<Vec<String>>,
+        speak_permission: Option<u32>,
+        application_id: Option<&str>,
+    ) -> Result<Channel> {
+        self.api
+            .create_channel(
+                &self.token,
+                guild_id,
+                name,
+                channel_type,
+                sub_type,
+                position,
+                parent_id,
+                private_type,
+                private_user_ids,
+                speak_permission,
+                application_id,
+            )
+            .await
+    }
+
+    /// Gets guild roles.
+    ///
+    /// # Arguments
+    ///
+    /// * `guild_id` - The guild ID
+    ///
+    /// # Returns
+    ///
+    /// List of guild roles.
+    pub async fn get_guild_roles(&self, guild_id: &str) -> Result<GuildRoles> {
+        self.api.get_guild_roles(&self.token, guild_id).await
+    }
+
+    /// Creates a new guild role.
+    ///
+    /// # Arguments
+    ///
+    /// * `guild_id` - The guild ID
+    /// * `name` - Role name
+    /// * `color` - Role color (ARGB hex value converted to decimal)
+    /// * `hoist` - Whether to display separately in member list (0=no, 1=yes)
+    ///
+    /// # Returns
+    ///
+    /// The created guild role.
+    pub async fn create_guild_role(
+        &self,
+        guild_id: &str,
+        name: Option<&str>,
+        color: Option<u32>,
+        hoist: Option<bool>,
+    ) -> Result<GuildRole> {
+        self.api
+            .create_guild_role(&self.token, guild_id, name, color, hoist)
+            .await
+    }
+
+    /// Updates a guild role.
+    ///
+    /// # Arguments
+    ///
+    /// * `guild_id` - The guild ID
+    /// * `role_id` - The role ID
+    /// * `name` - Role name
+    /// * `color` - Role color (ARGB hex value converted to decimal)
+    /// * `hoist` - Whether to display separately in member list (0=no, 1=yes)
+    ///
+    /// # Returns
+    ///
+    /// The updated guild role.
+    pub async fn update_guild_role(
+        &self,
+        guild_id: &str,
+        role_id: &str,
+        name: Option<&str>,
+        color: Option<u32>,
+        hoist: Option<bool>,
+    ) -> Result<GuildRole> {
+        self.api
+            .update_guild_role(&self.token, guild_id, role_id, name, color, hoist)
+            .await
+    }
+
+    /// Deletes a guild role.
+    ///
+    /// # Arguments
+    ///
+    /// * `guild_id` - The guild ID
+    /// * `role_id` - The role ID
+    ///
+    /// # Returns
+    ///
+    /// Result indicating success or failure.
+    pub async fn delete_guild_role(&self, guild_id: &str, role_id: &str) -> Result<()> {
+        self.api
+            .delete_guild_role(&self.token, guild_id, role_id)
+            .await
+    }
+
+    /// Adds a role to a guild member.
+    ///
+    /// # Arguments
+    ///
+    /// * `guild_id` - The guild ID
+    /// * `user_id` - The user ID
+    /// * `role_id` - The role ID
+    /// * `channel_id` - Optional channel ID for channel-specific roles
+    ///
+    /// # Returns
+    ///
+    /// Result indicating success or failure.
+    pub async fn add_guild_role_member(
+        &self,
+        guild_id: &str,
+        user_id: &str,
+        role_id: &str,
+        channel_id: Option<&str>,
+    ) -> Result<()> {
+        self.api
+            .create_guild_role_member(&self.token, guild_id, role_id, user_id, channel_id)
+            .await
+    }
+
+    /// Removes a role from a guild member.
+    ///
+    /// # Arguments
+    ///
+    /// * `guild_id` - The guild ID
+    /// * `user_id` - The user ID
+    /// * `role_id` - The role ID
+    /// * `channel_id` - Optional channel ID for channel-specific roles
+    ///
+    /// # Returns
+    ///
+    /// Result indicating success or failure.
+    pub async fn remove_guild_role_member(
+        &self,
+        guild_id: &str,
+        user_id: &str,
+        role_id: &str,
+        channel_id: Option<&str>,
+    ) -> Result<()> {
+        self.api
+            .delete_guild_role_member(&self.token, guild_id, role_id, user_id, channel_id)
+            .await
+    }
+
+    /// Gets guild member information.
+    ///
+    /// # Arguments
+    ///
+    /// * `guild_id` - The guild ID
+    /// * `user_id` - The user ID
+    ///
+    /// # Returns
+    ///
+    /// Member information.
+    pub async fn get_guild_member(&self, guild_id: &str, user_id: &str) -> Result<GuildMember> {
+        self.api
+            .get_guild_member(&self.token, guild_id, user_id)
+            .await
+    }
+
+    /// Gets guild members list.
+    ///
+    /// # Arguments
+    ///
+    /// * `guild_id` - The guild ID
+    /// * `after` - Optional user ID to get members after
+    /// * `limit` - Number of members to return (1-400, default 1)
+    ///
+    /// # Returns
+    ///
+    /// List of members.
+    pub async fn get_guild_members(
+        &self,
+        guild_id: &str,
+        after: Option<&str>,
+        limit: Option<u32>,
+    ) -> Result<Vec<GuildMember>> {
+        self.api
+            .get_guild_members(&self.token, guild_id, after, limit)
+            .await
+    }
+
+    /// Kicks a member from the guild.
+    ///
+    /// # Arguments
+    ///
+    /// * `guild_id` - The guild ID
+    /// * `user_id` - The user ID to kick
+    /// * `add_blacklist` - Whether to add user to blacklist
+    /// * `delete_history_msg_days` - Days of message history to delete (3, 7, 15, 30)
+    ///
+    /// # Returns
+    ///
+    /// Result indicating success or failure.
+    pub async fn kick_member(
+        &self,
+        guild_id: &str,
+        user_id: &str,
+        add_blacklist: Option<bool>,
+        delete_history_msg_days: Option<i32>,
+    ) -> Result<()> {
+        self.api
+            .delete_member(
+                &self.token,
+                guild_id,
+                user_id,
+                add_blacklist,
+                delete_history_msg_days,
+            )
+            .await
+    }
+
+    /// Updates audio control in a channel.
+    ///
+    /// # Arguments
+    ///
+    /// * `channel_id` - The channel ID
+    /// * `audio_control` - Audio control data
+    ///
+    /// # Returns
+    ///
+    /// Result indicating success or failure.
+    pub async fn update_audio(&self, channel_id: &str, audio_control: &AudioAction) -> Result<()> {
+        self.api
+            .update_audio(&self.token, channel_id, audio_control)
+            .await
+    }
+
+    /// Turns on microphone in a channel.
+    ///
+    /// # Arguments
+    ///
+    /// * `channel_id` - The channel ID
+    ///
+    /// # Returns
+    ///
+    /// Result indicating success or failure.
+    pub async fn on_microphone(&self, channel_id: &str) -> Result<()> {
+        self.api.on_microphone(&self.token, channel_id).await
+    }
+
+    /// Turns off microphone in a channel.
+    ///
+    /// # Arguments
+    ///
+    /// * `channel_id` - The channel ID
+    ///
+    /// # Returns
+    ///
+    /// Result indicating success or failure.
+    pub async fn off_microphone(&self, channel_id: &str) -> Result<()> {
+        self.api.off_microphone(&self.token, channel_id).await
+    }
+
+    /// Mutes all members in a guild.
+    ///
+    /// # Arguments
+    ///
+    /// * `guild_id` - The guild ID
+    /// * `mute_end_timestamp` - Optional end timestamp
+    /// * `mute_seconds` - Optional duration in seconds
+    ///
+    /// # Returns
+    ///
+    /// Result indicating success or failure.
+    pub async fn mute_all(
+        &self,
+        guild_id: &str,
+        mute_end_timestamp: Option<&str>,
+        mute_seconds: Option<&str>,
+    ) -> Result<()> {
+        self.api
+            .mute_all(&self.token, guild_id, mute_end_timestamp, mute_seconds)
+            .await
+    }
+
+    /// Cancels mute for all members in a guild.
+    ///
+    /// # Arguments
+    ///
+    /// * `guild_id` - The guild ID
+    ///
+    /// # Returns
+    ///
+    /// Result indicating success or failure.
+    pub async fn cancel_mute_all(&self, guild_id: &str) -> Result<()> {
+        self.api.cancel_mute_all(&self.token, guild_id).await
+    }
+
+    /// Mutes a specific member in a guild.
+    ///
+    /// # Arguments
+    ///
+    /// * `guild_id` - The guild ID
+    /// * `user_id` - The user ID to mute
+    /// * `mute_end_timestamp` - Optional end timestamp
+    /// * `mute_seconds` - Optional duration in seconds
+    ///
+    /// # Returns
+    ///
+    /// Result indicating success or failure.
+    pub async fn mute_member(
+        &self,
+        guild_id: &str,
+        user_id: &str,
+        mute_end_timestamp: Option<&str>,
+        mute_seconds: Option<&str>,
+    ) -> Result<()> {
+        self.api
+            .mute_member(
+                &self.token,
+                guild_id,
+                user_id,
+                mute_end_timestamp,
+                mute_seconds,
+            )
+            .await
+    }
+
+    /// Pins a message.
+    ///
+    /// # Arguments
+    ///
+    /// * `channel_id` - The channel ID
+    /// * `message_id` - The message ID to pin
+    ///
+    /// # Returns
+    ///
+    /// Result indicating success or failure.
+    pub async fn pin_message(&self, channel_id: &str, message_id: &str) -> Result<()> {
+        let _ = self
+            .api
+            .put_pin(&self.token, channel_id, message_id)
+            .await?;
+        Ok(())
+    }
+
+    /// Unpins a message.
+    ///
+    /// # Arguments
+    ///
+    /// * `channel_id` - The channel ID
+    /// * `message_id` - The message ID to unpin
+    ///
+    /// # Returns
+    ///
+    /// Result indicating success or failure.
+    pub async fn unpin_message(&self, channel_id: &str, message_id: &str) -> Result<()> {
+        self.api
+            .delete_pin(&self.token, channel_id, message_id)
+            .await
+    }
+
+    /// Gets pinned messages in a channel.
+    ///
+    /// # Arguments
+    ///
+    /// * `channel_id` - The channel ID
+    ///
+    /// # Returns
+    ///
+    /// The pinned messages response.
+    pub async fn get_pins(&self, channel_id: &str) -> Result<serde_json::Value> {
+        self.api.get_pins(&self.token, channel_id).await
+    }
+
+    /// Gets channel permissions for a user.
+    ///
+    /// # Arguments
+    ///
+    /// * `channel_id` - The channel ID
+    /// * `user_id` - The user ID
+    ///
+    /// # Returns
+    ///
+    /// Channel permissions for the user.
+    pub async fn get_channel_user_permissions(
+        &self,
+        channel_id: &str,
+        user_id: &str,
+    ) -> Result<ChannelPermissions> {
+        self.api
+            .get_channel_user_permissions(&self.token, channel_id, user_id)
+            .await
+    }
+
+    /// Gets channel permissions for a role.
+    ///
+    /// # Arguments
+    ///
+    /// * `channel_id` - The channel ID
+    /// * `role_id` - The role ID
+    ///
+    /// # Returns
+    ///
+    /// Channel permissions for the role.
+    pub async fn get_channel_role_permissions(
+        &self,
+        channel_id: &str,
+        role_id: &str,
+    ) -> Result<ChannelPermissions> {
+        self.api
+            .get_channel_role_permissions(&self.token, channel_id, role_id)
+            .await
+    }
+
+    /// Updates a channel.
+    ///
+    /// # Arguments
+    ///
+    /// * `channel_id` - The channel ID
+    /// * `name` - Optional new name
+    /// * `position` - Optional new position
+    /// * `parent_id` - Optional new parent ID
+    /// * `private_type` - Optional new private type
+    /// * `speak_permission` - Optional new speak permission
+    ///
+    /// # Returns
+    ///
+    /// The updated channel.
+    pub async fn update_channel(
+        &self,
+        channel_id: &str,
+        name: Option<&str>,
+        position: Option<u32>,
+        parent_id: Option<&str>,
+        private_type: Option<u32>,
+        speak_permission: Option<u32>,
+    ) -> Result<Channel> {
+        self.api
+            .update_channel(
+                &self.token,
+                channel_id,
+                name,
+                position,
+                parent_id,
+                private_type,
+                speak_permission,
+            )
+            .await
+    }
+
+    /// Deletes a channel.
+    ///
+    /// # Arguments
+    ///
+    /// * `channel_id` - The channel ID
+    ///
+    /// # Returns
+    ///
+    /// The deleted channel.
+    pub async fn delete_channel(&self, channel_id: &str) -> Result<Channel> {
+        self.api.delete_channel(&self.token, channel_id).await
+    }
+
+    /// Creates a DMS session.
+    ///
+    /// # Arguments
+    ///
+    /// * `recipient_id` - The recipient user ID
+    /// * `source_guild_id` - The source guild ID
+    ///
+    /// # Returns
+    ///
+    /// The created DMS session.
+    pub async fn create_dms(
+        &self,
+        recipient_id: &str,
+        source_guild_id: &str,
+    ) -> Result<serde_json::Value> {
+        self.api
+            .create_dms(&self.token, recipient_id, source_guild_id)
+            .await
+    }
+
+    /// Sends a file to a group.
+    ///
+    /// # Arguments
+    ///
+    /// * `group_openid` - The group OpenID
+    /// * `file_type` - The file type (1=image, 2=video, 3=audio, 4=file)
+    /// * `url` - The file URL
+    /// * `srv_send_msg` - Whether to send as message
+    ///
+    /// # Returns
+    ///
+    /// The file upload response.
+    pub async fn post_group_file(
+        &self,
+        group_openid: &str,
+        file_type: u32,
+        url: &str,
+        srv_send_msg: Option<bool>,
+    ) -> Result<serde_json::Value> {
+        self.api
+            .post_group_file(&self.token, group_openid, file_type, url, srv_send_msg)
+            .await
+    }
+
+    /// Sends a file to a C2C chat.
+    ///
+    /// # Arguments
+    ///
+    /// * `openid` - The user's OpenID
+    /// * `file_type` - The file type (1=image, 2=video, 3=audio, 4=file)
+    /// * `url` - The file URL
+    /// * `srv_send_msg` - Whether to send as message
+    ///
+    /// # Returns
+    ///
+    /// The file upload response.
+    pub async fn post_c2c_file(
+        &self,
+        openid: &str,
+        file_type: u32,
+        url: &str,
+        srv_send_msg: Option<bool>,
+    ) -> Result<serde_json::Value> {
+        self.api
+            .post_c2c_file(&self.token, openid, file_type, url, srv_send_msg)
+            .await
     }
 }
 
@@ -264,19 +1135,21 @@ impl<H: EventHandler + 'static> Client<H> {
             None, // TODO: Implement sharding
         );
 
-        // Start gateway connection in a separate task
+        // Start gateway connection in a separate task with auto-reconnect
         let gateway_task = {
             let mut gateway_clone = gateway;
             async move {
+                // Gateway now handles auto-reconnect internally
                 if let Err(e) = gateway_clone.connect(event_sender).await {
-                    error!("Gateway connection error: {}", e);
+                    error!("Gateway connection failed permanently: {}", e);
                 }
             }
         };
 
         tokio::spawn(gateway_task);
 
-        // Main event processing loop
+        // Main event processing loop - continue running even if gateway disconnects
+        info!("Bot client started, waiting for events...");
         while let Some(event) = event_receiver.recv().await {
             if let Err(e) = self.handle_event(ctx.clone(), event).await {
                 self.handler.error(e).await;
@@ -318,8 +1191,22 @@ impl<H: EventHandler + 'static> Client<H> {
                 }
             }
             Some("GROUP_AT_MESSAGE_CREATE") => {
-                if let Ok(message) = serde_json::from_value::<GroupMessage>(event.data) {
-                    self.handler.group_message_create(ctx, message).await;
+                debug!(
+                    "Attempting to parse GROUP_AT_MESSAGE_CREATE data: {:?}",
+                    event.data
+                );
+                match serde_json::from_value::<GroupMessage>(event.data.clone()) {
+                    Ok(message) => {
+                        debug!("Successfully parsed GroupMessage: {:?}", message);
+                        self.handler.group_message_create(ctx, message).await;
+                    }
+                    Err(e) => {
+                        error!("Failed to parse GroupMessage: {}", e);
+                        debug!(
+                            "Raw event data: {}",
+                            serde_json::to_string_pretty(&event.data).unwrap_or_default()
+                        );
+                    }
                 }
             }
             Some("C2C_MESSAGE_CREATE") => {
