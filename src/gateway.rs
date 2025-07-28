@@ -333,7 +333,7 @@ impl Gateway {
             // Resume existing session
             debug!("Resuming session: {}", session_id);
             let resume = Resume {
-                token: self.token.bot_token(),
+                token: self.token.bot_token().await?,
                 session_id: session_id.clone(),
                 seq: self.last_seq.load(Ordering::Relaxed),
             };
@@ -348,7 +348,7 @@ impl Gateway {
             // New identification
             debug!("Sending identify");
             let identify = Identify {
-                token: self.token.bot_token(),
+                token: self.token.bot_token().await?,
                 intents: self.intents.bits(),
                 shard: self.shard,
                 properties: IdentifyProperties::default(),

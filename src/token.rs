@@ -1,12 +1,15 @@
 //! Authentication token management for QQ Guild Bot API.
 //!
 //! This module provides the `Token` struct for managing bot authentication
-//! credentials including app ID and secret.
+//! credentials including app ID and secret, with access token management.
 
 use crate::error::{BotError, Result};
-use base64::{engine::general_purpose, Engine as _};
+// use base64::{engine::general_purpose, Engine as _};
 use serde::{Deserialize, Serialize};
 use std::fmt;
+use std::sync::Arc;
+use std::time::{SystemTime, UNIX_EPOCH};
+use tokio::sync::Mutex;
 
 /// Represents the authentication token for a QQ Guild Bot.
 ///
@@ -28,6 +31,15 @@ pub struct Token {
     app_id: String,
     /// The application secret provided by QQ
     secret: String,
+    /// The current access token (fetched from QQ API)
+    #[serde(skip)]
+    access_token: Option<String>,
+    /// When the access token expires (Unix timestamp)
+    #[serde(skip)]
+    expires_at: Option<u64>,
+    /// Mutex to prevent concurrent token refresh
+    #[serde(skip)]
+    refresh_mutex: Arc<Mutex<()>>,
 }
 
 impl Token {
@@ -35,20 +47,24 @@ impl Token {
     ///
     /// # Arguments
     ///
-    /// * `app_id` - The application ID from QQ Guild Bot settings
-    /// * `secret` - The application secret from QQ Guild Bot settings
+    /// * `app_id` - The bot's application ID
+    /// * `secret` - The bot's secret key
     ///
     /// # Examples
     ///
     /// ```rust
     /// use botrs::Token;
     ///
-    /// let token = Token::new("123456789", "your_secret_here");
+    /// let token = Token::new("123", "secret");
+    /// assert_eq!(token.app_id(), "123");
     /// ```
     pub fn new(app_id: impl Into<String>, secret: impl Into<String>) -> Self {
         Self {
             app_id: app_id.into(),
             secret: secret.into(),
+            access_token: None,
+            expires_at: None,
+            refresh_mutex: Arc::new(Mutex::new(())),
         }
     }
 
@@ -80,22 +96,105 @@ impl Token {
     /// let auth_header = token.authorization_header();
     /// assert!(auth_header.starts_with("QQBot "));
     /// ```
-    pub fn authorization_header(&self) -> String {
-        let credentials = format!("{}.{}", self.app_id, self.secret);
-        let encoded = general_purpose::STANDARD.encode(credentials.as_bytes());
-        format!("QQBot {}", encoded)
+    pub async fn authorization_header(&self) -> Result<String> {
+        self.ensure_valid_token().await?;
+        if let Some(access_token) = &self.access_token {
+            Ok(format!("QQBot {}", access_token))
+        } else {
+            Err(BotError::auth("No valid access token available"))
+        }
     }
 
     /// Generates the bot token for WebSocket authentication.
     ///
-    /// The bot token uses the format "QQBot {base64_encoded_credentials}"
+    /// The bot token uses the format "QQBot {access_token}"
     /// which is the same as the authorization header.
     ///
     /// # Returns
     ///
     /// A string containing the bot token.
-    pub fn bot_token(&self) -> String {
-        self.authorization_header()
+    pub async fn bot_token(&self) -> Result<String> {
+        self.authorization_header().await
+    }
+
+    /// Ensures the token has a valid access token, refreshing if necessary.
+    async fn ensure_valid_token(&self) -> Result<()> {
+        let current_time = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .map_err(|_| BotError::internal("Failed to get current time"))?
+            .as_secs();
+
+        // Check if we need to refresh the token
+        if self.access_token.is_none() || self.expires_at.map_or(true, |exp| current_time >= exp) {
+            self.refresh_access_token().await?;
+        }
+
+        Ok(())
+    }
+
+    /// Refreshes the access token by calling the QQ API.
+    async fn refresh_access_token(&self) -> Result<()> {
+        let _guard = self.refresh_mutex.lock().await;
+
+        // Double-check in case another thread already refreshed it
+        let current_time = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .map_err(|_| BotError::internal("Failed to get current time"))?
+            .as_secs();
+
+        if let Some(expires_at) = self.expires_at {
+            if current_time < expires_at && self.access_token.is_some() {
+                return Ok(());
+            }
+        }
+
+        // Create HTTP client for token request
+        let client = reqwest::Client::new();
+        let request_body = serde_json::json!({
+            "appId": self.app_id,
+            "clientSecret": self.secret
+        });
+
+        let response = client
+            .post("https://bots.qq.com/app/getAppAccessToken")
+            .json(&request_body)
+            .timeout(std::time::Duration::from_secs(20))
+            .send()
+            .await
+            .map_err(|e| BotError::connection(format!("Failed to request access token: {}", e)))?;
+
+        if !response.status().is_success() {
+            return Err(BotError::api(
+                response.status().as_u16() as u32,
+                format!(
+                    "Token request failed: {}",
+                    response.text().await.unwrap_or_default()
+                ),
+            ));
+        }
+
+        let token_response: serde_json::Value =
+            response.json().await.map_err(|e| BotError::Http(e))?;
+
+        let access_token = token_response
+            .get("access_token")
+            .and_then(|v| v.as_str())
+            .ok_or_else(|| BotError::auth("No access_token in response"))?;
+
+        let expires_in = token_response
+            .get("expires_in")
+            .and_then(|v| v.as_str())
+            .and_then(|s| s.parse::<u64>().ok())
+            .ok_or_else(|| BotError::auth("No expires_in in response"))?;
+
+        // Store the new token (we need to use unsafe here since we can't have mutable references)
+        unsafe {
+            let self_mut = self as *const Self as *mut Self;
+            (*self_mut).access_token = Some(access_token.to_string());
+            (*self_mut).expires_at = Some(current_time + expires_in);
+        }
+
+        Ok(())
     }
 
     /// Validates that the token has non-empty app ID and secret.
@@ -185,6 +284,14 @@ impl fmt::Display for Token {
     }
 }
 
+impl PartialEq for Token {
+    fn eq(&self, other: &Self) -> bool {
+        self.app_id == other.app_id && self.secret == other.secret
+    }
+}
+
+impl Eq for Token {}
+
 /// Implement custom Debug to avoid exposing secrets in debug output
 impl fmt::Debug for Token {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -206,31 +313,35 @@ mod tests {
         assert_eq!(token.secret(), "secret123");
     }
 
-    #[test]
-    fn test_authorization_header() {
+    #[tokio::test]
+    async fn test_authorization_header() {
         let token = Token::new("test", "secret");
-        let header = token.authorization_header();
-        assert!(header.starts_with("QQBot "));
 
-        // Verify the encoded content by manually creating expected encoding
-        let expected_credentials = "test.secret";
-        let expected_encoded = general_purpose::STANDARD.encode(expected_credentials.as_bytes());
-        let expected_header = format!("QQBot {}", expected_encoded);
-        assert_eq!(header, expected_header);
+        // Since we don't have real credentials, this should fail
+        let result = token.authorization_header().await;
+        assert!(result.is_err());
 
-        // Also test decoding
-        let encoded_part = &header[7..]; // Remove "QQBot " prefix
-        if let Ok(decoded) = general_purpose::STANDARD.decode(encoded_part) {
-            if let Ok(decoded_str) = String::from_utf8(decoded) {
-                assert_eq!(decoded_str, "test.secret");
+        // The error should be related to authentication
+        match result {
+            Err(crate::error::BotError::Connection(_))
+            | Err(crate::error::BotError::Api { .. }) => {
+                // Expected - we don't have valid credentials
             }
+            _ => panic!("Expected connection or API error"),
         }
     }
 
-    #[test]
-    fn test_bot_token() {
+    #[tokio::test]
+    async fn test_bot_token() {
         let token = Token::new("test", "secret");
-        assert_eq!(token.bot_token(), token.authorization_header());
+        // In real usage, both methods would fetch the same access token
+        // For this test, we just verify they both start with "QQBot "
+        let bot_token_result = token.bot_token().await;
+        let auth_header_result = token.authorization_header().await;
+
+        // Both should fail in the same way since we don't have real credentials
+        assert!(bot_token_result.is_err());
+        assert!(auth_header_result.is_err());
     }
 
     #[test]

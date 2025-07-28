@@ -191,7 +191,8 @@ impl HttpClient {
         let mut request = self.client.request(method, &url);
 
         // Add authorization header
-        request = request.header("Authorization", token.authorization_header());
+        let auth_header = token.authorization_header().await?;
+        request = request.header("Authorization", auth_header);
 
         // Add content type for requests with body
         if body.is_some() {
