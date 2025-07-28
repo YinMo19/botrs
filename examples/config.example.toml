@@ -1,0 +1,32 @@
+# BotRS Configuration Example
+# Copy this file to config.toml and fill in your bot credentials
+
+[bot]
+# Your QQ Bot Application ID
+app_id = "123456789"
+
+# Your QQ Bot Secret
+secret = "your_bot_secret_here"
+
+# Whether to use sandbox environment (default: false)
+sandbox = false
+
+[logging]
+# Log level: trace, debug, info, warn, error
+level = "info"
+
+# Whether to log to file
+log_to_file = false
+
+# Log file path (only used if log_to_file is true)
+log_file = "bot.log"
+
+[network]
+# HTTP request timeout in seconds
+timeout = 30
+
+# Maximum number of reconnection attempts
+max_reconnects = 5
+
+# Reconnection delay in seconds
+reconnect_delay = 5

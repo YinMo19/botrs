@@ -2,12 +2,14 @@
 name = "botrs"
 version = "0.1.0"
 edition = "2021"
-authors = ["botrs contributors"]
+authors = ["YinMo19"]
 description = "A Rust QQ Bot framework based on QQ Guild Bot API"
 license = "MIT"
-repository = "https://github.com/your-repo/botrs"
+repository = "https://github.com/YinMo19/botrs"
 keywords = ["qq", "bot", "guild", "api", "async"]
+readme = "README.md"
 categories = ["api-bindings", "asynchronous", "network-programming"]
+documentation = "https://docs.rs/botrs"
 
 [dependencies]
 # Async runtime
@@ -41,16 +43,62 @@ async-trait = "0.1"
 
 # Optional features for examples
 clap = { version = "4.0", optional = true, features = ["derive"] }
+toml = { version = "0.8", optional = true }
 
 [dev-dependencies]
 tokio-test = "0.4"
+tempfile = "3.0"
 
 [features]
 default = []
-examples = ["clap"]
+examples = ["clap", "toml"]
 
 [[example]]
 name = "simple_bot"
+required-features = ["examples"]
+
+[[example]]
+name = "demo_at_reply"
+required-features = ["examples"]
+
+[[example]]
+name = "demo_at_reply_command"
+required-features = ["examples"]
+
+[[example]]
+name = "demo_at_reply_embed"
+required-features = ["examples"]
+
+[[example]]
+name = "demo_at_reply_markdown"
+required-features = ["examples"]
+
+[[example]]
+name = "demo_at_reply_keyboard"
+required-features = ["examples"]
+
+[[example]]
+name = "demo_group_reply_text"
+required-features = ["examples"]
+
+[[example]]
+name = "demo_c2c_reply_text"
+required-features = ["examples"]
+
+[[example]]
+name = "demo_recall"
+required-features = ["examples"]
+
+[[example]]
+name = "demo_at_reply_file_data"
+required-features = ["examples"]
+
+[[example]]
+name = "demo_dms_reply"
+required-features = ["examples"]
+
+[[example]]
+name = "demo_at_reply_reference"
 required-features = ["examples"]
 
 [lib]
