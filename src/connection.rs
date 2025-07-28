@@ -60,6 +60,7 @@ impl Session {
 }
 
 /// Connection session pool for managing multiple websocket sessions
+#[allow(unused)]
 pub struct ConnectionSession {
     /// Maximum concurrent connections
     max_async: usize,
