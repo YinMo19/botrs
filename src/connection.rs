@@ -18,6 +18,18 @@ use std::sync::Arc;
 use tokio::net::TcpStream;
 use tokio::sync::Mutex;
 use tokio::time::{sleep, Duration};
+
+// Type aliases to simplify complex types
+type ConnectFn = Box<
+    dyn Fn(
+            Session,
+        ) -> std::pin::Pin<
+            Box<dyn std::future::Future<Output = Result<(), crate::error::BotError>> + Send>,
+        > + Send
+        + Sync,
+>;
+type DispatchFn = Box<dyn Fn(&str, Value) + Send + Sync>;
+type ParserMap = HashMap<String, fn(&ConnectionState, &Value) -> Option<(&'static str, Value)>>;
 use tokio_tungstenite::{MaybeTlsStream, WebSocketStream};
 use tracing::{debug, error, info, warn};
 
@@ -65,16 +77,9 @@ pub struct ConnectionSession {
     /// Maximum concurrent connections
     max_async: usize,
     /// Connection function
-    connect_fn: Box<
-        dyn Fn(
-                Session,
-            ) -> std::pin::Pin<
-                Box<dyn std::future::Future<Output = Result<(), crate::error::BotError>> + Send>,
-            > + Send
-            + Sync,
-    >,
+    connect_fn: ConnectFn,
     /// Event dispatcher
-    dispatch_fn: Box<dyn Fn(&str, Value) + Send + Sync>,
+    dispatch_fn: DispatchFn,
     /// Session list
     sessions: Vec<Session>,
     /// Connection state
@@ -167,7 +172,7 @@ pub struct ConnectionState {
     /// API client
     api: BotApi,
     /// Event parsers
-    parsers: HashMap<String, fn(&ConnectionState, &Value) -> Option<(&'static str, Value)>>,
+    parsers: ParserMap,
 }
 
 impl ConnectionState {

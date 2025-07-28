@@ -1,6 +1,6 @@
 [package]
 name = "botrs"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 authors = ["YinMo19"]
 description = "A Rust QQ Bot framework based on QQ Guild Bot API"

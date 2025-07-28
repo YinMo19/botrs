@@ -6,6 +6,7 @@
 use crate::api::BotApi;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::str::FromStr;
 
 /// Group management event structure
 #[derive(Debug, Clone, Serialize)]
@@ -173,21 +174,6 @@ impl ManageEventType {
         }
     }
 
-    /// Parse event type from string
-    pub fn from_str(s: &str) -> Option<Self> {
-        match s {
-            "group_add_robot" => Some(Self::GroupAddRobot),
-            "group_del_robot" => Some(Self::GroupDelRobot),
-            "group_msg_reject" => Some(Self::GroupMsgReject),
-            "group_msg_receive" => Some(Self::GroupMsgReceive),
-            "friend_add" => Some(Self::FriendAdd),
-            "friend_del" => Some(Self::FriendDel),
-            "c2c_msg_reject" => Some(Self::C2CMsgReject),
-            "c2c_msg_receive" => Some(Self::C2CMsgReceive),
-            _ => None,
-        }
-    }
-
     /// Check if this is a group-related event
     pub fn is_group_event(&self) -> bool {
         matches!(
@@ -208,6 +194,24 @@ impl ManageEventType {
     }
 }
 
+impl FromStr for ManageEventType {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "group_add_robot" => Ok(Self::GroupAddRobot),
+            "group_del_robot" => Ok(Self::GroupDelRobot),
+            "group_msg_reject" => Ok(Self::GroupMsgReject),
+            "group_msg_receive" => Ok(Self::GroupMsgReceive),
+            "friend_add" => Ok(Self::FriendAdd),
+            "friend_del" => Ok(Self::FriendDel),
+            "c2c_msg_reject" => Ok(Self::C2CMsgReject),
+            "c2c_msg_receive" => Ok(Self::C2CMsgReceive),
+            _ => Err(()),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -215,14 +219,14 @@ mod tests {
     #[test]
     fn test_manage_event_type_from_str() {
         assert_eq!(
-            ManageEventType::from_str("group_add_robot"),
-            Some(ManageEventType::GroupAddRobot)
+            "group_add_robot".parse::<ManageEventType>(),
+            Ok(ManageEventType::GroupAddRobot)
         );
         assert_eq!(
-            ManageEventType::from_str("friend_add"),
-            Some(ManageEventType::FriendAdd)
+            "friend_add".parse::<ManageEventType>(),
+            Ok(ManageEventType::FriendAdd)
         );
-        assert_eq!(ManageEventType::from_str("invalid"), None);
+        assert_eq!("invalid".parse::<ManageEventType>(), Err(()));
     }
 
     #[test]

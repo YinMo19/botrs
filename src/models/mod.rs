@@ -39,7 +39,7 @@ pub trait HasId {
 
     /// Returns the object's ID as a string, or empty string if not set.
     fn id_string(&self) -> String {
-        self.id().map(|id| id.clone()).unwrap_or_default()
+        self.id().cloned().unwrap_or_default()
     }
 }
 

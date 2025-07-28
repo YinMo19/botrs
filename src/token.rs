@@ -129,7 +129,7 @@ impl Token {
             .as_secs();
 
         // Check if we need to refresh the token
-        if self.access_token.is_none() || self.expires_at.map_or(true, |exp| current_time >= exp) {
+        if self.access_token.is_none() || self.expires_at.is_none_or(|exp| current_time >= exp) {
             self.refresh_access_token().await?;
         }
 
@@ -178,7 +178,7 @@ impl Token {
         }
 
         let token_response: serde_json::Value =
-            response.json().await.map_err(|e| BotError::Http(e))?;
+            response.json().await.map_err(BotError::Http)?;
 
         let access_token = token_response
             .get("access_token")
