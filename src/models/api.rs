@@ -52,7 +52,7 @@ impl<T> ApiResponse<T> {
         if let Some(code) = self.code {
             let message = self
                 .message
-                .unwrap_or_else(|| format!("API error {}", code));
+                .unwrap_or_else(|| format!("API error {code}"));
             Err(crate::BotError::api(code, message))
         } else {
             Ok(self.data)
@@ -193,11 +193,7 @@ impl RateLimit {
     /// Returns the time until the rate limit resets (in seconds).
     pub fn reset_in(&self) -> u64 {
         let now = chrono::Utc::now().timestamp() as u64;
-        if self.reset > now {
-            self.reset - now
-        } else {
-            0
-        }
+        self.reset.saturating_sub(now)
     }
 }
 

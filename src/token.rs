@@ -103,7 +103,7 @@ impl Token {
     pub async fn authorization_header(&self) -> Result<String> {
         self.ensure_valid_token().await?;
         if let Some(access_token) = &self.access_token {
-            Ok(format!("QQBot {}", access_token))
+            Ok(format!("QQBot {access_token}"))
         } else {
             Err(BotError::auth("No valid access token available"))
         }
@@ -165,7 +165,7 @@ impl Token {
             .timeout(std::time::Duration::from_secs(20))
             .send()
             .await
-            .map_err(|e| BotError::connection(format!("Failed to request access token: {}", e)))?;
+            .map_err(|e| BotError::connection(format!("Failed to request access token: {e}")))?;
 
         if !response.status().is_success() {
             return Err(BotError::api(

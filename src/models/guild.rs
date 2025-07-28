@@ -196,7 +196,7 @@ impl GuildRole {
 
     /// Gets the role's color as a hex value.
     pub fn color_hex(&self) -> Option<String> {
-        self.color.map(|c| format!("#{:06X}", c))
+        self.color.map(|c| format!("#{c:06X}"))
     }
 
     /// Gets the number of members with this role.
@@ -273,7 +273,7 @@ impl Role {
 
     /// Gets the role's color as a hex value.
     pub fn color_hex(&self) -> Option<String> {
-        self.color.map(|c| format!("#{:06X}", c))
+        self.color.map(|c| format!("#{c:06X}"))
     }
 
     /// Gets the number of members with this role.

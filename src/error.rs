@@ -16,7 +16,7 @@ pub enum BotError {
 
     /// WebSocket connection errors
     #[error("WebSocket error: {0}")]
-    WebSocket(#[from] tokio_tungstenite::tungstenite::Error),
+    WebSocket(Box<tokio_tungstenite::tungstenite::Error>),
 
     /// JSON serialization/deserialization errors
     #[error("JSON error: {0}")]
@@ -190,7 +190,14 @@ where
     E: fmt::Display,
 {
     fn with_context(self, context: &str) -> Result<T> {
-        self.map_err(|e| BotError::internal(format!("{}: {}", context, e)))
+        self.map_err(|e| BotError::internal(format!("{context}: {e}")))
+    }
+}
+
+// Manual From implementation for boxing WebSocket error
+impl From<tokio_tungstenite::tungstenite::Error> for BotError {
+    fn from(err: tokio_tungstenite::tungstenite::Error) -> Self {
+        BotError::WebSocket(Box::new(err))
     }
 }
 

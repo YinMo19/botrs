@@ -9,13 +9,13 @@ use crate::models::gateway::*;
 use crate::token::Token;
 use futures_util::{SinkExt, StreamExt};
 
-use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
-use tokio::sync::{mpsc, Mutex};
+use tokio::sync::{Mutex, mpsc};
 use tokio::time::sleep;
 
-use tokio_tungstenite::{connect_async, tungstenite::Message, MaybeTlsStream, WebSocketStream};
+use tokio_tungstenite::{MaybeTlsStream, WebSocketStream, connect_async, tungstenite::Message};
 use tracing::{debug, info, warn};
 use url::Url;
 
@@ -179,7 +179,7 @@ impl Gateway {
         let url = Url::parse(&self.url).map_err(BotError::Url)?;
 
         // Connect to WebSocket (using standard connection like Python's simple approach)
-        let (ws_stream, _) = connect_async(&url).await.map_err(BotError::WebSocket)?;
+        let (ws_stream, _) = connect_async(&url).await?;
         debug!("[botrs] WebSocket连接建立成功");
 
         // Mark connection as alive and record connection start time
@@ -270,7 +270,7 @@ impl Gateway {
                     self.connection_alive.store(false, Ordering::Relaxed);
                     self.is_ready.store(false, Ordering::Relaxed);
                     self.stop_heartbeat_task();
-                    return Err(BotError::WebSocket(e));
+                    return Err(BotError::WebSocket(Box::new(e)));
                 }
             }
         }
@@ -393,9 +393,9 @@ impl Gateway {
                 if let Some(data) = &event.data {
                     if let Ok(hello) = serde_json::from_value::<Hello>(data.clone()) {
                         debug!(
-                        "[botrs] 收到 HELLO 事件，服务器建议心跳间隔: {}ms (我们使用固定30000ms)",
-                        hello.heartbeat_interval
-                    );
+                            "[botrs] 收到 HELLO 事件，服务器建议心跳间隔: {}ms (我们使用固定30000ms)",
+                            hello.heartbeat_interval
+                        );
                         self.heartbeat_interval = Some(hello.heartbeat_interval);
                         // Use 30000ms like Python
                         self.heartbeat_interval_ms.store(30000, Ordering::Relaxed);
@@ -512,10 +512,7 @@ impl Gateway {
 
         // Send through WebSocket
         let mut writer = write.lock().await;
-        writer
-            .send(Message::Text(payload))
-            .await
-            .map_err(BotError::WebSocket)?;
+        writer.send(Message::Text(payload)).await?;
 
         Ok(())
     }
