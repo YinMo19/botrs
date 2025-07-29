@@ -32,12 +32,7 @@ impl EventHandler for GroupReplyFileHandler {
         };
 
         // File URL - this needs to be filled with an actual uploaded resource URL
-        let file_url = ""; // 这里需要填写上传的资源Url
-
-        if file_url.is_empty() {
-            warn!("file_url is empty, please provide a valid file URL");
-            return;
-        }
+        let file_url = "https://arcaea.lowiro.com/assets/character-card_en_Hikari@2x-UqTl1zuc.png"; // 这里需要填写上传的资源Url，夹带私货
 
         // Upload media file (equivalent to message._api.post_group_file)
         let upload_media_result = ctx
@@ -121,7 +116,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Validate token
     if let Err(e) = token.validate() {
-        panic!("Invalid token: {}", e);
+        panic!("Invalid token: {e}");
     }
 
     info!("Token validated successfully");

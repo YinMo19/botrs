@@ -3,7 +3,7 @@
 //! This module provides the HTTP client for making requests to the QQ Guild Bot API,
 //! handling authentication, rate limiting, and error responses.
 
-use crate::error::{http_error_from_status, BotError, Result};
+use crate::error::{BotError, Result, http_error_from_status};
 use crate::models::api::{ApiError, RateLimit};
 use crate::token::Token;
 use reqwest::{Client, Method, Response, StatusCode};
@@ -158,6 +158,32 @@ impl HttpClient {
     {
         self.request(Method::DELETE, token, path, query, None::<&()>)
             .await
+    }
+
+    /// Makes a PATCH request to the API.
+    ///
+    /// # Arguments
+    ///
+    /// * `token` - Authentication token
+    /// * `path` - API endpoint path
+    /// * `query` - Optional query parameters
+    /// * `body` - Request body
+    ///
+    /// # Returns
+    ///
+    /// The response body as a JSON value.
+    pub async fn patch<Q, B>(
+        &self,
+        token: &Token,
+        path: &str,
+        query: Option<&Q>,
+        body: Option<&B>,
+    ) -> Result<serde_json::Value>
+    where
+        Q: Serialize + ?Sized,
+        B: Serialize + ?Sized,
+    {
+        self.request(Method::PATCH, token, path, query, body).await
     }
 
     /// Makes a generic HTTP request to the API.

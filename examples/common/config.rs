@@ -206,7 +206,7 @@ max_reconnects = 10
 reconnect_delay = 10
 "#;
 
-        let mut temp_file = NamedTempFile::new().unwrap();
+        let temp_file = NamedTempFile::new().unwrap();
         fs::write(temp_file.path(), toml_content).unwrap();
 
         let config = Config::from_file(temp_file.path()).unwrap();

@@ -32,7 +32,7 @@ impl EventHandler for ScheduleHandler {
         };
 
         // Schedule ID - can be filled in or obtained after sending "/创建日程" command
-        let _schedule_id = String::new(); // 日程ID，可以填写或者发送/创建日程 命令后获取
+        let schedule_id = String::new(); // 日程ID，可以填写或者发送/创建日程 命令后获取
 
         info!("receive message {}", content);
 
@@ -43,7 +43,7 @@ impl EventHandler for ScheduleHandler {
             .map(|info| info.username.as_str())
             .unwrap_or("Bot");
 
-        let reply_content = format!("机器人{}收到你的@消息了: {}", bot_name, content);
+        let reply_content = format!("机器人{bot_name}收到你的@消息了: {content}");
 
         // Reply to the message first
         match message.reply(&ctx.api, &ctx.token, &reply_content).await {
@@ -58,47 +58,40 @@ impl EventHandler for ScheduleHandler {
             .unwrap()
             .as_millis() as u64;
         let start_time = now + delay;
-        let _end_time = start_time + delay;
+        let end_time = start_time + delay;
 
         // Handle different schedule commands
         if content.contains("/创建日程") {
-            // TODO: Create schedule (equivalent to self.api.create_schedule)
-            // This API is not yet implemented in the Rust version
-            warn!("create_schedule API is not yet implemented");
-            /*
+            // Create schedule (equivalent to self.api.create_schedule)
             match ctx
                 .api
                 .create_schedule(
                     &ctx.token,
-                    CHANNEL_SCHEDULE_ID,
+                    _CHANNEL_SCHEDULE_ID,
                     "test",
                     &start_time.to_string(),
                     &end_time.to_string(),
-                    CHANNEL_SCHEDULE_ID,
-                    "0",
+                    _CHANNEL_SCHEDULE_ID,
+                    botrs::models::schedule::RemindType::None,
                 )
                 .await
             {
                 Ok(schedule) => {
                     info!("Successfully created schedule: {:?}", schedule);
-                    if let Some(id) = schedule.id {
-                        schedule_id = id;
-                    }
+                    // if let Some(id) = &schedule.id {
+                    //     schedule_id = id.clone();
+                    // }
                 }
                 Err(e) => {
                     warn!("Failed to create schedule: {}", e);
                 }
             }
-            */
         } else if content.contains("/查询日程") {
-            // TODO: Get schedule (equivalent to self.api.get_schedule)
-            // This API is not yet implemented in the Rust version
-            warn!("get_schedule API is not yet implemented");
-            /*
+            // Get schedule (equivalent to self.api.get_schedule)
             if !schedule_id.is_empty() {
                 match ctx
                     .api
-                    .get_schedule(&ctx.token, CHANNEL_SCHEDULE_ID, &schedule_id)
+                    .get_schedule(&ctx.token, _CHANNEL_SCHEDULE_ID, &schedule_id)
                     .await
                 {
                     Ok(schedule) => {
@@ -111,24 +104,20 @@ impl EventHandler for ScheduleHandler {
             } else {
                 warn!("No schedule_id available for query");
             }
-            */
         } else if content.contains("/更新日程") {
-            // TODO: Update schedule (equivalent to self.api.update_schedule)
-            // This API is not yet implemented in the Rust version
-            warn!("update_schedule API is not yet implemented");
-            /*
+            // Update schedule (equivalent to self.api.update_schedule)
             if !schedule_id.is_empty() {
                 match ctx
                     .api
                     .update_schedule(
                         &ctx.token,
-                        CHANNEL_SCHEDULE_ID,
+                        _CHANNEL_SCHEDULE_ID,
                         &schedule_id,
                         "update",
                         &start_time.to_string(),
                         &end_time.to_string(),
-                        CHANNEL_SCHEDULE_ID,
-                        "0",
+                        _CHANNEL_SCHEDULE_ID,
+                        botrs::models::schedule::RemindType::None,
                     )
                     .await
                 {
@@ -142,16 +131,12 @@ impl EventHandler for ScheduleHandler {
             } else {
                 warn!("No schedule_id available for update");
             }
-            */
         } else if content.contains("/删除日程") {
-            // TODO: Delete schedule (equivalent to self.api.delete_schedule)
-            // This API is not yet implemented in the Rust version
-            warn!("delete_schedule API is not yet implemented");
-            /*
+            // Delete schedule (equivalent to self.api.delete_schedule)
             if !schedule_id.is_empty() {
                 match ctx
                     .api
-                    .delete_schedule(&ctx.token, CHANNEL_SCHEDULE_ID, &schedule_id)
+                    .delete_schedule(&ctx.token, _CHANNEL_SCHEDULE_ID, &schedule_id)
                     .await
                 {
                     Ok(result) => {
@@ -164,7 +149,6 @@ impl EventHandler for ScheduleHandler {
             } else {
                 warn!("No schedule_id available for deletion");
             }
-            */
         }
     }
 
@@ -195,7 +179,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Validate token
     if let Err(e) = token.validate() {
-        panic!("Invalid token: {}", e);
+        panic!("Invalid token: {e}");
     }
 
     info!("Token validated successfully");

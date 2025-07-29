@@ -53,7 +53,7 @@ impl EventHandler for PinsMessageHandler {
             .map(|info| info.username.as_str())
             .unwrap_or("Bot");
 
-        let reply_content = format!("机器人{}收到你的@消息了: {}", bot_name, content);
+        let reply_content = format!("机器人{bot_name}收到你的@消息了: {content}");
 
         // Reply to the message first
         match message.reply(&ctx.api, &ctx.token, &reply_content).await {
@@ -126,7 +126,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Validate token
     if let Err(e) = token.validate() {
-        panic!("Invalid token: {}", e);
+        panic!("Invalid token: {e}");
     }
 
     info!("Token validated successfully");
