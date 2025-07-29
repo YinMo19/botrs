@@ -2,13 +2,18 @@
 //! interface for sending messages with fewer None parameters.
 
 use botrs::{
-    Client, EventHandler, Intents, Result, Token,
+    Client, EventHandler, Intents, Token,
     models::message::{
         C2CMessageParams, DirectMessageParams, Embed, EmbedField, GroupMessageParams,
         MarkdownPayload, MessageParams,
     },
 };
 use tracing::{info, warn};
+
+mod common;
+
+use common::{Config, init_logging};
+use std::env;
 
 /// Event handler that demonstrates the new message parameter API.
 struct NewApiDemoHandler;
@@ -285,20 +290,36 @@ impl NewApiDemoHandler {
 }
 
 #[tokio::main]
-async fn main() -> Result<()> {
-    // Initialize tracing
-    tracing_subscriber::fmt::init();
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Initialize logging
+    init_logging();
 
-    // Get token from environment variable
-    let token = Token::from_env()?;
+    info!("Starting AT reply markdown demo...");
 
-    // Create client with intents for all message types
-    let intents = Intents::new()
-        .with_guild_messages()
-        .with_guild_message_reactions()
-        .with_direct_message();
+    // Load configuration with multiple fallback options
+    let config = Config::load_with_fallback(
+        Some("examples/config.toml"),
+        env::args().nth(1), // app_id from command line
+        env::args().nth(2), // secret from command line
+    )?;
 
-    let mut client = Client::new(token, intents, NewApiDemoHandler, false)?;
+    info!("Configuration loaded successfully");
+
+    // Create token
+    let token = Token::new(config.bot.app_id, config.bot.secret);
+
+    // Validate token
+    if let Err(e) = token.validate() {
+        panic!("Invalid token: {}", e);
+    }
+
+    info!("Token validated successfully");
+
+    // Set up intents - we want to receive public guild messages (@ mentions)
+    // This is equivalent to: intents = botpy.Intents(public_guild_messages=True)
+    let intents = Intents::default().with_public_guild_messages();
+
+    let mut client = Client::new(token, intents, NewApiDemoHandler, true)?;
 
     println!("🤖 New Message API Demo Bot is starting...");
     println!("💡 Try sending '/demo text' in a channel to see the new API in action!");
