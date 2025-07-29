@@ -321,9 +321,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut client = Client::new(token, intents, NewApiDemoHandler, true)?;
 
-    println!("🤖 New Message API Demo Bot is starting...");
-    println!("💡 Try sending '/demo text' in a channel to see the new API in action!");
-    println!("📚 Use '/demo' to see all available commands");
+    info!("🤖 New Message API Demo Bot is starting...");
+    info!("💡 Try sending '/demo text' in a channel to see the new API in action!");
+    info!("📚 Use '/demo' to see all available commands");
 
     // Start the bot
     client.start().await?;

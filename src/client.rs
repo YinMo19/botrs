@@ -1009,13 +1009,14 @@ impl<H: EventHandler + 'static> Client<H> {
     ///
     /// ```rust,no_run
     /// use botrs::{Client, Token, Intents, EventHandler, Context};
+    /// use tracing::info;
     ///
     /// struct MyHandler;
     ///
     /// #[async_trait::async_trait]
     /// impl EventHandler for MyHandler {
     ///     async fn message_create(&self, ctx: Context, message: botrs::Message) {
-    ///         println!("Received message: {:?}", message.content);
+    ///         info!("Received message: {:?}", message.content);
     ///     }
     /// }
     ///
