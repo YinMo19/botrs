@@ -24,23 +24,19 @@ api.post_message(
 ```
 
 **新版 API（推荐）：**
-```rust,no_run
+```rust,ignore
 use botrs::models::message::MessageParams;
-use botrs::{BotApi, Token};
 
-# async fn example(api: &BotApi, token: &Token) -> Result<(), Box<dyn std::error::Error>> {
 let params = MessageParams::new_text("Hello! 🌍");
 api.post_message_with_params(token, "channel_id", params).await?;
-# Ok(())
-# }
 ```
 
 ### 🎯 **新 API 方法（推荐）**
 
-- [`post_message_with_params`] - 发送频道消息（使用 [`MessageParams`]）
-- [`post_group_message_with_params`] - 发送群消息（使用 [`GroupMessageParams`]）
-- [`post_c2c_message_with_params`] - 发送私聊消息（使用 [`C2CMessageParams`]）
-- [`post_dms_with_params`] - 发送私信（使用 [`DirectMessageParams`]）
+- `post_message_with_params` - 发送频道消息（使用 [`MessageParams`]）
+- `post_group_message_with_params` - 发送群消息（使用 [`GroupMessageParams`]）
+- `post_c2c_message_with_params` - 发送私聊消息（使用 [`C2CMessageParams`]）
+- `post_dms_with_params` - 发送私信（使用 [`DirectMessageParams`]）
 
 ### ⚠️ **旧版 API 方法（已弃用）**
 
@@ -145,25 +141,24 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 ## 📋 新消息 API 迁移指南
 
-### 简单文本消息
-```rust,no_run
-use botrs::models::message::MessageParams;
-use botrs::{BotApi, Token};
+> **📖 文档说明**：本 README 被包含在 `lib.rs` 中作为项目文档，所有代码示例都会参与文档测试。
+> - 完整的可运行示例使用 `no_run` 标记（会进行编译检查，但不执行）
+> - 代码片段使用 `ignore` 标记（跳过编译检查，便于阅读）
+> - 在实际使用时，请参考 [examples/](examples/) 目录中的完整示例
 
-# async fn example(api: &BotApi, token: &Token) -> Result<(), Box<dyn std::error::Error>> {
+### 简单文本消息
+```rust,ignore
+use botrs::models::message::MessageParams;
+
 // ✨ 新 API - 简洁明了
 let params = MessageParams::new_text("Hello World! 🌍");
 api.post_message_with_params(token, "channel_id", params).await?;
-# Ok(())
-# }
 ```
 
 ### 带嵌入内容的消息
-```rust,no_run
+```rust,ignore
 use botrs::models::message::{MessageParams, Embed};
-use botrs::{BotApi, Token};
 
-# async fn example(api: &BotApi, token: &Token) -> Result<(), Box<dyn std::error::Error>> {
 let embed = Embed {
     title: Some("标题".to_string()),
     description: Some("这是一个嵌入消息示例".to_string()),
@@ -177,64 +172,46 @@ let params = MessageParams {
     ..Default::default()
 };
 api.post_message_with_params(token, "channel_id", params).await?;
-# Ok(())
-# }
 ```
 
 ### 回复消息并附带文件
-```rust,no_run
+```rust,ignore
 use botrs::models::message::MessageParams;
-use botrs::{BotApi, Token};
 
-# async fn example(api: &BotApi, token: &Token) -> Result<(), Box<dyn std::error::Error>> {
 let file_data = std::fs::read("image.png")?;
 let params = MessageParams::new_text("这是你要的文件！")
     .with_file_image(&file_data)
     .with_reply("reply_to_message_id");
 api.post_message_with_params(token, "channel_id", params).await?;
-# Ok(())
-# }
 ```
 
 ### 群消息发送
-```rust,no_run
+```rust,ignore
 use botrs::models::message::GroupMessageParams;
-use botrs::{BotApi, Token};
 
-# async fn example(api: &BotApi, token: &Token) -> Result<(), Box<dyn std::error::Error>> {
 let params = GroupMessageParams::new_text("群里好！")
     .with_reply("reply_to_message_id");
 api.post_group_message_with_params(token, "group_openid", params).await?;
-# Ok(())
-# }
 ```
 
 ### 私聊消息发送
-```rust,no_run
+```rust,ignore
 use botrs::models::message::C2CMessageParams;
-use botrs::{BotApi, Token};
 
-# async fn example(api: &BotApi, token: &Token) -> Result<(), Box<dyn std::error::Error>> {
 let params = C2CMessageParams::new_text("私聊消息");
 api.post_c2c_message_with_params(token, "user_openid", params).await?;
-# Ok(())
-# }
 ```
 
 ### 私信发送
-```rust,no_run
+```rust,ignore
 use botrs::models::message::DirectMessageParams;
-use botrs::{BotApi, Token};
 
-# async fn example(api: &BotApi, token: &Token) -> Result<(), Box<dyn std::error::Error>> {
 let params = DirectMessageParams::new_text("私信内容")
     .with_reply("reply_to_message_id");
 api.post_dms_with_params(token, "guild_id", params).await?;
-# Ok(())
-# }
 ```
 
-更详细和更具体的内容可以在 https://docs.rs/botrs 阅读，另有 https://deepwiki.com/YinMo19/botrs 作为 AI 文档可以参照阅读代码结构。
+更详细和更具体的内容可以在 <https://docs.rs/botrs> 阅读，另有 <https://deepwiki.com/YinMo19/botrs> 作为 AI 文档可以参照阅读代码结构。
 
 ## 环境变量配置
 
@@ -247,13 +224,10 @@ export QQ_BOT_SECRET="your_secret"
 
 然后在代码中使用：
 
-```rust,no_run
+```rust,ignore
 use botrs::Token;
 
-# fn main() -> Result<(), Box<dyn std::error::Error>> {
 let token = Token::from_env()?;
-# Ok(())
-# }
 ```
 
 ## 事件处理
@@ -430,10 +404,9 @@ impl EventHandler for MyBot {
 
 Intent 系统允许你精确控制机器人接收的事件类型：
 
-```rust,no_run
+```rust,ignore
 use botrs::Intents;
 
-# fn main() {
 // 默认 intents（基础事件）
 let intents = Intents::default();
 
@@ -452,17 +425,15 @@ let intents = Intents::all();
 if intents.has_privileged() {
     println!("Contains privileged intents");
 }
-# }
 ```
 
 ### 特权 Intent
 
 某些 Intent 需要特殊权限，可通过 `has_privileged()` 方法检查：
 
-```rust,no_run
+```rust,ignore
 use botrs::Intents;
 
-# fn main() {
 let intents = Intents::none()
     .with_guild_members()   // 特权 intent
     .with_guild_messages(); // 特权 intent
@@ -470,7 +441,6 @@ let intents = Intents::none()
 if intents.has_privileged() {
     println!("需要申请特殊权限");
 }
-# }
 ```
 
 ## API 客户端
@@ -535,38 +505,25 @@ async fn handle_api_call(api: &BotApi, token: &Token) -> Result<()> {
 
 ### HTTP 客户端配置
 
-```rust,no_run
+```rust,ignore
 use botrs::http::HttpClient;
 
-# fn main() -> Result<(), Box<dyn std::error::Error>> {
 // 自定义超时和环境
 let http = HttpClient::new(60, true)?; // 60秒超时，沙盒环境
-# Ok(())
-# }
 ```
 
 ### 客户端配置
 
-```rust,no_run
+```rust,ignore
 use botrs::{Client, BotApi, Token, Intents, EventHandler};
 use botrs::http::HttpClient;
 
-struct MyHandler;
-#[async_trait::async_trait]
-impl EventHandler for MyHandler {}
-
-# fn main() -> Result<(), Box<dyn std::error::Error>> {
-# let token = Token::new("app_id", "secret");
-# let intents = Intents::default();
-# let handler = MyHandler;
 // 标准创建方式
 let client = Client::new(token, intents, handler, false)?;
 
 // HTTP 客户端可以通过 HttpClient 进行配置
 let http = HttpClient::new(60, true)?; // 60秒超时，沙盒环境
 let api = BotApi::new(http);
-# Ok(())
-# }
 ```
 
 ## 运行示例
@@ -677,7 +634,7 @@ BotRS 的设计灵感来自 Python 的 [botpy](https://github.com/tencent-connec
 
 ## 许可证
 
-本项目采用 MIT 许可证。详情请参阅 [LICENSE](LICENSE) 文件。
+本项目采用 MIT 许可证。详情请参阅 [LICENSE](./LICENSE) 文件。
 
 ## 贡献
 
