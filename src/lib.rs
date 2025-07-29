@@ -17,24 +17,24 @@
 //!
 //! ## Quick Start
 //!
-/// ```rust,no_run
-/// use botrs::{Client, Token, Intents, EventHandler};
-///
-/// struct MyHandler;
-///
-/// #[async_trait::async_trait]
-/// impl EventHandler for MyHandler {}
-///
-/// #[tokio::main]
-/// async fn main() -> Result<(), Box<dyn std::error::Error>> {
-///     let token = Token::new("your_app_id", "your_secret");
-///     let intents = Intents::default();
-///     let handler = MyHandler;
-///     let mut client = Client::new(token, intents, handler, false)?;
-///     client.start().await?;
-///     Ok(())
-/// }
-/// ```
+//! ```rust,no_run
+//! use botrs::{Client, Token, Intents, EventHandler};
+//!
+//! struct MyHandler;
+//!
+//! #[async_trait::async_trait]
+//! impl EventHandler for MyHandler {}
+//!
+// #[tokio::main]
+//! async fn main() -> Result<(), Box<dyn std::error::Error>> {
+//!     let token = Token::new("your_app_id", "your_secret");
+//!     let intents = Intents::default();
+//!     let handler = MyHandler;
+//!     let mut client = Client::new(token, intents, handler, false)?;
+//!     client.start().await?;
+//!     Ok(())
+//! }
+//! ```
 pub mod api;
 pub mod audio;
 pub mod client;
