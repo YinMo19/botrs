@@ -46,7 +46,7 @@ impl EventHandler for DmsReplyHandler {
             }
         };
 
-        let reply_content = format!("机器人{}收到你的私信了: {}", bot_name, content);
+        let reply_content = format!("机器人{bot_name}收到你的私信了: {content}");
 
         // Reply to the direct message using new API
         let params = botrs::models::message::DirectMessageParams {
@@ -161,7 +161,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Validate token
     if let Err(e) = token.validate() {
-        panic!("Invalid token: {}", e);
+        panic!("Invalid token: {e}");
     }
 
     info!("Token validated successfully");

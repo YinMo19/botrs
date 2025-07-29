@@ -49,7 +49,7 @@ impl EventHandler for C2CReplyHandler {
         let msg_id = message.id.as_deref();
 
         // Create reply content (equivalent to Python version)
-        let reply_content = format!("我收到了你的消息：{}", content);
+        let reply_content = format!("我收到了你的消息：{content}");
 
         // Send C2C message using new API (equivalent to message._api.post_c2c_message)
         let params = botrs::models::message::C2CMessageParams {
@@ -99,7 +99,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Validate token
     if let Err(e) = token.validate() {
-        panic!("Invalid token: {}", e);
+        panic!("Invalid token: {e}");
     }
 
     info!("Token validated successfully");

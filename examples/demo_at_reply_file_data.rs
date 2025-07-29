@@ -38,7 +38,7 @@ impl EventHandler for FileReplyHandler {
             .map(|info| info.username.as_str())
             .unwrap_or("Bot");
 
-        let reply_content = format!("机器人{}收到你的@消息了: {}", bot_name, content);
+        let reply_content = format!("机器人{bot_name}收到你的@消息了: {content}");
 
         // Get required IDs
         let channel_id = match &message.channel_id {
@@ -216,7 +216,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Validate token
     if let Err(e) = token.validate() {
-        panic!("Invalid token: {}", e);
+        panic!("Invalid token: {e}");
     }
 
     info!("Token validated successfully");

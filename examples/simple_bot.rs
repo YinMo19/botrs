@@ -55,7 +55,7 @@ impl EventHandler for SimpleHandler {
             _ => {
                 // Echo back messages that mention the bot
                 if content.contains("bot") || content.contains("机器人") {
-                    Some(format!("You mentioned me! You said: {}", content))
+                    Some(format!("You mentioned me! You said: {content}"))
                 } else {
                     None
                 }
@@ -105,7 +105,7 @@ impl EventHandler for SimpleHandler {
             _ => {
                 // Echo back messages that mention the bot
                 if content.contains("bot") || content.contains("机器人") {
-                    Some(format!("You mentioned me! You said: {}", content))
+                    Some(format!("You mentioned me! You said: {content}"))
                 } else {
                     None
                 }
@@ -151,7 +151,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Validate token
     if let Err(e) = token.validate() {
-        panic!("Invalid token: {}", e);
+        panic!("Invalid token: {e}");
     }
 
     info!("Token validated successfully");

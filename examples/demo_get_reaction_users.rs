@@ -21,26 +21,22 @@ impl EventHandler for GetReactionUsersHandler {
     }
 
     /// Called when a message is created that mentions the bot.
-    async fn message_create(&self, _ctx: Context, _message: Message) {
-        let _users: Vec<botrs::models::User> = Vec::new();
-        let _cookie = String::new();
+    async fn message_create(&self, ctx: Context, _message: Message) {
+        let mut users: Vec<botrs::reaction::ReactionUser> = Vec::new();
+        let mut cookie = String::new();
 
         // Example channel_id and message_id - these would need to be actual values
-        let _channel_id = "2568610";
-        let _message_id = "088de19cbeb883e7e97110a2e39c0138d80d48acfc879406";
-        let _reaction_type = 1; // Reaction type
-        let _emoji_id = "4"; // Emoji ID
+        let channel_id = "2568610";
+        let message_id = "088de19cbeb883e7e97110a2e39c0138d80d48acfc879406";
+        let reaction_type = botrs::models::emoji::EmojiType::System; // System emoji
+        let emoji_id = "4"; // Emoji ID
 
-        // TODO: Get reaction users (equivalent to self.api.get_reaction_users)
-        // This API is not yet implemented in the Rust version
-        warn!("get_reaction_users API is not yet implemented");
-        /*
         loop {
             // Get reaction users (equivalent to self.api.get_reaction_users)
             let cookie_param = if cookie.is_empty() {
                 None
             } else {
-                Some(&cookie)
+                Some(cookie.as_str())
             };
 
             match ctx
@@ -52,6 +48,7 @@ impl EventHandler for GetReactionUsersHandler {
                     reaction_type,
                     emoji_id,
                     cookie_param,
+                    None, // Use default limit of 20
                 )
                 .await
             {
@@ -80,11 +77,10 @@ impl EventHandler for GetReactionUsersHandler {
         // Log results (equivalent to Python print statements)
         info!("Total users found: {}", users.len());
         for user in users {
-            if let Some(username) = user.username {
+            if let Some(username) = &user.username {
                 info!("User: {}", username);
             }
         }
-        */
     }
 
     /// Called when an error occurs during event processing.
@@ -114,7 +110,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Validate token
     if let Err(e) = token.validate() {
-        panic!("Invalid token: {}", e);
+        panic!("Invalid token: {e}");
     }
 
     info!("Token validated successfully");

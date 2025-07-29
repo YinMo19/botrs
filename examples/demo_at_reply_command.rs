@@ -60,7 +60,7 @@ fn hello_command(params: &str) -> Option<String> {
     Some(if params.is_empty() {
         "Hello! 你好！".to_string()
     } else {
-        format!("Hello! 你好！参数: {}", params)
+        format!("Hello! 你好！参数: {params}")
     })
 }
 
@@ -70,7 +70,7 @@ fn good_night_command(params: &str) -> Option<String> {
     Some(if params.is_empty() {
         "Good night! 晚安！".to_string()
     } else {
-        format!("Good night! 晚安！参数: {}", params)
+        format!("Good night! 晚安！参数: {params}")
     })
 }
 
@@ -127,7 +127,7 @@ impl EventHandler for AtReplyCommandHandler {
                 .api
                 .post_message_with_params(
                     &ctx.token,
-                    &message.channel_id.as_ref().unwrap_or(&String::new()),
+                    message.channel_id.as_ref().unwrap_or(&String::new()),
                     params,
                 )
                 .await
@@ -173,7 +173,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Validate token
     if let Err(e) = token.validate() {
-        panic!("Invalid token: {}", e);
+        panic!("Invalid token: {e}");
     }
 
     info!("Token validated successfully");

@@ -43,7 +43,7 @@ impl EventHandler for GroupReplyHandler {
         let msg_id = message.id.as_deref();
 
         // Create reply content (equivalent to Python version)
-        let reply_content = format!("收到了消息：{}", content);
+        let reply_content = format!("收到了消息：{content}");
 
         // Send group message using new API (equivalent to message._api.post_group_message)
         let params = botrs::models::message::GroupMessageParams {
@@ -93,7 +93,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Validate token
     if let Err(e) = token.validate() {
-        panic!("Invalid token: {}", e);
+        panic!("Invalid token: {e}");
     }
 
     info!("Token validated successfully");

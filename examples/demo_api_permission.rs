@@ -35,7 +35,7 @@ impl EventHandler for ApiPermissionHandler {
             .map(|info| info.username.as_str())
             .unwrap_or("Bot");
 
-        let reply_content = format!("机器人{}创建日程{}", bot_name, content);
+        let reply_content = format!("机器人{bot_name}创建日程{content}");
 
         // Reply to the message first
         match message.reply(&ctx.api, &ctx.token, &reply_content).await {
@@ -63,11 +63,8 @@ impl EventHandler for ApiPermissionHandler {
 
         // Handle different permission commands
         if content.contains("/权限列表") {
-            // TODO: Get permissions list (equivalent to self.api.get_permissions)
-            // This API is not yet implemented in the Rust version
-            warn!("get_permissions API is not yet implemented");
-            /*
-            match ctx.api.get_permissions(&ctx.token, guild_id).await {
+            // Get permissions list (equivalent to self.api.get_permissions)
+            match ctx.api.get_permissions(&ctx.token, _guild_id).await {
                 Ok(apis) => {
                     for api in apis {
                         let desc = api.desc.as_deref().unwrap_or("Unknown");
@@ -79,25 +76,19 @@ impl EventHandler for ApiPermissionHandler {
                     warn!("Failed to get permissions: {}", e);
                 }
             }
-            */
         }
 
         if content.contains("/请求权限") {
-            // TODO: Create permission demand (equivalent to self.api.post_permission_demand)
-            // This API and models::permission module are not yet implemented in the Rust version
-            warn!("post_permission_demand API and permission models are not yet implemented");
-            /*
-            let demand_identity = botrs::models::permission::APIPermissionDemandIdentify {
-                path: "/guilds/{guild_id}/members/{user_id}".to_string(),
-                method: "GET".to_string(),
-            };
+            // Create permission demand (equivalent to self.api.post_permission_demand)
+            let demand_identity =
+                botrs::models::permission::APIPermissionDemandIdentify::guild_members();
 
             match ctx
                 .api
                 .post_permission_demand(
                     &ctx.token,
-                    guild_id,
-                    channel_id,
+                    _guild_id,
+                    _channel_id,
                     demand_identity,
                     "获取当前频道成员信息",
                 )
@@ -105,14 +96,13 @@ impl EventHandler for ApiPermissionHandler {
             {
                 Ok(demand) => {
                     let title = demand.title.as_deref().unwrap_or("Unknown");
-                    let desc = demand.desc.as_deref().unwrap_or("Unknown");
+                    let desc = &demand.desc;
                     info!("api title: {}, desc: {}", title, desc);
                 }
                 Err(e) => {
                     warn!("Failed to post permission demand: {}", e);
                 }
             }
-            */
         }
     }
 
@@ -143,7 +133,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Validate token
     if let Err(e) = token.validate() {
-        panic!("Invalid token: {}", e);
+        panic!("Invalid token: {e}");
     }
 
     info!("Token validated successfully");

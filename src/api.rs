@@ -116,14 +116,19 @@
 use crate::error::Result;
 use crate::http::HttpClient;
 use crate::models::{
+    announce::{Announce, AnnouncesType, RecommendChannel},
     api::{AudioAction, BotInfo, GatewayResponse, MessageResponse},
     channel::{Channel, ChannelPermissions, ChannelSubType, ChannelType},
+    emoji::EmojiType,
     guild::{Guild, GuildRole, GuildRoles, Member},
     message::{
         Ark, C2CMessageParams, DirectMessageParams, Embed, GroupMessageParams, Keyboard,
         KeyboardPayload, MarkdownPayload, Media, Message, MessageParams, Reference,
     },
+    permission::{APIPermission, APIPermissionDemand, APIPermissionDemandIdentify},
+    schedule::{RemindType, Schedule},
 };
+use crate::reaction::ReactionUsers;
 use crate::token::Token;
 use base64::Engine;
 use serde_json::{Value, json};
@@ -1630,6 +1635,401 @@ impl BotApi {
             .http
             .post(token, &path, None::<&()>, Some(&body))
             .await?;
+        Ok(response)
+    }
+
+    // Announcement APIs
+
+    /// Creates a message-type guild announcement.
+    ///
+    /// # Arguments
+    ///
+    /// * `token` - Authentication token
+    /// * `guild_id` - The guild ID where the announcement will be created
+    /// * `channel_id` - The channel ID containing the message to announce
+    /// * `message_id` - The message ID to turn into an announcement
+    ///
+    /// # Returns
+    ///
+    /// The created announcement.
+    pub async fn create_announce(
+        &self,
+        token: &Token,
+        guild_id: &str,
+        channel_id: &str,
+        message_id: &str,
+    ) -> Result<Announce> {
+        debug!(
+            "Creating announcement in guild {} for message {}",
+            guild_id, message_id
+        );
+
+        let body = json!({
+            "channel_id": channel_id,
+            "message_id": message_id
+        });
+
+        let path = format!("/guilds/{guild_id}/announces");
+        let response = self
+            .http
+            .post(token, &path, None::<&()>, Some(&body))
+            .await?;
+        Ok(serde_json::from_value(response)?)
+    }
+
+    /// Creates a recommended channel announcement.
+    ///
+    /// # Arguments
+    ///
+    /// * `token` - Authentication token
+    /// * `guild_id` - The guild ID where the announcement will be created
+    /// * `announces_type` - The type of announcement
+    /// * `recommend_channels` - List of channels to recommend
+    ///
+    /// # Returns
+    ///
+    /// The created announcement.
+    pub async fn create_recommend_announce(
+        &self,
+        token: &Token,
+        guild_id: &str,
+        announces_type: AnnouncesType,
+        recommend_channels: Vec<RecommendChannel>,
+    ) -> Result<Announce> {
+        debug!("Creating recommend announcement in guild {}", guild_id);
+
+        let body = json!({
+            "announces_type": u8::from(announces_type),
+            "recommend_channels": recommend_channels
+        });
+
+        let path = format!("/guilds/{guild_id}/announces");
+        let response = self
+            .http
+            .post(token, &path, None::<&()>, Some(&body))
+            .await?;
+        Ok(serde_json::from_value(response)?)
+    }
+
+    /// Deletes a guild announcement.
+    ///
+    /// # Arguments
+    ///
+    /// * `token` - Authentication token
+    /// * `guild_id` - The guild ID
+    /// * `message_id` - The message ID of the announcement to delete, or "all" to delete all
+    ///
+    /// # Returns
+    ///
+    /// Success indication.
+    pub async fn delete_announce(
+        &self,
+        token: &Token,
+        guild_id: &str,
+        message_id: &str,
+    ) -> Result<Value> {
+        debug!("Deleting announcement {} in guild {}", message_id, guild_id);
+
+        let path = format!("/guilds/{guild_id}/announces/{message_id}");
+        let response = self.http.delete(token, &path, None::<&()>).await?;
+        Ok(response)
+    }
+
+    // Permission APIs
+
+    /// Gets the list of API permissions for a guild.
+    ///
+    /// # Arguments
+    ///
+    /// * `token` - Authentication token
+    /// * `guild_id` - The guild ID
+    ///
+    /// # Returns
+    ///
+    /// List of API permissions.
+    pub async fn get_permissions(
+        &self,
+        token: &Token,
+        guild_id: &str,
+    ) -> Result<Vec<APIPermission>> {
+        debug!("Getting permissions for guild {}", guild_id);
+
+        let path = format!("/guilds/{guild_id}/api_permission");
+        let response = self.http.get(token, &path, None::<&()>).await?;
+
+        // The response has an extra "apis" level
+        if let Some(apis) = response.get("apis") {
+            Ok(serde_json::from_value(apis.clone())?)
+        } else {
+            Ok(vec![])
+        }
+    }
+
+    /// Creates an API permission demand request.
+    ///
+    /// # Arguments
+    ///
+    /// * `token` - Authentication token
+    /// * `guild_id` - The guild ID where permission is requested
+    /// * `channel_id` - The channel ID where the request will be sent
+    /// * `api_identify` - The API identifier for which permission is requested
+    /// * `desc` - Description explaining why the permission is needed
+    ///
+    /// # Returns
+    ///
+    /// The created permission demand.
+    pub async fn post_permission_demand(
+        &self,
+        token: &Token,
+        guild_id: &str,
+        channel_id: &str,
+        api_identify: APIPermissionDemandIdentify,
+        desc: &str,
+    ) -> Result<APIPermissionDemand> {
+        debug!("Creating permission demand in guild {}", guild_id);
+
+        let body = json!({
+            "channel_id": channel_id,
+            "api_identify": api_identify,
+            "desc": desc
+        });
+
+        let path = format!("/guilds/{guild_id}/api_permission/demand");
+        let response = self
+            .http
+            .post(token, &path, None::<&()>, Some(&body))
+            .await?;
+        Ok(serde_json::from_value(response)?)
+    }
+
+    // Reaction APIs
+
+    /// Gets the list of users who reacted with a specific emoji.
+    ///
+    /// # Arguments
+    ///
+    /// * `token` - Authentication token
+    /// * `channel_id` - The channel ID containing the message
+    /// * `message_id` - The message ID
+    /// * `emoji_type` - The type of emoji (1 = system, 2 = custom)
+    /// * `emoji_id` - The emoji ID
+    /// * `cookie` - Optional pagination cookie from previous request
+    /// * `limit` - Maximum number of users to return (1-100, default 20)
+    ///
+    /// # Returns
+    ///
+    /// List of users who reacted and pagination info.
+    pub async fn get_reaction_users(
+        &self,
+        token: &Token,
+        channel_id: &str,
+        message_id: &str,
+        emoji_type: EmojiType,
+        emoji_id: &str,
+        cookie: Option<&str>,
+        limit: Option<u32>,
+    ) -> Result<ReactionUsers> {
+        debug!(
+            "Getting reaction users for message {} with emoji {}",
+            message_id, emoji_id
+        );
+
+        let mut params = HashMap::new();
+        params.insert("limit", limit.unwrap_or(20).to_string());
+        if let Some(cookie) = cookie {
+            params.insert("cookie", cookie.to_string());
+        }
+
+        let path = format!(
+            "/channels/{channel_id}/messages/{message_id}/reactions/{emoji_type}/{emoji_id}",
+            emoji_type = u8::from(emoji_type)
+        );
+        let response = self.http.get(token, &path, Some(&params)).await?;
+        Ok(serde_json::from_value(response)?)
+    }
+
+    // Schedule APIs
+
+    /// Gets the list of schedules for a channel.
+    ///
+    /// # Arguments
+    ///
+    /// * `token` - Authentication token
+    /// * `channel_id` - The schedule channel ID
+    /// * `since` - Optional timestamp to get schedules after this time
+    ///
+    /// # Returns
+    ///
+    /// List of schedules.
+    pub async fn get_schedules(
+        &self,
+        token: &Token,
+        channel_id: &str,
+        since: Option<&str>,
+    ) -> Result<Vec<Schedule>> {
+        debug!("Getting schedules for channel {}", channel_id);
+
+        let body = if let Some(since) = since {
+            json!({ "since": since })
+        } else {
+            json!({})
+        };
+
+        let path = format!("/channels/{channel_id}/schedules");
+        let response = self
+            .http
+            .get(
+                token,
+                &path,
+                if since.is_some() { Some(&body) } else { None },
+            )
+            .await?;
+        Ok(serde_json::from_value(response)?)
+    }
+
+    /// Gets a specific schedule by ID.
+    ///
+    /// # Arguments
+    ///
+    /// * `token` - Authentication token
+    /// * `channel_id` - The schedule channel ID
+    /// * `schedule_id` - The schedule ID
+    ///
+    /// # Returns
+    ///
+    /// The schedule details.
+    pub async fn get_schedule(
+        &self,
+        token: &Token,
+        channel_id: &str,
+        schedule_id: &str,
+    ) -> Result<Schedule> {
+        debug!("Getting schedule {} in channel {}", schedule_id, channel_id);
+
+        let path = format!("/channels/{channel_id}/schedules/{schedule_id}");
+        let response = self.http.get(token, &path, None::<&()>).await?;
+        Ok(serde_json::from_value(response)?)
+    }
+
+    /// Creates a new schedule in a channel.
+    ///
+    /// # Arguments
+    ///
+    /// * `token` - Authentication token
+    /// * `channel_id` - The schedule channel ID
+    /// * `name` - Name of the schedule
+    /// * `start_timestamp` - Start time as Unix timestamp string
+    /// * `end_timestamp` - End time as Unix timestamp string
+    /// * `jump_channel_id` - Channel ID to jump to when event starts
+    /// * `remind_type` - Type of reminder to set
+    ///
+    /// # Returns
+    ///
+    /// The created schedule.
+    pub async fn create_schedule(
+        &self,
+        token: &Token,
+        channel_id: &str,
+        name: &str,
+        start_timestamp: &str,
+        end_timestamp: &str,
+        jump_channel_id: &str,
+        remind_type: RemindType,
+    ) -> Result<Schedule> {
+        debug!("Creating schedule '{}' in channel {}", name, channel_id);
+
+        let body = json!({
+            "schedule": {
+                "name": name,
+                "start_timestamp": start_timestamp,
+                "end_timestamp": end_timestamp,
+                "jump_channel_id": jump_channel_id,
+                "reminder_id": u8::from(remind_type)
+            }
+        });
+
+        let path = format!("/channels/{channel_id}/schedules");
+        let response = self
+            .http
+            .post(token, &path, None::<&()>, Some(&body))
+            .await?;
+        Ok(serde_json::from_value(response)?)
+    }
+
+    /// Updates an existing schedule.
+    ///
+    /// # Arguments
+    ///
+    /// * `token` - Authentication token
+    /// * `channel_id` - The schedule channel ID
+    /// * `schedule_id` - The schedule ID to update
+    /// * `name` - New name of the schedule
+    /// * `start_timestamp` - New start time as Unix timestamp string
+    /// * `end_timestamp` - New end time as Unix timestamp string
+    /// * `jump_channel_id` - New channel ID to jump to when event starts
+    /// * `remind_type` - New type of reminder to set
+    ///
+    /// # Returns
+    ///
+    /// The updated schedule.
+    pub async fn update_schedule(
+        &self,
+        token: &Token,
+        channel_id: &str,
+        schedule_id: &str,
+        name: &str,
+        start_timestamp: &str,
+        end_timestamp: &str,
+        jump_channel_id: &str,
+        remind_type: RemindType,
+    ) -> Result<Schedule> {
+        debug!(
+            "Updating schedule {} in channel {}",
+            schedule_id, channel_id
+        );
+
+        let body = json!({
+            "schedule": {
+                "name": name,
+                "start_timestamp": start_timestamp,
+                "end_timestamp": end_timestamp,
+                "jump_channel_id": jump_channel_id,
+                "reminder_id": u8::from(remind_type)
+            }
+        });
+
+        let path = format!("/channels/{channel_id}/schedules/{schedule_id}");
+        let response = self
+            .http
+            .patch(token, &path, None::<&()>, Some(&body))
+            .await?;
+        Ok(serde_json::from_value(response)?)
+    }
+
+    /// Deletes a schedule.
+    ///
+    /// # Arguments
+    ///
+    /// * `token` - Authentication token
+    /// * `channel_id` - The schedule channel ID
+    /// * `schedule_id` - The schedule ID to delete
+    ///
+    /// # Returns
+    ///
+    /// Success indication.
+    pub async fn delete_schedule(
+        &self,
+        token: &Token,
+        channel_id: &str,
+        schedule_id: &str,
+    ) -> Result<Value> {
+        debug!(
+            "Deleting schedule {} in channel {}",
+            schedule_id, channel_id
+        );
+
+        let path = format!("/channels/{channel_id}/schedules/{schedule_id}");
+        let response = self.http.delete(token, &path, None::<&()>).await?;
         Ok(response)
     }
 

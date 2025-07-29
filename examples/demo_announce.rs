@@ -47,7 +47,7 @@ impl EventHandler for AnnounceHandler {
         };
 
         // Send acknowledgment message first (equivalent to self.api.post_message)
-        let ack_content = format!("command received: {}", content);
+        let ack_content = format!("command received: {content}");
         let params = botrs::models::message::MessageParams {
             content: Some(ack_content),
             ..Default::default()
@@ -88,13 +88,10 @@ impl EventHandler for AnnounceHandler {
 
         // Handle different announcement commands
         if content.contains("/建公告") {
-            // TODO: Create announcement (equivalent to self.api.create_announce)
-            // This API is not yet implemented in the Rust version
-            warn!("create_announce API is not yet implemented");
-            /*
+            // Create announcement (equivalent to self.api.create_announce)
             match ctx
                 .api
-                .create_announce(&ctx.token, guild_id, channel_id, referenced_message_id)
+                .create_announce(&ctx.token, _guild_id, channel_id, _referenced_message_id)
                 .await
             {
                 Ok(result) => {
@@ -104,15 +101,11 @@ impl EventHandler for AnnounceHandler {
                     warn!("Failed to create announcement: {}", e);
                 }
             }
-            */
         } else if content.contains("/删公告") {
-            // TODO: Delete announcement (equivalent to self.api.delete_announce)
-            // This API is not yet implemented in the Rust version
-            warn!("delete_announce API is not yet implemented");
-            /*
+            // Delete announcement (equivalent to self.api.delete_announce)
             match ctx
                 .api
-                .delete_announce(&ctx.token, guild_id, referenced_message_id)
+                .delete_announce(&ctx.token, _guild_id, _referenced_message_id)
                 .await
             {
                 Ok(result) => {
@@ -122,22 +115,18 @@ impl EventHandler for AnnounceHandler {
                     warn!("Failed to delete announcement: {}", e);
                 }
             }
-            */
         } else if content.contains("/设置推荐子频道") {
-            // TODO: Create recommended channel announcement (equivalent to self.api.create_recommend_announce)
-            // This API and models::announce module are not yet implemented in the Rust version
-            warn!("create_recommend_announce API and announce models are not yet implemented");
-            /*
-            let channel_list = vec![botrs::models::announce::RecommendChannel {
-                channel_id: Some(channel_id.clone()),
-                introduce: Some("introduce".to_string()),
-            }];
+            // Create recommended channel announcement (equivalent to self.api.create_recommend_announce)
+            let channel_list = vec![botrs::models::announce::RecommendChannel::new(
+                channel_id.clone(),
+                Some("introduce".to_string()),
+            )];
 
             match ctx
                 .api
                 .create_recommend_announce(
                     &ctx.token,
-                    guild_id,
+                    _guild_id,
                     botrs::models::announce::AnnouncesType::Member,
                     channel_list,
                 )
@@ -150,7 +139,6 @@ impl EventHandler for AnnounceHandler {
                     warn!("Failed to create recommend announcement: {}", e);
                 }
             }
-            */
         }
     }
 
@@ -181,7 +169,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Validate token
     if let Err(e) = token.validate() {
-        panic!("Invalid token: {}", e);
+        panic!("Invalid token: {e}");
     }
 
     info!("Token validated successfully");

@@ -3,21 +3,29 @@
 //! This module contains all the data structures used for interacting with the QQ Guild Bot API,
 //! including messages, guilds, users, channels, and other entities.
 
+pub mod announce;
 pub mod api;
 pub mod channel;
+pub mod emoji;
 pub mod gateway;
 pub mod guild;
 pub mod message;
+pub mod permission;
 pub mod robot;
+pub mod schedule;
 pub mod user;
 
 // Re-export commonly used types
+pub use announce::*;
 pub use api::*;
 pub use channel::*;
+pub use emoji::*;
 pub use gateway::*;
 // Guild types are already exported by the specific re-exports below
 pub use message::*;
+pub use permission::*;
 pub use robot::*;
+pub use schedule::*;
 pub use user::*;
 
 // Re-export specific types for convenience
