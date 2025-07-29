@@ -6,7 +6,7 @@
 mod common;
 
 use botrs::{Client, Context, DirectMessage, EventHandler, Intents, Message, Ready, Token};
-use common::{init_logging, Config};
+use common::{Config, init_logging};
 use std::env;
 use tracing::{info, warn};
 
@@ -48,23 +48,16 @@ impl EventHandler for DmsReplyHandler {
 
         let reply_content = format!("机器人{}收到你的私信了: {}", bot_name, content);
 
-        // Reply to the direct message using post_dms API
+        // Reply to the direct message using new API
+        let params = botrs::models::message::DirectMessageParams {
+            content: Some(reply_content),
+            msg_id: message.id.clone(),
+            ..Default::default()
+        };
+
         match ctx
             .api
-            .post_dms(
-                &ctx.token,
-                guild_id,
-                Some(&reply_content),  // content
-                None,                  // embed
-                None,                  // ark
-                None,                  // message_reference
-                None,                  // image
-                None,                  // file_image
-                message.id.as_deref(), // msg_id for reply
-                None,                  // event_id
-                None,                  // markdown
-                None,                  // keyboard
-            )
+            .post_dms_with_params(&ctx.token, guild_id, params)
             .await
         {
             Ok(_) => info!("Successfully replied to direct message"),
@@ -125,22 +118,11 @@ impl EventHandler for DmsReplyHandler {
                         .unwrap_or(guild_id);
 
                     // Send a DM using the created session
+                    let params = botrs::models::message::DirectMessageParams::new_text("hello");
+
                     match ctx
                         .api
-                        .post_dms(
-                            &ctx.token,
-                            dm_guild_id,
-                            Some("hello"),         // content
-                            None,                  // embed
-                            None,                  // ark
-                            None,                  // message_reference
-                            None,                  // image
-                            None,                  // file_image
-                            message.id.as_deref(), // msg_id
-                            None,                  // event_id
-                            None,                  // markdown
-                            None,                  // keyboard
-                        )
+                        .post_dms_with_params(&ctx.token, dm_guild_id, params)
                         .await
                     {
                         Ok(_) => info!("Successfully sent DM via created session"),

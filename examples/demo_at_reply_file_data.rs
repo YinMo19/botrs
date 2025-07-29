@@ -6,7 +6,7 @@
 mod common;
 
 use botrs::{Client, Context, EventHandler, Intents, Message, Ready, Token};
-use common::{init_logging, Config};
+use common::{Config, init_logging};
 use std::env;
 use std::fs;
 use tracing::{info, warn};
@@ -50,14 +50,20 @@ impl EventHandler for FileReplyHandler {
         };
 
         // Method 1: Read file as bytes and send (equivalent to Python method 1)
-        match self.send_file_as_bytes(&ctx, channel_id, &reply_content).await {
+        match self
+            .send_file_as_bytes(&ctx, channel_id, &reply_content)
+            .await
+        {
             Ok(_) => info!("Successfully sent file as bytes"),
             Err(e) => warn!("Failed to send file as bytes: {}", e),
         }
 
         // Method 2: Send file by reading it again (equivalent to Python method 2)
         // Note: In Rust, this is similar to method 1 since we need to read the file
-        match self.send_file_direct(&ctx, channel_id, &reply_content).await {
+        match self
+            .send_file_direct(&ctx, channel_id, &reply_content)
+            .await
+        {
             Ok(_) => info!("Successfully sent file directly"),
             Err(e) => warn!("Failed to send file directly: {}", e),
         }
@@ -65,7 +71,10 @@ impl EventHandler for FileReplyHandler {
         // Method 3: Send file by path (equivalent to Python method 3)
         // Note: In the current API, we still need to read the file, but this demonstrates
         // the concept of path-based file sending
-        match self.send_file_by_path(&ctx, channel_id, &reply_content).await {
+        match self
+            .send_file_by_path(&ctx, channel_id, &reply_content)
+            .await
+        {
             Ok(_) => info!("Successfully sent file by path"),
             Err(e) => warn!("Failed to send file by path: {}", e),
         }
@@ -91,29 +100,24 @@ impl FileReplyHandler {
         let img_bytes = match fs::read(file_path) {
             Ok(bytes) => bytes,
             Err(e) => {
-                warn!("Could not read file {}: {}. Make sure the file exists.", file_path, e);
+                warn!(
+                    "Could not read file {}: {}. Make sure the file exists.",
+                    file_path, e
+                );
                 info!("Creating a simple placeholder file for demonstration...");
                 // Create a simple placeholder if file doesn't exist
-                b"This is a placeholder file for demo purposes. Replace with an actual image file.".to_vec()
+                b"This is a placeholder file for demo purposes. Replace with an actual image file."
+                    .to_vec()
             }
         };
 
         // Send message with file attachment
+        // Send file image using bytes
+        let params =
+            botrs::models::message::MessageParams::new_text(content).with_file_image(&img_bytes);
+
         ctx.api
-            .post_message(
-                &ctx.token,
-                channel_id,
-                Some(content),      // content
-                None,               // embed
-                None,               // ark
-                None,               // message_reference
-                None,               // image (URL)
-                Some(&img_bytes),   // file_image (bytes)
-                None,               // msg_id
-                None,               // event_id
-                None,               // markdown
-                None,               // keyboard
-            )
+            .post_message_with_params(&ctx.token, channel_id, params)
             .await?;
 
         Ok(())
@@ -132,28 +136,22 @@ impl FileReplyHandler {
         let img_bytes = match fs::read(file_path) {
             Ok(bytes) => bytes,
             Err(e) => {
-                warn!("Could not read file {}: {}. Using placeholder.", file_path, e);
+                warn!(
+                    "Could not read file {}: {}. Using placeholder.",
+                    file_path, e
+                );
                 // Create a simple placeholder if file doesn't exist
                 b"This is a placeholder file for demo purposes (method 2). Replace with an actual image file.".to_vec()
             }
         };
 
         // Send message with file attachment
+        // Send file image using bytes directly
+        let params =
+            botrs::models::message::MessageParams::new_text(content).with_file_image(&img_bytes);
+
         ctx.api
-            .post_message(
-                &ctx.token,
-                channel_id,
-                Some(content),      // content
-                None,               // embed
-                None,               // ark
-                None,               // message_reference
-                None,               // image (URL)
-                Some(&img_bytes),   // file_image (bytes)
-                None,               // msg_id
-                None,               // event_id
-                None,               // markdown
-                None,               // keyboard
-            )
+            .post_message_with_params(&ctx.token, channel_id, params)
             .await?;
 
         Ok(())
@@ -175,28 +173,22 @@ impl FileReplyHandler {
         let img_bytes = match fs::read(file_path) {
             Ok(bytes) => bytes,
             Err(e) => {
-                warn!("Could not read file {}: {}. Using placeholder.", file_path, e);
+                warn!(
+                    "Could not read file {}: {}. Using placeholder.",
+                    file_path, e
+                );
                 // Create a simple placeholder if file doesn't exist
                 b"This is a placeholder file for demo purposes (method 3). Replace with an actual image file.".to_vec()
             }
         };
 
         // Send message with file attachment
+        // Send file image using bytes from path
+        let params =
+            botrs::models::message::MessageParams::new_text(content).with_file_image(&img_bytes);
+
         ctx.api
-            .post_message(
-                &ctx.token,
-                channel_id,
-                Some(content),      // content
-                None,               // embed
-                None,               // ark
-                None,               // message_reference
-                None,               // image (URL)
-                Some(&img_bytes),   // file_image (bytes)
-                None,               // msg_id
-                None,               // event_id
-                None,               // markdown
-                None,               // keyboard
-            )
+            .post_message_with_params(&ctx.token, channel_id, params)
             .await?;
 
         Ok(())

@@ -6,7 +6,7 @@
 mod common;
 
 use botrs::{C2CMessage, Client, Context, EventHandler, Intents, Ready, Token};
-use common::{init_logging, Config};
+use common::{Config, init_logging};
 use std::env;
 use tracing::{info, warn};
 
@@ -51,24 +51,17 @@ impl EventHandler for C2CReplyHandler {
         // Create reply content (equivalent to Python version)
         let reply_content = format!("我收到了你的消息：{}", content);
 
-        // Send C2C message using API (equivalent to message._api.post_c2c_message)
+        // Send C2C message using new API (equivalent to message._api.post_c2c_message)
+        let params = botrs::models::message::C2CMessageParams {
+            msg_type: 0,
+            content: Some(reply_content),
+            msg_id: msg_id.map(|s| s.to_string()),
+            ..Default::default()
+        };
+
         match ctx
             .api
-            .post_c2c_message(
-                &ctx.token,
-                user_openid,
-                Some(0),              // msg_type: 0 for text message
-                Some(&reply_content), // content
-                None,                 // embed
-                None,                 // ark
-                None,                 // message_reference
-                None,                 // media
-                msg_id,               // msg_id for reply
-                None,                 // msg_seq
-                None,                 // event_id
-                None,                 // markdown
-                None,                 // keyboard
-            )
+            .post_c2c_message_with_params(&ctx.token, user_openid, params)
             .await
         {
             Ok(response) => {

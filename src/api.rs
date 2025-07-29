@@ -2,6 +2,116 @@
 //!
 //! This module provides the main API client for interacting with the QQ Guild Bot API,
 //! implementing all endpoints available in the Python SDK.
+//!
+//! # Message Sending API Refactoring (v0.2.0)
+//!
+//! ## 🚀 **Major Improvement: Parameter Struct API**
+//!
+//! We've completely refactored the message sending API to eliminate the problem of
+//! functions with many `None` parameters. The new API uses structured parameters
+//! with `..Default::default()` for a much cleaner developer experience.
+//!
+//! ### **Problem Solved**
+//!
+//! **Before (Multiple None Parameters):**
+//! ```rust,no_run
+//! # use botrs::*;
+//! # async fn example(api: &BotApi, token: &Token) -> Result<()> {
+//! api.post_message(
+//!     token, "channel_id", Some("Hello!"),
+//!     None, None, None, None, None, None, None, None, None  // 😱 Too many Nones!
+//! ).await?;
+//! # Ok(())
+//! # }
+//! ```
+//!
+//! **After (Clean Parameter Structs):**
+//! ```rust,no_run
+//! # use botrs::*;
+//! # use botrs::models::message::MessageParams;
+//! # async fn example(api: &BotApi, token: &Token) -> Result<()> {
+//! let params = MessageParams::new_text("Hello!");
+//! api.post_message_with_params(token, "channel_id", params).await?;
+//! # Ok(())
+//! # }
+//! ```
+//!
+//! ## **New API Functions (Recommended)**
+//!
+//! - [`BotApi::post_message_with_params`] - Send channel messages with [`MessageParams`]
+//! - [`BotApi::post_group_message_with_params`] - Send group messages with [`GroupMessageParams`]
+//! - [`BotApi::post_c2c_message_with_params`] - Send C2C messages with [`C2CMessageParams`]
+//! - [`BotApi::post_dms_with_params`] - Send direct messages with [`DirectMessageParams`]
+//!
+//! ## **Legacy API Functions (Deprecated)**
+//!
+//! - [`BotApi::post_message`] ⚠️ Use `post_message_with_params` instead
+//! - [`BotApi::post_group_message`] ⚠️ Use `post_group_message_with_params` instead
+//! - [`BotApi::post_c2c_message`] ⚠️ Use `post_c2c_message_with_params` instead
+//! - [`BotApi::post_dms`] ⚠️ Use `post_dms_with_params` instead
+//!
+//! ## **Key Benefits**
+//!
+//!  **Cleaner Code**: Use `..Default::default()` instead of many `None` parameters
+//!  **Better Readability**: Named fields instead of positional parameters
+//!  **Type Safety**: Structured parameters prevent parameter ordering mistakes
+//!  **Builder Patterns**: Convenient methods like `.with_reply()` and `.with_file_image()`
+//!  **Extensibility**: Easy to add new fields without breaking existing code
+//!  **Compatibility**: Based on official Python botpy API structure
+//!
+//! ## **Migration Examples**
+//!
+//! ### Simple Text Message
+//! ```rust,no_run
+//! # use botrs::*;
+//! # use botrs::models::message::MessageParams;
+//! # async fn example(api: &BotApi, token: &Token) -> Result<()> {
+//! let params = MessageParams::new_text("Hello World!");
+//! api.post_message_with_params(token, "channel_id", params).await?;
+//! # Ok(())
+//! # }
+//! ```
+//!
+//! ### Message with Embed
+//! ```rust,no_run
+//! # use botrs::*;
+//! # use botrs::models::message::{MessageParams, Embed};
+//! # async fn example(api: &BotApi, token: &Token, embed: Embed) -> Result<()> {
+//! let params = MessageParams {
+//!     content: Some("Check this out!".to_string()),
+//!     embed: Some(embed),
+//!     ..Default::default()
+//! };
+//! api.post_message_with_params(token, "channel_id", params).await?;
+//! # Ok(())
+//! # }
+//! ```
+//!
+//! ### Reply with File
+//! ```rust,no_run
+//! # use botrs::*;
+//! # use botrs::models::message::MessageParams;
+//! # async fn example(api: &BotApi, token: &Token, file_data: &[u8]) -> Result<()> {
+//! let params = MessageParams::new_text("Here's your file!")
+//!     .with_file_image(file_data)
+//!     .with_reply("message_id_to_reply_to");
+//! api.post_message_with_params(token, "channel_id", params).await?;
+//! # Ok(())
+//! # }
+//! ```
+//!
+//! ## **Backward Compatibility**
+//!
+//! All legacy functions still work but are marked as deprecated. They will be
+//! removed in version 1.0.0. Legacy functions internally call the new API
+//! to ensure identical behavior.
+//!
+//! See [`crate::models::message`] for complete migration guide and API documentation.
+//!
+//! [`MessageParams`]: crate::models::message::MessageParams
+//! [`GroupMessageParams`]: crate::models::message::GroupMessageParams
+//! [`C2CMessageParams`]: crate::models::message::C2CMessageParams
+//! [`DirectMessageParams`]: crate::models::message::DirectMessageParams
 
 use crate::error::Result;
 use crate::http::HttpClient;
@@ -9,11 +119,14 @@ use crate::models::{
     api::{AudioAction, BotInfo, GatewayResponse, MessageResponse},
     channel::{Channel, ChannelPermissions, ChannelSubType, ChannelType},
     guild::{Guild, GuildRole, GuildRoles, Member},
-    message::{Ark, Embed, Keyboard, KeyboardPayload, MarkdownPayload, Media, Message, Reference},
+    message::{
+        Ark, C2CMessageParams, DirectMessageParams, Embed, GroupMessageParams, Keyboard,
+        KeyboardPayload, MarkdownPayload, Media, Message, MessageParams, Reference,
+    },
 };
 use crate::token::Token;
 use base64::Engine;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use std::collections::HashMap;
 use tracing::debug;
 
@@ -636,7 +749,57 @@ impl BotApi {
         Ok(serde_json::from_value(response)?)
     }
 
-    /// Sends a message to a channel.
+    /// Sends a message to a channel using MessageParams.
+    ///
+    /// This is the new, recommended way to send channel messages. It uses a parameter struct
+    /// instead of many optional arguments, making the code cleaner and more maintainable.
+    ///
+    /// # Arguments
+    ///
+    /// * `token` - Authentication token
+    /// * `channel_id` - The channel ID
+    /// * `params` - Message parameters (see [`MessageParams`])
+    ///
+    /// # Returns
+    ///
+    /// The sent message response.
+    ///
+    /// # Examples
+    ///
+    /// ```rust,no_run
+    /// # use botrs::*;
+    /// # use botrs::models::message::MessageParams;
+    /// # async fn example(api: &BotApi, token: &Token) -> Result<()> {
+    /// // Simple text message
+    /// let params = MessageParams::new_text("Hello world!");
+    /// api.post_message_with_params(token, "channel_id", params).await?;
+    ///
+    /// // Message with reply
+    /// let params = MessageParams::new_text("Reply!").with_reply("message_id");
+    /// api.post_message_with_params(token, "channel_id", params).await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn post_message_with_params(
+        &self,
+        token: &Token,
+        channel_id: &str,
+        params: MessageParams,
+    ) -> Result<MessageResponse> {
+        debug!("Sending message to channel {}", channel_id);
+
+        // Handle file_image encoding if raw bytes were provided separately
+        let body = serde_json::to_value(&params)?;
+
+        let path = format!("/channels/{channel_id}/messages");
+        let response = self
+            .http
+            .post(token, &path, None::<&()>, Some(&body))
+            .await?;
+        Ok(serde_json::from_value(response)?)
+    }
+
+    /// Sends a message to a channel (legacy API for backward compatibility).
     ///
     /// # Arguments
     ///
@@ -656,6 +819,7 @@ impl BotApi {
     /// # Returns
     ///
     /// The sent message response.
+    #[deprecated(since = "0.1.0", note = "Use post_message_with_params instead")]
     pub async fn post_message(
         &self,
         token: &Token,
@@ -671,42 +835,61 @@ impl BotApi {
         markdown: Option<&MarkdownPayload>,
         keyboard: Option<&Keyboard>,
     ) -> Result<MessageResponse> {
-        debug!("Sending message to channel {}", channel_id);
+        let params = MessageParams {
+            content: content.map(|s| s.to_string()),
+            embed: embed.cloned(),
+            ark: ark.cloned(),
+            message_reference: message_reference.cloned(),
+            image: image.map(|s| s.to_string()),
+            file_image: file_image
+                .map(|data| base64::engine::general_purpose::STANDARD.encode(data)),
+            msg_id: msg_id.map(|s| s.to_string()),
+            event_id: event_id.map(|s| s.to_string()),
+            markdown: markdown.cloned(),
+            keyboard: keyboard.cloned(),
+        };
 
-        let mut body = json!({});
+        self.post_message_with_params(token, channel_id, params)
+            .await
+    }
 
-        if let Some(content) = content {
-            body["content"] = json!(content);
-        }
-        if let Some(embed) = embed {
-            body["embed"] = serde_json::to_value(embed)?;
-        }
-        if let Some(ark) = ark {
-            body["ark"] = serde_json::to_value(ark)?;
-        }
-        if let Some(reference) = message_reference {
-            body["message_reference"] = serde_json::to_value(reference)?;
-        }
-        if let Some(image) = image {
-            body["image"] = json!(image);
-        }
-        if let Some(file_data) = file_image {
-            body["file_image"] = json!(base64::engine::general_purpose::STANDARD.encode(file_data));
-        }
-        if let Some(msg_id) = msg_id {
-            body["msg_id"] = json!(msg_id);
-        }
-        if let Some(event_id) = event_id {
-            body["event_id"] = json!(event_id);
-        }
-        if let Some(markdown) = markdown {
-            body["markdown"] = serde_json::to_value(markdown)?;
-        }
-        if let Some(keyboard) = keyboard {
-            body["keyboard"] = serde_json::to_value(keyboard)?;
-        }
+    /// Sends a group message using GroupMessageParams.
+    ///
+    /// This is the new, recommended way to send group messages. It uses a parameter struct
+    /// instead of many optional arguments, making the code cleaner and more maintainable.
+    ///
+    /// # Arguments
+    ///
+    /// * `token` - Authentication token
+    /// * `group_openid` - The group OpenID
+    /// * `params` - Group message parameters (see [`GroupMessageParams`])
+    ///
+    /// # Returns
+    ///
+    /// The sent group message response.
+    ///
+    /// # Examples
+    ///
+    /// ```rust,no_run
+    /// # use botrs::*;
+    /// # use botrs::models::message::GroupMessageParams;
+    /// # async fn example(api: &BotApi, token: &Token) -> Result<()> {
+    /// let params = GroupMessageParams::new_text("Hello group!");
+    /// api.post_group_message_with_params(token, "group_openid", params).await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn post_group_message_with_params(
+        &self,
+        token: &Token,
+        group_openid: &str,
+        params: GroupMessageParams,
+    ) -> Result<MessageResponse> {
+        debug!("Sending group message to {}", group_openid);
 
-        let path = format!("/channels/{channel_id}/messages");
+        let body = serde_json::to_value(&params)?;
+
+        let path = format!("/v2/groups/{group_openid}/messages");
         let response = self
             .http
             .post(token, &path, None::<&()>, Some(&body))
@@ -714,7 +897,7 @@ impl BotApi {
         Ok(serde_json::from_value(response)?)
     }
 
-    /// Sends a group message.
+    /// Sends a group message (legacy API for backward compatibility).
     ///
     /// # Arguments
     ///
@@ -735,6 +918,7 @@ impl BotApi {
     /// # Returns
     ///
     /// The sent group message response.
+    #[deprecated(since = "0.1.0", note = "Use post_group_message_with_params instead")]
     pub async fn post_group_message(
         &self,
         token: &Token,
@@ -751,44 +935,61 @@ impl BotApi {
         markdown: Option<&MarkdownPayload>,
         keyboard: Option<&KeyboardPayload>,
     ) -> Result<MessageResponse> {
-        debug!("Sending group message to {}", group_openid);
+        let params = GroupMessageParams {
+            msg_type: msg_type.unwrap_or(0),
+            content: content.map(|s| s.to_string()),
+            embed: embed.cloned(),
+            ark: ark.cloned(),
+            message_reference: message_reference.cloned(),
+            media: media.cloned(),
+            msg_id: msg_id.map(|s| s.to_string()),
+            msg_seq,
+            event_id: event_id.map(|s| s.to_string()),
+            markdown: markdown.cloned(),
+            keyboard: keyboard.cloned(),
+        };
 
-        let mut body = json!({
-            "msg_type": msg_type.unwrap_or(0)
-        });
+        self.post_group_message_with_params(token, group_openid, params)
+            .await
+    }
 
-        if let Some(content) = content {
-            body["content"] = json!(content);
-        }
-        if let Some(embed) = embed {
-            body["embed"] = serde_json::to_value(embed)?;
-        }
-        if let Some(ark) = ark {
-            body["ark"] = serde_json::to_value(ark)?;
-        }
-        if let Some(reference) = message_reference {
-            body["message_reference"] = serde_json::to_value(reference)?;
-        }
-        if let Some(media) = media {
-            body["media"] = serde_json::to_value(media)?;
-        }
-        if let Some(msg_id) = msg_id {
-            body["msg_id"] = json!(msg_id);
-        }
-        if let Some(msg_seq) = msg_seq {
-            body["msg_seq"] = json!(msg_seq);
-        }
-        if let Some(event_id) = event_id {
-            body["event_id"] = json!(event_id);
-        }
-        if let Some(markdown) = markdown {
-            body["markdown"] = serde_json::to_value(markdown)?;
-        }
-        if let Some(keyboard) = keyboard {
-            body["keyboard"] = serde_json::to_value(keyboard)?;
-        }
+    /// Sends a C2C (client-to-client) message using C2CMessageParams.
+    ///
+    /// This is the new, recommended way to send C2C messages. It uses a parameter struct
+    /// instead of many optional arguments, making the code cleaner and more maintainable.
+    ///
+    /// # Arguments
+    ///
+    /// * `token` - Authentication token
+    /// * `openid` - The user's OpenID
+    /// * `params` - C2C message parameters (see [`C2CMessageParams`])
+    ///
+    /// # Returns
+    ///
+    /// The sent C2C message response.
+    ///
+    /// # Examples
+    ///
+    /// ```rust,no_run
+    /// # use botrs::*;
+    /// # use botrs::models::message::C2CMessageParams;
+    /// # async fn example(api: &BotApi, token: &Token) -> Result<()> {
+    /// let params = C2CMessageParams::new_text("Hello user!");
+    /// api.post_c2c_message_with_params(token, "user_openid", params).await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn post_c2c_message_with_params(
+        &self,
+        token: &Token,
+        openid: &str,
+        params: C2CMessageParams,
+    ) -> Result<MessageResponse> {
+        debug!("Sending C2C message to {}", openid);
 
-        let path = format!("/v2/groups/{group_openid}/messages");
+        let body = serde_json::to_value(&params)?;
+
+        let path = format!("/v2/users/{openid}/messages");
         let response = self
             .http
             .post(token, &path, None::<&()>, Some(&body))
@@ -796,7 +997,7 @@ impl BotApi {
         Ok(serde_json::from_value(response)?)
     }
 
-    /// Sends a C2C (client-to-client) message.
+    /// Sends a C2C (client-to-client) message (legacy API for backward compatibility).
     ///
     /// # Arguments
     ///
@@ -817,6 +1018,7 @@ impl BotApi {
     /// # Returns
     ///
     /// The sent C2C message response.
+    #[deprecated(since = "0.1.0", note = "Use post_c2c_message_with_params instead")]
     pub async fn post_c2c_message(
         &self,
         token: &Token,
@@ -833,44 +1035,61 @@ impl BotApi {
         markdown: Option<&MarkdownPayload>,
         keyboard: Option<&KeyboardPayload>,
     ) -> Result<MessageResponse> {
-        debug!("Sending C2C message to {}", openid);
+        let params = C2CMessageParams {
+            msg_type: msg_type.unwrap_or(0),
+            content: content.map(|s| s.to_string()),
+            embed: embed.cloned(),
+            ark: ark.cloned(),
+            message_reference: message_reference.cloned(),
+            media: media.cloned(),
+            msg_id: msg_id.map(|s| s.to_string()),
+            msg_seq,
+            event_id: event_id.map(|s| s.to_string()),
+            markdown: markdown.cloned(),
+            keyboard: keyboard.cloned(),
+        };
 
-        let mut body = json!({
-            "msg_type": msg_type.unwrap_or(0)
-        });
+        self.post_c2c_message_with_params(token, openid, params)
+            .await
+    }
 
-        if let Some(content) = content {
-            body["content"] = json!(content);
-        }
-        if let Some(embed) = embed {
-            body["embed"] = serde_json::to_value(embed)?;
-        }
-        if let Some(ark) = ark {
-            body["ark"] = serde_json::to_value(ark)?;
-        }
-        if let Some(reference) = message_reference {
-            body["message_reference"] = serde_json::to_value(reference)?;
-        }
-        if let Some(media) = media {
-            body["media"] = serde_json::to_value(media)?;
-        }
-        if let Some(msg_id) = msg_id {
-            body["msg_id"] = json!(msg_id);
-        }
-        if let Some(msg_seq) = msg_seq {
-            body["msg_seq"] = json!(msg_seq);
-        }
-        if let Some(event_id) = event_id {
-            body["event_id"] = json!(event_id);
-        }
-        if let Some(markdown) = markdown {
-            body["markdown"] = serde_json::to_value(markdown)?;
-        }
-        if let Some(keyboard) = keyboard {
-            body["keyboard"] = serde_json::to_value(keyboard)?;
-        }
+    /// Sends a direct message using DirectMessageParams.
+    ///
+    /// This is the new, recommended way to send direct messages. It uses a parameter struct
+    /// instead of many optional arguments, making the code cleaner and more maintainable.
+    ///
+    /// # Arguments
+    ///
+    /// * `token` - Authentication token
+    /// * `guild_id` - The DM session guild ID
+    /// * `params` - Direct message parameters (see [`DirectMessageParams`])
+    ///
+    /// # Returns
+    ///
+    /// The sent direct message response.
+    ///
+    /// # Examples
+    ///
+    /// ```rust,no_run
+    /// # use botrs::*;
+    /// # use botrs::models::message::DirectMessageParams;
+    /// # async fn example(api: &BotApi, token: &Token) -> Result<()> {
+    /// let params = DirectMessageParams::new_text("Hello DM!");
+    /// api.post_dms_with_params(token, "guild_id", params).await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn post_dms_with_params(
+        &self,
+        token: &Token,
+        guild_id: &str,
+        params: DirectMessageParams,
+    ) -> Result<MessageResponse> {
+        debug!("Sending direct message to guild session {}", guild_id);
 
-        let path = format!("/v2/users/{openid}/messages");
+        let body = serde_json::to_value(&params)?;
+
+        let path = format!("/dms/{guild_id}/messages");
         let response = self
             .http
             .post(token, &path, None::<&()>, Some(&body))
@@ -878,7 +1097,7 @@ impl BotApi {
         Ok(serde_json::from_value(response)?)
     }
 
-    /// Sends a direct message.
+    /// Sends a direct message (legacy API for backward compatibility).
     ///
     /// # Arguments
     ///
@@ -898,6 +1117,7 @@ impl BotApi {
     /// # Returns
     ///
     /// The sent direct message response.
+    #[deprecated(since = "0.1.0", note = "Use post_dms_with_params instead")]
     pub async fn post_dms(
         &self,
         token: &Token,
@@ -913,47 +1133,21 @@ impl BotApi {
         markdown: Option<&MarkdownPayload>,
         keyboard: Option<&Keyboard>,
     ) -> Result<MessageResponse> {
-        debug!("Sending direct message to guild session {}", guild_id);
+        let params = DirectMessageParams {
+            content: content.map(|s| s.to_string()),
+            embed: embed.cloned(),
+            ark: ark.cloned(),
+            message_reference: message_reference.cloned(),
+            image: image.map(|s| s.to_string()),
+            file_image: file_image
+                .map(|data| base64::engine::general_purpose::STANDARD.encode(data)),
+            msg_id: msg_id.map(|s| s.to_string()),
+            event_id: event_id.map(|s| s.to_string()),
+            markdown: markdown.cloned(),
+            keyboard: keyboard.cloned(),
+        };
 
-        let mut body = json!({});
-
-        if let Some(content) = content {
-            body["content"] = json!(content);
-        }
-        if let Some(embed) = embed {
-            body["embed"] = serde_json::to_value(embed)?;
-        }
-        if let Some(ark) = ark {
-            body["ark"] = serde_json::to_value(ark)?;
-        }
-        if let Some(reference) = message_reference {
-            body["message_reference"] = serde_json::to_value(reference)?;
-        }
-        if let Some(image) = image {
-            body["image"] = json!(image);
-        }
-        if let Some(file_data) = file_image {
-            body["file_image"] = json!(base64::engine::general_purpose::STANDARD.encode(file_data));
-        }
-        if let Some(msg_id) = msg_id {
-            body["msg_id"] = json!(msg_id);
-        }
-        if let Some(event_id) = event_id {
-            body["event_id"] = json!(event_id);
-        }
-        if let Some(markdown) = markdown {
-            body["markdown"] = serde_json::to_value(markdown)?;
-        }
-        if let Some(keyboard) = keyboard {
-            body["keyboard"] = serde_json::to_value(keyboard)?;
-        }
-
-        let path = format!("/dms/{guild_id}/messages");
-        let response = self
-            .http
-            .post(token, &path, None::<&()>, Some(&body))
-            .await?;
-        Ok(serde_json::from_value(response)?)
+        self.post_dms_with_params(token, guild_id, params).await
     }
 
     /// Creates a direct message session.

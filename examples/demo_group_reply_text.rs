@@ -6,7 +6,7 @@
 mod common;
 
 use botrs::{Client, Context, EventHandler, GroupMessage, Intents, Ready, Token};
-use common::{init_logging, Config};
+use common::{Config, init_logging};
 use std::env;
 use tracing::{info, warn};
 
@@ -45,24 +45,17 @@ impl EventHandler for GroupReplyHandler {
         // Create reply content (equivalent to Python version)
         let reply_content = format!("收到了消息：{}", content);
 
-        // Send group message using API (equivalent to message._api.post_group_message)
+        // Send group message using new API (equivalent to message._api.post_group_message)
+        let params = botrs::models::message::GroupMessageParams {
+            msg_type: 0,
+            content: Some(reply_content),
+            msg_id: msg_id.map(|s| s.to_string()),
+            ..Default::default()
+        };
+
         match ctx
             .api
-            .post_group_message(
-                &ctx.token,
-                group_openid,
-                Some(0),              // msg_type: 0 for text message
-                Some(&reply_content), // content
-                None,                 // embed
-                None,                 // ark
-                None,                 // message_reference
-                None,                 // media
-                msg_id,               // msg_id for reply
-                None,                 // msg_seq
-                None,                 // event_id
-                None,                 // markdown
-                None,                 // keyboard
-            )
+            .post_group_message_with_params(&ctx.token, group_openid, params)
             .await
         {
             Ok(response) => {

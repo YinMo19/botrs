@@ -118,21 +118,9 @@ impl Context {
     ///
     /// The sent message response.
     pub async fn send_message(&self, channel_id: &str, content: &str) -> Result<MessageResponse> {
+        let params = crate::models::message::MessageParams::new_text(content);
         self.api
-            .post_message(
-                &self.token,
-                channel_id,
-                Some(content),
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-            )
+            .post_message_with_params(&self.token, channel_id, params)
             .await
     }
 
@@ -153,21 +141,13 @@ impl Context {
         content: Option<&str>,
         embed: &Embed,
     ) -> Result<MessageResponse> {
+        let params = crate::models::message::MessageParams {
+            content: content.map(|s| s.to_string()),
+            embed: Some(embed.clone()),
+            ..Default::default()
+        };
         self.api
-            .post_message(
-                &self.token,
-                channel_id,
-                content,
-                Some(embed),
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-            )
+            .post_message_with_params(&self.token, channel_id, params)
             .await
     }
 
@@ -193,21 +173,13 @@ impl Context {
             ignore_get_message_error: Some(true),
         };
 
+        let params = crate::models::message::MessageParams {
+            content: Some(content.to_string()),
+            message_reference: Some(reference),
+            ..Default::default()
+        };
         self.api
-            .post_message(
-                &self.token,
-                channel_id,
-                Some(content),
-                None,
-                None,
-                Some(&reference),
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-            )
+            .post_message_with_params(&self.token, channel_id, params)
             .await
     }
 
@@ -226,22 +198,9 @@ impl Context {
         group_openid: &str,
         content: &str,
     ) -> Result<MessageResponse> {
+        let params = crate::models::message::GroupMessageParams::new_text(content);
         self.api
-            .post_group_message(
-                &self.token,
-                group_openid,
-                Some(0), // Text message type
-                Some(content),
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-            )
+            .post_group_message_with_params(&self.token, group_openid, params)
             .await
     }
 
@@ -256,22 +215,9 @@ impl Context {
     ///
     /// The sent C2C message response.
     pub async fn send_c2c_message(&self, openid: &str, content: &str) -> Result<MessageResponse> {
+        let params = crate::models::message::C2CMessageParams::new_text(content);
         self.api
-            .post_c2c_message(
-                &self.token,
-                openid,
-                Some(0), // Text message type
-                Some(content),
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-            )
+            .post_c2c_message_with_params(&self.token, openid, params)
             .await
     }
 

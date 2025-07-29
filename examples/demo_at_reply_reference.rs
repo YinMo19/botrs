@@ -6,9 +6,9 @@
 mod common;
 
 use botrs::{
-    models::message::Reference, Client, Context, EventHandler, Intents, Message, Ready, Token,
+    Client, Context, EventHandler, Intents, Message, Ready, Token, models::message::Reference,
 };
-use common::{init_logging, Config};
+use common::{Config, init_logging};
 use std::env;
 use tracing::{info, warn};
 
@@ -55,23 +55,16 @@ impl EventHandler for ReferenceReplyHandler {
             ignore_get_message_error: None,
         };
 
-        // Send message with reference using API (equivalent to Python api.post_message)
+        // Send message with reference using new API (equivalent to Python api.post_message)
+        let params = botrs::models::message::MessageParams {
+            content: Some("<emoji:4>这是一条引用消息".to_string()),
+            message_reference: Some(message_reference),
+            ..Default::default()
+        };
+
         match ctx
             .api
-            .post_message(
-                &ctx.token,
-                channel_id,
-                Some("<emoji:4>这是一条引用消息"), // content with emoji
-                None,                              // embed
-                None,                              // ark
-                Some(&message_reference),          // message_reference
-                None,                              // image
-                None,                              // file_image
-                Some(message_id),                  // msg_id
-                None,                              // event_id
-                None,                              // markdown
-                None,                              // keyboard
-            )
+            .post_message_with_params(&ctx.token, channel_id, params)
             .await
         {
             Ok(_) => info!("Successfully sent message with reference"),
