@@ -1,6 +1,6 @@
 [package]
 name = "botrs"
-version = "0.2.1"
+version = "0.2.2"
 edition = "2024"
 authors = ["YinMo19"]
 description = "A Rust QQ Bot framework based on QQ Guild Bot API"
@@ -103,6 +103,58 @@ required-features = ["examples"]
 
 [[example]]
 name = "demo_new_message_api"
+required-features = ["examples"]
+
+[[example]]
+name = "demo_announce"
+required-features = ["examples"]
+
+[[example]]
+name = "demo_api_permission"
+required-features = ["examples"]
+
+[[example]]
+name = "demo_at_reply_ark"
+required-features = ["examples"]
+
+[[example]]
+name = "demo_audio_or_live_channel_member"
+required-features = ["examples"]
+
+[[example]]
+name = "demo_c2c_manage_event"
+required-features = ["examples"]
+
+[[example]]
+name = "demo_c2c_reply_file"
+required-features = ["examples"]
+
+[[example]]
+name = "demo_get_reaction_users"
+required-features = ["examples"]
+
+[[example]]
+name = "demo_group_manage_event"
+required-features = ["examples"]
+
+[[example]]
+name = "demo_group_reply_file"
+required-features = ["examples"]
+
+[[example]]
+name = "demo_guild_member_event"
+required-features = ["examples"]
+
+[[example]]
+name = "demo_open_forum_event"
+required-features = ["examples"]
+
+[[example]]
+name = "demo_pins_message"
+required-features = ["examples"]
+
+[[example]]
+name = "demo_schedule"
 required-features = ["examples"]
 
 [lib]
