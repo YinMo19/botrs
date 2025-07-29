@@ -4,10 +4,13 @@
 //! for bot applications, handling connections, events, and API interactions.
 
 use crate::api::BotApi;
+use crate::audio::PublicAudio;
 use crate::error::{BotError, Result};
+use crate::forum::OpenThread;
 use crate::gateway::Gateway;
 use crate::http::HttpClient;
 use crate::intents::Intents;
+use crate::manage::{C2CManageEvent, GroupManageEvent};
 use crate::models::channel::{ChannelSubType, ChannelType};
 use crate::models::gateway::GatewayEvent;
 use crate::models::guild::{GuildRole, GuildRoles, Member as GuildMember};
@@ -70,6 +73,57 @@ pub trait EventHandler: Send + Sync {
 
     /// Called when a message audit is rejected.
     async fn message_audit_reject(&self, _ctx: Context, _audit: MessageAudit) {}
+
+    /// Called when a friend is added.
+    async fn friend_add(&self, _ctx: Context, _event: C2CManageEvent) {}
+
+    /// Called when a friend is deleted.
+    async fn friend_del(&self, _ctx: Context, _event: C2CManageEvent) {}
+
+    /// Called when C2C message is rejected.
+    async fn c2c_msg_reject(&self, _ctx: Context, _event: C2CManageEvent) {}
+
+    /// Called when C2C message is received.
+    async fn c2c_msg_receive(&self, _ctx: Context, _event: C2CManageEvent) {}
+
+    /// Called when robot is added to group.
+    async fn group_add_robot(&self, _ctx: Context, _event: GroupManageEvent) {}
+
+    /// Called when robot is deleted from group.
+    async fn group_del_robot(&self, _ctx: Context, _event: GroupManageEvent) {}
+
+    /// Called when group message is rejected.
+    async fn group_msg_reject(&self, _ctx: Context, _event: GroupManageEvent) {}
+
+    /// Called when group message is received.
+    async fn group_msg_receive(&self, _ctx: Context, _event: GroupManageEvent) {}
+
+    /// Called when a user enters an audio or live channel.
+    async fn audio_or_live_channel_member_enter(&self, _ctx: Context, _audio: PublicAudio) {}
+
+    /// Called when a user exits an audio or live channel.
+    async fn audio_or_live_channel_member_exit(&self, _ctx: Context, _audio: PublicAudio) {}
+
+    /// Called when an open forum thread is created.
+    async fn open_forum_thread_create(&self, _ctx: Context, _thread: OpenThread) {}
+
+    /// Called when an open forum thread is updated.
+    async fn open_forum_thread_update(&self, _ctx: Context, _thread: OpenThread) {}
+
+    /// Called when an open forum thread is deleted.
+    async fn open_forum_thread_delete(&self, _ctx: Context, _thread: OpenThread) {}
+
+    /// Called when an open forum post is created.
+    async fn open_forum_post_create(&self, _ctx: Context, _thread: OpenThread) {}
+
+    /// Called when an open forum post is deleted.
+    async fn open_forum_post_delete(&self, _ctx: Context, _thread: OpenThread) {}
+
+    /// Called when an open forum reply is created.
+    async fn open_forum_reply_create(&self, _ctx: Context, _thread: OpenThread) {}
+
+    /// Called when an open forum reply is deleted.
+    async fn open_forum_reply_delete(&self, _ctx: Context, _thread: OpenThread) {}
 
     /// Called for any unhandled events.
     async fn unknown_event(&self, _ctx: Context, _event: GatewayEvent) {}
@@ -1252,6 +1306,196 @@ impl<H: EventHandler + 'static> Client<H> {
                     if let Ok(audit) = serde_json::from_value::<MessageAudit>(data) {
                         self.handler.message_audit_reject(ctx, audit).await;
                     }
+                }
+            }
+            Some("friend_add") => {
+                if let Some(data) = event.data {
+                    let event_id = data
+                        .get("id")
+                        .and_then(|v| v.as_str())
+                        .map(|s| s.to_string());
+                    let mut data_map = std::collections::HashMap::new();
+                    if let serde_json::Value::Object(obj) = &data {
+                        for (k, v) in obj {
+                            data_map.insert(k.clone(), v.clone());
+                        }
+                    }
+                    let event = C2CManageEvent::new(ctx.api.as_ref().clone(), event_id, &data_map);
+                    self.handler.friend_add(ctx, event).await;
+                }
+            }
+            Some("friend_del") => {
+                if let Some(data) = event.data {
+                    let event_id = data
+                        .get("id")
+                        .and_then(|v| v.as_str())
+                        .map(|s| s.to_string());
+                    let mut data_map = std::collections::HashMap::new();
+                    if let serde_json::Value::Object(obj) = &data {
+                        for (k, v) in obj {
+                            data_map.insert(k.clone(), v.clone());
+                        }
+                    }
+                    let event = C2CManageEvent::new(ctx.api.as_ref().clone(), event_id, &data_map);
+                    self.handler.friend_del(ctx, event).await;
+                }
+            }
+            Some("c2c_msg_reject") => {
+                if let Some(data) = event.data {
+                    let event_id = data
+                        .get("id")
+                        .and_then(|v| v.as_str())
+                        .map(|s| s.to_string());
+                    let mut data_map = std::collections::HashMap::new();
+                    if let serde_json::Value::Object(obj) = &data {
+                        for (k, v) in obj {
+                            data_map.insert(k.clone(), v.clone());
+                        }
+                    }
+                    let event = C2CManageEvent::new(ctx.api.as_ref().clone(), event_id, &data_map);
+                    self.handler.c2c_msg_reject(ctx, event).await;
+                }
+            }
+            Some("c2c_msg_receive") => {
+                if let Some(data) = event.data {
+                    let event_id = data
+                        .get("id")
+                        .and_then(|v| v.as_str())
+                        .map(|s| s.to_string());
+                    let mut data_map = std::collections::HashMap::new();
+                    if let serde_json::Value::Object(obj) = &data {
+                        for (k, v) in obj {
+                            data_map.insert(k.clone(), v.clone());
+                        }
+                    }
+                    let event = C2CManageEvent::new(ctx.api.as_ref().clone(), event_id, &data_map);
+                    self.handler.c2c_msg_receive(ctx, event).await;
+                }
+            }
+            Some("group_add_robot") => {
+                if let Some(data) = event.data {
+                    let event_id = data
+                        .get("id")
+                        .and_then(|v| v.as_str())
+                        .map(|s| s.to_string());
+                    let mut data_map = std::collections::HashMap::new();
+                    if let serde_json::Value::Object(obj) = &data {
+                        for (k, v) in obj {
+                            data_map.insert(k.clone(), v.clone());
+                        }
+                    }
+                    let event =
+                        GroupManageEvent::new(ctx.api.as_ref().clone(), event_id, &data_map);
+                    self.handler.group_add_robot(ctx, event).await;
+                }
+            }
+            Some("group_del_robot") => {
+                if let Some(data) = event.data {
+                    let event_id = data
+                        .get("id")
+                        .and_then(|v| v.as_str())
+                        .map(|s| s.to_string());
+                    let mut data_map = std::collections::HashMap::new();
+                    if let serde_json::Value::Object(obj) = &data {
+                        for (k, v) in obj {
+                            data_map.insert(k.clone(), v.clone());
+                        }
+                    }
+                    let event =
+                        GroupManageEvent::new(ctx.api.as_ref().clone(), event_id, &data_map);
+                    self.handler.group_del_robot(ctx, event).await;
+                }
+            }
+            Some("group_msg_reject") => {
+                if let Some(data) = event.data {
+                    let event_id = data
+                        .get("id")
+                        .and_then(|v| v.as_str())
+                        .map(|s| s.to_string());
+                    let mut data_map = std::collections::HashMap::new();
+                    if let serde_json::Value::Object(obj) = &data {
+                        for (k, v) in obj {
+                            data_map.insert(k.clone(), v.clone());
+                        }
+                    }
+                    let event =
+                        GroupManageEvent::new(ctx.api.as_ref().clone(), event_id, &data_map);
+                    self.handler.group_msg_reject(ctx, event).await;
+                }
+            }
+            Some("group_msg_receive") => {
+                if let Some(data) = event.data {
+                    let event_id = data
+                        .get("id")
+                        .and_then(|v| v.as_str())
+                        .map(|s| s.to_string());
+                    let mut data_map = std::collections::HashMap::new();
+                    if let serde_json::Value::Object(obj) = &data {
+                        for (k, v) in obj {
+                            data_map.insert(k.clone(), v.clone());
+                        }
+                    }
+                    let event =
+                        GroupManageEvent::new(ctx.api.as_ref().clone(), event_id, &data_map);
+                    self.handler.group_msg_receive(ctx, event).await;
+                }
+            }
+            Some("audio_or_live_channel_member_enter") => {
+                if let Some(data) = event.data {
+                    let audio = PublicAudio::new(ctx.api.as_ref().clone(), data);
+                    self.handler
+                        .audio_or_live_channel_member_enter(ctx, audio)
+                        .await;
+                }
+            }
+            Some("audio_or_live_channel_member_exit") => {
+                if let Some(data) = event.data {
+                    let audio = PublicAudio::new(ctx.api.as_ref().clone(), data);
+                    self.handler
+                        .audio_or_live_channel_member_exit(ctx, audio)
+                        .await;
+                }
+            }
+            Some("open_forum_thread_create") => {
+                if let Some(data) = event.data {
+                    let thread = OpenThread::new(ctx.api.as_ref().clone(), &data);
+                    self.handler.open_forum_thread_create(ctx, thread).await;
+                }
+            }
+            Some("open_forum_thread_update") => {
+                if let Some(data) = event.data {
+                    let thread = OpenThread::new(ctx.api.as_ref().clone(), &data);
+                    self.handler.open_forum_thread_update(ctx, thread).await;
+                }
+            }
+            Some("open_forum_thread_delete") => {
+                if let Some(data) = event.data {
+                    let thread = OpenThread::new(ctx.api.as_ref().clone(), &data);
+                    self.handler.open_forum_thread_delete(ctx, thread).await;
+                }
+            }
+            Some("open_forum_post_create") => {
+                if let Some(data) = event.data {
+                    let thread = OpenThread::new(ctx.api.as_ref().clone(), &data);
+                    self.handler.open_forum_post_create(ctx, thread).await;
+                }
+            }
+            Some("open_forum_post_delete") => {
+                if let Some(data) = event.data {
+                    let thread = OpenThread::new(ctx.api.as_ref().clone(), &data);
+                    self.handler.open_forum_post_delete(ctx, thread).await;
+                }
+            }
+            Some("open_forum_reply_create") => {
+                if let Some(data) = event.data {
+                    let thread = OpenThread::new(ctx.api.as_ref().clone(), &data);
+                    self.handler.open_forum_reply_create(ctx, thread).await;
+                }
+            }
+            Some("open_forum_reply_delete") => {
+                if let Some(data) = event.data {
+                    let thread = OpenThread::new(ctx.api.as_ref().clone(), &data);
+                    self.handler.open_forum_reply_delete(ctx, thread).await;
                 }
             }
             _ => {

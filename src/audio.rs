@@ -87,8 +87,11 @@ impl Audio {
 
 impl std::fmt::Display for Audio {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Audio {{ channel_id: {:?}, guild_id: {:?}, audio_url: {:?}, text: {:?}, event_id: {:?} }}",
-               self.channel_id, self.guild_id, self.audio_url, self.text, self.event_id)
+        write!(
+            f,
+            "Audio {{ channel_id: {:?}, guild_id: {:?}, audio_url: {:?}, text: {:?}, event_id: {:?} }}",
+            self.channel_id, self.guild_id, self.audio_url, self.text, self.event_id
+        )
     }
 }
 
