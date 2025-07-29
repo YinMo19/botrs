@@ -25,7 +25,7 @@ BotRS 是一个用 Rust 实现的 QQ 频道机器人框架，基于 [QQ 频道�
 
 ```toml
 [dependencies]
-botrs = "0.1.0"
+botrs = "0.1.3"
 tokio = { version = "1.0", features = ["full"] }
 tracing = "0.1"
 tracing-subscriber = "0.3"

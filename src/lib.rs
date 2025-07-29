@@ -25,7 +25,7 @@
 //! #[async_trait::async_trait]
 //! impl EventHandler for MyHandler {}
 //!
-// #[tokio::main]
+//! #[tokio::main]
 //! async fn main() -> Result<(), Box<dyn std::error::Error>> {
 //!     let token = Token::new("your_app_id", "your_secret");
 //!     let intents = Intents::default();
