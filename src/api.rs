@@ -52,12 +52,12 @@
 //!
 //! ## **Key Benefits**
 //!
-//!  **Cleaner Code**: Use `..Default::default()` instead of many `None` parameters
-//!  **Better Readability**: Named fields instead of positional parameters
-//!  **Type Safety**: Structured parameters prevent parameter ordering mistakes
-//!  **Builder Patterns**: Convenient methods like `.with_reply()` and `.with_file_image()`
-//!  **Extensibility**: Easy to add new fields without breaking existing code
-//!  **Compatibility**: Based on official Python botpy API structure
+//!  - **Cleaner Code**: Use `..Default::default()` instead of many `None` parameters
+//!  - **Better Readability**: Named fields instead of positional parameters
+//!  - **Type Safety**: Structured parameters prevent parameter ordering mistakes
+//!  - **Builder Patterns**: Convenient methods like `.with_reply()` and `.with_file_image()`
+//!  - **Extensibility**: Easy to add new fields without breaking existing code
+//!  - **Compatibility**: Based on official Python botpy API structure
 //!
 //! ## **Migration Examples**
 //!
