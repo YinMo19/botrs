@@ -6,7 +6,7 @@
 mod common;
 
 use botrs::{Client, Context, EventHandler, Intents, Message, Ready, Token};
-use common::{init_logging, Config};
+use common::{Config, init_logging};
 use std::env;
 use tracing::{info, warn};
 
@@ -117,21 +117,18 @@ impl EventHandler for AtReplyCommandHandler {
             }
 
             // Also send using api.post_message (equivalent to second method in Python)
+            let params = botrs::models::message::MessageParams {
+                content: Some(response),
+                msg_id: message.id.clone(),
+                ..Default::default()
+            };
+
             match ctx
                 .api
-                .post_message(
+                .post_message_with_params(
                     &ctx.token,
                     &message.channel_id.as_ref().unwrap_or(&String::new()),
-                    Some(&response),
-                    None,                  // embed
-                    None,                  // ark
-                    None,                  // message_reference
-                    None,                  // image
-                    None,                  // file_image
-                    message.id.as_deref(), // msg_id
-                    None,                  // event_id
-                    None,                  // markdown
-                    None,                  // keyboard
+                    params,
                 )
                 .await
             {

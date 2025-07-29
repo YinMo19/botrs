@@ -1,8 +1,132 @@
 //! Message-related data models for the QQ Guild Bot API.
 //!
 //! This module contains message types that correspond to the Python botpy implementation.
+//!
+//! # Migration Guide: New Message Parameter API
+//!
+//! Starting from version 0.2.0, this module introduces cleaner parameter structs for message sending
+//! to replace functions with many `Option<T>` parameters.
+//!
+//! ## Benefits
+//!
+//! - **Cleaner code**: Use `..Default::default()` instead of many `None` parameters
+//! - **Better readability**: Named fields instead of positional parameters
+//! - **Type safety**: Structured parameters prevent parameter ordering mistakes
+//! - **Extensibility**: Easy to add new fields without breaking existing code
+//! - **Builder patterns**: Convenient methods for common operations
+//!
+//! ## Migration Examples
+//!
+//! ### Channel Messages
+//!
+//! **Old API (deprecated):**
+//! ```rust,no_run
+//! # use botrs::*;
+//! # async fn example(api: &BotApi, token: &Token, channel_id: &str) -> Result<()> {
+//! api.post_message(
+//!     token,
+//!     channel_id,
+//!     Some("Hello!"),    // content
+//!     None,              // embed
+//!     None,              // ark
+//!     None,              // message_reference
+//!     None,              // image
+//!     None,              // file_image
+//!     None,              // msg_id
+//!     None,              // event_id
+//!     None,              // markdown
+//!     None,              // keyboard
+//! ).await?;
+//! # Ok(())
+//! # }
+//! ```
+//!
+//! **New API:**
+//! ```rust,no_run
+//! # use botrs::*;
+//! # use botrs::models::message::MessageParams;
+//! # async fn example(api: &BotApi, token: &Token, channel_id: &str) -> Result<()> {
+//! // Simple text message
+//! let params = MessageParams::new_text("Hello!");
+//! api.post_message_with_params(token, channel_id, params).await?;
+//!
+//! // Message with embed
+//! // Message with embed
+//! # let my_embed = Default::default();
+//! let params = MessageParams {
+//!     content: Some("Check this out!".to_string()),
+//!     embed: Some(my_embed),
+//!     ..Default::default()
+//! };
+//! api.post_message_with_params(token, channel_id, params).await?;
+//!
+//! // Reply to a message
+//! # let message_id = "123456";
+//! let params = MessageParams::new_text("Reply content").with_reply(message_id);
+//! api.post_message_with_params(token, channel_id, params).await?;
+//! # Ok(())
+//! # }
+//! ```
+//!
+//! ### Group Messages
+//!
+//! **Old API (deprecated):**
+//! ```rust,no_run
+//! # use botrs::*;
+//! # async fn example(api: &BotApi, token: &Token, group_openid: &str) -> Result<()> {
+//! api.post_group_message(
+//!     token,
+//!     group_openid,
+//!     Some(0),           // msg_type
+//!     Some("Hello!"),    // content
+//!     None,              // embed
+//!     None,              // ark
+//!     None,              // message_reference
+//!     None,              // media
+//!     None,              // msg_id
+//!     None,              // msg_seq
+//!     None,              // event_id
+//!     None,              // markdown
+//!     None,              // keyboard
+//! ).await?;
+//! # Ok(())
+//! # }
+//! ```
+//!
+//! **New API:**
+//! ```rust,no_run
+//! # use botrs::*;
+//! # use botrs::models::message::GroupMessageParams;
+//! # async fn example(api: &BotApi, token: &Token, group_openid: &str) -> Result<()> {
+//! let params = GroupMessageParams::new_text("Hello!");
+//! api.post_group_message_with_params(token, group_openid, params).await?;
+//! # Ok(())
+//! # }
+//! ```
+//!
+//! ## Parameter Structs
+//!
+//! - [`MessageParams`] - For channel messages
+//! - [`GroupMessageParams`] - For group messages
+//! - [`C2CMessageParams`] - For C2C (client-to-client) messages
+//! - [`DirectMessageParams`] - For direct messages
+//!
+//! Each struct provides:
+//! - `new_text(content)` - Create simple text message
+//! - `with_reply(message_id)` - Add reply reference
+//! - `with_file_image(&bytes)` - Add file attachment (MessageParams/DirectMessageParams only)
+//! - `Default` implementation for easy struct building
+//!
+//! ## Breaking Changes
+//!
+//! - Old message sending functions are **deprecated** but still functional
+//! - They will be removed in version 1.0.0
+//! - No immediate breaking changes - old code compiles with warnings
+//!
+//! See the examples in `/examples` directory for comprehensive usage patterns.
 
 use crate::models::{HasId, Snowflake, Timestamp};
+use base64::Engine;
 use serde::{Deserialize, Serialize};
 
 /// Represents a message in a guild channel.
@@ -135,21 +259,14 @@ impl Message {
         content: &str,
     ) -> Result<crate::models::api::MessageResponse, crate::error::BotError> {
         if let (Some(channel_id), Some(msg_id)) = (&self.channel_id, &self.id) {
-            api.post_message(
-                token,
-                channel_id,
-                Some(content),
-                None,                     // embed
-                None,                     // ark
-                None,                     // message_reference
-                None,                     // image
-                None,                     // file_image
-                Some(msg_id),             // msg_id for reply
-                self.event_id.as_deref(), // event_id
-                None,                     // markdown
-                None,                     // keyboard
-            )
-            .await
+            let params = MessageParams {
+                content: Some(content.to_string()),
+                msg_id: Some(msg_id.clone()),
+                event_id: self.event_id.clone(),
+                ..Default::default()
+            };
+            api.post_message_with_params(token, channel_id, params)
+                .await
         } else {
             Err(crate::error::BotError::InvalidData(
                 "Missing channel_id or message_id for reply".to_string(),
@@ -174,9 +291,7 @@ impl Message {
 
     /// Returns true if the author is a bot.
     pub fn is_from_bot(&self) -> bool {
-        self.author
-            .as_ref()
-            .is_some_and(|a| a.bot.unwrap_or(false))
+        self.author.as_ref().is_some_and(|a| a.bot.unwrap_or(false))
     }
 }
 
@@ -306,25 +421,17 @@ impl DirectMessage {
         token: &crate::token::Token,
         content: &str,
     ) -> Result<crate::models::api::MessageResponse, crate::error::BotError> {
-        if let (Some(guild_id), Some(msg_id)) = (&self.guild_id, &self.id) {
-            api.post_dms(
-                token,
-                guild_id,
-                Some(content),
-                None,                     // embed
-                None,                     // ark
-                None,                     // message_reference
-                None,                     // image
-                None,                     // file_image
-                Some(msg_id),             // msg_id for reply
-                self.event_id.as_deref(), // event_id
-                None,                     // markdown
-                None,                     // keyboard
-            )
-            .await
+        if let Some(guild_id) = &self.guild_id {
+            let params = DirectMessageParams {
+                content: Some(content.to_string()),
+                msg_id: self.id.clone(),
+                event_id: self.event_id.clone(),
+                ..Default::default()
+            };
+            api.post_dms_with_params(token, guild_id, params).await
         } else {
             Err(crate::error::BotError::InvalidData(
-                "Missing guild_id or message_id for DM reply".to_string(),
+                "Missing guild_id for DM reply".to_string(),
             ))
         }
     }
@@ -435,22 +542,15 @@ impl GroupMessage {
         content: &str,
     ) -> Result<crate::models::api::MessageResponse, crate::error::BotError> {
         if let (Some(group_openid), Some(msg_id)) = (&self.group_openid, &self.id) {
-            api.post_group_message(
-                token,
-                group_openid,
-                Some(0), // msg_type: text
-                Some(content),
-                None,                     // embed
-                None,                     // ark
-                None,                     // message_reference
-                None,                     // media
-                Some(msg_id), // msg_id for reply - this is the key for reply functionality
-                None,         // msg_seq - let server handle this
-                self.event_id.as_deref(), // event_id
-                None,         // markdown
-                None,         // keyboard
-            )
-            .await
+            let params = GroupMessageParams {
+                msg_type: 0,
+                content: Some(content.to_string()),
+                msg_id: Some(msg_id.clone()),
+                event_id: self.event_id.clone(),
+                ..Default::default()
+            };
+            api.post_group_message_with_params(token, group_openid, params)
+                .await
         } else {
             Err(crate::error::BotError::InvalidData(
                 "Missing group_openid or message_id for reply".to_string(),
@@ -557,22 +657,16 @@ impl C2CMessage {
             self.author.as_ref().and_then(|a| a.user_openid.as_ref()),
             &self.id,
         ) {
-            api.post_c2c_message(
-                token,
-                user_openid,
-                Some(0), // msg_type: text
-                Some(content),
-                None,                     // embed
-                None,                     // ark
-                None,                     // message_reference
-                None,                     // media
-                Some(msg_id),             // msg_id for reply
-                Some(1),                  // msg_seq
-                self.event_id.as_deref(), // event_id
-                None,                     // markdown
-                None,                     // keyboard
-            )
-            .await
+            let params = C2CMessageParams {
+                msg_type: 0,
+                content: Some(content.to_string()),
+                msg_id: Some(msg_id.clone()),
+                msg_seq: Some(1),
+                event_id: self.event_id.clone(),
+                ..Default::default()
+            };
+            api.post_c2c_message_with_params(token, user_openid, params)
+                .await
         } else {
             Err(crate::error::BotError::InvalidData(
                 "Missing user_openid or message_id for C2C reply".to_string(),
@@ -981,7 +1075,7 @@ pub struct ArkObjKv {
 }
 
 /// Embed message structure.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct Embed {
     /// Title of the embed
     pub title: Option<String>,
@@ -1163,7 +1257,7 @@ pub struct KeyboardPayload {
 }
 
 /// Markdown message payload.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct MarkdownPayload {
     /// Template ID
     pub template_id: Option<String>,
@@ -1200,4 +1294,226 @@ pub struct Reference {
     pub message_id: Option<String>,
     /// Whether to ignore getting reference message error
     pub ignore_get_message_error: Option<bool>,
+}
+
+/// Parameters for sending a message to a channel.
+#[derive(Debug, Clone, Default, Serialize)]
+pub struct MessageParams {
+    /// Message content
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub content: Option<String>,
+    /// Message embed
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub embed: Option<Embed>,
+    /// Ark template
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ark: Option<Ark>,
+    /// Message reference
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub message_reference: Option<Reference>,
+    /// Image URL
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub image: Option<String>,
+    /// Base64 encoded file image
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub file_image: Option<String>,
+    /// Message ID to reply to
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub msg_id: Option<String>,
+    /// Event ID
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub event_id: Option<String>,
+    /// Markdown payload
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub markdown: Option<MarkdownPayload>,
+    /// Keyboard payload
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub keyboard: Option<Keyboard>,
+}
+
+/// Parameters for sending a group message.
+#[derive(Debug, Clone, Default, Serialize)]
+pub struct GroupMessageParams {
+    /// Message type (0=text, 1=rich text, 2=markdown, 3=ark, 4=embed, 7=media)
+    pub msg_type: u32,
+    /// Message content
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub content: Option<String>,
+    /// Message embed
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub embed: Option<Embed>,
+    /// Ark template
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ark: Option<Ark>,
+    /// Message reference
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub message_reference: Option<Reference>,
+    /// Media attachment
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub media: Option<Media>,
+    /// Message ID to reply to
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub msg_id: Option<String>,
+    /// Message sequence number
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub msg_seq: Option<u32>,
+    /// Event ID
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub event_id: Option<String>,
+    /// Markdown payload
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub markdown: Option<MarkdownPayload>,
+    /// Keyboard payload
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub keyboard: Option<KeyboardPayload>,
+}
+
+/// Parameters for sending a C2C (client-to-client) message.
+#[derive(Debug, Clone, Default, Serialize)]
+pub struct C2CMessageParams {
+    /// Message type (0=text, 1=rich text, 2=markdown, 3=ark, 4=embed, 7=media)
+    pub msg_type: u32,
+    /// Message content
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub content: Option<String>,
+    /// Message embed
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub embed: Option<Embed>,
+    /// Ark template
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ark: Option<Ark>,
+    /// Message reference
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub message_reference: Option<Reference>,
+    /// Media attachment
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub media: Option<Media>,
+    /// Message ID to reply to
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub msg_id: Option<String>,
+    /// Message sequence number
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub msg_seq: Option<u32>,
+    /// Event ID
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub event_id: Option<String>,
+    /// Markdown payload
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub markdown: Option<MarkdownPayload>,
+    /// Keyboard payload
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub keyboard: Option<KeyboardPayload>,
+}
+
+/// Parameters for sending a direct message.
+#[derive(Debug, Clone, Default, Serialize)]
+pub struct DirectMessageParams {
+    /// Message content
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub content: Option<String>,
+    /// Message embed
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub embed: Option<Embed>,
+    /// Ark template
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ark: Option<Ark>,
+    /// Message reference
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub message_reference: Option<Reference>,
+    /// Image URL
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub image: Option<String>,
+    /// Base64 encoded file image
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub file_image: Option<String>,
+    /// Message ID to reply to
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub msg_id: Option<String>,
+    /// Event ID
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub event_id: Option<String>,
+    /// Markdown payload
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub markdown: Option<MarkdownPayload>,
+    /// Keyboard payload
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub keyboard: Option<Keyboard>,
+}
+
+impl MessageParams {
+    /// Creates a new MessageParams with text content.
+    pub fn new_text(content: impl Into<String>) -> Self {
+        Self {
+            content: Some(content.into()),
+            ..Default::default()
+        }
+    }
+
+    /// Sets file image data, automatically encoding to base64.
+    pub fn with_file_image(mut self, data: &[u8]) -> Self {
+        self.file_image = Some(base64::engine::general_purpose::STANDARD.encode(data));
+        self
+    }
+
+    /// Sets the message reference for replying.
+    pub fn with_reply(mut self, message_id: impl Into<String>) -> Self {
+        self.msg_id = Some(message_id.into());
+        self
+    }
+}
+
+impl GroupMessageParams {
+    /// Creates a new GroupMessageParams with text content.
+    pub fn new_text(content: impl Into<String>) -> Self {
+        Self {
+            msg_type: 0,
+            content: Some(content.into()),
+            ..Default::default()
+        }
+    }
+
+    /// Sets the message reference for replying.
+    pub fn with_reply(mut self, message_id: impl Into<String>) -> Self {
+        self.msg_id = Some(message_id.into());
+        self
+    }
+}
+
+impl C2CMessageParams {
+    /// Creates a new C2CMessageParams with text content.
+    pub fn new_text(content: impl Into<String>) -> Self {
+        Self {
+            msg_type: 0,
+            content: Some(content.into()),
+            ..Default::default()
+        }
+    }
+
+    /// Sets the message reference for replying.
+    pub fn with_reply(mut self, message_id: impl Into<String>) -> Self {
+        self.msg_id = Some(message_id.into());
+        self
+    }
+}
+
+impl DirectMessageParams {
+    /// Creates a new DirectMessageParams with text content.
+    pub fn new_text(content: impl Into<String>) -> Self {
+        Self {
+            content: Some(content.into()),
+            ..Default::default()
+        }
+    }
+
+    /// Sets file image data, automatically encoding to base64.
+    pub fn with_file_image(mut self, data: &[u8]) -> Self {
+        self.file_image = Some(base64::engine::general_purpose::STANDARD.encode(data));
+        self
+    }
+
+    /// Sets the message reference for replying.
+    pub fn with_reply(mut self, message_id: impl Into<String>) -> Self {
+        self.msg_id = Some(message_id.into());
+        self
+    }
 }

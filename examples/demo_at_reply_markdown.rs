@@ -6,10 +6,10 @@
 mod common;
 
 use botrs::{
-    models::message::{MarkdownParam, MarkdownPayload},
     Client, Context, EventHandler, Intents, Message, Ready, Token,
+    models::message::{MarkdownParam, MarkdownPayload},
 };
-use common::{init_logging, Config};
+use common::{Config, init_logging};
 use std::env;
 use tracing::{info, warn};
 
@@ -22,7 +22,7 @@ impl MarkdownReplyHandler {
         &self,
         ctx: &Context,
         channel_id: &str,
-        msg_id: Option<&str>,
+        _msg_id: Option<&str>,
     ) {
         // Create markdown parameters (equivalent to Python MessageMarkdownParams)
         let params = vec![
@@ -47,22 +47,15 @@ impl MarkdownReplyHandler {
         };
 
         // Send markdown message using API
+        // Send markdown message using new API (equivalent to api.post_markdown_message)
+        let params = botrs::models::message::MessageParams {
+            markdown: Some(markdown),
+            ..Default::default()
+        };
+
         match ctx
             .api
-            .post_message(
-                &ctx.token,
-                channel_id,
-                None,            // content
-                None,            // embed
-                None,            // ark
-                None,            // message_reference
-                None,            // image
-                None,            // file_image
-                msg_id,          // msg_id for reply
-                None,            // event_id
-                Some(&markdown), // markdown
-                None,            // keyboard
-            )
+            .post_message_with_params(&ctx.token, channel_id, params)
             .await
         {
             Ok(_) => info!("Successfully sent markdown message by template"),
@@ -75,7 +68,7 @@ impl MarkdownReplyHandler {
         &self,
         ctx: &Context,
         channel_id: &str,
-        msg_id: Option<&str>,
+        _msg_id: Option<&str>,
     ) {
         let markdown = MarkdownPayload {
             template_id: None,
@@ -84,23 +77,15 @@ impl MarkdownReplyHandler {
             content: Some("# 标题 \n## 简介很开心 \n内容".to_string()),
         };
 
-        // Send markdown message using API
+        // Send markdown message using new API
+        let params = botrs::models::message::MessageParams {
+            markdown: Some(markdown),
+            ..Default::default()
+        };
+
         match ctx
             .api
-            .post_message(
-                &ctx.token,
-                channel_id,
-                None,            // content
-                None,            // embed
-                None,            // ark
-                None,            // message_reference
-                None,            // image
-                None,            // file_image
-                msg_id,          // msg_id for reply
-                None,            // event_id
-                Some(&markdown), // markdown
-                None,            // keyboard
-            )
+            .post_message_with_params(&ctx.token, channel_id, params)
             .await
         {
             Ok(_) => info!("Successfully sent markdown message by content"),

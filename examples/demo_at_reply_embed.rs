@@ -6,10 +6,10 @@
 mod common;
 
 use botrs::{
-    models::message::{Embed, EmbedField},
     Client, Context, EventHandler, Intents, Message, Ready, Token,
+    models::message::{Embed, EmbedField},
 };
-use common::{init_logging, Config};
+use common::{Config, init_logging};
 use std::env;
 use tracing::{info, warn};
 
@@ -69,22 +69,14 @@ impl EventHandler for EmbedReplyHandler {
             }
         };
 
+        let params = botrs::models::message::MessageParams {
+            embed: Some(embed),
+            ..Default::default()
+        };
+
         match ctx
             .api
-            .post_message(
-                &ctx.token,
-                channel_id,
-                None,         // content
-                Some(&embed), // embed
-                None,         // ark
-                None,         // message_reference
-                None,         // image
-                None,         // file_image
-                None,         // msg_id
-                None,         // event_id
-                None,         // markdown
-                None,         // keyboard
-            )
+            .post_message_with_params(&ctx.token, channel_id, params)
             .await
         {
             Ok(_) => info!("Successfully sent embed message"),

@@ -6,13 +6,13 @@
 mod common;
 
 use botrs::{
+    Client, Context, EventHandler, Intents, Message, Ready, Token,
     models::message::{
         Keyboard, KeyboardButton, KeyboardButtonAction, KeyboardButtonPermission,
         KeyboardButtonRenderData, KeyboardContent, KeyboardPayload, KeyboardRow, MarkdownPayload,
     },
-    Client, Context, EventHandler, Intents, Message, Ready, Token,
 };
-use common::{init_logging, Config};
+use common::{Config, init_logging};
 use std::env;
 use tracing::{info, warn};
 
@@ -33,24 +33,16 @@ impl KeyboardReplyHandler {
             content: serde_json::json!({"id": "62"}),
         };
 
-        // Send keyboard message using API (equivalent to api.post_keyboard_message)
-        // Note: In Rust version, we use post_message with keyboard parameter
+        // Send keyboard message using new API (equivalent to api.post_keyboard_message)
+        let params = botrs::models::message::MessageParams {
+            markdown: Some(markdown),
+            keyboard: Some(self.keyboard_payload_to_keyboard(&keyboard)),
+            ..Default::default()
+        };
+
         match ctx
             .api
-            .post_message(
-                &ctx.token,
-                channel_id,
-                None,                                                // content
-                None,                                                // embed
-                None,                                                // ark
-                None,                                                // message_reference
-                None,                                                // image
-                None,                                                // file_image
-                None,                                                // msg_id
-                None,                                                // event_id
-                Some(&markdown),                                     // markdown
-                Some(&self.keyboard_payload_to_keyboard(&keyboard)), // keyboard
-            )
+            .post_message_with_params(&ctx.token, channel_id, params)
             .await
         {
             Ok(_) => info!("Successfully sent template keyboard message"),
@@ -72,23 +64,16 @@ impl KeyboardReplyHandler {
             content: Some(keyboard_content),
         };
 
-        // Send keyboard message using API
+        // Send keyboard message using new API
+        let params = botrs::models::message::MessageParams {
+            markdown: Some(markdown),
+            keyboard: Some(keyboard),
+            ..Default::default()
+        };
+
         match ctx
             .api
-            .post_message(
-                &ctx.token,
-                channel_id,
-                None,            // content
-                None,            // embed
-                None,            // ark
-                None,            // message_reference
-                None,            // image
-                None,            // file_image
-                None,            // msg_id
-                None,            // event_id
-                Some(&markdown), // markdown
-                Some(&keyboard), // keyboard
-            )
+            .post_message_with_params(&ctx.token, channel_id, params)
             .await
         {
             Ok(_) => info!("Successfully sent self-defined keyboard message"),
