@@ -1,40 +1,7 @@
 // the api indeed have a lot of arguments
 #![allow(clippy::too_many_arguments)]
+#![doc = include_str!("../README.md")]
 
-//! # BotRS - Rust QQ Bot Framework
-//!
-//! BotRS is a Rust implementation of the QQ Guild Bot API framework, inspired by the Python botpy library.
-//! It provides an easy-to-use, efficient, and type-safe way to create QQ Guild bots.
-//!
-//! ## Features
-//!
-//! - Async/await support with Tokio
-//! - WebSocket connection management
-//! - HTTP API client
-//! - Event-driven architecture
-//! - Type-safe message handling
-//! - Intent-based event filtering
-//!
-//! ## Quick Start
-//!
-//! ```rust,no_run
-//! use botrs::{Client, Token, Intents, EventHandler};
-//!
-//! struct MyHandler;
-//!
-//! #[async_trait::async_trait]
-//! impl EventHandler for MyHandler {}
-//!
-//! #[tokio::main]
-//! async fn main() -> Result<(), Box<dyn std::error::Error>> {
-//!     let token = Token::new("your_app_id", "your_secret");
-//!     let intents = Intents::default();
-//!     let handler = MyHandler;
-//!     let mut client = Client::new(token, intents, handler, false)?;
-//!     client.start().await?;
-//!     Ok(())
-//! }
-//! ```
 pub mod api;
 pub mod audio;
 pub mod client;

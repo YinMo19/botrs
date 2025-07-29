@@ -15,7 +15,7 @@ BotRS 是一个用 Rust 实现的 QQ 频道机器人框架，基于 [QQ 频道�
 ### 🚀 **问题解决**
 
 **旧版 API（已弃用）：**
-```rust
+```rust,ignore
 // 😱 太多令人困惑的 None 参数！
 api.post_message(
     token, "channel_id", Some("Hello!"),
@@ -24,12 +24,15 @@ api.post_message(
 ```
 
 **新版 API（推荐）：**
-```rust
+```rust,no_run
 use botrs::models::message::MessageParams;
+use botrs::{BotApi, Token};
 
-// ✨ 清洁简洁的参数结构
-let params = MessageParams::new_text("Hello!");
+# async fn example(api: &BotApi, token: &Token) -> Result<(), Box<dyn std::error::Error>> {
+let params = MessageParams::new_text("Hello! 🌍");
 api.post_message_with_params(token, "channel_id", params).await?;
+# Ok(())
+# }
 ```
 
 ### 🎯 **新 API 方法（推荐）**
@@ -75,7 +78,7 @@ api.post_message_with_params(token, "channel_id", params).await?;
 
 ```toml
 [dependencies]
-botrs = "0.2.0"
+botrs = "0.2.4"
 tokio = { version = "1.0", features = ["full"] }
 tracing = "0.1"
 tracing-subscriber = "0.3"
@@ -84,7 +87,7 @@ async-trait = "0.1"
 
 ### 基础示例
 
-```rust
+```rust,no_run
 use botrs::{Client, Context, EventHandler, Intents, Token, Message};
 use botrs::models::gateway::Ready;
 use botrs::models::message::MessageParams;
@@ -111,7 +114,7 @@ impl EventHandler for MyBot {
                 let params = MessageParams::new_text("Pong! 🏓");
                 if let Some(channel_id) = &message.channel_id {
                     if let Err(e) = ctx.api.post_message_with_params(&ctx.token, channel_id, params).await {
-                        eprintln!("Failed to reply: {}", e);
+                        info!("Failed to reply: {}", e);
                     }
                 }
             }
@@ -131,7 +134,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let intents = Intents::default();
 
     // 创建客户端
-    let mut client = Client::new(token, intents, MyBot)?;
+    let mut client = Client::new(token, intents, MyBot, false)?;
 
     // 启动机器人
     client.start().await?;
@@ -143,18 +146,24 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 ## 📋 新消息 API 迁移指南
 
 ### 简单文本消息
-```rust
+```rust,no_run
 use botrs::models::message::MessageParams;
+use botrs::{BotApi, Token};
 
+# async fn example(api: &BotApi, token: &Token) -> Result<(), Box<dyn std::error::Error>> {
 // ✨ 新 API - 简洁明了
 let params = MessageParams::new_text("Hello World! 🌍");
 api.post_message_with_params(token, "channel_id", params).await?;
+# Ok(())
+# }
 ```
 
 ### 带嵌入内容的消息
-```rust
+```rust,no_run
 use botrs::models::message::{MessageParams, Embed};
+use botrs::{BotApi, Token};
 
+# async fn example(api: &BotApi, token: &Token) -> Result<(), Box<dyn std::error::Error>> {
 let embed = Embed {
     title: Some("标题".to_string()),
     description: Some("这是一个嵌入消息示例".to_string()),
@@ -168,41 +177,61 @@ let params = MessageParams {
     ..Default::default()
 };
 api.post_message_with_params(token, "channel_id", params).await?;
+# Ok(())
+# }
 ```
 
 ### 回复消息并附带文件
-```rust
+```rust,no_run
+use botrs::models::message::MessageParams;
+use botrs::{BotApi, Token};
+
+# async fn example(api: &BotApi, token: &Token) -> Result<(), Box<dyn std::error::Error>> {
 let file_data = std::fs::read("image.png")?;
 let params = MessageParams::new_text("这是你要的文件！")
     .with_file_image(&file_data)
     .with_reply("reply_to_message_id");
 api.post_message_with_params(token, "channel_id", params).await?;
+# Ok(())
+# }
 ```
 
 ### 群消息发送
-```rust
+```rust,no_run
 use botrs::models::message::GroupMessageParams;
+use botrs::{BotApi, Token};
 
+# async fn example(api: &BotApi, token: &Token) -> Result<(), Box<dyn std::error::Error>> {
 let params = GroupMessageParams::new_text("群里好！")
     .with_reply("reply_to_message_id");
 api.post_group_message_with_params(token, "group_openid", params).await?;
+# Ok(())
+# }
 ```
 
 ### 私聊消息发送
-```rust
+```rust,no_run
 use botrs::models::message::C2CMessageParams;
+use botrs::{BotApi, Token};
 
+# async fn example(api: &BotApi, token: &Token) -> Result<(), Box<dyn std::error::Error>> {
 let params = C2CMessageParams::new_text("私聊消息");
 api.post_c2c_message_with_params(token, "user_openid", params).await?;
+# Ok(())
+# }
 ```
 
 ### 私信发送
-```rust
+```rust,no_run
 use botrs::models::message::DirectMessageParams;
+use botrs::{BotApi, Token};
 
+# async fn example(api: &BotApi, token: &Token) -> Result<(), Box<dyn std::error::Error>> {
 let params = DirectMessageParams::new_text("私信内容")
     .with_reply("reply_to_message_id");
 api.post_dms_with_params(token, "guild_id", params).await?;
+# Ok(())
+# }
 ```
 
 更详细和更具体的内容可以在 https://docs.rs/botrs 阅读，另有 https://deepwiki.com/YinMo19/botrs 作为 AI 文档可以参照阅读代码结构。
@@ -218,8 +247,13 @@ export QQ_BOT_SECRET="your_secret"
 
 然后在代码中使用：
 
-```rust
+```rust,no_run
+use botrs::Token;
+
+# fn main() -> Result<(), Box<dyn std::error::Error>> {
 let token = Token::from_env()?;
+# Ok(())
+# }
 ```
 
 ## 事件处理
@@ -228,16 +262,19 @@ BotRS 支持多种事件类型：
 
 ### 消息事件
 
-```rust
-use botrs::{Message, DirectMessage, GroupMessage, C2CMessage};
+```rust,no_run
+use botrs::{Message, DirectMessage, GroupMessage, C2CMessage, Context, EventHandler};
 use botrs::models::message::{MessageParams, GroupMessageParams, C2CMessageParams, DirectMessageParams};
+use tracing::info;
+
+struct MyBot;
 
 #[async_trait::async_trait]
 impl EventHandler for MyBot {
     // @ 消息事件
     async fn message_create(&self, ctx: Context, message: Message) {
         if let Some(content) = &message.content {
-            println!("Received message: {}", content);
+            info!("Received message: {}", content);
 
             // 使用新 API 回复
             let params = MessageParams::new_text("收到您的消息了！");
@@ -246,40 +283,77 @@ impl EventHandler for MyBot {
             }
         }
     }
+}
+```
 
+```rust,no_run
+use botrs::{DirectMessage, Context, EventHandler};
+use botrs::models::message::DirectMessageParams;
+use tracing::info;
+
+struct MyBot;
+
+#[async_trait::async_trait]
+impl EventHandler for MyBot {
     // 私信事件
     async fn direct_message_create(&self, ctx: Context, message: DirectMessage) {
         if let Some(content) = &message.content {
-            println!("Received DM: {}", content);
+            info!("Received DM: {}", content);
 
             // 使用新 API 回复私信
-            let params = DirectMessageParams::new_text("收到您的私信了！");
+            let params = DirectMessageParams::new_text("私信回复！");
             if let Some(guild_id) = &message.guild_id {
                 let _ = ctx.api.post_dms_with_params(&ctx.token, guild_id, params).await;
             }
         }
     }
+}
+```
 
+```rust,no_run
+use botrs::{GroupMessage, Context, EventHandler};
+use botrs::models::message::GroupMessageParams;
+use tracing::info;
+
+struct MyBot;
+
+#[async_trait::async_trait]
+impl EventHandler for MyBot {
     // 群消息事件
     async fn group_message_create(&self, ctx: Context, message: GroupMessage) {
         if let Some(content) = &message.content {
-            println!("Received group message: {}", content);
+            info!("Received group message: {}", content);
 
             // 使用新 API 回复群消息
-            let params = GroupMessageParams::new_text("群里好！");
-            let _ = ctx.api.post_group_message_with_params(&ctx.token, &message.group_openid, params).await;
+            let params = GroupMessageParams::new_text("收到您的群消息了！");
+            if let Some(group_openid) = &message.group_openid {
+                let _ = ctx.api.post_group_message_with_params(&ctx.token, group_openid, params).await;
+            }
         }
     }
+}
+```
 
-    // C2C 消息事件
+```rust,no_run
+use botrs::{C2CMessage, Context, EventHandler};
+use botrs::models::message::C2CMessageParams;
+use tracing::info;
+
+struct MyBot;
+
+#[async_trait::async_trait]
+impl EventHandler for MyBot {
+    // C2C 私聊事件
     async fn c2c_message_create(&self, ctx: Context, message: C2CMessage) {
         if let Some(content) = &message.content {
-            println!("Received C2C message: {}", content);
+            info!("Received C2C message: {}", content);
 
             // 使用新 API 回复 C2C 消息
-            let params = C2CMessageParams::new_text("收到您的私聊消息了！");
-            if let Some(user_openid) = &message.author.user_openid {
-                let _ = ctx.api.post_c2c_message_with_params(&ctx.token, user_openid, params).await;
+            let params = C2CMessageParams::new_text("C2C 回复！");
+            if let Some(author) = &message.author {
+                if let Some(user_openid) = &author.user_openid {
+                    let _ = ctx.api.post_c2c_message_with_params(&ctx.token, user_openid, params).await;
+                }
             }
         }
     }
@@ -288,29 +362,32 @@ impl EventHandler for MyBot {
 
 ### 频道事件
 
-```rust
-use botrs::Guild;
+```rust,no_run
+use botrs::{Guild, Context, EventHandler};
+use tracing::info;
+
+struct MyBot;
 
 #[async_trait::async_trait]
 impl EventHandler for MyBot {
     // 加入频道
     async fn guild_create(&self, _ctx: Context, guild: Guild) {
         if let Some(name) = &guild.name {
-            println!("Joined guild: {}", name);
+            info!("Joined guild: {}", name);
         }
     }
 
     // 频道更新
     async fn guild_update(&self, _ctx: Context, guild: Guild) {
         if let Some(name) = &guild.name {
-            println!("Guild updated: {}", name);
+            info!("Guild updated: {}", name);
         }
     }
 
     // 离开频道
     async fn guild_delete(&self, _ctx: Context, guild: Guild) {
         if let Some(name) = &guild.name {
-            println!("Left guild: {}", name);
+            info!("Left guild: {}", name);
         }
     }
 }
@@ -318,24 +395,33 @@ impl EventHandler for MyBot {
 
 ### 成员事件
 
-```rust
-use botrs::Member;
+```rust,no_run
+use botrs::{Member, Context, EventHandler};
+use tracing::info;
+
+struct MyBot;
 
 #[async_trait::async_trait]
 impl EventHandler for MyBot {
     // 成员加入
     async fn guild_member_add(&self, _ctx: Context, member: Member) {
-        println!("Member joined: {}", member.user.username);
+        if let Some(user) = &member.user {
+            info!("Member joined: {}", user.username);
+        }
     }
 
     // 成员更新
     async fn guild_member_update(&self, _ctx: Context, member: Member) {
-        println!("Member updated: {}", member.user.username);
+        if let Some(user) = &member.user {
+            info!("Member updated: {}", user.username);
+        }
     }
 
     // 成员离开
     async fn guild_member_remove(&self, _ctx: Context, member: Member) {
-        println!("Member left: {}", member.user.username);
+        if let Some(user) = &member.user {
+            info!("Member left: {}", user.username);
+        }
     }
 }
 ```
@@ -344,9 +430,10 @@ impl EventHandler for MyBot {
 
 Intent 系统允许你精确控制机器人接收的事件类型：
 
-```rust
+```rust,no_run
 use botrs::Intents;
 
+# fn main() {
 // 默认 intents（基础事件）
 let intents = Intents::default();
 
@@ -362,31 +449,37 @@ let intents = Intents::none()
 let intents = Intents::all();
 
 // 检查特权 intent
-if intents.is_privileged() {
+if intents.has_privileged() {
     println!("Contains privileged intents");
 }
+# }
 ```
 
 ### 特权 Intent
 
-某些 Intent 需要特殊权限，可通过 `is_privileged()` 方法检查：
+某些 Intent 需要特殊权限，可通过 `has_privileged()` 方法检查：
 
-```rust
+```rust,no_run
+use botrs::Intents;
+
+# fn main() {
 let intents = Intents::none()
     .with_guild_members()   // 特权 intent
     .with_guild_messages(); // 特权 intent
 
-if intents.is_privileged() {
+if intents.has_privileged() {
     println!("需要申请特殊权限");
 }
+# }
 ```
 
 ## API 客户端
 
 BotRS 提供了完整的 API 客户端来与 QQ 频道 API 交互：
 
-```rust
-use botrs::{BotApi, HttpClient, Token};
+```rust,no_run
+use botrs::{BotApi, Token};
+use botrs::http::HttpClient;
 use botrs::models::message::MessageParams;
 
 #[tokio::main]
@@ -415,22 +508,23 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 BotRS 提供了统一的错误处理：
 
-```rust
-use botrs::{BotError, Result};
+```rust,no_run
+use botrs::{BotError, Result, BotApi, Token};
+use tracing::{info, error};
 
-async fn handle_api_call() -> Result<()> {
-    match api.get_bot_info(&token).await {
+async fn handle_api_call(api: &BotApi, token: &Token) -> Result<()> {
+    match api.get_bot_info(token).await {
         Ok(info) => {
-            println!("Bot: {}", info.username);
+            info!("Bot: {}", info.username);
         }
         Err(BotError::Api { code, message }) => {
-            eprintln!("API error {}: {}", code, message);
+            error!("API error {}: {}", code, message);
         }
         Err(BotError::RateLimit { retry_after }) => {
-            eprintln!("Rate limited, retry after {} seconds", retry_after);
+            error!("Rate limited, retry after {} seconds", retry_after);
         }
         Err(e) => {
-            eprintln!("Other error: {}", e);
+            error!("Other error: {}", e);
         }
     }
     Ok(())
@@ -441,24 +535,38 @@ async fn handle_api_call() -> Result<()> {
 
 ### HTTP 客户端配置
 
-```rust
-use botrs::HttpClient;
+```rust,no_run
+use botrs::http::HttpClient;
 
+# fn main() -> Result<(), Box<dyn std::error::Error>> {
 // 自定义超时和环境
 let http = HttpClient::new(60, true)?; // 60秒超时，沙盒环境
+# Ok(())
+# }
 ```
 
 ### 客户端配置
 
-```rust
-use botrs::Client;
+```rust,no_run
+use botrs::{Client, BotApi, Token, Intents, EventHandler};
+use botrs::http::HttpClient;
 
+struct MyHandler;
+#[async_trait::async_trait]
+impl EventHandler for MyHandler {}
+
+# fn main() -> Result<(), Box<dyn std::error::Error>> {
+# let token = Token::new("app_id", "secret");
+# let intents = Intents::default();
+# let handler = MyHandler;
 // 标准创建方式
-let client = Client::new(token, intents, handler)?;
+let client = Client::new(token, intents, handler, false)?;
 
 // HTTP 客户端可以通过 HttpClient 进行配置
 let http = HttpClient::new(60, true)?; // 60秒超时，沙盒环境
 let api = BotApi::new(http);
+# Ok(())
+# }
 ```
 
 ## 运行示例
@@ -575,7 +683,7 @@ BotRS 的设计灵感来自 Python 的 [botpy](https://github.com/tencent-connec
 
 欢迎贡献代码！我的个人 git commit 提交风格是：
 
-```
+```text
 [type] simple message
 
 - detail message 1: detailed description.
@@ -586,12 +694,12 @@ BotRS 的设计灵感来自 Python 的 [botpy](https://github.com/tencent-connec
 ```
 
 例如：
-```
+```text
 [feature] add structured message parameters API
 
-- `models/message.rs`: add MessageParams, GroupMessageParams, C2CMessageParams, DirectMessageParams structs.
-- `api.rs`: add post_*_with_params methods for structured parameter sending.
-- `examples/`: add demo_new_message_api.rs showing the new API usage.
+- models/message.rs: add MessageParams, GroupMessageParams, C2CMessageParams, DirectMessageParams structs.
+- api.rs: add post_*_with_params methods for structured parameter sending.
+- examples/: add demo_new_message_api.rs showing the new API usage.
 - deprecate old multi-parameter API methods but keep backward compatibility.
 ```
 
