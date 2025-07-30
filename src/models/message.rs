@@ -128,6 +128,7 @@
 use crate::models::{HasId, Snowflake, Timestamp};
 use base64::Engine;
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 
 /// Represents a message in a guild channel.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -569,7 +570,7 @@ impl Default for GroupMessage {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct C2CMessage {
     /// The message's unique ID
-    pub id: Option<Snowflake>,
+    pub id: Option<String>,
     /// The message content
     pub content: Option<String>,
     /// Referenced message information
@@ -584,6 +585,8 @@ pub struct C2CMessage {
     pub timestamp: Option<Timestamp>,
     /// The author of this message
     pub author: Option<C2CMessageUser>,
+    /// Message scene information
+    pub message_scene: Option<Value>,
     /// Event ID from the gateway
     pub event_id: Option<String>,
 }
@@ -600,6 +603,7 @@ impl C2CMessage {
             msg_seq: None,
             timestamp: None,
             author: None,
+            message_scene: None,
             event_id: None,
         }
     }
@@ -642,6 +646,7 @@ impl C2CMessage {
             author: data
                 .get("author")
                 .map(|v| C2CMessageUser::from_data(v.clone())),
+            message_scene: data.get("message_scene").cloned(),
             event_id: Some(event_id),
         }
     }
@@ -845,10 +850,14 @@ impl GroupMessageUser {
 }
 
 /// User information in a C2C message.
-/// Represents a user in a C2C message.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+/// Represents a user in a C2C message
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct C2CMessageUser {
-    /// The user's OpenID
+    /// The user's ID
+    pub id: Option<String>,
+    /// The user's union openid
+    pub union_openid: Option<String>,
+    /// The user's openid
     pub user_openid: Option<String>,
 }
 
@@ -856,6 +865,11 @@ impl C2CMessageUser {
     /// Creates a new C2C message user from API data.
     pub fn from_data(data: serde_json::Value) -> Self {
         Self {
+            id: data.get("id").and_then(|v| v.as_str()).map(String::from),
+            union_openid: data
+                .get("union_openid")
+                .and_then(|v| v.as_str())
+                .map(String::from),
             user_openid: data
                 .get("user_openid")
                 .and_then(|v| v.as_str())
