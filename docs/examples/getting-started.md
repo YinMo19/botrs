@@ -2,6 +2,8 @@
 
 This page provides practical examples to help you get started with BotRS. Each example builds upon the previous one, demonstrating core concepts and common patterns.
 
+There are already [numerous demos](https://github.com/YinMo19/botrs/tree/main/examples) in the source code repository, approximately twenty demos, covering all common scenarios. The following documentation is just some supplementary explanations, possibly containing errors. It only provides some hints. Please do not directly copy and run them without checking, as there might be compilation errors.
+
 ## Basic Echo Bot
 
 A simple bot that echoes back messages when mentioned.
@@ -26,7 +28,7 @@ impl EventHandler for EchoBot {
         if let Some(content) = &message.content {
             // Echo back the message with a prefix
             let echo_response = format!("Echo: {}", content);
-            
+
             match message.reply(&ctx.api, &ctx.token, &echo_response).await {
                 Ok(_) => info!("Echoed message: {}", content),
                 Err(e) => warn!("Failed to echo message: {}", e),
@@ -107,7 +109,7 @@ impl EventHandler for CommandBot {
 
         if let Some(content) = &message.content {
             let content = content.trim();
-            
+
             // Check if message starts with command prefix
             if let Some(command_text) = content.strip_prefix('!') {
                 let parts: Vec<&str> = command_text.split_whitespace().collect();
@@ -223,7 +225,7 @@ impl EventHandler for MultiEventBot {
 
             // You could send a welcome message here
             // Note: You'd need to know the welcome channel ID
-            // let welcome_msg = format!("Welcome to the server, {}!", 
+            // let welcome_msg = format!("Welcome to the server, {}!",
             //                          user.username.as_deref().unwrap_or("friend"));
         }
     }
@@ -538,7 +540,7 @@ fn load_config() -> Result<BotConfig, Box<dyn std::error::Error>> {
     // Try to load from file first
     if let Ok(config_content) = fs::read_to_string("config.toml") {
         let mut config: BotConfig = toml::from_str(&config_content)?;
-        
+
         // Override with environment variables if present
         if let Ok(app_id) = std::env::var("QQ_BOT_APP_ID") {
             config.bot.app_id = app_id;
@@ -546,16 +548,16 @@ fn load_config() -> Result<BotConfig, Box<dyn std::error::Error>> {
         if let Ok(secret) = std::env::var("QQ_BOT_SECRET") {
             config.bot.secret = secret;
         }
-        
+
         Ok(config)
     } else {
         // Create default config and save it
         let default_config = BotConfig::default();
         let config_content = toml::to_string_pretty(&default_config)?;
         fs::write("config.toml", config_content)?;
-        
+
         info!("Created default config.toml - please update it with your bot credentials");
-        
+
         // Still try to use environment variables
         let mut config = default_config;
         if let Ok(app_id) = std::env::var("QQ_BOT_APP_ID") {
@@ -564,7 +566,7 @@ fn load_config() -> Result<BotConfig, Box<dyn std::error::Error>> {
         if let Ok(secret) = std::env::var("QQ_BOT_SECRET") {
             config.bot.secret = secret;
         }
-        
+
         Ok(config)
     }
 }
