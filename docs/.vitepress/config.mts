@@ -523,10 +523,8 @@ export default defineConfig({
     themeConfig: {
         logo: "/logo.svg",
 
-        algolia: {
-            appId: "BOTRS_APP_ID",
-            apiKey: "BOTRS_API_KEY",
-            indexName: "botrs",
+        search: {
+            provider: "local",
         },
     },
 
