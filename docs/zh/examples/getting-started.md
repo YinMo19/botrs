@@ -2,6 +2,8 @@
 
 本页面提供实用示例，帮助您开始使用 BotRS。每个示例都建立在前一个示例的基础上，演示核心概念和常见模式。
 
+在源代码仓库中已经有 [大量的 demo](https://github.com/YinMo19/botrs/tree/main/examples)，大概二十多个 demo，覆盖了所有常用场景。下面的文档只是一些补充说明，可能含有错误，只是提供一些 hint，请不要直接复制到地方运行，可能有编译错误。
+
 ## 基础回声机器人
 
 一个简单的机器人，当被提及时会回显消息。
@@ -26,7 +28,7 @@ impl EventHandler for EchoBot {
         if let Some(content) = &message.content {
             // 带前缀回显消息
             let echo_response = format!("回声：{}", content);
-            
+
             match message.reply(&ctx.api, &ctx.token, &echo_response).await {
                 Ok(_) => info!("回显消息：{}", content),
                 Err(e) => warn!("回显消息失败：{}", e),
@@ -107,7 +109,7 @@ impl EventHandler for CommandBot {
 
         if let Some(content) = &message.content {
             let content = content.trim();
-            
+
             // 检查消息是否以命令前缀开始
             if let Some(command_text) = content.strip_prefix('!') {
                 let parts: Vec<&str> = command_text.split_whitespace().collect();
@@ -223,7 +225,7 @@ impl EventHandler for MultiEventBot {
 
             // 您可以在此发送欢迎消息
             // 注意：您需要知道欢迎频道 ID
-            // let welcome_msg = format!("欢迎来到服务器，{}！", 
+            // let welcome_msg = format!("欢迎来到服务器，{}！",
             //                          user.username.as_deref().unwrap_or("朋友"));
         }
     }
@@ -538,7 +540,7 @@ fn load_config() -> Result<BotConfig, Box<dyn std::error::Error>> {
     // 首先尝试从文件加载
     if let Ok(config_content) = fs::read_to_string("config.toml") {
         let mut config: BotConfig = toml::from_str(&config_content)?;
-        
+
         // 如果存在，用环境变量覆盖
         if let Ok(app_id) = std::env::var("QQ_BOT_APP_ID") {
             config.bot.app_id = app_id;
@@ -546,16 +548,16 @@ fn load_config() -> Result<BotConfig, Box<dyn std::error::Error>> {
         if let Ok(secret) = std::env::var("QQ_BOT_SECRET") {
             config.bot.secret = secret;
         }
-        
+
         Ok(config)
     } else {
         // 创建默认配置并保存
         let default_config = BotConfig::default();
         let config_content = toml::to_string_pretty(&default_config)?;
         fs::write("config.toml", config_content)?;
-        
+
         info!("已创建默认 config.toml - 请使用您的机器人凭据更新它");
-        
+
         // 仍然尝试使用环境变量
         let mut config = default_config;
         if let Ok(app_id) = std::env::var("QQ_BOT_APP_ID") {
@@ -564,7 +566,7 @@ fn load_config() -> Result<BotConfig, Box<dyn std::error::Error>> {
         if let Ok(secret) = std::env::var("QQ_BOT_SECRET") {
             config.bot.secret = secret;
         }
-        
+
         Ok(config)
     }
 }
