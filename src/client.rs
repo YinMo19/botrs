@@ -1220,9 +1220,12 @@ impl<H: EventHandler + 'static> Client<H> {
             }
             Some("C2C_MESSAGE_CREATE") => {
                 if let Some(data) = event.data {
-                    if let Ok(message) = serde_json::from_value::<C2CMessage>(data) {
-                        self.handler.c2c_message_create(ctx, message).await;
-                    }
+                    let message = C2CMessage::from_data(
+                        (*ctx.api).clone(),
+                        format!("C2C_MESSAGE_CREATE_{}", event.sequence.unwrap_or(0)),
+                        data,
+                    );
+                    self.handler.c2c_message_create(ctx, message).await;
                 }
             }
             Some("PUBLIC_MESSAGE_DELETE") => {
