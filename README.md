@@ -8,6 +8,27 @@
 
 BotRS 是一个用 Rust 实现的 QQ 频道机器人框架，基于 [QQ 频道机器人 API](https://bot.q.qq.com/wiki/develop/api/)。它提供了类型安全、高性能、易于使用的接口来开发 QQ 频道机器人。
 
+## 📚 文档
+
+- **[完整文档](./docs)** - 包含英文和中文的全面指南
+- **[快速开始](./docs/guide/quick-start.md)** - 5分钟内运行你的第一个机器人
+- **[API 参考](./docs/api/client.md)** - 详细的 API 文档
+- **[示例代码](./docs/examples/getting-started.md)** - 实用的代码示例
+- **[更新日志](./docs/changelog.md)** - 版本历史和迁移指南
+
+### 本地运行文档
+
+```bash
+# 安装依赖
+pnpm install
+
+# 启动开发服务器
+pnpm docs:dev
+
+# 构建文档
+pnpm build
+```
+
 ## ✨ v0.2.0 重大更新：全新消息参数 API
 
 我们完全重构了消息发送 API，告别了多个 `None` 参数的混乱，引入了结构化参数系统，带来更清洁的开发体验！

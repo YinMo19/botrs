@@ -1,0 +1,40 @@
+{
+    "name": "botrs-docs",
+    "version": "0.2.5",
+    "description": "Documentation for BotRS - A Rust QQ Bot framework",
+    "scripts": {
+        "docs:dev": "vitepress dev docs",
+        "docs:build": "vitepress build docs",
+        "docs:preview": "vitepress preview docs",
+        "docs:serve": "vitepress serve docs",
+        "build": "npm run docs:build",
+        "dev": "npm run docs:dev",
+        "preview": "npm run docs:preview"
+    },
+    "keywords": [
+        "rust",
+        "qq",
+        "bot",
+        "guild",
+        "api",
+        "documentation",
+        "vitepress"
+    ],
+    "author": "YinMo19",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/YinMo19/botrs.git"
+    },
+    "homepage": "https://github.com/YinMo19/botrs",
+    "bugs": {
+        "url": "https://github.com/YinMo19/botrs/issues"
+    },
+    "devDependencies": {
+        "vitepress": "^1.6.3"
+    },
+    "engines": {
+        "node": ">=16.0.0",
+        "npm": ">=7.0.0"
+    }
+}
