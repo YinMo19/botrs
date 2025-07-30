@@ -148,18 +148,18 @@ use dotenvy::dotenv;
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // 如果存在则加载 .env 文件
     dotenv().ok();
-    
+
     let token = Token::new(
         std::env::var("QQ_BOT_APP_ID")?,
         std::env::var("QQ_BOT_SECRET")?,
     );
-    
+
     // 从环境变量使用沙盒模式
     let use_sandbox = std::env::var("QQ_BOT_SANDBOX")
         .unwrap_or_else(|_| "false".to_string())
         .parse::<bool>()
         .unwrap_or(false);
-    
+
     // 机器人设置的其余部分...
     Ok(())
 }
@@ -270,7 +270,7 @@ struct LoggingConfig {
 fn load_config() -> Result<Config, Box<dyn std::error::Error>> {
     let config_content = fs::read_to_string("config.toml")?;
     let mut config: Config = toml::from_str(&config_content)?;
-    
+
     // 用环境变量覆盖
     if let Ok(app_id) = std::env::var("QQ_BOT_APP_ID") {
         config.bot.app_id = app_id;
@@ -278,7 +278,7 @@ fn load_config() -> Result<Config, Box<dyn std::error::Error>> {
     if let Ok(secret) = std::env::var("QQ_BOT_SECRET") {
         config.bot.secret = secret;
     }
-    
+
     Ok(config)
 }
 ```
@@ -384,7 +384,7 @@ use tokio::signal;
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut client = create_client().await?;
-    
+
     // 处理关闭信号
     tokio::select! {
         result = client.start() => {
@@ -397,7 +397,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             client.stop().await?;
         }
     }
-    
+
     Ok(())
 }
 ```
@@ -433,15 +433,15 @@ impl Config {
         if self.bot.app_id.is_empty() {
             return Err(ConfigError::MissingAppId);
         }
-        
+
         if self.bot.secret.is_empty() {
             return Err(ConfigError::MissingSecret);
         }
-        
+
         if self.features.max_reconnect_attempts > 10 {
             return Err(ConfigError::InvalidReconnectAttempts);
         }
-        
+
         Ok(())
     }
 }
@@ -513,14 +513,14 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use tracing::{info, warn};
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 struct AppConfig {
     bot: BotSettings,
     intents: IntentSettings,
     logging: LoggingSettings,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 struct BotSettings {
     app_id: String,
     secret: String,
@@ -528,7 +528,7 @@ struct BotSettings {
     command_prefix: String,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 struct IntentSettings {
     public_guild_messages: bool,
     direct_message: bool,
@@ -536,7 +536,7 @@ struct IntentSettings {
     guild_members: bool,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 struct LoggingSettings {
     level: String,
     file_output: bool,
@@ -594,12 +594,12 @@ fn load_config() -> Result<AppConfig, Box<dyn std::error::Error>> {
 
 fn setup_logging(config: &LoggingSettings) -> Result<(), Box<dyn std::error::Error>> {
     let filter = format!("botrs={},my_bot={}", config.level, config.level);
-    
+
     if config.file_output {
         // 设置文件日志
         let file_appender = tracing_appender::rolling::daily("logs", "bot.log");
         let (non_blocking, _guard) = tracing_appender::non_blocking(file_appender);
-        
+
         tracing_subscriber::fmt()
             .with_env_filter(filter)
             .with_writer(non_blocking)
@@ -609,13 +609,13 @@ fn setup_logging(config: &LoggingSettings) -> Result<(), Box<dyn std::error::Err
             .with_env_filter(filter)
             .init();
     }
-    
+
     Ok(())
 }
 
 fn build_intents(config: &IntentSettings) -> Intents {
     let mut intents = Intents::default();
-    
+
     if config.public_guild_messages {
         intents = intents.with_public_guild_messages();
     }
@@ -628,7 +628,7 @@ fn build_intents(config: &IntentSettings) -> Intents {
     if config.guild_members {
         intents = intents.with_guild_members();
     }
-    
+
     intents
 }
 
@@ -641,7 +641,7 @@ impl EventHandler for MyBot {
     async fn ready(&self, _ctx: botrs::Context, ready: botrs::Ready) {
         info!("机器人就绪，配置: sandbox={}", self.config.bot.sandbox);
     }
-    
+
     // 其他事件处理器...
 }
 
@@ -649,16 +649,16 @@ impl EventHandler for MyBot {
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let config = load_config()?;
     setup_logging(&config.logging)?;
-    
+
     info!("使用配置启动机器人");
-    
+
     let token = Token::new(&config.bot.app_id, &config.bot.secret);
     let intents = build_intents(&config.intents);
     let handler = MyBot { config: config.clone() };
-    
+
     let mut client = Client::new(token, intents, handler, config.bot.sandbox)?;
     client.start().await?;
-    
+
     Ok(())
 }
 ```
