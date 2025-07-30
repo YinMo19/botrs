@@ -10,7 +10,8 @@ File handling is an essential feature for many bots. This example shows how to u
 
 ### Uploading Images
 Uploading images in the QQ bot seems a bit abstract. The API we commonly use for uploading images actually works in reverse - we upload our own files to our own image hosting service or set up a static resource server, and then send the URL to QQ. QQ will download this image from your URL and then send it to the corresponding group chat/channel/private message. This method has been tested.
-The direct upload of binary streams has not been tested yet. The example is as follows.
+
+The direct upload of binary streams has not been tested yet. The example is as follows. This method is only applicable to channels and cannot be used in groups. In group chats, the reverse upload function via URL should be used instead.
 
 ```rust
 //! Demo: AT Reply with File Data
