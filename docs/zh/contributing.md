@@ -257,30 +257,26 @@ export RUST_LOG="debug"
 
 ### 提交消息格式
 
-我们使用约定式提交：
+欢迎贡献代码！我的个人 git commit 提交风格是：
 
+```text
+[type] simple message
+
+- detail message 1: detailed description.
+- detail message 2: detailed description.
+- detail message 3: detailed description.
+- detail message 4: detailed description.
+- etc.
 ```
-type(scope): description
 
-[可选的正文]
+例如：
+```text
+[feature] add structured message parameters API
 
-[可选的页脚]
-```
-
-类型：
-- `feat`: 新功能
-- `fix`: 错误修复
-- `docs`: 文档更改
-- `style`: 格式更改
-- `refactor`: 代码重构
-- `test`: 添加测试
-- `chore`: 维护任务
-
-示例：
-```
-feat(api): 添加对语音消息的支持
-fix(websocket): 解决连接超时问题
-docs(readme): 更新安装说明
+- models/message.rs: add MessageParams, GroupMessageParams, C2CMessageParams, DirectMessageParams structs.
+- api.rs: add post_*_with_params methods for structured parameter sending.
+- examples/: add demo_new_message_api.rs showing the new API usage.
+- deprecate old multi-parameter API methods but keep backward compatibility.
 ```
 
 ### 审查流程
@@ -313,7 +309,7 @@ docs(readme): 更新安装说明
 ### 获取帮助
 
 - [GitHub 讨论](https://github.com/YinMo19/botrs/discussions) 用于问题
-- [Discord 服务器](https://discord.gg/botrs) 用于实时聊天
+- [Discord 服务器](https://discord.gg/eRRkYfcG8u) 用于实时聊天
 - [GitHub Issues](https://github.com/YinMo19/botrs/issues) 用于错误和功能
 
 ### 认可

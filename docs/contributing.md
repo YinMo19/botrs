@@ -260,11 +260,11 @@ export RUST_LOG="debug"
 We use conventional commits:
 
 ```
-type(scope): description
+[type(scope)]: description
 
-[optional body]
-
-[optional footer]
+- body: detailed description of changes
+- body: detailed description of changes
+- body: detailed description of changes
 ```
 
 Types:
@@ -277,10 +277,13 @@ Types:
 - `chore`: maintenance tasks
 
 Examples:
-```
-feat(api): add support for voice messages
-fix(websocket): resolve connection timeout issue
-docs(readme): update installation instructions
+```text
+[feature] add structured message parameters API
+
+- models/message.rs: add MessageParams, GroupMessageParams, C2CMessageParams, DirectMessageParams structs.
+- api.rs: add post_*_with_params methods for structured parameter sending.
+- examples/: add demo_new_message_api.rs showing the new API usage.
+- deprecate old multi-parameter API methods but keep backward compatibility.
 ```
 
 ### Review Process
@@ -313,7 +316,7 @@ We follow [Semantic Versioning](https://semver.org/):
 ### Getting Help
 
 - [GitHub Discussions](https://github.com/YinMo19/botrs/discussions) for questions
-- [Discord Server](https://discord.gg/botrs) for real-time chat
+- [Discord Server](https://discord.gg/eRRkYfcG8u) for real-time chat
 - [GitHub Issues](https://github.com/YinMo19/botrs/issues) for bugs and features
 
 ### Recognition
