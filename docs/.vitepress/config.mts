@@ -98,6 +98,19 @@ export default defineConfig({
                             ],
                         },
                         {
+                            text: "Performance and Security",
+                            items: [
+                                {
+                                    text: "Performace",
+                                    link: "/guide/performance.md",
+                                },
+                                {
+                                    text: "Security",
+                                    link: "/guide/security.md",
+                                },
+                            ],
+                        },
+                        {
                             text: "Migration Guide",
                             items: [
                                 {
@@ -320,6 +333,19 @@ export default defineConfig({
                                 {
                                     text: "论坛与话题",
                                     link: "/zh/guide/forum-threads",
+                                },
+                            ],
+                        },
+                        {
+                            text: "性能与安全",
+                            items: [
+                                {
+                                    text: "高性能指南",
+                                    link: "/zh/guide/performance.md",
+                                },
+                                {
+                                    text: "安全指南",
+                                    link: "/zh/guide/security.md",
                                 },
                             ],
                         },

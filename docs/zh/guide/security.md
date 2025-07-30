@@ -48,7 +48,7 @@ impl SecureConfig {
         // 确保文件具有限制性权限（600）
         let metadata = fs::metadata(path)?;
         let permissions = metadata.permissions();
-        
+
         #[cfg(unix)]
         {
             use std::os::unix::fs::PermissionsExt;
@@ -56,12 +56,12 @@ impl SecureConfig {
                 return Err("配置文件必须具有 600 权限".into());
             }
         }
-        
+
         let content = fs::read_to_string(path)?;
         let config: SecureConfig = toml::from_str(&content)?;
         Ok(config)
     }
-    
+
     // 从加密文件加载
     pub fn load_encrypted(path: &Path, key: &[u8]) -> Result<Self, Box<dyn std::error::Error>> {
         let encrypted_data = fs::read(path)?;
@@ -92,7 +92,7 @@ pub struct RotatingToken {
 }
 
 impl RotatingToken {
-    pub fn new<F>(token: Token, expires_at: DateTime<Utc>, refresh_callback: F) -> Self 
+    pub fn new<F>(token: Token, expires_at: DateTime<Utc>, refresh_callback: F) -> Self
     where
         F: Fn() -> Result<Token, Box<dyn std::error::Error>> + Send + Sync + 'static
     {
@@ -102,7 +102,7 @@ impl RotatingToken {
             refresh_callback: Box::new(refresh_callback),
         }
     }
-    
+
     pub async fn get_valid_token(&mut self) -> Result<&Token, Box<dyn std::error::Error>> {
         if Utc::now() > self.expires_at - Duration::minutes(5) {
             // 在过期前刷新令牌
@@ -139,7 +139,7 @@ impl InputValidator {
             Regex::new(r"(?i)(or|and)\s+\d+\s*=\s*\d+").unwrap(),
             Regex::new(r"(?i)'\s*(or|and)\s+'").unwrap(),
         ];
-        
+
         Self {
             url_regex,
             sql_injection_patterns,
@@ -147,20 +147,20 @@ impl InputValidator {
             blocked_words: HashSet::new(),
         }
     }
-    
+
     pub fn validate_message_content(&self, content: &str) -> Result<String, ValidationError> {
         // 长度检查
         if content.len() > self.max_message_length {
             return Err(ValidationError::TooLong);
         }
-        
+
         // 检查 SQL 注入模式
         for pattern in &self.sql_injection_patterns {
             if pattern.is_match(content) {
                 return Err(ValidationError::SqlInjection);
             }
         }
-        
+
         // 检查被阻止的词语
         let words: Vec<&str> = content.split_whitespace().collect();
         for word in words {
@@ -168,12 +168,12 @@ impl InputValidator {
                 return Err(ValidationError::BlockedContent);
             }
         }
-        
+
         // 清理 HTML/markdown
         let sanitized = self.sanitize_content(content);
         Ok(sanitized)
     }
-    
+
     fn sanitize_content(&self, content: &str) -> String {
         // 移除或转义潜在危险内容
         content
@@ -181,24 +181,24 @@ impl InputValidator {
             .replace("javascript:", "")
             .replace("data:", "")
     }
-    
+
     pub fn extract_safe_urls(&self, content: &str) -> Vec<String> {
         let mut safe_urls = Vec::new();
-        
+
         for url_match in self.url_regex.find_iter(content) {
             let url = url_match.as_str();
             if self.is_safe_url(url) {
                 safe_urls.push(url.to_string());
             }
         }
-        
+
         safe_urls
     }
-    
+
     fn is_safe_url(&self, url: &str) -> bool {
         // 检查安全域名白名单
         let safe_domains = ["github.com", "docs.rs", "crates.io"];
-        
+
         if let Ok(parsed_url) = url::Url::parse(url) {
             if let Some(domain) = parsed_url.domain() {
                 return safe_domains.iter().any(|&safe| domain.ends_with(safe));
@@ -237,7 +237,7 @@ impl CommandValidator {
             Err(ValidationError::InvalidUserId)
         }
     }
-    
+
     pub fn validate_channel_id(channel_id: &str) -> Result<String, ValidationError> {
         // 频道 ID 的类似验证
         if channel_id.chars().all(|c| c.is_ascii_digit()) && channel_id.len() <= 20 {
@@ -246,16 +246,16 @@ impl CommandValidator {
             Err(ValidationError::InvalidChannelId)
         }
     }
-    
+
     pub fn validate_duration(duration_str: &str) -> Result<std::time::Duration, ValidationError> {
         use std::time::Duration;
-        
+
         let duration_regex = Regex::new(r"^(\d+)([smhd])$").unwrap();
-        
+
         if let Some(captures) = duration_regex.captures(duration_str) {
             let value: u64 = captures[1].parse().map_err(|_| ValidationError::InvalidDuration)?;
             let unit = &captures[2];
-            
+
             let duration = match unit {
                 "s" => Duration::from_secs(value),
                 "m" => Duration::from_secs(value * 60),
@@ -263,12 +263,12 @@ impl CommandValidator {
                 "d" => Duration::from_secs(value * 86400),
                 _ => return Err(ValidationError::InvalidDuration),
             };
-            
+
             // 强制执行合理限制
             if duration > Duration::from_secs(86400 * 30) { // 最多 30 天
                 return Err(ValidationError::DurationTooLong);
             }
-            
+
             Ok(duration)
         } else {
             Err(ValidationError::InvalidDuration)
@@ -305,14 +305,14 @@ pub struct PermissionManager {
 impl PermissionManager {
     pub fn new() -> Self {
         let mut role_permissions = HashMap::new();
-        
+
         // 定义默认角色和权限
         role_permissions.insert("moderator".to_string(), vec![
             Permission::SendMessages,
             Permission::DeleteMessages,
             Permission::KickMembers,
         ]);
-        
+
         role_permissions.insert("admin".to_string(), vec![
             Permission::SendMessages,
             Permission::DeleteMessages,
@@ -321,17 +321,17 @@ impl PermissionManager {
             Permission::ManageChannels,
             Permission::ManageGuild,
         ]);
-        
+
         role_permissions.insert("owner".to_string(), vec![
             Permission::Administrator,
         ]);
-        
+
         Self {
             role_permissions,
             user_roles: HashMap::new(),
         }
     }
-    
+
     pub fn has_permission(&self, user_id: &str, permission: &Permission) -> bool {
         if let Some(roles) = self.user_roles.get(user_id) {
             for role in roles {
@@ -344,7 +344,7 @@ impl PermissionManager {
         }
         false
     }
-    
+
     pub async fn check_command_permission(
         &self,
         user_id: &str,
@@ -357,7 +357,7 @@ impl PermissionManager {
             "mute" => Permission::KickMembers,
             _ => Permission::SendMessages,
         };
-        
+
         if self.has_permission(user_id, &required_permission) {
             Ok(())
         } else {
@@ -396,25 +396,25 @@ impl SecurityRateLimiter {
         command_cooldowns.insert("kick".to_string(), Duration::from_secs(10));
         command_cooldowns.insert("ban".to_string(), Duration::from_secs(30));
         command_cooldowns.insert("mute".to_string(), Duration::from_secs(5));
-        
+
         Self {
             user_attempts: HashMap::new(),
             command_cooldowns,
         }
     }
-    
+
     pub fn check_rate_limit(&mut self, user_id: &str, command: &str) -> Result<(), RateLimitError> {
         let now = Instant::now();
         let attempts = self.user_attempts.entry(user_id.to_string()).or_insert_with(Vec::new);
-        
+
         // 移除旧尝试（超过 1 分钟）
         attempts.retain(|&attempt| now.duration_since(attempt) < Duration::from_secs(60));
-        
+
         // 检查滥用（每分钟超过 10 个命令）
         if attempts.len() >= 10 {
             return Err(RateLimitError::TooManyAttempts);
         }
-        
+
         // 检查命令特定冷却时间
         if let Some(cooldown) = self.command_cooldowns.get(command) {
             if let Some(&last_attempt) = attempts.last() {
@@ -423,7 +423,7 @@ impl SecurityRateLimiter {
                 }
             }
         }
-        
+
         attempts.push(now);
         Ok(())
     }
@@ -459,14 +459,14 @@ impl UserCredentials {
     pub fn new(user_id: String, password: &str) -> Self {
         let salt = generate_salt();
         let password_hash = hash_password(password, &salt);
-        
+
         Self {
             user_id,
             password_hash,
             salt,
         }
     }
-    
+
     pub fn verify_password(&self, password: &str) -> bool {
         let computed_hash = hash_password(password, &self.salt);
         computed_hash == self.password_hash
@@ -493,7 +493,7 @@ impl SecureLogger {
     pub fn log_user_action(user_id: &str, action: &str, details: Option<&str>) {
         // 对用户 ID 进行哈希以保护隐私
         let user_hash = Self::hash_user_id(user_id);
-        
+
         match details {
             Some(details) => {
                 tracing::info!("用户 {} 执行了操作：{}（{}）", user_hash, action, details);
@@ -503,7 +503,7 @@ impl SecureLogger {
             }
         }
     }
-    
+
     fn hash_user_id(user_id: &str) -> String {
         let mut hasher = Sha256::new();
         hasher.update(user_id.as_bytes());
@@ -531,28 +531,28 @@ impl DataEncryption {
         let cipher = Aes256Gcm::new(key);
         Self { cipher }
     }
-    
+
     pub fn encrypt(&self, data: &[u8]) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
         let mut nonce_bytes = [0u8; 12];
         rand::thread_rng().fill_bytes(&mut nonce_bytes);
         let nonce = Nonce::from_slice(&nonce_bytes);
-        
+
         let ciphertext = self.cipher.encrypt(nonce, data)?;
-        
+
         // 在密文前添加随机数
         let mut result = nonce_bytes.to_vec();
         result.extend_from_slice(&ciphertext);
         Ok(result)
     }
-    
+
     pub fn decrypt(&self, encrypted_data: &[u8]) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
         if encrypted_data.len() < 12 {
             return Err("无效的加密数据".into());
         }
-        
+
         let (nonce_bytes, ciphertext) = encrypted_data.split_at(12);
         let nonce = Nonce::from_slice(nonce_bytes);
-        
+
         let plaintext = self.cipher.decrypt(nonce, ciphertext)?;
         Ok(plaintext)
     }
@@ -582,13 +582,13 @@ impl EventHandler for SecureEventHandler {
             tracing::warn!("无效的消息来源：{}", e);
             return;
         }
-        
+
         // 验证消息内容
         let content = match &msg.content {
             Some(content) => content,
             None => return,
         };
-        
+
         let validated_content = match self.validator.validate_message_content(content) {
             Ok(content) => content,
             Err(e) => {
@@ -597,11 +597,11 @@ impl EventHandler for SecureEventHandler {
                 return;
             }
         };
-        
+
         // 处理验证过的消息
         self.process_secure_message(&ctx, &msg, &validated_content).await;
     }
-    
+
     async fn error(&self, error: BotError) {
         // 记录安全相关错误
         match &error {
@@ -627,27 +627,27 @@ impl SecureEventHandler {
                 return Err(SecurityError::UntrustedSource);
             }
         }
-        
+
         // 检查机器人消息（潜在的冒充）
         if msg.is_from_bot() {
             return Err(SecurityError::BotMessage);
         }
-        
+
         Ok(())
     }
-    
+
     fn is_trusted_guild(&self, guild_id: &str) -> bool {
         // 实施频道白名单检查
         true // 占位符
     }
-    
+
     async fn send_security_warning(&self, ctx: &Context, msg: &Message, reason: &str) {
         let warning = format!("⚠️ 安全警告：{}", reason);
         if let Err(e) = msg.reply(&ctx.api, &ctx.token, &warning).await {
             tracing::error!("发送安全警告失败：{}", e);
         }
     }
-    
+
     async fn process_secure_message(&self, ctx: &Context, msg: &Message, content: &str) {
         // 实施安全消息处理
     }
@@ -705,25 +705,25 @@ impl SecureConfiguration {
             file_permissions: 0o600, // 仅所有者读/写
         }
     }
-    
+
     pub fn load_config<T>(&self) -> Result<T, Box<dyn std::error::Error>>
     where
         T: serde::de::DeserializeOwned,
     {
         let path = Path::new(&self.config_path);
-        
+
         // 验证文件权限
         self.verify_file_permissions(path)?;
-        
+
         // 加载和解析配置
         let content = fs::read_to_string(path)?;
         let config: T = toml::from_str(&content)?;
         Ok(config)
     }
-    
+
     fn verify_file_permissions(&self, path: &Path) -> Result<(), Box<dyn std::error::Error>> {
         let metadata = fs::metadata(path)?;
-        
+
         #[cfg(unix)]
         {
             use std::os::unix::fs::PermissionsExt;
@@ -735,7 +735,7 @@ impl SecureConfiguration {
                 ).into());
             }
         }
-        
+
         Ok(())
     }
 }
@@ -772,10 +772,10 @@ impl AuditLogger {
             .create(true)
             .append(true)
             .open(log_path)?;
-            
+
         Ok(Self { log_file })
     }
-    
+
     pub fn log_security_event(
         &mut self,
         event_type: &str,
@@ -793,7 +793,7 @@ impl AuditLogger {
             ip_address: None, // 将从请求上下文填充
             success,
         };
-        
+
         writeln!(self.log_file, "{}", serde_json::to_string(&event)?)?;
         Ok(())
     }
@@ -820,16 +820,16 @@ impl IntrusionDetector {
             blocked_users: HashMap::new(),
         }
     }
-    
+
     pub fn record_failed_attempt(&mut self, user_id: &str) -> bool {
         let now = Instant::now();
         let attempts = self.failed_attempts.entry(user_id.to_string()).or_insert_with(Vec::new);
-        
+
         // 移除 1 小时前的尝试
         attempts.retain(|&attempt| now.duration_since(attempt) < Duration::from_secs(3600));
-        
+
         attempts.push(now);
-        
+
         // 如果 1 小时内失败尝试超过 5 次则阻止用户
         if attempts.len() > 5 {
             self.blocked_users.insert(user_id.to_string(), now);
@@ -839,7 +839,7 @@ impl IntrusionDetector {
             false
         }
     }
-    
+
     pub fn is_blocked(&self, user_id: &str) -> bool {
         if let Some(&blocked_at) = self.blocked_users.get(user_id) {
             // 阻止 24 小时
@@ -848,7 +848,7 @@ impl IntrusionDetector {
             false
         }
     }
-    
+
     pub fn clear_user_attempts(&mut self, user_id: &str) {
         self.failed_attempts.remove(user_id);
         self.blocked_users.remove(user_id);
@@ -875,11 +875,62 @@ impl IntrusionDetector {
 5. **监控和警报** - 实施安全监控
 
 ### 代码审查清单
+- [ ] 不使用硬编码的凭证或机密信息
+- [ ] 对所有用户输入都实施了输入验证
+- [ ] 实现了恰当的错误处理，不泄露信息
+- [ ] 已设置身份验证和授权检查
+- [ ] 敏感数据已妥善加密/哈希处理
+- [ ] 对安全相关的事件实施了审计日志记录
+- [ ] 对敏感操作实施了速率限制
+- [ ] 依赖项来自可信来源且为最新版本
 
-- [ ] 没有硬编码的凭据或密钥
-- [ ] 对所有用户输入实施输入验证
-- [ ] 适当的错误处理而不泄露信息
-- [ ] 身份验证和授权检查到位
-- [ ] 敏感数据正确加密/哈希
-- [ ] 安全相关事件的审计日志
-- [ ] 对
+## 安全测试
+### rust 测试机制
+
+编译期检查保证代码安全。
+
+```rust
+// Security test framework
+#[cfg(test)]
+mod security_tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn test_sql_injection_protection() {
+        let validator = InputValidator::new();
+
+        let malicious_inputs = vec![
+            "'; DROP TABLE users; --",
+            "1' OR '1'='1",
+            "UNION SELECT password FROM users",
+        ];
+
+        for input in malicious_inputs {
+            assert!(validator.validate_message_content(input).is_err());
+        }
+    }
+
+    #[tokio::test]
+    async fn test_rate_limiting() {
+        let mut rate_limiter = SecurityRateLimiter::new();
+
+        // Test rapid-fire attempts
+        for i in 0..15 {
+            let result = rate_limiter.check_rate_limit("test_user", "test_command");
+            if i >= 10 {
+                assert!(result.is_err()); // Should be rate limited
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn test_permission_bypass() {
+        let perm_manager = PermissionManager::new();
+
+        // Test that users without permissions can't execute admin commands
+        assert!(!perm_manager.has_permission("regular_user", &Permission::BanMembers));
+        assert!(perm_manager.check_command_permission("regular_user", "ban").await.is_err());
+    }
+}
+```
+遵循这些安全指南并实施所建议的措施，您就能够构建出既强大又安全的 QQ 公会机器人，从而保护您的基础设施以及用户的数据。
