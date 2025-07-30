@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Documentation improvements and restructuring
 
-## [0.2.5] - 2024-01-15
+## [0.2.5] - 2025-07-30
 
 ### Added
 - Additional message parameter validation
@@ -32,13 +32,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved connection stability with better retry logic
 - Updated dependencies to latest versions
 
-## [0.2.0] - 2023-12-01
+## [0.2.0] - 2025-07-29
 
 ### Added
 - **New Structured Message API**: Complete redesign of message sending with structured parameters
 - `MessageParams` for guild messages with builder pattern support
 - `GroupMessageParams` for group messages
-- `C2CMessageParams` for private messages  
+- `C2CMessageParams` for private messages
 - `DirectMessageParams` for direct messages
 - New methods: `post_message_with_params`, `post_group_message_with_params`, `post_c2c_message_with_params`, `post_dms_with_params`
 - Comprehensive support for all QQ Guild message types (text, embeds, files, markdown, keyboards, ARK messages)
@@ -68,7 +68,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved token validation and error handling
 - Better input sanitization for user-provided content
 
-## [0.1.3] - 2023-10-15
+## [0.1.3] - 2025-07-29
 
 ### Added
 - Support for group message events (`GROUP_ADD_ROBOT`, `GROUP_DEL_ROBOT`, `GROUP_MSG_RECEIVE`, `GROUP_MSG_REJECT`)
@@ -91,7 +91,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Connection stability improvements
 - Memory usage optimization
 
-## [0.1.2] - 2023-09-01
+## [0.1.2] - 2025-07-29
 
 ### Added
 - Message audit event handling (`MESSAGE_AUDIT_PASS`, `MESSAGE_AUDIT_REJECT`)
@@ -109,7 +109,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - WebSocket connection drops in certain network conditions
 - Memory leaks in event processing
 
-## [0.1.1] - 2023-08-15
+## [0.1.1] - 2025-07-29
 
 ### Added
 - Basic message recall functionality
@@ -125,7 +125,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved API response parsing
 - Better handling of rate limits
 
-## [0.1.0] - 2023-08-01
+## [0.1.0] - 2025-07-29
 
 ### Added
 - Initial release of BotRS
