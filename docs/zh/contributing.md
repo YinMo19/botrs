@@ -4,7 +4,7 @@
 
 ## 行为准则
 
-通过参与此项目，您同意遵守我们的[行为准则](CODE_OF_CONDUCT.md)。请在贡献之前阅读。
+通过参与此项目，您同意遵守我们的[行为准则](./CODE_OF_CONDUCT.md)。请在贡献之前阅读。
 
 ## 开始使用
 
@@ -91,7 +91,7 @@
 - 您的环境（Rust 版本、操作系统等）
 - 相关的代码示例或日志
 
-使用我们的[错误报告模板](.github/ISSUE_TEMPLATE/bug_report.md)。
+使用我们的[错误报告模板](./bug_report.md)。
 
 ### 功能请求
 
@@ -102,7 +102,7 @@
 - 来自其他库的任何相关示例
 - 愿意自己实现功能
 
-使用我们的[功能请求模板](.github/ISSUE_TEMPLATE/feature_request.md)。
+使用我们的[功能请求模板](./feature_request.md)。
 
 ### 代码贡献
 
@@ -136,13 +136,13 @@ pub struct MessageParams {
 
 // 记录公共 API
 /// 创建具有文本内容的新消息。
-/// 
+///
 /// # 参数
-/// 
+///
 /// * `content` - 消息的文本内容
-/// 
+///
 /// # 示例
-/// 
+///
 /// ```
 /// let params = MessageParams::new_text("你好，世界！");
 /// ```

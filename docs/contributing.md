@@ -91,7 +91,7 @@ When reporting bugs, please include:
 - Your environment (Rust version, OS, etc.)
 - Relevant code samples or logs
 
-Use our [bug report template](.github/ISSUE_TEMPLATE/bug_report.md).
+Use our [bug report template](bug_report.md).
 
 ### Feature Requests
 
@@ -102,7 +102,7 @@ For feature requests, please include:
 - Any relevant examples from other libraries
 - Willingness to implement the feature yourself
 
-Use our [feature request template](.github/ISSUE_TEMPLATE/feature_request.md).
+Use our [feature request template](feature_request.md).
 
 ### Code Contributions
 
@@ -136,13 +136,13 @@ pub struct MessageParams {
 
 // Document public APIs
 /// Creates a new message with text content.
-/// 
+///
 /// # Arguments
-/// 
+///
 /// * `content` - The text content of the message
-/// 
+///
 /// # Example
-/// 
+///
 /// ```
 /// let params = MessageParams::new_text("Hello, world!");
 /// ```
