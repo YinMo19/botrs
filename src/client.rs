@@ -1177,23 +1177,50 @@ impl<H: EventHandler + 'static> Client<H> {
         match event.event_type.as_deref() {
             Some("READY") => {
                 if let Some(data) = event.data {
-                    if let Ok(ready) = serde_json::from_value::<Ready>(data) {
-                        info!("Bot is ready! Session ID: {}", ready.session_id);
-                        self.handler.ready(ctx, ready).await;
+                    match serde_json::from_value::<Ready>(data.clone()) {
+                        Ok(ready) => {
+                            info!("Bot is ready! Session ID: {}", ready.session_id);
+                            self.handler.ready(ctx, ready).await;
+                        }
+                        Err(e) => {
+                            error!("Failed to parse READY event: {}", e);
+                            debug!(
+                                "Raw event data: {}",
+                                serde_json::to_string_pretty(&data).unwrap_or_default()
+                            );
+                        }
                     }
                 }
             }
             Some("AT_MESSAGE_CREATE") => {
                 if let Some(data) = event.data {
-                    if let Ok(message) = serde_json::from_value::<Message>(data) {
-                        self.handler.message_create(ctx, message).await;
+                    match serde_json::from_value::<Message>(data.clone()) {
+                        Ok(message) => {
+                            self.handler.message_create(ctx, message).await;
+                        }
+                        Err(e) => {
+                            error!("Failed to parse AT_MESSAGE_CREATE event: {}", e);
+                            debug!(
+                                "Raw event data: {}",
+                                serde_json::to_string_pretty(&data).unwrap_or_default()
+                            );
+                        }
                     }
                 }
             }
             Some("DIRECT_MESSAGE_CREATE") => {
                 if let Some(data) = event.data {
-                    if let Ok(message) = serde_json::from_value::<DirectMessage>(data) {
-                        self.handler.direct_message_create(ctx, message).await;
+                    match serde_json::from_value::<DirectMessage>(data.clone()) {
+                        Ok(message) => {
+                            self.handler.direct_message_create(ctx, message).await;
+                        }
+                        Err(e) => {
+                            error!("Failed to parse DIRECT_MESSAGE_CREATE event: {}", e);
+                            debug!(
+                                "Raw event data: {}",
+                                serde_json::to_string_pretty(&data).unwrap_or_default()
+                            );
+                        }
                     }
                 }
             }
@@ -1230,85 +1257,193 @@ impl<H: EventHandler + 'static> Client<H> {
             }
             Some("PUBLIC_MESSAGE_DELETE") => {
                 if let Some(data) = event.data {
-                    if let Ok(message) = serde_json::from_value::<Message>(data) {
-                        self.handler.message_delete(ctx, message).await;
+                    match serde_json::from_value::<Message>(data.clone()) {
+                        Ok(message) => {
+                            self.handler.message_delete(ctx, message).await;
+                        }
+                        Err(e) => {
+                            error!("Failed to parse PUBLIC_MESSAGE_DELETE event: {}", e);
+                            debug!(
+                                "Raw event data: {}",
+                                serde_json::to_string_pretty(&data).unwrap_or_default()
+                            );
+                        }
                     }
                 }
             }
             Some("GUILD_CREATE") => {
                 if let Some(data) = event.data {
-                    if let Ok(guild) = serde_json::from_value::<Guild>(data) {
-                        self.handler.guild_create(ctx, guild).await;
+                    match serde_json::from_value::<Guild>(data.clone()) {
+                        Ok(guild) => {
+                            self.handler.guild_create(ctx, guild).await;
+                        }
+                        Err(e) => {
+                            error!("Failed to parse GUILD_CREATE event: {}", e);
+                            debug!(
+                                "Raw event data: {}",
+                                serde_json::to_string_pretty(&data).unwrap_or_default()
+                            );
+                        }
                     }
                 }
             }
             Some("GUILD_UPDATE") => {
                 if let Some(data) = event.data {
-                    if let Ok(guild) = serde_json::from_value::<Guild>(data) {
-                        self.handler.guild_update(ctx, guild).await;
+                    match serde_json::from_value::<Guild>(data.clone()) {
+                        Ok(guild) => {
+                            self.handler.guild_update(ctx, guild).await;
+                        }
+                        Err(e) => {
+                            error!("Failed to parse GUILD_UPDATE event: {}", e);
+                            debug!(
+                                "Raw event data: {}",
+                                serde_json::to_string_pretty(&data).unwrap_or_default()
+                            );
+                        }
                     }
                 }
             }
             Some("GUILD_DELETE") => {
                 if let Some(data) = event.data {
-                    if let Ok(guild) = serde_json::from_value::<Guild>(data) {
-                        self.handler.guild_delete(ctx, guild).await;
+                    match serde_json::from_value::<Guild>(data.clone()) {
+                        Ok(guild) => {
+                            self.handler.guild_delete(ctx, guild).await;
+                        }
+                        Err(e) => {
+                            error!("Failed to parse GUILD_DELETE event: {}", e);
+                            debug!(
+                                "Raw event data: {}",
+                                serde_json::to_string_pretty(&data).unwrap_or_default()
+                            );
+                        }
                     }
                 }
             }
             Some("CHANNEL_CREATE") => {
                 if let Some(data) = event.data {
-                    if let Ok(channel) = serde_json::from_value::<Channel>(data) {
-                        self.handler.channel_create(ctx, channel).await;
+                    match serde_json::from_value::<Channel>(data.clone()) {
+                        Ok(channel) => {
+                            self.handler.channel_create(ctx, channel).await;
+                        }
+                        Err(e) => {
+                            error!("Failed to parse CHANNEL_CREATE event: {}", e);
+                            debug!(
+                                "Raw event data: {}",
+                                serde_json::to_string_pretty(&data).unwrap_or_default()
+                            );
+                        }
                     }
                 }
             }
             Some("CHANNEL_UPDATE") => {
                 if let Some(data) = event.data {
-                    if let Ok(channel) = serde_json::from_value::<Channel>(data) {
-                        self.handler.channel_update(ctx, channel).await;
+                    match serde_json::from_value::<Channel>(data.clone()) {
+                        Ok(channel) => {
+                            self.handler.channel_update(ctx, channel).await;
+                        }
+                        Err(e) => {
+                            error!("Failed to parse CHANNEL_UPDATE event: {}", e);
+                            debug!(
+                                "Raw event data: {}",
+                                serde_json::to_string_pretty(&data).unwrap_or_default()
+                            );
+                        }
                     }
                 }
             }
             Some("CHANNEL_DELETE") => {
                 if let Some(data) = event.data {
-                    if let Ok(channel) = serde_json::from_value::<Channel>(data) {
-                        self.handler.channel_delete(ctx, channel).await;
+                    match serde_json::from_value::<Channel>(data.clone()) {
+                        Ok(channel) => {
+                            self.handler.channel_delete(ctx, channel).await;
+                        }
+                        Err(e) => {
+                            error!("Failed to parse CHANNEL_DELETE event: {}", e);
+                            debug!(
+                                "Raw event data: {}",
+                                serde_json::to_string_pretty(&data).unwrap_or_default()
+                            );
+                        }
                     }
                 }
             }
             Some("GUILD_MEMBER_ADD") => {
                 if let Some(data) = event.data {
-                    if let Ok(member) = serde_json::from_value::<Member>(data) {
-                        self.handler.guild_member_add(ctx, member).await;
+                    match serde_json::from_value::<Member>(data.clone()) {
+                        Ok(member) => {
+                            self.handler.guild_member_add(ctx, member).await;
+                        }
+                        Err(e) => {
+                            error!("Failed to parse GUILD_MEMBER_ADD event: {}", e);
+                            debug!(
+                                "Raw event data: {}",
+                                serde_json::to_string_pretty(&data).unwrap_or_default()
+                            );
+                        }
                     }
                 }
             }
             Some("GUILD_MEMBER_UPDATE") => {
                 if let Some(data) = event.data {
-                    if let Ok(member) = serde_json::from_value::<Member>(data) {
-                        self.handler.guild_member_update(ctx, member).await;
+                    match serde_json::from_value::<Member>(data.clone()) {
+                        Ok(member) => {
+                            self.handler.guild_member_update(ctx, member).await;
+                        }
+                        Err(e) => {
+                            error!("Failed to parse GUILD_MEMBER_UPDATE event: {}", e);
+                            debug!(
+                                "Raw event data: {}",
+                                serde_json::to_string_pretty(&data).unwrap_or_default()
+                            );
+                        }
                     }
                 }
             }
             Some("GUILD_MEMBER_REMOVE") => {
                 if let Some(data) = event.data {
-                    if let Ok(member) = serde_json::from_value::<Member>(data) {
-                        self.handler.guild_member_remove(ctx, member).await;
+                    match serde_json::from_value::<Member>(data.clone()) {
+                        Ok(member) => {
+                            self.handler.guild_member_remove(ctx, member).await;
+                        }
+                        Err(e) => {
+                            error!("Failed to parse GUILD_MEMBER_REMOVE event: {}", e);
+                            debug!(
+                                "Raw event data: {}",
+                                serde_json::to_string_pretty(&data).unwrap_or_default()
+                            );
+                        }
                     }
                 }
             }
             Some("MESSAGE_AUDIT_PASS") => {
                 if let Some(data) = event.data {
-                    if let Ok(audit) = serde_json::from_value::<MessageAudit>(data) {
-                        self.handler.message_audit_pass(ctx, audit).await;
+                    match serde_json::from_value::<MessageAudit>(data.clone()) {
+                        Ok(audit) => {
+                            self.handler.message_audit_pass(ctx, audit).await;
+                        }
+                        Err(e) => {
+                            error!("Failed to parse MESSAGE_AUDIT_PASS event: {}", e);
+                            debug!(
+                                "Raw event data: {}",
+                                serde_json::to_string_pretty(&data).unwrap_or_default()
+                            );
+                        }
                     }
                 }
             }
             Some("MESSAGE_AUDIT_REJECT") => {
                 if let Some(data) = event.data {
-                    if let Ok(audit) = serde_json::from_value::<MessageAudit>(data) {
-                        self.handler.message_audit_reject(ctx, audit).await;
+                    match serde_json::from_value::<MessageAudit>(data.clone()) {
+                        Ok(audit) => {
+                            self.handler.message_audit_reject(ctx, audit).await;
+                        }
+                        Err(e) => {
+                            error!("Failed to parse MESSAGE_AUDIT_REJECT event: {}", e);
+                            debug!(
+                                "Raw event data: {}",
+                                serde_json::to_string_pretty(&data).unwrap_or_default()
+                            );
+                        }
                     }
                 }
             }
