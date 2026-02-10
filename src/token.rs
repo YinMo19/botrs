@@ -177,8 +177,7 @@ impl Token {
             ));
         }
 
-        let token_response: serde_json::Value =
-            response.json().await.map_err(BotError::Http)?;
+        let token_response: serde_json::Value = response.json().await.map_err(BotError::Http)?;
 
         let access_token = token_response
             .get("access_token")

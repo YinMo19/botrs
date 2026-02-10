@@ -7,7 +7,6 @@ pub mod config;
 
 pub use config::*;
 
-
 /// Initialize logging for examples with a reasonable default configuration.
 pub fn init_logging() {
     tracing_subscriber::fmt()

@@ -117,7 +117,7 @@ impl Gateway {
         &mut self,
         event_sender: mpsc::UnboundedSender<GatewayEvent>,
     ) -> Result<()> {
-        let mut connection_attempt = 0;
+        let mut connection_attempt: u32 = 0;
         loop {
             connection_attempt += 1;
             debug!("[botrs] 启动中... (第{}次连接尝试)", connection_attempt);
@@ -152,12 +152,14 @@ impl Gateway {
 
             // Dynamic reconnect interval like Python: round(5 / max_concurrency)
             // For single connection, use 5 seconds, but add exponential backoff for frequent failures
-            let base_interval = 5;
+            let base_interval = 5_u64;
             let reconnect_interval = if connection_attempt <= 3 {
                 base_interval
             } else {
                 // Exponential backoff: 5, 10, 20, 40 seconds max
-                std::cmp::min(base_interval * (1 << (connection_attempt - 3)), 40)
+                // Use saturating math to avoid overflow/panic on long reconnect loops.
+                let shift = connection_attempt.saturating_sub(3).min(3);
+                base_interval.saturating_mul(1_u64 << shift).min(40)
             };
 
             debug!(
@@ -484,6 +486,7 @@ impl Gateway {
             };
 
             GatewayEvent {
+                id: None,
                 event_type: None,
                 data: Some(serde_json::to_value(resume)?),
                 sequence: None,
@@ -500,6 +503,7 @@ impl Gateway {
             };
 
             GatewayEvent {
+                id: None,
                 event_type: None,
                 data: Some(serde_json::to_value(identify)?),
                 sequence: None,

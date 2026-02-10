@@ -50,9 +50,7 @@ impl<T> ApiResponse<T> {
     /// Converts this response into a Result.
     pub fn into_result(self) -> crate::Result<T> {
         if let Some(code) = self.code {
-            let message = self
-                .message
-                .unwrap_or_else(|| format!("API error {code}"));
+            let message = self.message.unwrap_or_else(|| format!("API error {code}"));
             Err(crate::BotError::api(code, message))
         } else {
             Ok(self.data)
@@ -264,8 +262,7 @@ pub struct AudioAction {
 }
 
 /// Response from message sending operations
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-#[derive(Default)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct MessageResponse {
     /// The ID of the sent message
     pub id: Option<Snowflake>,
@@ -286,7 +283,6 @@ impl MessageResponse {
         }
     }
 }
-
 
 #[cfg(test)]
 mod tests {

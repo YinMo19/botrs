@@ -6,7 +6,7 @@
 mod common;
 
 use botrs::{Client, Context, EventHandler, Intents, Message, Ready, Token};
-use common::{init_logging, Config};
+use common::{Config, init_logging};
 use std::env;
 use tracing::{info, warn};
 
