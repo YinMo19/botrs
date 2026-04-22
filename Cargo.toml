@@ -1,6 +1,6 @@
 [package]
 name = "botrs"
-version = "0.2.8"
+version = "0.2.9"
 edition = "2024"
 authors = ["YinMo19"]
 description = "A Rust QQ Bot framework based on QQ Guild Bot API"
@@ -14,10 +14,10 @@ documentation = "https://docs.rs/botrs"
 [dependencies]
 # Async runtime
 tokio = { version = "1.0", features = ["full"] }
-tokio-tungstenite = { version = "0.20", features = ["native-tls"] }
+tokio-tungstenite = { version = "0.20", features = ["rustls-tls-webpki-roots"] }
 
 # HTTP client
-reqwest = { version = "0.12.22", features = ["json", "stream", "rustls-tls"] }
+reqwest = { version = "0.12.22", default-features = false, features = ["charset", "http2", "json", "stream", "system-proxy", "rustls-tls-webpki-roots"] }
 
 # Serialization
 serde = { version = "1.0", features = ["derive"] }
