@@ -2,6 +2,7 @@
 
 #![allow(non_snake_case, non_upper_case_globals)]
 
+use std::collections::HashMap;
 use std::sync::{LazyLock, RwLock};
 
 use crate::api::{APIVersion, APIv1, BotApi};
@@ -15,8 +16,19 @@ use crate::token::Token;
 pub static DefaultOpenAPIVersion: LazyLock<RwLock<APIVersion>> =
     LazyLock::new(|| RwLock::new(APIv1));
 
+pub static VersionMapping: LazyLock<RwLock<HashMap<APIVersion, BotApi>>> =
+    LazyLock::new(|| RwLock::new(HashMap::from([(APIv1, default_openapi_template())])));
+
+fn default_openapi_template() -> BotApi {
+    BotApi::new(HttpClient::new(crate::DEFAULT_TIMEOUT, false).expect("valid default api client"))
+}
+
 pub fn SelectOpenAPIVersion(version: APIVersion) -> Result<()> {
-    if version == APIv1 {
+    if VersionMapping
+        .read()
+        .expect("openapi version mapping lock poisoned")
+        .contains_key(&version)
+    {
         *DefaultOpenAPIVersion
             .write()
             .expect("openapi version lock poisoned") = version;
@@ -26,18 +38,27 @@ pub fn SelectOpenAPIVersion(version: APIVersion) -> Result<()> {
     }
 }
 
-pub fn NewOpenAPI(_app_id: impl Into<String>, token: Token) -> BotApi {
-    BotApi::with_token(
-        HttpClient::new(crate::DEFAULT_TIMEOUT, false).expect("valid default api client"),
-        token,
-    )
+pub fn NewOpenAPI(app_id: impl Into<String>, token: Token) -> BotApi {
+    new_openapi(app_id, token, false)
 }
 
-pub fn NewSandboxOpenAPI(_app_id: impl Into<String>, token: Token) -> BotApi {
-    BotApi::with_token(
-        HttpClient::new(crate::DEFAULT_TIMEOUT, true).expect("valid sandbox api client"),
-        token,
-    )
+pub fn NewSandboxOpenAPI(app_id: impl Into<String>, token: Token) -> BotApi {
+    new_openapi(app_id, token, true)
+}
+
+fn new_openapi(app_id: impl Into<String>, token: Token, in_sandbox: bool) -> BotApi {
+    let version = *DefaultOpenAPIVersion
+        .read()
+        .expect("openapi version lock poisoned");
+    let template = VersionMapping
+        .read()
+        .expect("openapi version mapping lock poisoned")
+        .get(&version)
+        .cloned()
+        .unwrap_or_else(default_openapi_template);
+    template
+        .setup_from_template(app_id, token, in_sandbox)
+        .expect("valid registered api template")
 }
 
 pub fn SetLogger(logger: impl crate::log::Logger + 'static) {
@@ -52,9 +73,11 @@ pub fn SetWebsocketClient(client: impl crate::websocket::WebSocket + Clone + 'st
     crate::websocket::Register(client);
 }
 
-pub fn SetOpenAPIClient(_version: APIVersion, _client: BotApi) {
-    // BotRS currently has a single OpenAPI implementation. This function is kept
-    // as a compatibility registration hook for botgo-style setup code.
+pub fn SetOpenAPIClient(version: APIVersion, client: BotApi) {
+    VersionMapping
+        .write()
+        .expect("openapi version mapping lock poisoned")
+        .insert(version, client);
 }
 
 pub fn RegisterDispatchEventHandler(event_type: impl Into<EventType>, handler: EventParseFunc) {
@@ -77,5 +100,20 @@ mod tests {
         let api = NewSandboxOpenAPI("app", token);
         assert_eq!(api.Version(), APIv1);
         assert!(api.token().is_some());
+    }
+
+    #[test]
+    fn openapi_client_registry_controls_version_selection() {
+        let custom_version = 42;
+        let template = BotApi::new(HttpClient::new(9, false).unwrap()).SetDebug(true);
+        SetOpenAPIClient(custom_version, template);
+        SelectOpenAPIVersion(custom_version).unwrap();
+
+        let api = NewSandboxOpenAPI("app", Token::new("app", "secret"));
+        assert_eq!(api.http().timeout(), std::time::Duration::from_secs(9));
+        assert!(api.http().is_sandbox());
+        assert!(api.http().debug_enabled());
+
+        SelectOpenAPIVersion(APIv1).unwrap();
     }
 }

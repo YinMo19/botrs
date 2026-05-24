@@ -204,6 +204,16 @@ impl BotApi {
         }
     }
 
+    /// Creates a new instance from this client as a botgo OpenAPI template.
+    pub fn setup_from_template(
+        &self,
+        _bot_app_id: impl Into<String>,
+        token: Token,
+        in_sandbox: bool,
+    ) -> Result<Self> {
+        Ok(Self::with_token(self.http.with_sandbox(in_sandbox)?, token))
+    }
+
     /// Creates a configured API client and token, mirroring botgo's setup step.
     pub fn setup(
         bot_app_id: impl Into<String>,
@@ -211,8 +221,12 @@ impl BotApi {
         in_sandbox: bool,
     ) -> Result<(Self, Token)> {
         let token = Token::new(bot_app_id, secret);
-        let http = HttpClient::new(crate::DEFAULT_TIMEOUT, in_sandbox)?;
-        Ok((Self::with_token(http, token.clone()), token))
+        let api = Self::new(HttpClient::new(crate::DEFAULT_TIMEOUT, in_sandbox)?);
+        let app_id = token.app_id().to_string();
+        Ok((
+            api.setup_from_template(app_id, token.clone(), in_sandbox)?,
+            token,
+        ))
     }
 
     /// Botgo-compatible setup constructor.
