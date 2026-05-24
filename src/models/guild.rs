@@ -445,6 +445,22 @@ impl GuildMembersPager {
             limit: Some(limit.to_string()),
         }
     }
+
+    /// Converts the pager to botgo-compatible query parameters.
+    pub fn query_params(&self) -> std::collections::HashMap<String, String> {
+        let mut query = std::collections::HashMap::new();
+        if let Some(limit) = &self.limit {
+            if !limit.is_empty() {
+                query.insert("limit".to_string(), limit.clone());
+            }
+        }
+        if let Some(after) = &self.after {
+            if !after.is_empty() {
+                query.insert("after".to_string(), after.clone());
+            }
+        }
+        query
+    }
 }
 
 /// Pager for guild role member list requests.
@@ -465,6 +481,81 @@ impl GuildRoleMembersPager {
             start_index: Some(start_index.into()),
             limit: Some(limit.to_string()),
         }
+    }
+
+    /// Converts the pager to botgo-compatible query parameters.
+    pub fn query_params(&self) -> std::collections::HashMap<String, String> {
+        let mut query = std::collections::HashMap::new();
+        if let Some(limit) = &self.limit {
+            if !limit.is_empty() {
+                query.insert("limit".to_string(), limit.clone());
+            }
+        }
+        if let Some(start_index) = &self.start_index {
+            if !start_index.is_empty() {
+                query.insert("start_index".to_string(), start_index.clone());
+            }
+        }
+        query
+    }
+}
+
+/// Pager for current-user guild list requests.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
+pub struct GuildPager {
+    /// Read guilds before this guild ID.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub before: Option<String>,
+    /// Read guilds after this guild ID. Takes precedence over `before`.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub after: Option<String>,
+    /// Page size.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub limit: Option<String>,
+}
+
+impl GuildPager {
+    /// Creates an empty guild pager.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn with_after(mut self, after: impl Into<String>) -> Self {
+        self.after = Some(after.into());
+        self
+    }
+
+    pub fn with_before(mut self, before: impl Into<String>) -> Self {
+        self.before = Some(before.into());
+        self
+    }
+
+    pub fn with_limit(mut self, limit: impl ToString) -> Self {
+        self.limit = Some(limit.to_string());
+        self
+    }
+
+    /// Converts the pager to botgo-compatible query parameters.
+    pub fn query_params(&self) -> std::collections::HashMap<String, String> {
+        let mut query = std::collections::HashMap::new();
+        if let Some(limit) = &self.limit {
+            if !limit.is_empty() {
+                query.insert("limit".to_string(), limit.clone());
+            }
+        }
+        if let Some(after) = &self.after {
+            if !after.is_empty() {
+                query.insert("after".to_string(), after.clone());
+            }
+        }
+        if !query.contains_key("after") {
+            if let Some(before) = &self.before {
+                if !before.is_empty() {
+                    query.insert("before".to_string(), before.clone());
+                }
+            }
+        }
+        query
     }
 }
 
@@ -511,6 +602,20 @@ pub const DELETE_SEVEN_DAYS: DeleteHistoryMsgDay = 7;
 pub const DELETE_FIFTEEN_DAYS: DeleteHistoryMsgDay = 15;
 pub const DELETE_THIRTY_DAYS: DeleteHistoryMsgDay = 30;
 pub const DELETE_ALL: DeleteHistoryMsgDay = -1;
+#[allow(non_upper_case_globals)]
+pub const NoDelete: DeleteHistoryMsgDay = NO_DELETE;
+#[allow(non_upper_case_globals)]
+pub const DeleteThreeDays: DeleteHistoryMsgDay = DELETE_THREE_DAYS;
+#[allow(non_upper_case_globals)]
+pub const DeleteSevenDays: DeleteHistoryMsgDay = DELETE_SEVEN_DAYS;
+#[allow(non_upper_case_globals)]
+pub const DeleteFifteenDays: DeleteHistoryMsgDay = DELETE_FIFTEEN_DAYS;
+#[allow(non_upper_case_globals)]
+pub const DeleteThirtyDays: DeleteHistoryMsgDay = DELETE_THIRTY_DAYS;
+#[allow(non_upper_case_globals)]
+pub const DeleteAll: DeleteHistoryMsgDay = DELETE_ALL;
+
+pub type MemberDeleteOpts = MemberDeleteOptions;
 
 /// Additional options for deleting a guild member.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -547,6 +652,22 @@ impl Default for MemberDeleteOptions {
             delete_history_msg_days: NO_DELETE,
         }
     }
+}
+
+pub type MemberDeleteOption = Box<dyn FnOnce(&mut MemberDeleteOptions) + Send>;
+
+#[allow(non_snake_case)]
+pub fn WithAddBlackList(add_blacklist: bool) -> MemberDeleteOption {
+    Box::new(move |options| {
+        options.add_blacklist = add_blacklist;
+    })
+}
+
+#[allow(non_snake_case)]
+pub fn WithDeleteHistoryMsg(days: DeleteHistoryMsgDay) -> MemberDeleteOption {
+    Box::new(move |options| {
+        options.delete_history_msg_days = normalize_delete_history_msg_days(days);
+    })
 }
 
 /// Normalizes history deletion days to the official supported values.
