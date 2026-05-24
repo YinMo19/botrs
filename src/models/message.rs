@@ -393,12 +393,9 @@ impl Message {
                     .and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok())
                     .map(|dt| dt.with_timezone(&chrono::Utc)),
             }),
-            message_reference: data.get("message_reference").map(|v| MessageReference {
-                message_id: v
-                    .get("message_id")
-                    .and_then(|id| id.as_str())
-                    .map(String::from),
-            }),
+            message_reference: data
+                .get("message_reference")
+                .map(|v| MessageReference::from_data(v.clone())),
             mentions: data
                 .get("mentions")
                 .and_then(|v| v.as_array())
@@ -1152,6 +1149,8 @@ impl DirectMessageMember {
 pub struct MessageReference {
     /// The ID of the referenced message
     pub message_id: Option<Snowflake>,
+    /// Whether reference message fetch errors should be ignored
+    pub ignore_get_message_error: Option<bool>,
 }
 
 impl MessageReference {
@@ -1162,6 +1161,9 @@ impl MessageReference {
                 .get("message_id")
                 .and_then(|v| v.as_str())
                 .map(String::from),
+            ignore_get_message_error: data
+                .get("ignore_get_message_error")
+                .and_then(|v| v.as_bool()),
         }
     }
 }
@@ -1312,6 +1314,21 @@ mod tests {
         let mut message = Message::new();
         message.content = Some("Hello, world!".to_string());
         assert!(message.has_content());
+    }
+
+    #[test]
+    fn botgo_message_reference_keeps_ignore_error_flag() {
+        let reference = MessageReference::from_data(serde_json::json!({
+            "message_id": "message-1",
+            "ignore_get_message_error": true
+        }));
+
+        assert_eq!(reference.message_id.as_deref(), Some("message-1"));
+        assert_eq!(reference.ignore_get_message_error, Some(true));
+
+        let value = serde_json::to_value(&reference).unwrap();
+        assert_eq!(value["message_id"], serde_json::json!("message-1"));
+        assert_eq!(value["ignore_get_message_error"], serde_json::json!(true));
     }
 
     #[test]
