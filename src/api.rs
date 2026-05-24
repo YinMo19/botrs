@@ -137,7 +137,9 @@ use crate::models::{
     message_setting::MessageSetting,
     permission::{APIPermission, APIPermissionDemand, APIPermissionDemandIdentify},
     schedule::{RemindType, Schedule, ScheduleWrapper},
-    webhook::{HttpIdentity, HttpReady, HttpSession},
+    webhook::{
+        HttpIdentity, HttpReady, HttpSession, WebhookValidationRequest, WebhookValidationResponse,
+    },
 };
 use crate::reaction::{Emoji as ReactionEmoji, MessageReactionPager, ReactionUsers};
 use crate::token::Token;
@@ -3026,6 +3028,19 @@ impl BotApi {
         let path = format!("/gateway/webhook/sessions/{session_id}");
         self.http.delete(token, &path, None::<&()>).await?;
         Ok(())
+    }
+
+    /// Builds a webhook validation response from a request and signature.
+    pub fn webhook_validation_response(
+        request: &WebhookValidationRequest,
+        signature: impl Into<String>,
+        data_version: impl Into<String>,
+    ) -> WebhookValidationResponse {
+        WebhookValidationResponse {
+            plain_token: request.plain_token.clone(),
+            signature: signature.into(),
+            data_version: data_version.into(),
+        }
     }
 
     /// Gets the HTTP client reference.
