@@ -1216,6 +1216,42 @@ mod tests {
     }
 
     #[test]
+    fn botgo_api_message_helpers_match_send_type_contract() {
+        let message = MessageToCreate {
+            event_id: Some("event-1".to_string()),
+            ..Default::default()
+        };
+        let rich_media = RichMediaMessage {
+            event_id: Some("ignored".to_string()),
+            ..Default::default()
+        };
+        let reference = Reference {
+            message_id: Some("message-1".to_string()),
+            ignore_get_message_error: Some(true),
+        };
+
+        assert_eq!(message.GetEventID(), "event-1");
+        assert_eq!(message.GetSendType(), SendType::Text);
+        assert_eq!(rich_media.GetEventID(), "");
+        assert_eq!(rich_media.GetSendType(), SendType::RichMedia);
+        assert_eq!(reference.GetEventID(), "message-1");
+        assert_eq!(reference.GetSendType(), SendType::Text);
+
+        let api_message = ApiMessage::from(message);
+        assert_eq!(api_message.GetEventID(), "event-1");
+        assert_eq!(api_message.GetSendType(), SendType::Text);
+    }
+
+    #[test]
+    fn botgo_messages_pager_query_params() {
+        let pager = MessagesPager::new(Some(MPTBefore), Some("msg-1"), Some(20));
+        let query = pager.QueryParams();
+
+        assert_eq!(query.get("before").map(String::as_str), Some("msg-1"));
+        assert_eq!(query.get("limit").map(String::as_str), Some("20"));
+    }
+
+    #[test]
     fn test_message_creation() {
         let message = Message::new();
         assert!(message.id.is_none());
@@ -1961,6 +1997,18 @@ impl MessageToCreate {
     pub const fn send_type(&self) -> SendType {
         SendType::Text
     }
+
+    /// Botgo-compatible event ID accessor.
+    #[allow(non_snake_case)]
+    pub fn GetEventID(&self) -> &str {
+        self.event_id.as_deref().unwrap_or("")
+    }
+
+    /// Botgo-compatible send type accessor.
+    #[allow(non_snake_case)]
+    pub const fn GetSendType(&self) -> SendType {
+        self.send_type()
+    }
 }
 
 /// Botgo-compatible rich media upload/direct-send payload.
@@ -2000,6 +2048,30 @@ impl RichMediaMessage {
     pub const fn send_type(&self) -> SendType {
         SendType::RichMedia
     }
+
+    /// Botgo-compatible event ID accessor. Botgo intentionally returns
+    /// an empty value for rich media payloads.
+    #[allow(non_snake_case)]
+    pub const fn GetEventID(&self) -> &str {
+        ""
+    }
+
+    /// Botgo-compatible send type accessor.
+    #[allow(non_snake_case)]
+    pub const fn GetSendType(&self) -> SendType {
+        self.send_type()
+    }
+}
+
+/// Botgo-compatible message interface.
+pub trait APIMessage: Serialize {
+    /// Returns the event ID used for passive replies.
+    #[allow(non_snake_case)]
+    fn GetEventID(&self) -> &str;
+
+    /// Returns the route family for this message payload.
+    #[allow(non_snake_case)]
+    fn GetSendType(&self) -> SendType;
 }
 
 /// API message envelope used by group and C2C message APIs.
@@ -2018,6 +2090,51 @@ impl ApiMessage {
             Self::Message(message) => message.send_type(),
             Self::RichMedia(message) => message.send_type(),
         }
+    }
+
+    /// Botgo-compatible event ID accessor.
+    #[allow(non_snake_case)]
+    pub fn GetEventID(&self) -> &str {
+        match self {
+            Self::Message(message) => message.GetEventID(),
+            Self::RichMedia(message) => message.GetEventID(),
+        }
+    }
+
+    /// Botgo-compatible send type accessor.
+    #[allow(non_snake_case)]
+    pub const fn GetSendType(&self) -> SendType {
+        self.send_type()
+    }
+}
+
+impl APIMessage for MessageToCreate {
+    fn GetEventID(&self) -> &str {
+        self.GetEventID()
+    }
+
+    fn GetSendType(&self) -> SendType {
+        self.GetSendType()
+    }
+}
+
+impl APIMessage for RichMediaMessage {
+    fn GetEventID(&self) -> &str {
+        self.GetEventID()
+    }
+
+    fn GetSendType(&self) -> SendType {
+        self.GetSendType()
+    }
+}
+
+impl APIMessage for ApiMessage {
+    fn GetEventID(&self) -> &str {
+        self.GetEventID()
+    }
+
+    fn GetSendType(&self) -> SendType {
+        self.GetSendType()
     }
 }
 
@@ -2042,6 +2159,16 @@ impl From<MessageToCreate> for ApiMessage {
 impl From<RichMediaMessage> for ApiMessage {
     fn from(message: RichMediaMessage) -> Self {
         Self::RichMedia(message)
+    }
+}
+
+impl APIMessage for Reference {
+    fn GetEventID(&self) -> &str {
+        self.message_id.as_deref().unwrap_or("")
+    }
+
+    fn GetSendType(&self) -> SendType {
+        SendType::Text
     }
 }
 
@@ -2119,6 +2246,12 @@ impl MessagesPager {
             query.insert(pager_type.as_str().to_string(), id.clone());
         }
         query
+    }
+
+    /// Botgo-compatible query parameter accessor.
+    #[allow(non_snake_case)]
+    pub fn QueryParams(&self) -> std::collections::HashMap<String, String> {
+        self.query_params()
     }
 }
 

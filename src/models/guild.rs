@@ -463,6 +463,12 @@ impl GuildMembersPager {
         insert_query_param(&mut query, "after", &self.after);
         query
     }
+
+    /// Botgo-compatible query parameter accessor.
+    #[allow(non_snake_case)]
+    pub fn QueryParams(&self) -> HashMap<String, String> {
+        self.query_params()
+    }
 }
 
 impl Pager for GuildMembersPager {
@@ -497,6 +503,12 @@ impl GuildRoleMembersPager {
         insert_query_param(&mut query, "limit", &self.limit);
         insert_query_param(&mut query, "start_index", &self.start_index);
         query
+    }
+
+    /// Botgo-compatible query parameter accessor.
+    #[allow(non_snake_case)]
+    pub fn QueryParams(&self) -> HashMap<String, String> {
+        self.query_params()
     }
 }
 
@@ -550,6 +562,12 @@ impl GuildPager {
             insert_query_param(&mut query, "before", &self.before);
         }
         query
+    }
+
+    /// Botgo-compatible query parameter accessor.
+    #[allow(non_snake_case)]
+    pub fn QueryParams(&self) -> HashMap<String, String> {
+        self.query_params()
     }
 }
 
@@ -904,6 +922,32 @@ mod tests {
         assert_eq!(role.member_count(), 5);
         assert_eq!(role.get_member_limit(), 10);
         assert!(!role.is_at_member_limit());
+    }
+
+    #[test]
+    fn botgo_pager_query_params_match_official_priority() {
+        let members = GuildMembersPager::new("user-1", 100);
+        assert_eq!(
+            members.QueryParams().get("after").map(String::as_str),
+            Some("user-1")
+        );
+
+        let role_members = GuildRoleMembersPager::new("next-1", 50);
+        assert_eq!(
+            role_members
+                .QueryParams()
+                .get("start_index")
+                .map(String::as_str),
+            Some("next-1")
+        );
+
+        let guilds = GuildPager::new()
+            .with_before("before-1")
+            .with_after("after-1")
+            .with_limit(20);
+        let query = guilds.QueryParams();
+        assert_eq!(query.get("after").map(String::as_str), Some("after-1"));
+        assert!(!query.contains_key("before"));
     }
 
     #[test]

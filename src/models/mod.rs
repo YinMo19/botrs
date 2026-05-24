@@ -99,6 +99,11 @@ fn parse_duration(value: &str) -> Result<StdDuration, String> {
 /// Botgo-compatible pager trait.
 pub trait Pager {
     fn query_params(&self) -> HashMap<String, String>;
+
+    #[allow(non_snake_case)]
+    fn QueryParams(&self) -> HashMap<String, String> {
+        self.query_params()
+    }
 }
 
 /// Common trait for objects that have a snowflake ID.
