@@ -19,7 +19,7 @@ use crate::models::channel::{
 };
 use crate::models::gateway::GatewayEvent;
 use crate::models::guild::{
-    GuildMembersPager, GuildRole, GuildRoleMembers, GuildRoleMembersPager, GuildRoles,
+    GuildMembersPager, GuildPager, GuildRole, GuildRoleMembers, GuildRoleMembersPager, GuildRoles,
     Member as GuildMember, MemberAddRoleBody, MemberDeleteOptions, UpdateGuildMute,
     UpdateGuildMuteResponse, UpdateResult,
 };
@@ -619,6 +619,11 @@ impl Context {
         self.api
             .get_guilds(&self.token, guild_id, limit, desc)
             .await
+    }
+
+    /// Gets current-user guilds with a botgo-compatible pager.
+    pub async fn get_guilds_with_pager(&self, pager: &GuildPager) -> Result<Vec<Guild>> {
+        self.api.get_guilds_with_pager(&self.token, pager).await
     }
 
     /// Gets channels in a guild.

@@ -124,9 +124,9 @@ use crate::models::{
     },
     emoji::EmojiType,
     guild::{
-        Guild, GuildMembersPager, GuildRole, GuildRoleMembers, GuildRoleMembersPager, GuildRoles,
-        Member, MemberAddRoleBody, MemberDeleteOptions, UpdateGuildMute, UpdateGuildMuteResponse,
-        UpdateResult, UpdateRole, normalize_delete_history_msg_days,
+        Guild, GuildMembersPager, GuildPager, GuildRole, GuildRoleMembers, GuildRoleMembersPager,
+        GuildRoles, Member, MemberAddRoleBody, MemberDeleteOptions, UpdateGuildMute,
+        UpdateGuildMuteResponse, UpdateResult, UpdateRole, normalize_delete_history_msg_days,
     },
     message::{
         ApiMessage, Ark, C2CMessageParams, DirectMessageParams, DirectMessageSession,
@@ -268,19 +268,29 @@ impl BotApi {
         limit: Option<u32>,
         desc: Option<bool>,
     ) -> Result<Vec<Guild>> {
-        debug!("Getting guilds");
-
-        let mut params = HashMap::new();
+        let mut pager = GuildPager::new();
         if let Some(limit) = limit {
-            params.insert("limit", limit.to_string());
+            pager = pager.with_limit(limit);
         }
         if let Some(guild_id) = guild_id {
-            if desc.unwrap_or(false) {
-                params.insert("before", guild_id.to_string());
+            pager = if desc.unwrap_or(false) {
+                pager.with_before(guild_id)
             } else {
-                params.insert("after", guild_id.to_string());
-            }
+                pager.with_after(guild_id)
+            };
         }
+        self.get_guilds_with_pager(token, &pager).await
+    }
+
+    /// Gets the current user's guilds with a botgo-compatible pager.
+    pub async fn get_guilds_with_pager(
+        &self,
+        token: &Token,
+        pager: &GuildPager,
+    ) -> Result<Vec<Guild>> {
+        debug!("Getting guilds");
+
+        let params = pager.query_params();
 
         let response = self
             .http
