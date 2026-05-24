@@ -936,6 +936,8 @@ pub struct MessageAudit {
     pub audit_time: Option<Timestamp>,
     /// The create time
     pub create_time: Option<Timestamp>,
+    /// Channel-specific sequence number for ordering audited messages
+    pub seq_in_channel: Option<String>,
     /// Event ID from the gateway
     pub event_id: Option<String>,
 }
@@ -950,6 +952,7 @@ impl MessageAudit {
             guild_id: None,
             audit_time: None,
             create_time: None,
+            seq_in_channel: None,
             event_id: None,
         }
     }
@@ -983,6 +986,10 @@ impl MessageAudit {
                 .and_then(|v| v.as_str())
                 .and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok())
                 .map(|dt| dt.with_timezone(&chrono::Utc)),
+            seq_in_channel: data
+                .get("seq_in_channel")
+                .and_then(|v| v.as_str())
+                .map(String::from),
             event_id: Some(event_id),
         }
     }
@@ -1332,6 +1339,39 @@ mod tests {
     }
 
     #[test]
+    fn botgo_message_audit_keeps_channel_sequence() {
+        let audit = MessageAudit::from_data(
+            crate::api::BotApi::new(crate::http::HttpClient::new(30, false).unwrap()),
+            "event-1".to_string(),
+            serde_json::json!({
+                "audit_id": "audit-1",
+                "message_id": "message-1",
+                "guild_id": "guild-1",
+                "channel_id": "channel-1",
+                "seq_in_channel": "42"
+            }),
+        );
+
+        assert_eq!(audit.seq_in_channel.as_deref(), Some("42"));
+        let value = serde_json::to_value(&audit).unwrap();
+        assert_eq!(value["seq_in_channel"], serde_json::json!("42"));
+    }
+
+    #[test]
+    fn botgo_embed_keeps_prompt_field() {
+        let embed = Embed {
+            title: Some("title".to_string()),
+            prompt: Some("summary".to_string()),
+            ..Default::default()
+        };
+
+        let value = serde_json::to_value(&embed).unwrap();
+        assert_eq!(value["prompt"], serde_json::json!("summary"));
+        let parsed: Embed = serde_json::from_value(value).unwrap();
+        assert_eq!(parsed.prompt.as_deref(), Some("summary"));
+    }
+
+    #[test]
     fn test_message_attachment_types() {
         let mut attachment = MessageAttachment {
             id: Some("123".to_string()),
@@ -1425,6 +1465,8 @@ pub struct Embed {
     pub title: Option<String>,
     /// Description of the embed
     pub description: Option<String>,
+    /// Message list summary/popup content
+    pub prompt: Option<String>,
     /// URL of the embed
     pub url: Option<String>,
     /// Timestamp of the embed

@@ -37,6 +37,7 @@ impl EventHandler for EmbedReplyHandler {
         let embed = Embed {
             title: Some("embed消息".to_string()),
             description: None,
+            prompt: None,
             url: None,
             timestamp: None,
             color: Some(0x00ff00), // Green color
