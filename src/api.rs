@@ -117,7 +117,7 @@ use crate::error::Result;
 use crate::http::HttpClient;
 use crate::models::{
     announce::{Announce, AnnouncesType, RecommendChannel},
-    api::{AudioAction, BotInfo, GatewayResponse, MessageResponse},
+    api::{AudioAction, BotInfo, GatewayResponse, MessageResponse, PinsMessage},
     channel::{
         Channel, ChannelPermissions, ChannelRolesPermissions, ChannelSubType, ChannelType,
         ChannelValueObject, PrivateType, SpeakPermission, UpdateChannelPermissions,
@@ -135,7 +135,7 @@ use crate::models::{
     },
     message_setting::MessageSetting,
     permission::{APIPermission, APIPermissionDemand, APIPermissionDemandIdentify},
-    schedule::{RemindType, Schedule},
+    schedule::{RemindType, Schedule, ScheduleWrapper},
     webhook::{HttpIdentity, HttpReady, HttpSession},
 };
 use crate::reaction::ReactionUsers;
@@ -1992,14 +1992,14 @@ impl BotApi {
         token: &Token,
         channel_id: &str,
         message_id: &str,
-    ) -> Result<Value> {
+    ) -> Result<PinsMessage> {
         debug!("Pinning message {} in channel {}", message_id, channel_id);
         let path = format!("/channels/{channel_id}/pins/{message_id}");
         let response = self
             .http
-            .put(token, &path, None::<&()>, Some(&json!({})))
+            .put(token, &path, None::<&()>, None::<&()>)
             .await?;
-        Ok(response)
+        Ok(serde_json::from_value(response)?)
     }
 
     /// Unpins a message.
@@ -2052,11 +2052,11 @@ impl BotApi {
     /// # Returns
     ///
     /// Pinned messages.
-    pub async fn get_pins(&self, token: &Token, channel_id: &str) -> Result<Value> {
+    pub async fn get_pins(&self, token: &Token, channel_id: &str) -> Result<PinsMessage> {
         debug!("Getting pinned messages in channel {}", channel_id);
         let path = format!("/channels/{channel_id}/pins");
         let response = self.http.get(token, &path, None::<&()>).await?;
-        Ok(response)
+        Ok(serde_json::from_value(response)?)
     }
 
     /// Uploads a group file.
@@ -2543,22 +2543,33 @@ impl BotApi {
         jump_channel_id: &str,
         remind_type: RemindType,
     ) -> Result<Schedule> {
-        debug!("Creating schedule '{}' in channel {}", name, channel_id);
+        let schedule = Schedule::new(
+            name,
+            start_timestamp,
+            end_timestamp,
+            Some(jump_channel_id.to_string()),
+            remind_type,
+        );
+        self.create_schedule_with_model(token, channel_id, &schedule)
+            .await
+    }
 
-        let body = json!({
-            "schedule": {
-                "name": name,
-                "start_timestamp": start_timestamp,
-                "end_timestamp": end_timestamp,
-                "jump_channel_id": jump_channel_id,
-                "reminder_id": u8::from(remind_type)
-            }
-        });
-
+    /// Creates a new schedule in a channel from a schedule model.
+    pub async fn create_schedule_with_model(
+        &self,
+        token: &Token,
+        channel_id: &str,
+        schedule: &Schedule,
+    ) -> Result<Schedule> {
+        debug!(
+            "Creating schedule '{}' in channel {}",
+            schedule.name, channel_id
+        );
+        let wrapper = ScheduleWrapper::new(schedule.clone());
         let path = format!("/channels/{channel_id}/schedules");
         let response = self
             .http
-            .post(token, &path, None::<&()>, Some(&body))
+            .post(token, &path, None::<&()>, Some(&wrapper))
             .await?;
         Ok(serde_json::from_value(response)?)
     }
@@ -2590,25 +2601,35 @@ impl BotApi {
         jump_channel_id: &str,
         remind_type: RemindType,
     ) -> Result<Schedule> {
+        let schedule = Schedule::new(
+            name,
+            start_timestamp,
+            end_timestamp,
+            Some(jump_channel_id.to_string()),
+            remind_type,
+        );
+        self.update_schedule_with_model(token, channel_id, schedule_id, &schedule)
+            .await
+    }
+
+    /// Updates an existing schedule from a schedule model.
+    pub async fn update_schedule_with_model(
+        &self,
+        token: &Token,
+        channel_id: &str,
+        schedule_id: &str,
+        schedule: &Schedule,
+    ) -> Result<Schedule> {
         debug!(
             "Updating schedule {} in channel {}",
             schedule_id, channel_id
         );
 
-        let body = json!({
-            "schedule": {
-                "name": name,
-                "start_timestamp": start_timestamp,
-                "end_timestamp": end_timestamp,
-                "jump_channel_id": jump_channel_id,
-                "reminder_id": u8::from(remind_type)
-            }
-        });
-
+        let wrapper = ScheduleWrapper::new(schedule.clone());
         let path = format!("/channels/{channel_id}/schedules/{schedule_id}");
         let response = self
             .http
-            .patch(token, &path, None::<&()>, Some(&body))
+            .patch(token, &path, None::<&()>, Some(&wrapper))
             .await?;
         Ok(serde_json::from_value(response)?)
     }

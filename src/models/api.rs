@@ -273,6 +273,18 @@ pub struct MessageResponse {
     pub extra: Option<serde_json::Value>,
 }
 
+/// Pinned messages response.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+pub struct PinsMessage {
+    /// Guild ID
+    pub guild_id: Option<Snowflake>,
+    /// Channel ID
+    pub channel_id: Option<Snowflake>,
+    /// Pinned message IDs
+    #[serde(default)]
+    pub message_ids: Vec<Snowflake>,
+}
+
 impl MessageResponse {
     /// Creates a new message response
     pub fn new(id: impl Into<Snowflake>) -> Self {
