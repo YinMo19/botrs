@@ -12,7 +12,7 @@ use crate::http::HttpClient;
 use crate::intents::Intents;
 use crate::interaction::Interaction;
 use crate::manage::{C2CManageEvent, GroupManageEvent};
-use crate::models::api::AudioAction;
+use crate::models::api::{AudioAction, PinsMessage};
 use crate::models::channel::{
     ChannelRolesPermissions, ChannelSubType, ChannelType, ChannelValueObject,
     UpdateChannelPermissions,
@@ -1105,7 +1105,7 @@ impl Context {
     /// # Returns
     ///
     /// The pinned messages response.
-    pub async fn get_pins(&self, channel_id: &str) -> Result<serde_json::Value> {
+    pub async fn get_pins(&self, channel_id: &str) -> Result<PinsMessage> {
         self.api.get_pins(&self.token, channel_id).await
     }
 

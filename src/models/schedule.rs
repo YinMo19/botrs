@@ -3,7 +3,7 @@
 //! This module contains structures for creating and managing channel schedules
 //! in QQ Guild bots.
 
-use crate::models::{HasId, HasName, Snowflake};
+use crate::models::{HasId, HasName, Member, Snowflake};
 use serde::{Deserialize, Serialize};
 
 /// Reminder types for schedule events.
@@ -170,6 +170,7 @@ pub struct Schedule {
     /// Channel ID to jump to when the event starts
     pub jump_channel_id: Option<Snowflake>,
     /// Reminder type for the schedule
+    #[serde(alias = "reminder_id")]
     pub remind_type: Option<RemindType>,
 }
 
@@ -254,6 +255,32 @@ impl Schedule {
     pub fn has_jump_channel(&self) -> bool {
         self.jump_channel_id.is_some()
     }
+}
+
+/// Wrapper used by schedule create and update endpoints.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ScheduleWrapper {
+    pub schedule: Schedule,
+}
+
+impl ScheduleWrapper {
+    /// Creates a new schedule wrapper.
+    pub fn new(schedule: Schedule) -> Self {
+        Self { schedule }
+    }
+}
+
+/// Botgo-compatible schedule model with a full member creator.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct BotgoSchedule {
+    pub id: Option<Snowflake>,
+    pub name: Option<String>,
+    pub description: Option<String>,
+    pub start_timestamp: Option<String>,
+    pub end_timestamp: Option<String>,
+    pub jump_channel_id: Option<Snowflake>,
+    pub remind_type: Option<String>,
+    pub creator: Option<Member>,
 }
 
 impl HasId for Schedule {
