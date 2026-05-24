@@ -16,6 +16,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Documentation improvements and restructuring
 
+## [0.8.0] - 2026-05-25
+
+### Changed
+- Aligned `DirectMessage` with botgo's direct-message session DTO and made `DirectMessageSession` an alias of it.
+- `direct_message_create` now receives a regular `Message`, matching botgo's `WSDirectMessageData`.
+- Updated direct-message examples and API docs to use `DirectMessageParams` with `post_dms_with_params`.
+
+### Fixed
+- Completed botgo DTO parity for message, guild, and interaction wire formats.
+- Matched botgo message helper parsing behavior for mentions and command splitting.
+
 ## [0.7.0] - 2026-05-25
 
 ### Added

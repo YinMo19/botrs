@@ -95,7 +95,7 @@ api.post_message_with_params(token, "channel_id", params).await?;
 
 ```toml
 [dependencies]
-botrs = "0.7.0"
+botrs = "0.8.0"
 tokio = { version = "1.0", features = ["full"] }
 tracing = "0.1"
 tracing-subscriber = "0.3"
@@ -641,7 +641,12 @@ BotRS 的设计灵感来自 Python 的 [botpy](https://github.com/tencent-connec
 
 ## 版本历史
 
-### v0.7.0 (最新)
+### v0.8.0 (最新)
+- 🔁 对齐 botgo 的 `DirectMessage` 会话 DTO 和私信事件 `Message` payload
+- 🧭 修正私信事件处理示例，统一使用 `DirectMessageParams` 与 `post_dms_with_params`
+- 🧩 补齐 message、guild、interaction 等 DTO/wire format 对齐
+
+### v0.7.0
 - 🔧 对齐 botgo 的 HTTP callback session、OpenAPI app ID 状态和请求头行为
 - 🔁 修复不可 resume 重连后复用过期 session ID/seq 的问题
 - 🧩 兼容 botgo 单条消息接口的旧包装响应格式

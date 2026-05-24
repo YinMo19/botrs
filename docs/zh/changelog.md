@@ -16,6 +16,17 @@ BotRS 的所有重要更改都将记录在此文件中。
 ### 更改
 - 文档改进和重构
 
+## [0.8.0] - 2026-05-25
+
+### 更改
+- `DirectMessage` 对齐为 botgo 的私信会话 DTO，`DirectMessageSession` 改为其别名。
+- `direct_message_create` 现在接收普通 `Message`，与 botgo 的 `WSDirectMessageData` 保持一致。
+- 私信示例和 API 文档改为使用 `DirectMessageParams` 与 `post_dms_with_params`。
+
+### 修复
+- 补齐 message、guild 和 interaction wire format 的 botgo DTO 对齐。
+- 消息辅助函数的 mention 处理和命令切分行为与 botgo 保持一致。
+
 ## [0.7.0] - 2026-05-25
 
 ### 新增

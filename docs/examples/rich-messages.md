@@ -473,7 +473,7 @@ Add these dependencies to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-botrs = "0.7.0"
+botrs = "0.8.0"
 tokio = { version = "1.0", features = ["full"] }
 async-trait = "0.1"
 tracing = "0.1"
