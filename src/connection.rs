@@ -600,7 +600,8 @@ impl ConnectionState {
             state.api.clone(),
             Some(reaction_id.to_string()),
             reaction_data,
-        );
+        )
+        .ok()?;
         Some(("message_reaction_add", serde_json::to_value(reaction).ok()?))
     }
 
@@ -614,7 +615,8 @@ impl ConnectionState {
             state.api.clone(),
             Some(reaction_id.to_string()),
             reaction_data,
-        );
+        )
+        .ok()?;
         Some((
             "message_reaction_remove",
             serde_json::to_value(reaction).ok()?,

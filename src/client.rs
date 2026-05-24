@@ -529,7 +529,7 @@ impl Context {
         &self,
         channel_id: &str,
         message_id: &str,
-        emoji_type: u32,
+        emoji_type: i32,
         emoji_id: &str,
     ) -> Result<()> {
         self.api
@@ -565,7 +565,7 @@ impl Context {
         &self,
         channel_id: &str,
         message_id: &str,
-        emoji_type: u32,
+        emoji_type: i32,
         emoji_id: &str,
     ) -> Result<()> {
         self.api
@@ -1901,13 +1901,13 @@ impl<H: EventHandler + 'static> Client<H> {
             }
             Some("MESSAGE_REACTION_ADD") => {
                 if let Some(data) = event.data {
-                    let reaction = Reaction::new(ctx.api.as_ref().clone(), event.id, &data);
+                    let reaction = Reaction::new(ctx.api.as_ref().clone(), event.id, &data)?;
                     self.handler.message_reaction_add(ctx, reaction).await;
                 }
             }
             Some("MESSAGE_REACTION_REMOVE") => {
                 if let Some(data) = event.data {
-                    let reaction = Reaction::new(ctx.api.as_ref().clone(), event.id, &data);
+                    let reaction = Reaction::new(ctx.api.as_ref().clone(), event.id, &data)?;
                     self.handler.message_reaction_remove(ctx, reaction).await;
                 }
             }

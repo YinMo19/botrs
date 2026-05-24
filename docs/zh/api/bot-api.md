@@ -543,17 +543,17 @@ pub async fn delete_guild_announce(
 
 ## 表情回应 API
 
-### `put_message_reaction`
+### `create_message_reaction`
 
 为消息添加表情回应。
 
 ```rust
-pub async fn put_message_reaction(
+pub async fn create_message_reaction(
     &self,
     token: &Token,
     channel_id: &str,
     message_id: &str,
-    emoji: &str,
+    emoji: &ReactionEmoji,
 ) -> Result<(), BotError>
 ```
 
@@ -561,20 +561,21 @@ pub async fn put_message_reaction(
 
 ```rust
 // 添加点赞表情
-api.put_message_reaction(&token, "channel_123", "message_456", "👍").await?;
+let emoji = ReactionEmoji::new("4", 1);
+api.create_message_reaction(&token, "channel_123", "message_456", &emoji).await?;
 ```
 
-### `delete_message_reaction`
+### `delete_own_message_reaction`
 
 删除消息的表情回应。
 
 ```rust
-pub async fn delete_message_reaction(
+pub async fn delete_own_message_reaction(
     &self,
     token: &Token,
     channel_id: &str,
     message_id: &str,
-    emoji: &str,
+    emoji: &ReactionEmoji,
 ) -> Result<(), BotError>
 ```
 
@@ -588,9 +589,8 @@ pub async fn get_message_reaction_users(
     token: &Token,
     channel_id: &str,
     message_id: &str,
-    emoji: &str,
-    cookie: Option<&str>,
-    limit: Option<u32>,
+    emoji: &ReactionEmoji,
+    pager: &MessageReactionPager,
 ) -> Result<ReactionUsers, BotError>
 ```
 

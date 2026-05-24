@@ -77,9 +77,7 @@ impl EventHandler for GetReactionUsersHandler {
         // Log results (equivalent to Python print statements)
         info!("Total users found: {}", users.len());
         for user in users {
-            if let Some(username) = &user.username {
-                info!("User: {}", username);
-            }
+            info!("User: {}", user.username);
         }
     }
 
