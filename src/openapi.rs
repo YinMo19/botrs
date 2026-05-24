@@ -7,6 +7,38 @@ use std::sync::{Arc, LazyLock, RwLock};
 
 use reqwest::{Method, StatusCode, header::HeaderMap};
 
+pub use crate::api::{APIVersion, APIVersionString, APIv1};
+pub use crate::botgo::{DefaultOpenAPIVersion, VersionMapping};
+
+pub type OpenAPI = crate::api::BotApi;
+pub type Base = OpenAPI;
+pub type WebsocketAPI = OpenAPI;
+pub type UserAPI = OpenAPI;
+pub type MessageAPI = OpenAPI;
+pub type DirectMessageAPI = OpenAPI;
+pub type GuildAPI = OpenAPI;
+pub type ChannelAPI = OpenAPI;
+pub type AudioAPI = OpenAPI;
+pub type RoleAPI = OpenAPI;
+pub type MemberAPI = OpenAPI;
+pub type ChannelPermissionsAPI = OpenAPI;
+pub type AnnouncesAPI = OpenAPI;
+pub type ScheduleAPI = OpenAPI;
+pub type APIPermissionsAPI = OpenAPI;
+pub type PinsAPI = OpenAPI;
+pub type MessageReactionAPI = OpenAPI;
+pub type WebhookAPI = OpenAPI;
+pub type InteractionAPI = OpenAPI;
+pub type MessageSettingAPI = OpenAPI;
+
+pub fn Register(version: APIVersion, api: OpenAPI) {
+    crate::botgo::SetOpenAPIClient(version, api);
+}
+
+pub fn DefaultImpl() -> OpenAPI {
+    crate::botgo::DefaultImpl()
+}
+
 pub fn IsSuccessStatus(code: u16) -> bool {
     matches!(code, 200 | 204)
 }
@@ -139,6 +171,28 @@ mod tests {
         assert!(!IsSuccessStatus(201));
         assert!(!IsSuccessStatus(202));
         assert!(!IsSuccessStatus(400));
+    }
+
+    #[test]
+    fn openapi_registry_facade_matches_botgo_names() {
+        let custom_version = 777;
+        let template = crate::api::BotApi::new(
+            crate::http::HttpClient::new(11, false).expect("valid test client"),
+        );
+
+        Register(custom_version, template);
+
+        assert_eq!(
+            VersionMapping
+                .read()
+                .expect("openapi registry lock poisoned")
+                .get(&custom_version)
+                .expect("registered custom openapi")
+                .http()
+                .timeout(),
+            std::time::Duration::from_secs(11)
+        );
+        assert_eq!(DefaultImpl().Version(), crate::api::APIv1);
     }
 
     #[test]

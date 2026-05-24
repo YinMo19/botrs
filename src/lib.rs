@@ -34,8 +34,8 @@ pub mod websocket;
 pub use api::BotApi;
 pub use audio::{Audio, AudioControl, AudioStatus, PublicAudio, PublicAudioType};
 pub use botgo::{
-    NewOpenAPI, NewSandboxOpenAPI, RegisterDispatchEventHandler, SelectOpenAPIVersion, SetLogger,
-    SetOpenAPIClient, SetSessionManager, SetWebsocketClient,
+    DefaultImpl, NewOpenAPI, NewSandboxOpenAPI, RegisterDispatchEventHandler, SelectOpenAPIVersion,
+    SetLogger, SetOpenAPIClient, SetSessionManager, SetWebsocketClient,
 };
 pub use client::{Client, Context, EventHandler};
 pub use connection::{ConnectionSession, ConnectionState, Session};
@@ -70,8 +70,11 @@ pub use manage::{
 pub use models::gateway::Ready;
 pub use models::*;
 pub use openapi::{
-    DoReqFilterChains, DoRespFilterChains, FilterContext, HTTPFilter, IsSuccessStatus,
-    RegisterReqFilter, RegisterRespFilter,
+    APIPermissionsAPI, AnnouncesAPI, AudioAPI, Base, ChannelAPI, ChannelPermissionsAPI,
+    DirectMessageAPI, DoReqFilterChains, DoRespFilterChains, FilterContext, GuildAPI, HTTPFilter,
+    InteractionAPI, IsSuccessStatus, MemberAPI, MessageAPI, MessageReactionAPI, MessageSettingAPI,
+    OpenAPI, PinsAPI, Register as RegisterOpenAPI, RegisterReqFilter, RegisterRespFilter, RoleAPI,
+    ScheduleAPI, UserAPI, WebhookAPI, WebsocketAPI,
 };
 pub use options::{OpenApiOption, Options, WithHideTip, WithURL};
 pub use reaction::{

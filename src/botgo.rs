@@ -23,6 +23,18 @@ fn default_openapi_template() -> BotApi {
     BotApi::new(HttpClient::new(crate::DEFAULT_TIMEOUT, false).expect("valid default api client"))
 }
 
+pub fn DefaultImpl() -> BotApi {
+    let version = *DefaultOpenAPIVersion
+        .read()
+        .expect("openapi version lock poisoned");
+    VersionMapping
+        .read()
+        .expect("openapi version mapping lock poisoned")
+        .get(&version)
+        .cloned()
+        .unwrap_or_else(default_openapi_template)
+}
+
 pub fn SelectOpenAPIVersion(version: APIVersion) -> Result<()> {
     if VersionMapping
         .read()
