@@ -16,6 +16,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Documentation improvements and restructuring
 
+## [0.6.0] - 2026-05-25
+
+### Added
+- Botgo-compatible `WSPayload.session`, `C2CFriendData`, `WSC2CFriendData`, message helper, pager helper, and OpenAPI facade names.
+- `APIMessage`, `GetEventID`, `GetSendType`, `QueryParams`, OpenAPI group aliases, `openapi::Register`, and `DefaultImpl` compatibility entry points.
+
+### Changed
+- Aligned websocket event payload DTOs and C2C friend events with botgo's pure data-model shape.
+- Kept Rust-style lowercase helpers while adding botgo-style exported names for smoother migration.
+
 ## [0.5.0] - 2026-05-25
 
 ### Added
