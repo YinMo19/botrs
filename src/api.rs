@@ -129,10 +129,10 @@ use crate::models::{
         normalize_delete_history_msg_days,
     },
     message::{
-        ApiMessage, Ark, C2CMessageParams, DirectMessageParams, Embed, GroupMessageParams,
-        Keyboard, KeyboardPayload, MarkdownPayload, Media, Message, MessagePagerType,
-        MessageParams, MessageToCreate, MessagesPager, Reference, RichMediaMessage, SendType,
-        SettingGuide, SettingGuideToCreate,
+        ApiMessage, Ark, C2CMessageParams, DirectMessageParams, DirectMessageSession,
+        DirectMessageToCreate, Embed, GroupMessageParams, Keyboard, KeyboardPayload,
+        MarkdownPayload, Media, Message, MessagePagerType, MessageParams, MessageToCreate,
+        MessagesPager, Reference, RichMediaMessage, SendType, SettingGuide, SettingGuideToCreate,
     },
     message_setting::MessageSetting,
     permission::{APIPermission, APIPermissionDemand, APIPermissionDemandIdentify},
@@ -1526,6 +1526,23 @@ impl BotApi {
         self.post_dms_with_params(token, guild_id, params).await
     }
 
+    /// Creates a direct message session using a botgo-compatible payload.
+    pub async fn create_direct_message(
+        &self,
+        token: &Token,
+        dm: &DirectMessageToCreate,
+    ) -> Result<DirectMessageSession> {
+        debug!(
+            "Creating DM session for user {} from guild {}",
+            dm.recipient_id, dm.source_guild_id
+        );
+        let response = self
+            .http
+            .post(token, "/users/@me/dms", None::<&()>, Some(dm))
+            .await?;
+        Ok(serde_json::from_value(response)?)
+    }
+
     /// Creates a direct message session.
     ///
     /// # Arguments
@@ -1537,22 +1554,14 @@ impl BotApi {
     /// # Returns
     ///
     /// DM session information.
-    pub async fn create_dms(&self, token: &Token, guild_id: &str, user_id: &str) -> Result<Value> {
-        debug!(
-            "Creating DM session for user {} from guild {}",
-            user_id, guild_id
-        );
-
-        let body = json!({
-            "recipient_id": user_id,
-            "source_guild_id": guild_id
-        });
-
-        let response = self
-            .http
-            .post(token, "/users/@me/dms", None::<&()>, Some(&body))
-            .await?;
-        Ok(response)
+    pub async fn create_dms(
+        &self,
+        token: &Token,
+        guild_id: &str,
+        user_id: &str,
+    ) -> Result<DirectMessageSession> {
+        let dm = DirectMessageToCreate::new(guild_id, user_id);
+        self.create_direct_message(token, &dm).await
     }
 
     /// Posts a channel setting guide message.
@@ -1578,6 +1587,29 @@ impl BotApi {
         Ok(serde_json::from_value(response)?)
     }
 
+    /// Posts a channel setting guide message and returns the full message.
+    pub async fn post_setting_guide_message(
+        &self,
+        token: &Token,
+        channel_id: &str,
+        at_user_ids: Vec<String>,
+    ) -> Result<Message> {
+        let content = at_user_ids
+            .iter()
+            .map(|user_id| format!("<@{user_id}>"))
+            .collect::<String>();
+        let body = SettingGuideToCreate {
+            content: Some(content),
+            setting_guide: None,
+        };
+        let path = format!("/channels/{channel_id}/settingguide");
+        let response = self
+            .http
+            .post(token, &path, None::<&()>, Some(&body))
+            .await?;
+        Ok(serde_json::from_value(response)?)
+    }
+
     /// Posts a DM setting guide message.
     pub async fn post_dm_setting_guide(
         &self,
@@ -1585,6 +1617,27 @@ impl BotApi {
         guild_id: &str,
         jump_guild_id: &str,
     ) -> Result<MessageResponse> {
+        let body = SettingGuideToCreate {
+            content: None,
+            setting_guide: Some(SettingGuide {
+                guild_id: jump_guild_id.to_string(),
+            }),
+        };
+        let path = format!("/dms/{guild_id}/settingguide");
+        let response = self
+            .http
+            .post(token, &path, None::<&()>, Some(&body))
+            .await?;
+        Ok(serde_json::from_value(response)?)
+    }
+
+    /// Posts a DM setting guide message and returns the full message.
+    pub async fn post_dm_setting_guide_message(
+        &self,
+        token: &Token,
+        guild_id: &str,
+        jump_guild_id: &str,
+    ) -> Result<Message> {
         let body = SettingGuideToCreate {
             content: None,
             setting_guide: Some(SettingGuide {
