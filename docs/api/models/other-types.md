@@ -120,18 +120,18 @@ Detailed information about a thread.
 
 ```rust
 pub struct ThreadInfo {
-    pub thread_id: String,
-    pub title: String,
-    pub content: String,
-    pub date_time: String,
+    pub thread_id: Option<String>,
+    pub title: Option<String>,
+    pub content: Option<String>,
+    pub date_time: Option<String>,
 }
 ```
 
 #### Fields
 
 - `thread_id`: Unique thread identifier
-- `title`: Thread title
-- `content`: Thread content/description
+- `title`: Thread title string from the botgo DTO
+- `content`: Thread content string from the botgo DTO
 - `date_time`: Thread creation timestamp
 
 ### `OpenThread`
@@ -573,7 +573,10 @@ async fn create_forum_thread(
         &Format::Text,
     ).await?;
     
-    println!("Created forum thread: {}", thread.thread_info.title);
+    println!(
+        "Created forum thread: {}",
+        thread.thread_info.title.as_deref().unwrap_or("Untitled")
+    );
     Ok(thread)
 }
 ```

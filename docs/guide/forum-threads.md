@@ -241,36 +241,21 @@ impl ForumBot {
         // Access thread information
         println!("Thread ID: {:?}", thread.thread_info.thread_id);
         println!("Created: {:?}", thread.thread_info.date_time);
-        
-        // Parse title content
-        for paragraph in &thread.thread_info.title.paragraphs {
-            for elem in &paragraph.elems {
-                match elem.element_type {
-                    Some(1) => {
-                        // Text element
-                        if let Some(text) = &elem.text {
-                            if let Some(content) = &text.text {
-                                println!("Title text: {}", content);
-                            }
-                        }
-                    }
-                    Some(2) => {
-                        // Image element
-                        if let Some(image) = &elem.image {
-                            if let Some(url) = &image.plat_image.url {
-                                println!("Title image: {}", url);
-                            }
-                        }
-                    }
-                    _ => {}
-                }
-            }
+
+        if let Some(title) = &thread.thread_info.title {
+            println!("Title: {}", title);
         }
-        
-        // Parse main content
-        for paragraph in &thread.thread_info.content.paragraphs {
-            for elem in &paragraph.elems {
-                self.process_content_element(elem).await;
+
+        // The botgo DTO keeps title/content as JSON strings. Parse them only
+        // when structured rich-content processing is needed.
+        if let Some(content) = &thread.thread_info.content {
+            if let Ok(content_data) = serde_json::from_str::<serde_json::Value>(content) {
+                let parsed = Content::new(&content_data);
+                for paragraph in &parsed.paragraphs {
+                    for elem in &paragraph.elems {
+                        self.process_content_element(elem).await;
+                    }
+                }
             }
         }
     }
