@@ -11,7 +11,7 @@ use crate::gateway::Gateway;
 use crate::http::HttpClient;
 use crate::intents::Intents;
 use crate::interaction::Interaction;
-use crate::manage::{C2CManageEvent, GroupManageEvent};
+use crate::manage::{C2CManageEvent, EnterAioEvent, GroupManageEvent, SubscribeMessageStatusData};
 use crate::models::api::{AudioAction, PinsMessage};
 use crate::models::channel::{
     ChannelRolesPermissions, ChannelSubType, ChannelType, ChannelValueObject,
@@ -124,6 +124,12 @@ pub trait EventHandler: Send + Sync {
 
     /// Called when C2C message is received.
     async fn c2c_msg_receive(&self, _ctx: Context, _event: C2CManageEvent) {}
+
+    /// Called when subscribe message authorization status changes.
+    async fn subscribe_message_status(&self, _ctx: Context, _event: SubscribeMessageStatusData) {}
+
+    /// Called when a user enters AIO.
+    async fn enter_aio(&self, _ctx: Context, _event: EnterAioEvent) {}
 
     /// Called when robot is added to group.
     async fn group_add_robot(&self, _ctx: Context, _event: GroupManageEvent) {}
@@ -1774,6 +1780,28 @@ impl<H: EventHandler + 'static> Client<H> {
                     });
                     let message = C2CMessage::from_data((*ctx.api).clone(), event_id, data);
                     self.handler.c2c_message_create(ctx, message).await;
+                }
+            }
+            Some("SUBSCRIBE_MESSAGE_STATUS") => {
+                if let Some(data) = event.data {
+                    let event_id = event.id.clone().or_else(|| {
+                        data.get("id")
+                            .and_then(|v| v.as_str())
+                            .map(|s| s.to_string())
+                    });
+                    let status = SubscribeMessageStatusData::new(event_id, &data);
+                    self.handler.subscribe_message_status(ctx, status).await;
+                }
+            }
+            Some("ENTER_AIO") => {
+                if let Some(data) = event.data {
+                    let event_id = event.id.clone().or_else(|| {
+                        data.get("id")
+                            .and_then(|v| v.as_str())
+                            .map(|s| s.to_string())
+                    });
+                    let aio = EnterAioEvent::new(event_id, &data);
+                    self.handler.enter_aio(ctx, aio).await;
                 }
             }
             Some("DIRECT_MESSAGE_DELETE") => {

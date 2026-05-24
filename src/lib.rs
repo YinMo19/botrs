@@ -25,8 +25,14 @@ pub use connection::{ConnectionSession, ConnectionState, Session};
 pub use error::{BotError, Result};
 pub use forum::{Content, Format, OpenThread, Thread, ThreadInfo, Title};
 pub use intents::Intents;
-pub use interaction::{Interaction, InteractionData, InteractionDataType, InteractionType};
-pub use manage::{C2CManageEvent, GroupManageEvent, ManageEventType};
+pub use interaction::{
+    Interaction, InteractionData, InteractionDataType, InteractionType, SearchInputResolved,
+    SearchLayout, SearchRecord, SearchRsp,
+};
+pub use manage::{
+    C2CManageEvent, EnterAioEvent, GroupManageEvent, ManageEventType, SubscribeMessageStatusData,
+    SubscribeMsgTemplateResult,
+};
 pub use models::gateway::Ready;
 pub use models::*;
 pub use reaction::{Reaction, ReactionTarget, ReactionTargetType, ReactionUsers};
