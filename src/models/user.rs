@@ -1,5 +1,6 @@
 //! User-related data models for the QQ Guild Bot API.
 
+use crate::models::api::BotInfo;
 use crate::models::{HasId, Snowflake, Timestamp};
 use serde::{Deserialize, Serialize};
 
@@ -103,6 +104,19 @@ impl User {
 impl HasId for User {
     fn id(&self) -> Option<&Snowflake> {
         Some(&self.id)
+    }
+}
+
+impl From<BotInfo> for User {
+    fn from(bot: BotInfo) -> Self {
+        Self {
+            id: bot.id,
+            username: bot.username,
+            avatar: bot.avatar,
+            bot: bot.bot,
+            union_openid: None,
+            union_user_account: None,
+        }
     }
 }
 
