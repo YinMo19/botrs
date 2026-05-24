@@ -5,7 +5,7 @@
 
 mod common;
 
-use botrs::{Client, Context, EventHandler, Intents, Message, Ready, Token};
+use botrs::{Client, Context, EventHandler, Intents, Message, MessageDelete, Ready, Token};
 use common::{Config, init_logging};
 use std::env;
 use tracing::{info, warn};
@@ -79,8 +79,8 @@ impl EventHandler for RecallHandler {
     }
 
     /// Called when a message is deleted.
-    async fn message_delete(&self, _ctx: Context, message: Message) {
-        info!("Message deleted: {:?}", message.id);
+    async fn message_delete(&self, _ctx: Context, message: MessageDelete) {
+        info!("Message deleted: {:?}", message.message.id);
     }
 
     /// Called when an error occurs during event processing.

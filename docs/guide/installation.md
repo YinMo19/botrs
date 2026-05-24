@@ -47,7 +47,7 @@ Add BotRS and required dependencies to your `Cargo.toml`:
 ```toml
 [dependencies]
 # BotRS framework
-botrs = "0.2.5"
+botrs = "0.3.0"
 
 # Async runtime
 tokio = { version = "1.0", features = ["full"] }

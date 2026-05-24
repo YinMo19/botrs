@@ -40,10 +40,9 @@ impl MarkdownReplyHandler {
         ];
 
         let markdown = MarkdownPayload {
-            template_id: None,
             custom_template_id: Some("65".to_string()),
             params: Some(params),
-            content: None,
+            ..Default::default()
         };
 
         // Send markdown message using API
@@ -71,10 +70,8 @@ impl MarkdownReplyHandler {
         _msg_id: Option<&str>,
     ) {
         let markdown = MarkdownPayload {
-            template_id: None,
-            custom_template_id: None,
-            params: None,
             content: Some("# 标题 \n## 简介很开心 \n内容".to_string()),
+            ..Default::default()
         };
 
         // Send markdown message using new API

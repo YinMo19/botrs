@@ -23,10 +23,8 @@ impl KeyboardReplyHandler {
     /// Send template keyboard message (equivalent to send_template_keyboard)
     async fn send_template_keyboard(&self, ctx: &Context, channel_id: &str) {
         let markdown = MarkdownPayload {
-            template_id: None,
-            custom_template_id: None,
-            params: None,
             content: Some("# 123 \n 今天是个好天气".to_string()),
+            ..Default::default()
         };
 
         let keyboard = KeyboardPayload {
@@ -53,10 +51,8 @@ impl KeyboardReplyHandler {
     /// Send self-defined keyboard message (equivalent to send_self_defined_keyboard)
     async fn send_self_defined_keyboard(&self, ctx: &Context, channel_id: &str) {
         let markdown = MarkdownPayload {
-            template_id: None,
-            custom_template_id: None,
-            params: None,
             content: Some("# 标题 \n## 简介 \n内容".to_string()),
+            ..Default::default()
         };
 
         let keyboard_content = self.build_demo_keyboard();

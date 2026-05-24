@@ -95,7 +95,7 @@ api.post_message_with_params(token, "channel_id", params).await?;
 
 ```toml
 [dependencies]
-botrs = "0.2.4"
+botrs = "0.3.0"
 tokio = { version = "1.0", features = ["full"] }
 tracing = "0.1"
 tracing-subscriber = "0.3"

@@ -146,10 +146,10 @@ impl Config {
         secret: Option<String>,
     ) -> Result<Self, Box<dyn std::error::Error>> {
         // Try loading from file first
-        if let Some(path) = config_path {
-            if Path::new(path).exists() {
-                return Self::from_file(path);
-            }
+        if let Some(path) = config_path
+            && Path::new(path).exists()
+        {
+            return Self::from_file(path);
         }
 
         // Try default config file locations

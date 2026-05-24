@@ -148,6 +148,7 @@ use crate::reaction::{Emoji as ReactionEmoji, MessageReactionPager, ReactionUser
 use crate::token::Token;
 use base64::Engine;
 use reqwest::header::{HeaderMap, HeaderValue};
+use serde::Serialize;
 use serde_json::{Value, json};
 use std::collections::HashMap;
 use tracing::debug;
@@ -1219,12 +1220,8 @@ impl BotApi {
         msg: &ApiMessage,
     ) -> Result<Message> {
         debug!("Sending botgo-style group message to {}", group_openid);
-        let path = match msg.send_type() {
-            SendType::RichMedia => format!("/v2/groups/{group_openid}/files"),
-            _ => format!("/v2/groups/{group_openid}/messages"),
-        };
-        let response = self.http.post(token, &path, None::<&()>, Some(msg)).await?;
-        Ok(serde_json::from_value(response)?)
+        self.post_group_api_payload(token, group_openid, msg.send_type(), msg)
+            .await
     }
 
     /// Sends a group message create payload and returns the full message.
@@ -1234,7 +1231,7 @@ impl BotApi {
         group_openid: &str,
         msg: &MessageToCreate,
     ) -> Result<Message> {
-        self.post_group_api_message(token, group_openid, &ApiMessage::Message(msg.clone()))
+        self.post_group_api_payload(token, group_openid, msg.send_type(), msg)
             .await
     }
 
@@ -1245,8 +1242,23 @@ impl BotApi {
         group_openid: &str,
         msg: &RichMediaMessage,
     ) -> Result<Message> {
-        self.post_group_api_message(token, group_openid, &ApiMessage::RichMedia(msg.clone()))
+        self.post_group_api_payload(token, group_openid, msg.send_type(), msg)
             .await
+    }
+
+    async fn post_group_api_payload<T: Serialize + ?Sized>(
+        &self,
+        token: &Token,
+        group_openid: &str,
+        send_type: SendType,
+        msg: &T,
+    ) -> Result<Message> {
+        let path = match send_type {
+            SendType::RichMedia => format!("/v2/groups/{group_openid}/files"),
+            _ => format!("/v2/groups/{group_openid}/messages"),
+        };
+        let response = self.http.post(token, &path, None::<&()>, Some(msg)).await?;
+        Ok(serde_json::from_value(response)?)
     }
 
     /// Sends a group message (legacy API for backward compatibility).
@@ -1364,12 +1376,8 @@ impl BotApi {
         msg: &ApiMessage,
     ) -> Result<Message> {
         debug!("Sending botgo-style C2C message to {}", openid);
-        let path = match msg.send_type() {
-            SendType::RichMedia => format!("/v2/users/{openid}/files"),
-            _ => format!("/v2/users/{openid}/messages"),
-        };
-        let response = self.http.post(token, &path, None::<&()>, Some(msg)).await?;
-        Ok(serde_json::from_value(response)?)
+        self.post_c2c_api_payload(token, openid, msg.send_type(), msg)
+            .await
     }
 
     /// Sends a C2C message create payload and returns the full message.
@@ -1379,7 +1387,7 @@ impl BotApi {
         openid: &str,
         msg: &MessageToCreate,
     ) -> Result<Message> {
-        self.post_c2c_api_message(token, openid, &ApiMessage::Message(msg.clone()))
+        self.post_c2c_api_payload(token, openid, msg.send_type(), msg)
             .await
     }
 
@@ -1390,8 +1398,23 @@ impl BotApi {
         openid: &str,
         msg: &RichMediaMessage,
     ) -> Result<Message> {
-        self.post_c2c_api_message(token, openid, &ApiMessage::RichMedia(msg.clone()))
+        self.post_c2c_api_payload(token, openid, msg.send_type(), msg)
             .await
+    }
+
+    async fn post_c2c_api_payload<T: Serialize + ?Sized>(
+        &self,
+        token: &Token,
+        openid: &str,
+        send_type: SendType,
+        msg: &T,
+    ) -> Result<Message> {
+        let path = match send_type {
+            SendType::RichMedia => format!("/v2/users/{openid}/files"),
+            _ => format!("/v2/users/{openid}/messages"),
+        };
+        let response = self.http.post(token, &path, None::<&()>, Some(msg)).await?;
+        Ok(serde_json::from_value(response)?)
     }
 
     /// Sends a C2C (client-to-client) message (legacy API for backward compatibility).
