@@ -147,11 +147,22 @@ use crate::models::{
 use crate::reaction::{Emoji as ReactionEmoji, MessageReactionPager, ReactionUsers};
 use crate::token::Token;
 use base64::Engine;
+use reqwest::Method;
 use reqwest::header::{HeaderMap, HeaderValue};
 use serde::Serialize;
 use serde_json::{Value, json};
 use std::collections::HashMap;
+use std::time::Duration;
 use tracing::debug;
+
+pub type APIVersion = u32;
+#[allow(non_upper_case_globals)]
+pub const APIv1: APIVersion = 1;
+
+#[allow(non_snake_case)]
+pub fn APIVersionString(version: APIVersion) -> String {
+    format!("v{version}")
+}
 
 /// Bot API client for the QQ Guild Bot API.
 #[derive(Clone)]
@@ -178,6 +189,104 @@ impl BotApi {
     /// ```
     pub fn new(http: HttpClient) -> Self {
         Self { http }
+    }
+
+    /// Creates a configured API client and token, mirroring botgo's setup step.
+    pub fn setup(
+        bot_app_id: impl Into<String>,
+        secret: impl Into<String>,
+        in_sandbox: bool,
+    ) -> Result<(Self, Token)> {
+        let token = Token::new(bot_app_id, secret);
+        let http = HttpClient::new(crate::DEFAULT_TIMEOUT, in_sandbox)?;
+        Ok((Self::new(http), token))
+    }
+
+    /// Botgo-compatible setup constructor.
+    #[allow(non_snake_case)]
+    pub fn Setup(
+        bot_app_id: impl Into<String>,
+        secret: impl Into<String>,
+        in_sandbox: bool,
+    ) -> Result<(Self, Token)> {
+        Self::setup(bot_app_id, secret, in_sandbox)
+    }
+
+    /// Returns the OpenAPI version implemented by this client.
+    pub const fn version(&self) -> APIVersion {
+        APIv1
+    }
+
+    /// Botgo-compatible OpenAPI version method.
+    #[allow(non_snake_case)]
+    pub const fn Version(&self) -> APIVersion {
+        self.version()
+    }
+
+    /// Returns a client configured with the given request timeout.
+    pub fn with_timeout(&self, duration: Duration) -> Result<Self> {
+        Ok(Self {
+            http: self.http.with_timeout(duration)?,
+        })
+    }
+
+    /// Botgo-compatible timeout configuration method.
+    #[allow(non_snake_case)]
+    pub fn WithTimeout(&self, duration: Duration) -> Result<Self> {
+        self.with_timeout(duration)
+    }
+
+    /// Returns a client with verbose HTTP debug logging toggled.
+    pub fn set_debug(&self, debug: bool) -> Self {
+        Self {
+            http: self.http.with_debug(debug),
+        }
+    }
+
+    /// Botgo-compatible debug configuration method.
+    #[allow(non_snake_case)]
+    pub fn SetDebug(&self, debug: bool) -> Self {
+        self.set_debug(debug)
+    }
+
+    /// Passes through an arbitrary request to a full URL.
+    pub async fn transport<B>(
+        &self,
+        token: &Token,
+        method: Method,
+        url: &str,
+        body: Option<&B>,
+    ) -> Result<Vec<u8>>
+    where
+        B: Serialize + ?Sized,
+    {
+        self.http.transport(token, method, url, body).await
+    }
+
+    /// Botgo-compatible transport passthrough.
+    #[allow(non_snake_case)]
+    pub async fn Transport<B>(
+        &self,
+        token: &Token,
+        method: Method,
+        url: &str,
+        body: Option<&B>,
+    ) -> Result<Vec<u8>>
+    where
+        B: Serialize + ?Sized,
+    {
+        self.transport(token, method, url, body).await
+    }
+
+    /// Returns the last OpenAPI trace ID observed by the underlying HTTP client.
+    pub fn trace_id(&self) -> String {
+        self.http.trace_id()
+    }
+
+    /// Botgo-compatible trace ID accessor.
+    #[allow(non_snake_case)]
+    pub fn TraceID(&self) -> String {
+        self.trace_id()
     }
 
     /// Gets information about the current bot.
@@ -3141,5 +3250,21 @@ mod tests {
         let http = HttpClient::new(30, false).unwrap();
         let api = BotApi::new(http);
         assert!(!api.http().is_sandbox());
+    }
+
+    #[test]
+    fn test_botgo_base_helpers() {
+        let (api, token) = BotApi::Setup("app-id", "secret", true).unwrap();
+        assert_eq!(api.Version(), APIv1);
+        assert_eq!(APIVersionString(api.version()), "v1");
+        assert_eq!(token.app_id(), "app-id");
+        assert!(api.http().is_sandbox());
+
+        let api = api.WithTimeout(Duration::from_secs(7)).unwrap();
+        assert_eq!(api.http().timeout(), Duration::from_secs(7));
+
+        let api = api.SetDebug(true);
+        assert!(api.http().debug_enabled());
+        assert_eq!(api.TraceID(), "");
     }
 }
