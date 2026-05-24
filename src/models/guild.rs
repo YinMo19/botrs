@@ -587,6 +587,8 @@ pub struct UpdateGuildMuteResponse {
 /// Represents a member of a guild.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Member {
+    /// Guild ID
+    pub guild_id: Option<Snowflake>,
     /// The user information
     pub user: Option<crate::models::User>,
     /// The member's nickname in the guild
@@ -595,16 +597,20 @@ pub struct Member {
     pub roles: Option<Vec<Snowflake>>,
     /// When the member joined the guild
     pub joined_at: Option<Timestamp>,
+    /// Operator user ID
+    pub op_user_id: Option<Snowflake>,
 }
 
 impl Member {
     /// Creates a new member.
     pub fn new() -> Self {
         Self {
+            guild_id: None,
             user: None,
             nick: None,
             roles: None,
             joined_at: None,
+            op_user_id: None,
         }
     }
 
