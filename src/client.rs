@@ -438,6 +438,17 @@ impl Context {
             .await
     }
 
+    /// Posts a channel setting guide message and returns the full message.
+    pub async fn post_setting_guide_message(
+        &self,
+        channel_id: &str,
+        at_user_ids: Vec<String>,
+    ) -> Result<Message> {
+        self.api
+            .post_setting_guide_message(&self.token, channel_id, at_user_ids)
+            .await
+    }
+
     /// Recalls (deletes) a message.
     ///
     /// # Arguments
@@ -1307,9 +1318,28 @@ impl Context {
         &self,
         recipient_id: &str,
         source_guild_id: &str,
-    ) -> Result<serde_json::Value> {
+    ) -> Result<DirectMessageSession> {
         self.api
-            .create_dms(&self.token, recipient_id, source_guild_id)
+            .create_dms(&self.token, source_guild_id, recipient_id)
+            .await
+    }
+
+    /// Creates a direct message session.
+    pub async fn create_direct_message(
+        &self,
+        dm: &DirectMessageToCreate,
+    ) -> Result<DirectMessageSession> {
+        self.api.create_direct_message(&self.token, dm).await
+    }
+
+    /// Sends a direct message and returns the full message.
+    pub async fn post_direct_message(
+        &self,
+        guild_id: &str,
+        msg: &MessageToCreate,
+    ) -> Result<Message> {
+        self.api
+            .post_direct_message(&self.token, guild_id, msg)
             .await
     }
 
@@ -1321,6 +1351,17 @@ impl Context {
     ) -> Result<MessageResponse> {
         self.api
             .post_dm_setting_guide(&self.token, guild_id, jump_guild_id)
+            .await
+    }
+
+    /// Posts a DM setting guide message and returns the full message.
+    pub async fn post_dm_setting_guide_message(
+        &self,
+        guild_id: &str,
+        jump_guild_id: &str,
+    ) -> Result<Message> {
+        self.api
+            .post_dm_setting_guide_message(&self.token, guild_id, jump_guild_id)
             .await
     }
 
