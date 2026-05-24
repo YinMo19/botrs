@@ -25,7 +25,7 @@ use crate::models::guild::{
 use crate::models::message::{MessagePagerType, MessagesPager};
 use crate::models::webhook::{HttpIdentity, HttpReady, HttpSession};
 use crate::models::*;
-use crate::reaction::Reaction;
+use crate::reaction::{Emoji as ReactionEmoji, MessageReactionPager, Reaction, ReactionUsers};
 use crate::token::Token;
 use std::sync::Arc;
 use tokio::sync::mpsc;
@@ -537,6 +537,18 @@ impl Context {
             .await
     }
 
+    /// Adds a reaction to a message using a botgo-compatible emoji object.
+    pub async fn create_message_reaction(
+        &self,
+        channel_id: &str,
+        message_id: &str,
+        emoji: &ReactionEmoji,
+    ) -> Result<()> {
+        self.api
+            .create_message_reaction(&self.token, channel_id, message_id, emoji)
+            .await
+    }
+
     /// Removes a reaction from a message.
     ///
     /// # Arguments
@@ -558,6 +570,31 @@ impl Context {
     ) -> Result<()> {
         self.api
             .delete_reaction(&self.token, channel_id, message_id, emoji_type, emoji_id)
+            .await
+    }
+
+    /// Deletes own reaction from a message using a botgo-compatible emoji object.
+    pub async fn delete_own_message_reaction(
+        &self,
+        channel_id: &str,
+        message_id: &str,
+        emoji: &ReactionEmoji,
+    ) -> Result<()> {
+        self.api
+            .delete_own_message_reaction(&self.token, channel_id, message_id, emoji)
+            .await
+    }
+
+    /// Gets message reaction users using botgo-compatible emoji and pager objects.
+    pub async fn get_message_reaction_users(
+        &self,
+        channel_id: &str,
+        message_id: &str,
+        emoji: &ReactionEmoji,
+        pager: &MessageReactionPager,
+    ) -> Result<ReactionUsers> {
+        self.api
+            .get_message_reaction_users(&self.token, channel_id, message_id, emoji, pager)
             .await
     }
 
