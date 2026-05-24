@@ -16,6 +16,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Documentation improvements and restructuring
 
+## [0.7.0] - 2026-05-25
+
+### Added
+- Botgo-compatible OpenAPI v1 concrete constants `HeaderCallbackAppID` and `MaxIdleConns`.
+- `Session::from_app_id` / `Session::FromAppID` helper for HTTP callback payload sessions.
+
+### Changed
+- OpenAPI instances now preserve botgo's app ID state and send `X-Union-Appid` on requests.
+- `PutInteraction` now uses the OpenAPI app ID for `X-Callback-AppID`, matching botgo.
+- HTTP webhook dispatch payloads now include a session with the configured app ID.
+
+### Fixed
+- Clear stale session ID and sequence before requeueing sessions after non-resumable gateway close errors.
+- Accept botgo's legacy wrapped single-message response shape (`{"message": ...}`).
+
 ## [0.6.0] - 2026-05-25
 
 ### Added
