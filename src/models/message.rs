@@ -130,6 +130,21 @@ use base64::Engine;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
+fn is_zero_u32(value: &u32) -> bool {
+    *value == 0
+}
+
+/// Message scene metadata.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+pub struct MessageScene {
+    /// Message source, for example realtime voice or AI search scenes
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub source: Option<String>,
+    /// Callback data returned with the message scene
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub callback_data: Option<String>,
+}
+
 /// Represents a message in a guild channel.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Message {
@@ -141,6 +156,8 @@ pub struct Message {
     pub channel_id: Option<Snowflake>,
     /// The ID of the guild this message was sent in
     pub guild_id: Option<Snowflake>,
+    /// Group ID for group messages when present in API responses
+    pub group_id: Option<Snowflake>,
     /// The author of this message
     pub author: Option<MessageUser>,
     /// The member information of the author
@@ -148,15 +165,36 @@ pub struct Message {
     /// Referenced message information
     pub message_reference: Option<MessageReference>,
     /// Users mentioned in this message
+    #[serde(default)]
     pub mentions: Vec<MessageUser>,
     /// Attachments in this message
+    #[serde(default)]
     pub attachments: Vec<MessageAttachment>,
+    /// Structured embeds in this message
+    #[serde(default)]
+    pub embeds: Vec<Embed>,
+    /// Ark payload in this message
+    pub ark: Option<Ark>,
+    /// Whether this is a direct message
+    pub direct_message: Option<bool>,
     /// Global message sequence number
     pub seq: Option<u64>,
     /// Channel-specific message sequence number
     pub seq_in_channel: Option<String>,
     /// When this message was sent
     pub timestamp: Option<Timestamp>,
+    /// When this message was edited
+    pub edited_timestamp: Option<Timestamp>,
+    /// Whether this message mentions everyone
+    pub mention_everyone: Option<bool>,
+    /// Source guild ID for direct-message scenes
+    pub src_guild_id: Option<Snowflake>,
+    /// Uploaded rich media file info
+    pub file_info: Option<String>,
+    /// Rich media file TTL in seconds
+    pub ttl: Option<u32>,
+    /// Message scene information
+    pub message_scene: Option<MessageScene>,
     /// Event ID from the gateway
     pub event_id: Option<String>,
 }
@@ -169,14 +207,24 @@ impl Message {
             content: None,
             channel_id: None,
             guild_id: None,
+            group_id: None,
             author: None,
             member: None,
             message_reference: None,
             mentions: Vec::new(),
             attachments: Vec::new(),
+            embeds: Vec::new(),
+            ark: None,
+            direct_message: None,
             seq: None,
             seq_in_channel: None,
             timestamp: None,
+            edited_timestamp: None,
+            mention_everyone: None,
+            src_guild_id: None,
+            file_info: None,
+            ttl: None,
+            message_scene: None,
             event_id: None,
         }
     }
@@ -195,6 +243,10 @@ impl Message {
                 .map(String::from),
             guild_id: data
                 .get("guild_id")
+                .and_then(|v| v.as_str())
+                .map(String::from),
+            group_id: data
+                .get("group_id")
                 .and_then(|v| v.as_str())
                 .map(String::from),
             author: data
@@ -238,6 +290,16 @@ impl Message {
                         .collect()
                 })
                 .unwrap_or_default(),
+            embeds: data
+                .get("embeds")
+                .cloned()
+                .and_then(|v| serde_json::from_value(v).ok())
+                .unwrap_or_default(),
+            ark: data
+                .get("ark")
+                .cloned()
+                .and_then(|v| serde_json::from_value(v).ok()),
+            direct_message: data.get("direct_message").and_then(|v| v.as_bool()),
             seq: data.get("seq").and_then(|v| v.as_u64()),
             seq_in_channel: data
                 .get("seq_in_channel")
@@ -248,6 +310,25 @@ impl Message {
                 .and_then(|v| v.as_str())
                 .and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok())
                 .map(|dt| dt.with_timezone(&chrono::Utc)),
+            edited_timestamp: data
+                .get("edited_timestamp")
+                .and_then(|v| v.as_str())
+                .and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok())
+                .map(|dt| dt.with_timezone(&chrono::Utc)),
+            mention_everyone: data.get("mention_everyone").and_then(|v| v.as_bool()),
+            src_guild_id: data
+                .get("src_guild_id")
+                .and_then(|v| v.as_str())
+                .map(String::from),
+            file_info: data
+                .get("file_info")
+                .and_then(|v| v.as_str())
+                .map(String::from),
+            ttl: data.get("ttl").and_then(|v| v.as_u64()).map(|v| v as u32),
+            message_scene: data
+                .get("message_scene")
+                .cloned()
+                .and_then(|v| serde_json::from_value(v).ok()),
             event_id: Some(event_id),
         }
     }
@@ -1191,76 +1272,150 @@ pub struct EmbedField {
 }
 
 /// Keyboard message structure.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct Keyboard {
+    /// Keyboard template ID
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub id: Option<String>,
     /// Keyboard content
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub content: Option<KeyboardContent>,
 }
 
 /// Keyboard content structure.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct KeyboardContent {
     /// Rows of buttons
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub rows: Option<Vec<KeyboardRow>>,
+    /// Keyboard style
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub style: Option<KeyboardStyle>,
+}
+
+/// Keyboard style.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
+pub struct KeyboardStyle {
+    /// Font size
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub font_size: Option<String>,
 }
 
 /// Keyboard row structure.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct KeyboardRow {
     /// Buttons in this row
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub buttons: Option<Vec<KeyboardButton>>,
 }
 
 /// Keyboard button structure.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct KeyboardButton {
     /// Button ID
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub id: Option<String>,
     /// Button render data
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub render_data: Option<KeyboardButtonRenderData>,
     /// Button action
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub action: Option<KeyboardButtonAction>,
+    /// Button group ID
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub group_id: Option<String>,
 }
 
 /// Keyboard button render data.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct KeyboardButtonRenderData {
     /// Button label
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub label: Option<String>,
     /// Button visited label
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub visited_label: Option<String>,
     /// Button style
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub style: Option<u32>,
 }
 
 /// Keyboard button action.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct KeyboardButtonAction {
     /// Action type
-    #[serde(rename = "type")]
+    #[serde(rename = "type", skip_serializing_if = "Option::is_none")]
     pub action_type: Option<u32>,
     /// Permission data
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub permission: Option<KeyboardButtonPermission>,
     /// Click limit per user
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub click_limit: Option<u32>,
     /// Action data
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub data: Option<String>,
     /// Reply flag
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub reply: Option<bool>,
     /// Enter flag
     pub enter: Option<bool>,
+    /// Whether to show channel selection when at-bot action is used
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub at_bot_show_channel_list: Option<bool>,
+    /// Subscribe button data
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub subscribe_data: Option<KeyboardSubscribeData>,
+    /// Secondary confirmation modal
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub modal: Option<KeyboardModal>,
 }
 
 /// Keyboard button permission.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct KeyboardButtonPermission {
     /// Permission type
-    #[serde(rename = "type")]
+    #[serde(rename = "type", skip_serializing_if = "Option::is_none")]
     pub permission_type: Option<u32>,
     /// Specify role IDs
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub specify_role_ids: Option<Vec<String>>,
     /// Specify user IDs
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub specify_user_ids: Option<Vec<String>>,
+}
+
+/// Keyboard subscribe data.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
+pub struct KeyboardSubscribeData {
+    /// Subscription template IDs
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub template_ids: Option<Vec<KeyboardTemplateId>>,
+}
+
+/// Keyboard template ID wrapper.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+pub struct KeyboardTemplateId {
+    /// Official template ID
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub template_id: Option<u32>,
+    /// Custom template ID
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub custom_template_id: Option<String>,
+}
+
+/// Keyboard secondary confirmation modal.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+pub struct KeyboardModal {
+    /// Confirmation content
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub content: Option<String>,
+    /// Confirm button text
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub confirm_text: Option<String>,
+    /// Cancel button text
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub cancel_text: Option<String>,
 }
 
 /// Keyboard payload structure for API requests.
@@ -1293,7 +1448,7 @@ pub struct MarkdownParam {
 }
 
 /// Media message structure.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct Media {
     /// File info
     pub file_info: Option<String>,
@@ -1308,6 +1463,356 @@ pub struct Reference {
     pub message_id: Option<String>,
     /// Whether to ignore getting reference message error
     pub ignore_get_message_error: Option<bool>,
+}
+
+/// Message send type used to select botgo-compatible routes.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(from = "u8", into = "u8")]
+#[repr(u8)]
+pub enum SendType {
+    /// Regular text/message route
+    Text = 1,
+    /// Rich media file route
+    RichMedia = 2,
+    /// Unknown send type
+    Unknown(u8),
+}
+
+impl From<u8> for SendType {
+    fn from(value: u8) -> Self {
+        match value {
+            1 => Self::Text,
+            2 => Self::RichMedia,
+            other => Self::Unknown(other),
+        }
+    }
+}
+
+impl From<SendType> for u8 {
+    fn from(send_type: SendType) -> Self {
+        match send_type {
+            SendType::Text => 1,
+            SendType::RichMedia => 2,
+            SendType::Unknown(value) => value,
+        }
+    }
+}
+
+/// Message type used by the message create APIs.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(from = "u32", into = "u32")]
+#[repr(u32)]
+pub enum MessageCreateType {
+    /// Text message
+    Text = 0,
+    /// Markdown message
+    Markdown = 2,
+    /// Ark message
+    Ark = 3,
+    /// Embed message
+    Embed = 4,
+    /// Mention message
+    At = 5,
+    /// Input status notification
+    InputNotify = 6,
+    /// Rich media message
+    RichMedia = 7,
+    /// Unknown message type
+    Unknown(u32),
+}
+
+impl From<u32> for MessageCreateType {
+    fn from(value: u32) -> Self {
+        match value {
+            0 => Self::Text,
+            2 => Self::Markdown,
+            3 => Self::Ark,
+            4 => Self::Embed,
+            5 => Self::At,
+            6 => Self::InputNotify,
+            7 => Self::RichMedia,
+            other => Self::Unknown(other),
+        }
+    }
+}
+
+impl From<MessageCreateType> for u32 {
+    fn from(message_type: MessageCreateType) -> Self {
+        match message_type {
+            MessageCreateType::Text => 0,
+            MessageCreateType::Markdown => 2,
+            MessageCreateType::Ark => 3,
+            MessageCreateType::Embed => 4,
+            MessageCreateType::At => 5,
+            MessageCreateType::InputNotify => 6,
+            MessageCreateType::RichMedia => 7,
+            MessageCreateType::Unknown(value) => value,
+        }
+    }
+}
+
+/// Input status notification payload.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+pub struct InputNotify {
+    /// Input status type
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub input_type: Option<i32>,
+    /// Duration in seconds
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub input_second: Option<i32>,
+}
+
+/// Rich media info used after uploading media.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
+pub struct MediaInfo {
+    /// Uploaded rich media file info
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub file_info: Option<String>,
+}
+
+impl From<Media> for MediaInfo {
+    fn from(media: Media) -> Self {
+        Self {
+            file_info: media.file_info,
+        }
+    }
+}
+
+impl From<MediaInfo> for Media {
+    fn from(media: MediaInfo) -> Self {
+        Self {
+            file_info: media.file_info,
+            ttl: None,
+        }
+    }
+}
+
+/// Streamed message fragment metadata.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+pub struct Stream {
+    /// Stream state
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub state: Option<i32>,
+    /// Stream ID
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub id: Option<String>,
+    /// Fragment index
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub index: Option<i32>,
+    /// Whether to reset an unfinished stream
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub reset: Option<bool>,
+}
+
+/// Prompt keyboard wrapper used by message extension areas.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
+pub struct PromptKeyboard {
+    /// Keyboard payload
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub keyboard: Option<Keyboard>,
+}
+
+/// Message action button configuration.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+pub struct ActionButton {
+    /// Action bar template ID
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub template_id: Option<i32>,
+    /// Callback payload
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub callback_data: Option<String>,
+    /// Feedback button
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub feedback: Option<bool>,
+    /// TTS button
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tts: Option<bool>,
+    /// Regenerate button
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub re_generate: Option<bool>,
+    /// Stop generation button
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub stop_generate: Option<bool>,
+}
+
+/// Botgo-compatible channel/direct message create payload.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
+pub struct MessageToCreate {
+    /// Message content
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub content: Option<String>,
+    /// Message type
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub msg_type: Option<MessageCreateType>,
+    /// Message embed
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub embed: Option<Embed>,
+    /// Ark template
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ark: Option<Ark>,
+    /// Image URL
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub image: Option<String>,
+    /// Message ID to reply to
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub msg_id: Option<String>,
+    /// Message reference
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub message_reference: Option<Reference>,
+    /// Markdown payload
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub markdown: Option<MarkdownPayload>,
+    /// Keyboard payload
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub keyboard: Option<Keyboard>,
+    /// Event ID to reply to
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub event_id: Option<String>,
+    /// Deprecated timestamp field kept for botgo parity
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub timestamp: Option<i64>,
+    /// Message sequence number
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub msg_seq: Option<u32>,
+    /// Subscription ID
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub subscribe_id: Option<String>,
+    /// Input status notification
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub input_notify: Option<InputNotify>,
+    /// Rich media info
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub media: Option<MediaInfo>,
+    /// Prompt keyboard
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub prompt_keyboard: Option<PromptKeyboard>,
+    /// Action button
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub action_button: Option<ActionButton>,
+    /// Stream info
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub stream: Option<Stream>,
+    /// Feature control ID
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub feature_id: Option<u32>,
+    /// Base64 encoded file image, supported by the legacy Rust API.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub file_image: Option<String>,
+}
+
+impl MessageToCreate {
+    /// Creates a text message payload.
+    pub fn new_text(content: impl Into<String>) -> Self {
+        Self {
+            content: Some(content.into()),
+            ..Default::default()
+        }
+    }
+
+    /// Sets file image data, automatically encoding to base64.
+    pub fn with_file_image(mut self, data: &[u8]) -> Self {
+        self.file_image = Some(base64::engine::general_purpose::STANDARD.encode(data));
+        self
+    }
+
+    /// Sets the message ID to reply to.
+    pub fn with_reply(mut self, message_id: impl Into<String>) -> Self {
+        self.msg_id = Some(message_id.into());
+        self
+    }
+
+    /// Returns the send type for route selection.
+    pub const fn send_type(&self) -> SendType {
+        SendType::Text
+    }
+}
+
+/// Botgo-compatible rich media upload/direct-send payload.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
+pub struct RichMediaMessage {
+    /// Deprecated event ID field, kept for API compatibility
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub event_id: Option<String>,
+    /// File type, 1=image, 2=video, 3=audio
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub file_type: Option<u64>,
+    /// Rich media URL
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub url: Option<String>,
+    /// Whether the server should send the message directly
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub srv_send_msg: Option<bool>,
+    /// Optional text content
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub content: Option<String>,
+    /// Message sequence number
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub msg_seq: Option<i64>,
+}
+
+impl RichMediaMessage {
+    /// Creates a rich media payload with file type and URL.
+    pub fn new(file_type: u64, url: impl Into<String>) -> Self {
+        Self {
+            file_type: Some(file_type),
+            url: Some(url.into()),
+            ..Default::default()
+        }
+    }
+
+    /// Returns the send type for route selection.
+    pub const fn send_type(&self) -> SendType {
+        SendType::RichMedia
+    }
+}
+
+/// API message envelope used by group and C2C message APIs.
+#[derive(Debug, Clone, PartialEq)]
+pub enum ApiMessage {
+    /// Regular message create payload
+    Message(MessageToCreate),
+    /// Rich media payload
+    RichMedia(RichMediaMessage),
+}
+
+impl ApiMessage {
+    /// Returns the send type for botgo-compatible route selection.
+    pub const fn send_type(&self) -> SendType {
+        match self {
+            Self::Message(message) => message.send_type(),
+            Self::RichMedia(message) => message.send_type(),
+        }
+    }
+}
+
+impl Serialize for ApiMessage {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        match self {
+            Self::Message(message) => message.serialize(serializer),
+            Self::RichMedia(message) => message.serialize(serializer),
+        }
+    }
+}
+
+impl From<MessageToCreate> for ApiMessage {
+    fn from(message: MessageToCreate) -> Self {
+        Self::Message(message)
+    }
+}
+
+impl From<RichMediaMessage> for ApiMessage {
+    fn from(message: RichMediaMessage) -> Self {
+        Self::RichMedia(message)
+    }
+}
+
+impl From<KeyboardPayload> for Keyboard {
+    fn from(payload: KeyboardPayload) -> Self {
+        serde_json::from_value(payload.content).unwrap_or_default()
+    }
 }
 
 /// Message list pagination mode.
@@ -1393,11 +1898,14 @@ pub struct SettingGuideToCreate {
 }
 
 /// Parameters for sending a message to a channel.
-#[derive(Debug, Clone, Default, Serialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct MessageParams {
     /// Message content
     #[serde(skip_serializing_if = "Option::is_none")]
     pub content: Option<String>,
+    /// Message type
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub msg_type: Option<MessageCreateType>,
     /// Message embed
     #[serde(skip_serializing_if = "Option::is_none")]
     pub embed: Option<Embed>,
@@ -1425,12 +1933,40 @@ pub struct MessageParams {
     /// Keyboard payload
     #[serde(skip_serializing_if = "Option::is_none")]
     pub keyboard: Option<Keyboard>,
+    /// Deprecated timestamp field kept for botgo parity
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub timestamp: Option<i64>,
+    /// Message sequence number
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub msg_seq: Option<u32>,
+    /// Subscription ID
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub subscribe_id: Option<String>,
+    /// Input status notification
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub input_notify: Option<InputNotify>,
+    /// Rich media info
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub media: Option<MediaInfo>,
+    /// Prompt keyboard
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub prompt_keyboard: Option<PromptKeyboard>,
+    /// Action button
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub action_button: Option<ActionButton>,
+    /// Stream info
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub stream: Option<Stream>,
+    /// Feature control ID
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub feature_id: Option<u32>,
 }
 
 /// Parameters for sending a group message.
-#[derive(Debug, Clone, Default, Serialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct GroupMessageParams {
     /// Message type (0=text, 1=rich text, 2=markdown, 3=ark, 4=embed, 7=media)
+    #[serde(skip_serializing_if = "is_zero_u32")]
     pub msg_type: u32,
     /// Message content
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -1462,12 +1998,34 @@ pub struct GroupMessageParams {
     /// Keyboard payload
     #[serde(skip_serializing_if = "Option::is_none")]
     pub keyboard: Option<KeyboardPayload>,
+    /// Deprecated timestamp field kept for botgo parity
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub timestamp: Option<i64>,
+    /// Subscription ID
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub subscribe_id: Option<String>,
+    /// Input status notification
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub input_notify: Option<InputNotify>,
+    /// Prompt keyboard
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub prompt_keyboard: Option<PromptKeyboard>,
+    /// Action button
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub action_button: Option<ActionButton>,
+    /// Stream info
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub stream: Option<Stream>,
+    /// Feature control ID
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub feature_id: Option<u32>,
 }
 
 /// Parameters for sending a C2C (client-to-client) message.
-#[derive(Debug, Clone, Default, Serialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct C2CMessageParams {
     /// Message type (0=text, 1=rich text, 2=markdown, 3=ark, 4=embed, 7=media)
+    #[serde(skip_serializing_if = "is_zero_u32")]
     pub msg_type: u32,
     /// Message content
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -1499,14 +2057,38 @@ pub struct C2CMessageParams {
     /// Keyboard payload
     #[serde(skip_serializing_if = "Option::is_none")]
     pub keyboard: Option<KeyboardPayload>,
+    /// Deprecated timestamp field kept for botgo parity
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub timestamp: Option<i64>,
+    /// Subscription ID
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub subscribe_id: Option<String>,
+    /// Input status notification
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub input_notify: Option<InputNotify>,
+    /// Prompt keyboard
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub prompt_keyboard: Option<PromptKeyboard>,
+    /// Action button
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub action_button: Option<ActionButton>,
+    /// Stream info
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub stream: Option<Stream>,
+    /// Feature control ID
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub feature_id: Option<u32>,
 }
 
 /// Parameters for sending a direct message.
-#[derive(Debug, Clone, Default, Serialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct DirectMessageParams {
     /// Message content
     #[serde(skip_serializing_if = "Option::is_none")]
     pub content: Option<String>,
+    /// Message type
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub msg_type: Option<MessageCreateType>,
     /// Message embed
     #[serde(skip_serializing_if = "Option::is_none")]
     pub embed: Option<Embed>,
@@ -1534,6 +2116,33 @@ pub struct DirectMessageParams {
     /// Keyboard payload
     #[serde(skip_serializing_if = "Option::is_none")]
     pub keyboard: Option<Keyboard>,
+    /// Deprecated timestamp field kept for botgo parity
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub timestamp: Option<i64>,
+    /// Message sequence number
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub msg_seq: Option<u32>,
+    /// Subscription ID
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub subscribe_id: Option<String>,
+    /// Input status notification
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub input_notify: Option<InputNotify>,
+    /// Rich media info
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub media: Option<MediaInfo>,
+    /// Prompt keyboard
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub prompt_keyboard: Option<PromptKeyboard>,
+    /// Action button
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub action_button: Option<ActionButton>,
+    /// Stream info
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub stream: Option<Stream>,
+    /// Feature control ID
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub feature_id: Option<u32>,
 }
 
 impl MessageParams {
@@ -1556,6 +2165,11 @@ impl MessageParams {
         self.msg_id = Some(message_id.into());
         self
     }
+
+    /// Converts this payload into the botgo-compatible message create body.
+    pub fn into_message_to_create(self) -> MessageToCreate {
+        self.into()
+    }
 }
 
 impl GroupMessageParams {
@@ -1573,6 +2187,11 @@ impl GroupMessageParams {
         self.msg_id = Some(message_id.into());
         self
     }
+
+    /// Converts this payload into the botgo-compatible message create body.
+    pub fn into_message_to_create(self) -> MessageToCreate {
+        self.into()
+    }
 }
 
 impl C2CMessageParams {
@@ -1589,6 +2208,11 @@ impl C2CMessageParams {
     pub fn with_reply(mut self, message_id: impl Into<String>) -> Self {
         self.msg_id = Some(message_id.into());
         self
+    }
+
+    /// Converts this payload into the botgo-compatible message create body.
+    pub fn into_message_to_create(self) -> MessageToCreate {
+        self.into()
     }
 }
 
@@ -1611,5 +2235,116 @@ impl DirectMessageParams {
     pub fn with_reply(mut self, message_id: impl Into<String>) -> Self {
         self.msg_id = Some(message_id.into());
         self
+    }
+
+    /// Converts this payload into the botgo-compatible message create body.
+    pub fn into_message_to_create(self) -> MessageToCreate {
+        self.into()
+    }
+}
+
+impl From<MessageParams> for MessageToCreate {
+    fn from(params: MessageParams) -> Self {
+        Self {
+            content: params.content,
+            msg_type: params.msg_type,
+            embed: params.embed,
+            ark: params.ark,
+            image: params.image,
+            msg_id: params.msg_id,
+            message_reference: params.message_reference,
+            markdown: params.markdown,
+            keyboard: params.keyboard,
+            event_id: params.event_id,
+            timestamp: params.timestamp,
+            msg_seq: params.msg_seq,
+            subscribe_id: params.subscribe_id,
+            input_notify: params.input_notify,
+            media: params.media,
+            prompt_keyboard: params.prompt_keyboard,
+            action_button: params.action_button,
+            stream: params.stream,
+            feature_id: params.feature_id,
+            file_image: params.file_image,
+        }
+    }
+}
+
+impl From<DirectMessageParams> for MessageToCreate {
+    fn from(params: DirectMessageParams) -> Self {
+        Self {
+            content: params.content,
+            msg_type: params.msg_type,
+            embed: params.embed,
+            ark: params.ark,
+            image: params.image,
+            msg_id: params.msg_id,
+            message_reference: params.message_reference,
+            markdown: params.markdown,
+            keyboard: params.keyboard,
+            event_id: params.event_id,
+            timestamp: params.timestamp,
+            msg_seq: params.msg_seq,
+            subscribe_id: params.subscribe_id,
+            input_notify: params.input_notify,
+            media: params.media,
+            prompt_keyboard: params.prompt_keyboard,
+            action_button: params.action_button,
+            stream: params.stream,
+            feature_id: params.feature_id,
+            file_image: params.file_image,
+        }
+    }
+}
+
+impl From<GroupMessageParams> for MessageToCreate {
+    fn from(params: GroupMessageParams) -> Self {
+        Self {
+            content: params.content,
+            msg_type: Some(MessageCreateType::from(params.msg_type)),
+            embed: params.embed,
+            ark: params.ark,
+            msg_id: params.msg_id,
+            message_reference: params.message_reference,
+            markdown: params.markdown,
+            keyboard: params.keyboard.map(Into::into),
+            event_id: params.event_id,
+            timestamp: params.timestamp,
+            msg_seq: params.msg_seq,
+            subscribe_id: params.subscribe_id,
+            input_notify: params.input_notify,
+            media: params.media.map(Into::into),
+            prompt_keyboard: params.prompt_keyboard,
+            action_button: params.action_button,
+            stream: params.stream,
+            feature_id: params.feature_id,
+            ..Default::default()
+        }
+    }
+}
+
+impl From<C2CMessageParams> for MessageToCreate {
+    fn from(params: C2CMessageParams) -> Self {
+        Self {
+            content: params.content,
+            msg_type: Some(MessageCreateType::from(params.msg_type)),
+            embed: params.embed,
+            ark: params.ark,
+            msg_id: params.msg_id,
+            message_reference: params.message_reference,
+            markdown: params.markdown,
+            keyboard: params.keyboard.map(Into::into),
+            event_id: params.event_id,
+            timestamp: params.timestamp,
+            msg_seq: params.msg_seq,
+            subscribe_id: params.subscribe_id,
+            input_notify: params.input_notify,
+            media: params.media.map(Into::into),
+            prompt_keyboard: params.prompt_keyboard,
+            action_button: params.action_button,
+            stream: params.stream,
+            feature_id: params.feature_id,
+            ..Default::default()
+        }
     }
 }

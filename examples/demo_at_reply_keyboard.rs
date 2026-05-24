@@ -61,6 +61,7 @@ impl KeyboardReplyHandler {
 
         let keyboard_content = self.build_demo_keyboard();
         let keyboard = Keyboard {
+            id: None,
             content: Some(keyboard_content),
         };
 
@@ -102,7 +103,11 @@ impl KeyboardReplyHandler {
                 data: Some("/搜索".to_string()),
                 reply: None,
                 enter: Some(true), // equivalent to at_bot_show_channel_list=True
+                at_bot_show_channel_list: None,
+                subscribe_data: None,
+                modal: None,
             }),
+            group_id: None,
         };
 
         let row1 = KeyboardRow {
@@ -111,6 +116,7 @@ impl KeyboardReplyHandler {
 
         KeyboardContent {
             rows: Some(vec![row1]),
+            style: None,
         }
     }
 
@@ -118,8 +124,10 @@ impl KeyboardReplyHandler {
     /// This is needed because the API expects different formats
     fn keyboard_payload_to_keyboard(&self, _payload: &KeyboardPayload) -> Keyboard {
         Keyboard {
+            id: Some("62".to_string()),
             content: Some(KeyboardContent {
                 rows: None, // For template keyboards, we don't define rows
+                style: None,
             }),
         }
     }

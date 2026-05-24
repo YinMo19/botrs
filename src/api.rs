@@ -129,9 +129,10 @@ use crate::models::{
         normalize_delete_history_msg_days,
     },
     message::{
-        Ark, C2CMessageParams, DirectMessageParams, Embed, GroupMessageParams, Keyboard,
-        KeyboardPayload, MarkdownPayload, Media, Message, MessagePagerType, MessageParams,
-        MessagesPager, Reference, SettingGuide, SettingGuideToCreate,
+        ApiMessage, Ark, C2CMessageParams, DirectMessageParams, Embed, GroupMessageParams,
+        Keyboard, KeyboardPayload, MarkdownPayload, Media, Message, MessagePagerType,
+        MessageParams, MessageToCreate, MessagesPager, Reference, RichMediaMessage, SendType,
+        SettingGuide, SettingGuideToCreate,
     },
     message_setting::MessageSetting,
     permission::{APIPermission, APIPermissionDemand, APIPermissionDemandIdentify},
@@ -919,6 +920,58 @@ impl BotApi {
         self.get_messages(token, channel_id, &pager).await
     }
 
+    /// Sends a channel message using the botgo-compatible message create payload.
+    pub async fn post_message_to_create(
+        &self,
+        token: &Token,
+        channel_id: &str,
+        msg: &MessageToCreate,
+    ) -> Result<Message> {
+        debug!("Sending botgo-style message to channel {}", channel_id);
+        let path = format!("/channels/{channel_id}/messages");
+        let response = self.http.post(token, &path, None::<&()>, Some(msg)).await?;
+        Ok(serde_json::from_value(response)?)
+    }
+
+    /// Botgo-compatible alias for sending a channel message.
+    pub async fn post_message_api(
+        &self,
+        token: &Token,
+        channel_id: &str,
+        msg: &MessageToCreate,
+    ) -> Result<Message> {
+        self.post_message_to_create(token, channel_id, msg).await
+    }
+
+    /// Edits a channel message using the botgo-compatible message create payload.
+    pub async fn patch_message_to_create(
+        &self,
+        token: &Token,
+        channel_id: &str,
+        message_id: &str,
+        msg: &MessageToCreate,
+    ) -> Result<Message> {
+        debug!("Editing message {} in channel {}", message_id, channel_id);
+        let path = format!("/channels/{channel_id}/messages/{message_id}");
+        let response = self
+            .http
+            .patch(token, &path, None::<&()>, Some(msg))
+            .await?;
+        Ok(serde_json::from_value(response)?)
+    }
+
+    /// Botgo-compatible alias for editing a channel message.
+    pub async fn patch_message_api(
+        &self,
+        token: &Token,
+        channel_id: &str,
+        message_id: &str,
+        msg: &MessageToCreate,
+    ) -> Result<Message> {
+        self.patch_message_to_create(token, channel_id, message_id, msg)
+            .await
+    }
+
     /// Sends a message to a channel using MessageParams.
     ///
     /// This is the new, recommended way to send channel messages. It uses a parameter struct
@@ -959,7 +1012,7 @@ impl BotApi {
         debug!("Sending message to channel {}", channel_id);
 
         // Handle file_image encoding if raw bytes were provided separately
-        let body = serde_json::to_value(&params)?;
+        let body = serde_json::to_value(MessageToCreate::from(params))?;
 
         let path = format!("/channels/{channel_id}/messages");
         let response = self
@@ -978,7 +1031,7 @@ impl BotApi {
         params: MessageParams,
     ) -> Result<MessageResponse> {
         debug!("Editing message {} in channel {}", message_id, channel_id);
-        let body = serde_json::to_value(&params)?;
+        let body = serde_json::to_value(MessageToCreate::from(params))?;
         let path = format!("/channels/{channel_id}/messages/{message_id}");
         let response = self
             .http
@@ -1037,6 +1090,7 @@ impl BotApi {
     ) -> Result<MessageResponse> {
         let params = MessageParams {
             content: content.map(|s| s.to_string()),
+            msg_type: None,
             embed: embed.cloned(),
             ark: ark.cloned(),
             message_reference: message_reference.cloned(),
@@ -1047,6 +1101,15 @@ impl BotApi {
             event_id: event_id.map(|s| s.to_string()),
             markdown: markdown.cloned(),
             keyboard: keyboard.cloned(),
+            timestamp: None,
+            msg_seq: None,
+            subscribe_id: None,
+            input_notify: None,
+            media: None,
+            prompt_keyboard: None,
+            action_button: None,
+            stream: None,
+            feature_id: None,
         };
 
         self.post_message_with_params(token, channel_id, params)
@@ -1087,7 +1150,7 @@ impl BotApi {
     ) -> Result<MessageResponse> {
         debug!("Sending group message to {}", group_openid);
 
-        let body = serde_json::to_value(&params)?;
+        let body = serde_json::to_value(MessageToCreate::from(params))?;
 
         let path = format!("/v2/groups/{group_openid}/messages");
         let response = self
@@ -1095,6 +1158,44 @@ impl BotApi {
             .post(token, &path, None::<&()>, Some(&body))
             .await?;
         Ok(serde_json::from_value(response)?)
+    }
+
+    /// Sends a group message using the botgo-compatible API message envelope.
+    pub async fn post_group_api_message(
+        &self,
+        token: &Token,
+        group_openid: &str,
+        msg: &ApiMessage,
+    ) -> Result<Message> {
+        debug!("Sending botgo-style group message to {}", group_openid);
+        let path = match msg.send_type() {
+            SendType::RichMedia => format!("/v2/groups/{group_openid}/files"),
+            _ => format!("/v2/groups/{group_openid}/messages"),
+        };
+        let response = self.http.post(token, &path, None::<&()>, Some(msg)).await?;
+        Ok(serde_json::from_value(response)?)
+    }
+
+    /// Sends a group message create payload and returns the full message.
+    pub async fn post_group_message_to_create(
+        &self,
+        token: &Token,
+        group_openid: &str,
+        msg: &MessageToCreate,
+    ) -> Result<Message> {
+        self.post_group_api_message(token, group_openid, &ApiMessage::Message(msg.clone()))
+            .await
+    }
+
+    /// Uploads or directly sends group rich media using botgo routing.
+    pub async fn post_group_rich_media_message(
+        &self,
+        token: &Token,
+        group_openid: &str,
+        msg: &RichMediaMessage,
+    ) -> Result<Message> {
+        self.post_group_api_message(token, group_openid, &ApiMessage::RichMedia(msg.clone()))
+            .await
     }
 
     /// Sends a group message (legacy API for backward compatibility).
@@ -1147,6 +1248,13 @@ impl BotApi {
             event_id: event_id.map(|s| s.to_string()),
             markdown: markdown.cloned(),
             keyboard: keyboard.cloned(),
+            timestamp: None,
+            subscribe_id: None,
+            input_notify: None,
+            prompt_keyboard: None,
+            action_button: None,
+            stream: None,
+            feature_id: None,
         };
 
         self.post_group_message_with_params(token, group_openid, params)
@@ -1187,7 +1295,7 @@ impl BotApi {
     ) -> Result<MessageResponse> {
         debug!("Sending C2C message to {}", openid);
 
-        let body = serde_json::to_value(&params)?;
+        let body = serde_json::to_value(MessageToCreate::from(params))?;
 
         let path = format!("/v2/users/{openid}/messages");
         let response = self
@@ -1195,6 +1303,44 @@ impl BotApi {
             .post(token, &path, None::<&()>, Some(&body))
             .await?;
         Ok(serde_json::from_value(response)?)
+    }
+
+    /// Sends a C2C message using the botgo-compatible API message envelope.
+    pub async fn post_c2c_api_message(
+        &self,
+        token: &Token,
+        openid: &str,
+        msg: &ApiMessage,
+    ) -> Result<Message> {
+        debug!("Sending botgo-style C2C message to {}", openid);
+        let path = match msg.send_type() {
+            SendType::RichMedia => format!("/v2/users/{openid}/files"),
+            _ => format!("/v2/users/{openid}/messages"),
+        };
+        let response = self.http.post(token, &path, None::<&()>, Some(msg)).await?;
+        Ok(serde_json::from_value(response)?)
+    }
+
+    /// Sends a C2C message create payload and returns the full message.
+    pub async fn post_c2c_message_to_create(
+        &self,
+        token: &Token,
+        openid: &str,
+        msg: &MessageToCreate,
+    ) -> Result<Message> {
+        self.post_c2c_api_message(token, openid, &ApiMessage::Message(msg.clone()))
+            .await
+    }
+
+    /// Uploads or directly sends C2C rich media using botgo routing.
+    pub async fn post_c2c_rich_media_message(
+        &self,
+        token: &Token,
+        openid: &str,
+        msg: &RichMediaMessage,
+    ) -> Result<Message> {
+        self.post_c2c_api_message(token, openid, &ApiMessage::RichMedia(msg.clone()))
+            .await
     }
 
     /// Sends a C2C (client-to-client) message (legacy API for backward compatibility).
@@ -1247,6 +1393,13 @@ impl BotApi {
             event_id: event_id.map(|s| s.to_string()),
             markdown: markdown.cloned(),
             keyboard: keyboard.cloned(),
+            timestamp: None,
+            subscribe_id: None,
+            input_notify: None,
+            prompt_keyboard: None,
+            action_button: None,
+            stream: None,
+            feature_id: None,
         };
 
         self.post_c2c_message_with_params(token, openid, params)
@@ -1287,13 +1440,26 @@ impl BotApi {
     ) -> Result<MessageResponse> {
         debug!("Sending direct message to guild session {}", guild_id);
 
-        let body = serde_json::to_value(&params)?;
+        let body = serde_json::to_value(MessageToCreate::from(params))?;
 
         let path = format!("/dms/{guild_id}/messages");
         let response = self
             .http
             .post(token, &path, None::<&()>, Some(&body))
             .await?;
+        Ok(serde_json::from_value(response)?)
+    }
+
+    /// Sends a direct message using the botgo-compatible message create payload.
+    pub async fn post_direct_message(
+        &self,
+        token: &Token,
+        guild_id: &str,
+        msg: &MessageToCreate,
+    ) -> Result<Message> {
+        debug!("Sending botgo-style direct message to guild {}", guild_id);
+        let path = format!("/dms/{guild_id}/messages");
+        let response = self.http.post(token, &path, None::<&()>, Some(msg)).await?;
         Ok(serde_json::from_value(response)?)
     }
 
@@ -1335,6 +1501,7 @@ impl BotApi {
     ) -> Result<MessageResponse> {
         let params = DirectMessageParams {
             content: content.map(|s| s.to_string()),
+            msg_type: None,
             embed: embed.cloned(),
             ark: ark.cloned(),
             message_reference: message_reference.cloned(),
@@ -1345,6 +1512,15 @@ impl BotApi {
             event_id: event_id.map(|s| s.to_string()),
             markdown: markdown.cloned(),
             keyboard: keyboard.cloned(),
+            timestamp: None,
+            msg_seq: None,
+            subscribe_id: None,
+            input_notify: None,
+            media: None,
+            prompt_keyboard: None,
+            action_button: None,
+            stream: None,
+            feature_id: None,
         };
 
         self.post_dms_with_params(token, guild_id, params).await
