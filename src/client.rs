@@ -343,6 +343,19 @@ impl Context {
         self.api.get_guild(&self.token, guild_id).await
     }
 
+    /// Gets guild message frequency settings.
+    ///
+    /// # Arguments
+    ///
+    /// * `guild_id` - The guild ID
+    ///
+    /// # Returns
+    ///
+    /// Message settings for the guild.
+    pub async fn get_message_setting(&self, guild_id: &str) -> Result<MessageSetting> {
+        self.api.get_message_setting(&self.token, guild_id).await
+    }
+
     /// Gets channel information.
     ///
     /// # Arguments

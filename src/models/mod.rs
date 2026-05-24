@@ -10,6 +10,7 @@ pub mod emoji;
 pub mod gateway;
 pub mod guild;
 pub mod message;
+pub mod message_setting;
 pub mod permission;
 pub mod robot;
 pub mod schedule;
@@ -23,6 +24,7 @@ pub use emoji::*;
 pub use gateway::*;
 // Guild types are already exported by the specific re-exports below
 pub use message::*;
+pub use message_setting::*;
 pub use permission::*;
 pub use robot::*;
 pub use schedule::*;
