@@ -11,11 +11,11 @@ Represents a QQ user in the system.
 ```rust
 pub struct User {
     pub id: String,
-    pub username: Option<String>,
-    pub avatar: Option<String>,
-    pub bot: Option<bool>,
-    pub union_openid: Option<String>,
-    pub union_user_account: Option<String>,
+    pub username: String,
+    pub avatar: String,
+    pub bot: bool,
+    pub union_openid: String,
+    pub union_user_account: String,
 }
 ```
 
@@ -32,14 +32,14 @@ pub struct User {
 
 ```rust
 async fn handle_user_info(user: User) {
-    println!("User: {}", user.username.as_deref().unwrap_or("Unknown"));
+    println!("User: {}", user.username);
     
-    if user.bot.unwrap_or(false) {
+    if user.bot {
         println!("This is a bot account");
     }
     
-    if let Some(avatar) = &user.avatar {
-        println!("Avatar URL: {}", avatar);
+    if !user.avatar.is_empty() {
+        println!("Avatar URL: {}", user.avatar);
     }
 }
 ```
@@ -226,7 +226,7 @@ async fn get_member_details(ctx: Context, guild_id: &str, user_id: &str) -> Resu
     let member = ctx.get_guild_member(guild_id, user_id).await?;
     
     if let Some(user) = &member.user {
-        println!("Member: {}", user.username.as_deref().unwrap_or("Unknown"));
+        println!("Member: {}", user.username);
         println!("User ID: {}", user.id);
         
         if let Some(nick) = &member.nick {
@@ -271,7 +271,7 @@ async fn list_guild_members(ctx: Context, guild_id: &str) -> Result<()> {
             
             if let Some(user) = &member.user {
                 let display_name = member.nick.as_deref()
-                    .unwrap_or(user.username.as_deref().unwrap_or("Unknown"));
+                    .unwrap_or(user.username);
                 
                 println!("{}. {} (ID: {})", total_members, display_name, user.id);
                 
@@ -330,7 +330,7 @@ async fn moderate_member(ctx: Context, guild_id: &str, user_id: &str, reason: &s
     let member = ctx.get_guild_member(guild_id, user_id).await?;
     
     if let Some(user) = &member.user {
-        println!("Preparing to kick: {}", user.username.as_deref().unwrap_or("Unknown"));
+        println!("Preparing to kick: {}", user.username);
         
         // Kick member with reason
         ctx.kick_member(
@@ -463,8 +463,9 @@ impl UserTracker {
     }
     
     fn track_user(&mut self, user: User) {
-        if let Some(openid) = &user.union_openid {
-            self.users_by_openid.insert(openid.clone(), user);
+        if !user.union_openid.is_empty() {
+            self.users_by_openid
+                .insert(user.union_openid.clone(), user);
         }
     }
     
@@ -502,10 +503,10 @@ impl UserTracker {
 ```rust
 async fn verify_new_member(ctx: Context, guild_id: &str, member: Member) -> Result<()> {
     if let Some(user) = &member.user {
-        println!("Verifying new member: {}", user.username.as_deref().unwrap_or("Unknown"));
+        println!("Verifying new member: {}", user.username);
         
         // Check if it's a bot
-        if user.bot.unwrap_or(false) {
+        if user.bot {
             println!("Bot account detected - applying bot role");
             
             let bot_role_id = "bot_role_id";

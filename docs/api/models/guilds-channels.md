@@ -270,7 +270,7 @@ pub struct Member {
 ```rust
 async fn handle_member_update(ctx: Context, member: Member) {
     if let Some(user) = &member.user {
-        println!("Member updated: {}", user.username.as_deref().unwrap_or("Unknown"));
+        println!("Member updated: {}", user.username);
         
         if let Some(nick) = &member.nick {
             println!("Nickname: {}", nick);
@@ -288,11 +288,11 @@ Represents user information.
 ```rust
 pub struct User {
     pub id: String,
-    pub username: Option<String>,
-    pub avatar: Option<String>,
-    pub bot: Option<bool>,
-    pub union_openid: Option<String>,
-    pub union_user_account: Option<String>,
+    pub username: String,
+    pub avatar: String,
+    pub bot: bool,
+    pub union_openid: String,
+    pub union_user_account: String,
 }
 ```
 
@@ -384,7 +384,7 @@ async fn manage_guild_members(ctx: Context, guild_id: &str) -> Result<()> {
     
     for member in &members {
         if let Some(user) = &member.user {
-            println!("Member: {}", user.username.as_deref().unwrap_or("Unknown"));
+            println!("Member: {}", user.username);
             println!("  Roles: {:?}", member.roles);
             
             if let Some(joined) = &member.joined_at {
@@ -397,7 +397,7 @@ async fn manage_guild_members(ctx: Context, guild_id: &str) -> Result<()> {
     let user_id = "specific_user_id";
     let member = ctx.get_guild_member(guild_id, user_id).await?;
     if let Some(user) = &member.user {
-        println!("Found member: {}", user.username.as_deref().unwrap_or("Unknown"));
+        println!("Found member: {}", user.username);
     }
     
     Ok(())

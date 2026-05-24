@@ -8,18 +8,23 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct User {
     /// The user's unique ID
+    #[serde(default)]
     pub id: Snowflake,
     /// The user's username
+    #[serde(default)]
     pub username: String,
     /// The user's avatar hash
-    pub avatar: Option<String>,
+    #[serde(default)]
+    pub avatar: String,
     /// Whether the user is a bot
     #[serde(default)]
     pub bot: bool,
     /// The user's union openid (for group/C2C messages)
-    pub union_openid: Option<String>,
+    #[serde(default)]
+    pub union_openid: String,
     /// The user's union user account
-    pub union_user_account: Option<String>,
+    #[serde(default)]
+    pub union_user_account: String,
 }
 
 impl User {
@@ -28,47 +33,23 @@ impl User {
         Self {
             id: id.into(),
             username: username.into(),
-            avatar: None,
+            avatar: String::new(),
             bot: false,
-            union_openid: None,
-            union_user_account: None,
+            union_openid: String::new(),
+            union_user_account: String::new(),
         }
     }
 
     /// Creates a new user from API data.
     pub fn from_data(data: serde_json::Value) -> Self {
-        Self {
-            id: data
-                .get("id")
-                .and_then(|v| v.as_str())
-                .map(String::from)
-                .unwrap_or_default(),
-            username: data
-                .get("username")
-                .and_then(|v| v.as_str())
-                .map(String::from)
-                .unwrap_or_default(),
-            avatar: data
-                .get("avatar")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            bot: data.get("bot").and_then(|v| v.as_bool()).unwrap_or(false),
-            union_openid: data
-                .get("union_openid")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            union_user_account: data
-                .get("union_user_account")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-        }
+        serde_json::from_value(data).unwrap_or_default()
     }
 
     /// Gets the user's avatar URL if they have one.
     ///
     /// Returns the full URL to the user's avatar image.
     pub fn avatar_url(&self) -> Option<String> {
-        self.avatar.as_ref().map(|_hash| {
+        (!self.avatar.is_empty()).then(|| {
             format!(
                 "https://thirdqq.qlogo.cn/headimg_dl?dst_uin={}&spec=640",
                 self.id
@@ -112,10 +93,10 @@ impl From<BotInfo> for User {
         Self {
             id: bot.id,
             username: bot.username,
-            avatar: bot.avatar,
+            avatar: bot.avatar.unwrap_or_default(),
             bot: bot.bot,
-            union_openid: None,
-            union_user_account: None,
+            union_openid: String::new(),
+            union_user_account: String::new(),
         }
     }
 }
@@ -315,8 +296,45 @@ mod tests {
         let user = User::new("123456789", "TestUser");
         assert_eq!(user.id, "123456789");
         assert_eq!(user.username, "TestUser");
+        assert_eq!(user.avatar, "");
+        assert_eq!(user.union_openid, "");
+        assert_eq!(user.union_user_account, "");
         assert!(!user.is_bot());
         assert!(user.is_human());
+    }
+
+    #[test]
+    fn botgo_user_uses_required_zero_value_fields() {
+        let user: User = serde_json::from_value(serde_json::json!({})).unwrap();
+
+        assert_eq!(user.id, "");
+        assert_eq!(user.username, "");
+        assert_eq!(user.avatar, "");
+        assert!(!user.bot);
+        assert_eq!(user.union_openid, "");
+        assert_eq!(user.union_user_account, "");
+        assert!(user.avatar_url().is_none());
+    }
+
+    #[test]
+    fn botgo_user_keeps_official_json_shape() {
+        let user = User {
+            id: "user-1".to_string(),
+            username: "alice".to_string(),
+            avatar: "avatar-key".to_string(),
+            bot: true,
+            union_openid: "union-openid".to_string(),
+            union_user_account: "union-account".to_string(),
+        };
+        let value = serde_json::to_value(&user).unwrap();
+
+        assert_eq!(value["id"], "user-1");
+        assert_eq!(value["username"], "alice");
+        assert_eq!(value["avatar"], "avatar-key");
+        assert_eq!(value["bot"], true);
+        assert_eq!(value["union_openid"], "union-openid");
+        assert_eq!(value["union_user_account"], "union-account");
+        assert!(user.avatar_url().is_some());
     }
 
     #[test]

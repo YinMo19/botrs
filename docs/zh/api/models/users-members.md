@@ -11,11 +11,11 @@
 ```rust
 pub struct User {
     pub id: String,
-    pub username: Option<String>,
-    pub avatar: Option<String>,
-    pub bot: Option<bool>,
-    pub union_openid: Option<String>,
-    pub union_user_account: Option<String>,
+    pub username: String,
+    pub avatar: String,
+    pub bot: bool,
+    pub union_openid: String,
+    pub union_user_account: String,
 }
 ```
 
@@ -32,14 +32,14 @@ pub struct User {
 
 ```rust
 async fn handle_user_info(user: User) {
-    println!("用户: {}", user.username.as_deref().unwrap_or("未知"));
+    println!("用户: {}", user.username);
     
-    if user.bot.unwrap_or(false) {
+    if user.bot {
         println!("这是一个机器人账户");
     }
     
-    if let Some(avatar) = &user.avatar {
-        println!("头像 URL: {}", avatar);
+    if !user.avatar.is_empty() {
+        println!("头像 URL: {}", user.avatar);
     }
 }
 ```
@@ -244,14 +244,14 @@ pub struct DirectMessageMember {
 async fn get_user_details(ctx: Context, user_id: &str) -> Result<()> {
     // 获取用户基本信息
     let user = ctx.get_current_user().await?;
-    println!("当前用户: {}", user.username.as_deref().unwrap_or("未知"));
+    println!("当前用户: {}", user.username);
     
     // 在特定频道中获取用户信息
     let guild_id = "guild_id_here";
     let member = ctx.get_guild_member(guild_id, user_id).await?;
     
     if let Some(user) = &member.user {
-        println!("频道成员: {}", user.username.as_deref().unwrap_or("未知"));
+        println!("频道成员: {}", user.username);
         
         if let Some(nick) = &member.nick {
             println!("昵称: {}", nick);
@@ -391,9 +391,9 @@ impl EventHandler for UserMentionHandler {
             
             for mentioned_user in &message.mentions {
                 println!("提及用户: {}", 
-                    mentioned_user.username.as_deref().unwrap_or("未知"));
+                    mentioned_user.username);
                 
-                if mentioned_user.bot.unwrap_or(false) {
+                if mentioned_user.bot {
                     println!("  这是一个机器人");
                 }
             }
@@ -419,16 +419,16 @@ async fn display_user_card(ctx: Context, user: User, member: Option<Member>) -> 
     let mut card = format!("用户信息卡片\n");
     card.push_str(&format!("ID: {}\n", user.id));
     card.push_str(&format!("用户名: {}\n", 
-        user.username.as_deref().unwrap_or("未设置")));
+        user.username));
     
-    if user.bot.unwrap_or(false) {
+    if user.bot {
         card.push_str("类型: 机器人\n");
     } else {
         card.push_str("类型: 用户\n");
     }
     
-    if let Some(avatar) = &user.avatar {
-        card.push_str(&format!("头像: {}\n", avatar));
+    if !user.avatar.is_empty() {
+        card.push_str(&format!("头像: {}\n", user.avatar));
     }
     
     if let Some(member) = member {
