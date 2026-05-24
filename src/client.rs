@@ -900,6 +900,22 @@ impl Context {
         self.api.clean_pins(&self.token, channel_id).await
     }
 
+    /// Updates an interaction response.
+    ///
+    /// # Arguments
+    ///
+    /// * `interaction_id` - The interaction ID
+    /// * `body` - JSON body string to send
+    ///
+    /// # Returns
+    ///
+    /// Result indicating success or failure.
+    pub async fn put_interaction(&self, interaction_id: &str, body: &str) -> Result<()> {
+        self.api
+            .put_interaction(&self.token, interaction_id, body)
+            .await
+    }
+
     /// Gets channel permissions for a user.
     ///
     /// # Arguments
