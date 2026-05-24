@@ -16,6 +16,17 @@ BotRS 的所有重要更改都将记录在此文件中。
 ### 更改
 - 文档改进和重构
 
+## [0.9.0] - 2026-05-25
+
+### 更改
+- `MessageReaction` 和 `WSMessageReactionData` 对齐为 botgo 的纯消息表情表态 DTO。
+- reaction 的 `Emoji`、`ReactionTarget` 和 `MessageReaction` 字段改为必填，不再对缺失协议字段静默填空。
+- 论坛 `ThreadInfo.title` 和 `ThreadInfo.content` 对齐 botgo，保留原始字符串。
+- GitHub Actions 升级到当前主版本，规避 Node 20 action deprecation 风险。
+
+### 修复
+- 表情表态事件解析遇到畸形 payload 时会向外返回错误，不再构造空字段的半成品事件。
+
 ## [0.8.0] - 2026-05-25
 
 ### 更改
