@@ -6,6 +6,14 @@
 use crate::models::{HasId, Snowflake};
 use serde::{Deserialize, Serialize};
 
+/// Botgo-compatible API permissions response wrapper.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+pub struct APIPermissions {
+    /// API permission list.
+    #[serde(default, rename = "apis")]
+    pub api_list: Vec<APIPermission>,
+}
+
 /// Represents an API permission for a bot in a guild.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct APIPermission {
@@ -126,6 +134,32 @@ pub struct APIPermissionDemand {
     pub title: Option<String>,
     /// Description explaining why the permission is needed
     pub desc: String,
+}
+
+/// Botgo-compatible body for creating an API permission demand.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct APIPermissionDemandToCreate {
+    /// The channel ID where the permission request will be sent
+    pub channel_id: Snowflake,
+    /// The API identifier for which permission is requested
+    pub api_identify: APIPermissionDemandIdentify,
+    /// Description explaining why the permission is needed
+    pub desc: String,
+}
+
+impl APIPermissionDemandToCreate {
+    /// Creates a new botgo-compatible permission demand creation body.
+    pub fn new(
+        channel_id: impl Into<String>,
+        api_identify: APIPermissionDemandIdentify,
+        desc: impl Into<String>,
+    ) -> Self {
+        Self {
+            channel_id: channel_id.into(),
+            api_identify,
+            desc: desc.into(),
+        }
+    }
 }
 
 impl APIPermissionDemand {

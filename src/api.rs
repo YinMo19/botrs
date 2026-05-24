@@ -125,8 +125,8 @@ use crate::models::{
     emoji::EmojiType,
     guild::{
         Guild, GuildMembersPager, GuildRole, GuildRoleMembers, GuildRoleMembersPager, GuildRoles,
-        Member, MemberDeleteOptions, UpdateGuildMute, UpdateGuildMuteResponse, UpdateResult,
-        UpdateRole, normalize_delete_history_msg_days,
+        Member, MemberAddRoleBody, MemberDeleteOptions, UpdateGuildMute, UpdateGuildMuteResponse,
+        UpdateResult, UpdateRole, normalize_delete_history_msg_days,
     },
     message::{
         ApiMessage, Ark, C2CMessageParams, DirectMessageParams, DirectMessageSession,
@@ -135,7 +135,10 @@ use crate::models::{
         MessagesPager, Reference, RichMediaMessage, SendType, SettingGuide, SettingGuideToCreate,
     },
     message_setting::MessageSetting,
-    permission::{APIPermission, APIPermissionDemand, APIPermissionDemandIdentify},
+    permission::{
+        APIPermission, APIPermissionDemand, APIPermissionDemandIdentify,
+        APIPermissionDemandToCreate, APIPermissions,
+    },
     schedule::{RemindType, Schedule, ScheduleWrapper},
     webhook::{
         HttpIdentity, HttpReady, HttpSession, WebhookValidationRequest, WebhookValidationResponse,
@@ -468,15 +471,27 @@ impl BotApi {
         );
 
         let body = if let Some(channel_id) = channel_id {
-            json!({ "channel": { "id": channel_id } })
+            MemberAddRoleBody::with_channel_id(channel_id)
         } else {
-            json!({ "channel": { "id": null } })
+            MemberAddRoleBody::new()
         };
 
-        let path = format!("/guilds/{guild_id}/members/{user_id}/roles/{role_id}");
-        self.http
-            .put(token, &path, None::<&()>, Some(&body))
+        self.member_add_role(token, guild_id, role_id, user_id, &body)
             .await?;
+        Ok(())
+    }
+
+    /// Adds a member to a guild role with a botgo-compatible body.
+    pub async fn member_add_role(
+        &self,
+        token: &Token,
+        guild_id: &str,
+        role_id: &str,
+        user_id: &str,
+        body: &MemberAddRoleBody,
+    ) -> Result<()> {
+        let path = format!("/guilds/{guild_id}/members/{user_id}/roles/{role_id}");
+        self.http.put(token, &path, None::<&()>, Some(body)).await?;
         Ok(())
     }
 
@@ -507,14 +522,28 @@ impl BotApi {
         );
 
         let body = if let Some(channel_id) = channel_id {
-            json!({ "channel": { "id": channel_id } })
+            MemberAddRoleBody::with_channel_id(channel_id)
         } else {
-            json!({ "channel": { "id": null } })
+            MemberAddRoleBody::new()
         };
 
+        self.member_delete_role(token, guild_id, role_id, user_id, &body)
+            .await?;
+        Ok(())
+    }
+
+    /// Deletes a member from a guild role with a botgo-compatible body.
+    pub async fn member_delete_role(
+        &self,
+        token: &Token,
+        guild_id: &str,
+        role_id: &str,
+        user_id: &str,
+        body: &MemberAddRoleBody,
+    ) -> Result<()> {
         let path = format!("/guilds/{guild_id}/members/{user_id}/roles/{role_id}");
         self.http
-            .delete_with_body(token, &path, None::<&()>, Some(&body))
+            .delete_with_body(token, &path, None::<&()>, Some(body))
             .await?;
         Ok(())
     }
@@ -2635,22 +2664,41 @@ impl BotApi {
     /// # Returns
     ///
     /// List of API permissions.
+    pub async fn get_api_permissions(
+        &self,
+        token: &Token,
+        guild_id: &str,
+    ) -> Result<APIPermissions> {
+        debug!("Getting permissions for guild {}", guild_id);
+
+        let path = format!("/guilds/{guild_id}/api_permission");
+        let response = self.http.get(token, &path, None::<&()>).await?;
+        Ok(serde_json::from_value(response)?)
+    }
+
     pub async fn get_permissions(
         &self,
         token: &Token,
         guild_id: &str,
     ) -> Result<Vec<APIPermission>> {
-        debug!("Getting permissions for guild {}", guild_id);
+        Ok(self.get_api_permissions(token, guild_id).await?.api_list)
+    }
 
-        let path = format!("/guilds/{guild_id}/api_permission");
-        let response = self.http.get(token, &path, None::<&()>).await?;
+    /// Creates an API permission demand request with a botgo-compatible body.
+    pub async fn require_api_permissions(
+        &self,
+        token: &Token,
+        guild_id: &str,
+        demand: &APIPermissionDemandToCreate,
+    ) -> Result<APIPermissionDemand> {
+        debug!("Creating permission demand in guild {}", guild_id);
 
-        // The response has an extra "apis" level
-        if let Some(apis) = response.get("apis") {
-            Ok(serde_json::from_value(apis.clone())?)
-        } else {
-            Ok(vec![])
-        }
+        let path = format!("/guilds/{guild_id}/api_permission/demand");
+        let response = self
+            .http
+            .post(token, &path, None::<&()>, Some(demand))
+            .await?;
+        Ok(serde_json::from_value(response)?)
     }
 
     /// Creates an API permission demand request.
@@ -2676,18 +2724,8 @@ impl BotApi {
     ) -> Result<APIPermissionDemand> {
         debug!("Creating permission demand in guild {}", guild_id);
 
-        let body = json!({
-            "channel_id": channel_id,
-            "api_identify": api_identify,
-            "desc": desc
-        });
-
-        let path = format!("/guilds/{guild_id}/api_permission/demand");
-        let response = self
-            .http
-            .post(token, &path, None::<&()>, Some(&body))
-            .await?;
-        Ok(serde_json::from_value(response)?)
+        let demand = APIPermissionDemandToCreate::new(channel_id, api_identify, desc);
+        self.require_api_permissions(token, guild_id, &demand).await
     }
 
     // Reaction APIs

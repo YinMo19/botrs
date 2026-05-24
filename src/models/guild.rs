@@ -2,7 +2,7 @@
 //!
 //! This module contains guild types that correspond to the Python botpy implementation.
 
-use crate::models::{HasId, HasName, Snowflake, Timestamp};
+use crate::models::{HasId, HasName, Snowflake, Timestamp, channel::Channel};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 mod role_hoist_serde {
@@ -188,6 +188,21 @@ impl GuildRoles {
     }
 }
 
+/// Represents a role ID.
+pub type RoleId = Snowflake;
+/// Botgo-compatible role ID alias.
+pub type RoleID = RoleId;
+/// Default role color used by botgo when creating or updating roles.
+pub const DEFAULT_ROLE_COLOR: u32 = 4_278_245_297;
+
+/// Botgo-compatible role update info body.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+pub struct UpdateRoleInfo {
+    pub name: String,
+    pub color: u32,
+    pub hoist: u32,
+}
+
 /// Represents a role in a guild.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct GuildRole {
@@ -208,7 +223,7 @@ pub struct GuildRole {
 
 impl GuildRole {
     fn default_color() -> u32 {
-        4_278_245_297
+        DEFAULT_ROLE_COLOR
     }
 
     fn hoist_value(&self) -> u32 {
@@ -462,6 +477,29 @@ pub struct GuildRoleMembers {
     /// Cursor for the next page
     #[serde(default)]
     pub next: String,
+}
+
+/// Body used when adding or deleting a member role.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
+pub struct MemberAddRoleBody {
+    /// Channel object for channel administrator roles.
+    pub channel: Option<Channel>,
+}
+
+impl MemberAddRoleBody {
+    /// Creates a body without a channel.
+    pub fn new() -> Self {
+        Self { channel: None }
+    }
+
+    /// Creates a body for a channel-specific role.
+    pub fn with_channel_id(channel_id: impl Into<String>) -> Self {
+        let mut channel = Channel::new();
+        channel.id = Some(channel_id.into());
+        Self {
+            channel: Some(channel),
+        }
+    }
 }
 
 /// Supported history deletion windows when removing a guild member.
