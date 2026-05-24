@@ -61,10 +61,10 @@ impl EventHandler for NewApiDemoHandler {
             None => return,
         };
 
-        if content == "/demo group" {
-            if let Some(group_openid) = &message.group_openid {
-                self.demo_group_message(&ctx, group_openid).await;
-            }
+        if content == "/demo group"
+            && let Some(group_openid) = &message.group_openid
+        {
+            self.demo_group_message(&ctx, group_openid).await;
         }
     }
 

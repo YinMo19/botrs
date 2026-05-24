@@ -146,10 +146,11 @@ impl Token {
             .map_err(|_| BotError::internal("Failed to get current time"))?
             .as_secs();
 
-        if let Some(expires_at) = self.expires_at {
-            if current_time < expires_at && self.access_token.is_some() {
-                return Ok(());
-            }
+        if let Some(expires_at) = self.expires_at
+            && current_time < expires_at
+            && self.access_token.is_some()
+        {
+            return Ok(());
         }
 
         // Create HTTP client for token request

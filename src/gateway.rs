@@ -139,7 +139,7 @@ impl Gateway {
         let rounded = match remainder.saturating_mul(2).cmp(&max_concurrency) {
             std::cmp::Ordering::Less => quotient,
             std::cmp::Ordering::Greater => quotient + 1,
-            std::cmp::Ordering::Equal if quotient % 2 == 0 => quotient,
+            std::cmp::Ordering::Equal if quotient.is_multiple_of(2) => quotient,
             std::cmp::Ordering::Equal => quotient + 1,
         };
 
@@ -370,62 +370,62 @@ impl Gateway {
         }
 
         // Update sequence number if present
-        if let Some(seq) = event.sequence {
-            if seq > 0 {
-                self.last_seq.store(seq, Ordering::Relaxed);
-            }
+        if let Some(seq) = event.sequence
+            && seq > 0
+        {
+            self.last_seq.store(seq, Ordering::Relaxed);
         }
 
         // Handle dispatch events
-        if event.opcode == opcodes::DISPATCH {
-            if let Some(event_type) = &event.event_type {
-                match event_type.as_str() {
-                    "READY" => {
-                        match event
-                            .data
-                            .as_ref()
-                            .and_then(|d| serde_json::from_value::<Ready>(d.clone()).ok())
-                        {
-                            Some(ready) => {
-                                self.session_id = Some(ready.session_id.clone());
-                                self.is_ready.store(true, Ordering::Relaxed);
+        if event.opcode == opcodes::DISPATCH
+            && let Some(event_type) = &event.event_type
+        {
+            match event_type.as_str() {
+                "READY" => {
+                    match event
+                        .data
+                        .as_ref()
+                        .and_then(|d| serde_json::from_value::<Ready>(d.clone()).ok())
+                    {
+                        Some(ready) => {
+                            self.session_id = Some(ready.session_id.clone());
+                            self.is_ready.store(true, Ordering::Relaxed);
 
-                                let elapsed = self
-                                    .connection_start_time
-                                    .map(|t| t.elapsed())
-                                    .unwrap_or(Duration::ZERO);
-                                debug!(
-                                    "[botrs] 收到 READY 事件，session_id: {}，连接耗时: {:?}",
-                                    ready.session_id, elapsed
-                                );
-                                // Start heartbeat task with 30 second interval like Python
-                                self.start_heartbeat_task(write.clone());
-                                debug!("[botrs] 心跳任务已启动");
+                            let elapsed = self
+                                .connection_start_time
+                                .map(|t| t.elapsed())
+                                .unwrap_or(Duration::ZERO);
+                            debug!(
+                                "[botrs] 收到 READY 事件，session_id: {}，连接耗时: {:?}",
+                                ready.session_id, elapsed
+                            );
+                            // Start heartbeat task with 30 second interval like Python
+                            self.start_heartbeat_task(write.clone());
+                            debug!("[botrs] 心跳任务已启动");
 
-                                info!("[botrs] 机器人「{}」启动成功！", ready.user.username);
-                            }
-                            None => {
-                                debug!("[botrs] READY 事件解析失败或无数据");
-                            }
+                            info!("[botrs] 机器人「{}」启动成功！", ready.user.username);
+                        }
+                        None => {
+                            debug!("[botrs] READY 事件解析失败或无数据");
                         }
                     }
-                    "RESUMED" => {
-                        self.is_ready.store(true, Ordering::Relaxed);
-
-                        debug!("[botrs] 收到 RESUMED 事件");
-                        // Start heartbeat task after RESUMED as well
-                        self.start_heartbeat_task(write.clone());
-                        debug!("[botrs] 心跳任务已重新启动");
-
-                        info!("[botrs] 机器人重连成功! ");
-                    }
-                    _ => {}
                 }
+                "RESUMED" => {
+                    self.is_ready.store(true, Ordering::Relaxed);
 
-                // Regular event dispatch
-                if let Err(e) = event_sender.send(event) {
-                    debug!("Failed to send event: {}", e);
+                    debug!("[botrs] 收到 RESUMED 事件");
+                    // Start heartbeat task after RESUMED as well
+                    self.start_heartbeat_task(write.clone());
+                    debug!("[botrs] 心跳任务已重新启动");
+
+                    info!("[botrs] 机器人重连成功! ");
                 }
+                _ => {}
+            }
+
+            // Regular event dispatch
+            if let Err(e) = event_sender.send(event) {
+                debug!("Failed to send event: {}", e);
             }
         }
 
@@ -441,21 +441,21 @@ impl Gateway {
         match event.opcode {
             opcodes::HELLO => {
                 // Hello message with heartbeat interval
-                if let Some(data) = &event.data {
-                    if let Ok(hello) = serde_json::from_value::<Hello>(data.clone()) {
-                        debug!(
-                            "[botrs] 收到 HELLO 事件，服务器建议心跳间隔: {}ms (我们使用固定30000ms)",
-                            hello.heartbeat_interval
-                        );
-                        self.heartbeat_interval = Some(hello.heartbeat_interval);
-                        // Use 30000ms like Python
-                        self.heartbeat_interval_ms.store(30000, Ordering::Relaxed);
+                if let Some(data) = &event.data
+                    && let Ok(hello) = serde_json::from_value::<Hello>(data.clone())
+                {
+                    debug!(
+                        "[botrs] 收到 HELLO 事件，服务器建议心跳间隔: {}ms (我们使用固定30000ms)",
+                        hello.heartbeat_interval
+                    );
+                    self.heartbeat_interval = Some(hello.heartbeat_interval);
+                    // Use 30000ms like Python
+                    self.heartbeat_interval_ms.store(30000, Ordering::Relaxed);
 
-                        // Send identify or resume like Python's on_connected
-                        debug!("[botrs] 发送身份验证信息");
-                        if let Err(e) = self.send_identify(write).await {
-                            debug!("Failed to send identify: {}", e);
-                        }
+                    // Send identify or resume like Python's on_connected
+                    debug!("[botrs] 发送身份验证信息");
+                    if let Err(e) = self.send_identify(write).await {
+                        debug!("Failed to send identify: {}", e);
                     }
                 }
                 Ok(Some(GatewayAction::Continue))

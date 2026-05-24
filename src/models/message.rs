@@ -1963,7 +1963,7 @@ impl RichMediaMessage {
 #[derive(Debug, Clone, PartialEq)]
 pub enum ApiMessage {
     /// Regular message create payload
-    Message(MessageToCreate),
+    Message(Box<MessageToCreate>),
     /// Rich media payload
     RichMedia(RichMediaMessage),
 }
@@ -1992,7 +1992,7 @@ impl Serialize for ApiMessage {
 
 impl From<MessageToCreate> for ApiMessage {
     fn from(message: MessageToCreate) -> Self {
-        Self::Message(message)
+        Self::Message(Box::new(message))
     }
 }
 

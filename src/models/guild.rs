@@ -4,6 +4,13 @@
 
 use crate::models::{HasId, HasName, Snowflake, Timestamp, channel::Channel};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use std::collections::HashMap;
+
+fn insert_query_param(query: &mut HashMap<String, String>, key: &str, value: &Option<String>) {
+    if let Some(value) = value.as_ref().filter(|value| !value.is_empty()) {
+        query.insert(key.to_string(), value.clone());
+    }
+}
 
 mod role_hoist_serde {
     use super::*;
@@ -447,18 +454,10 @@ impl GuildMembersPager {
     }
 
     /// Converts the pager to botgo-compatible query parameters.
-    pub fn query_params(&self) -> std::collections::HashMap<String, String> {
-        let mut query = std::collections::HashMap::new();
-        if let Some(limit) = &self.limit {
-            if !limit.is_empty() {
-                query.insert("limit".to_string(), limit.clone());
-            }
-        }
-        if let Some(after) = &self.after {
-            if !after.is_empty() {
-                query.insert("after".to_string(), after.clone());
-            }
-        }
+    pub fn query_params(&self) -> HashMap<String, String> {
+        let mut query = HashMap::new();
+        insert_query_param(&mut query, "limit", &self.limit);
+        insert_query_param(&mut query, "after", &self.after);
         query
     }
 }
@@ -484,18 +483,10 @@ impl GuildRoleMembersPager {
     }
 
     /// Converts the pager to botgo-compatible query parameters.
-    pub fn query_params(&self) -> std::collections::HashMap<String, String> {
-        let mut query = std::collections::HashMap::new();
-        if let Some(limit) = &self.limit {
-            if !limit.is_empty() {
-                query.insert("limit".to_string(), limit.clone());
-            }
-        }
-        if let Some(start_index) = &self.start_index {
-            if !start_index.is_empty() {
-                query.insert("start_index".to_string(), start_index.clone());
-            }
-        }
+    pub fn query_params(&self) -> HashMap<String, String> {
+        let mut query = HashMap::new();
+        insert_query_param(&mut query, "limit", &self.limit);
+        insert_query_param(&mut query, "start_index", &self.start_index);
         query
     }
 }
@@ -536,24 +527,12 @@ impl GuildPager {
     }
 
     /// Converts the pager to botgo-compatible query parameters.
-    pub fn query_params(&self) -> std::collections::HashMap<String, String> {
-        let mut query = std::collections::HashMap::new();
-        if let Some(limit) = &self.limit {
-            if !limit.is_empty() {
-                query.insert("limit".to_string(), limit.clone());
-            }
-        }
-        if let Some(after) = &self.after {
-            if !after.is_empty() {
-                query.insert("after".to_string(), after.clone());
-            }
-        }
+    pub fn query_params(&self) -> HashMap<String, String> {
+        let mut query = HashMap::new();
+        insert_query_param(&mut query, "limit", &self.limit);
+        insert_query_param(&mut query, "after", &self.after);
         if !query.contains_key("after") {
-            if let Some(before) = &self.before {
-                if !before.is_empty() {
-                    query.insert("before".to_string(), before.clone());
-                }
-            }
+            insert_query_param(&mut query, "before", &self.before);
         }
         query
     }
