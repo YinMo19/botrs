@@ -61,7 +61,7 @@ pub fn GenValidationACK(
 pub fn HTTPHandler(
     body: &[u8],
     headers: &HeaderMap,
-    _app_id: impl Into<String>,
+    app_id: impl Into<String>,
     secret: &str,
 ) -> crate::Result<Option<Vec<u8>>> {
     if !crate::signature::Verify(secret, headers, body)? {
@@ -70,6 +70,7 @@ pub fn HTTPHandler(
 
     let mut payload: crate::models::gateway::WSPayload = serde_json::from_slice(body)?;
     payload.raw_message = Some(body.to_vec());
+    payload.session = Some(crate::session_manager::Session::from_app_id(app_id));
     let trace_id = headers
         .get(crate::constant::HeaderTraceID)
         .and_then(|value| value.to_str().ok())
@@ -112,6 +113,23 @@ pub fn HTTPHandler(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::sync::{Mutex, OnceLock};
+
+    fn captured_app_id() -> &'static Mutex<Option<String>> {
+        static CAPTURED: OnceLock<Mutex<Option<String>>> = OnceLock::new();
+        CAPTURED.get_or_init(|| Mutex::new(None))
+    }
+
+    fn capture_session_app_id(
+        payload: &mut crate::models::gateway::WSPayload,
+        _: &[u8],
+    ) -> crate::Result<()> {
+        *captured_app_id().lock().unwrap() = payload
+            .session
+            .as_ref()
+            .and_then(|session| session.app_id.clone());
+        Ok(())
+    }
 
     #[test]
     fn ack_payloads_match_botgo_shape() {
@@ -133,5 +151,30 @@ mod tests {
         let rsp: WHValidationRsp = serde_json::from_slice(&body).unwrap();
         assert_eq!(rsp.plain_token, "plain");
         assert!(!rsp.signature.is_empty());
+    }
+
+    #[test]
+    fn http_handler_sets_app_id_session_for_dispatch() {
+        let secret = "secret";
+        let body = br#"{"op":0,"t":"WEBHOOK_TEST","d":{"hello":"world"}}"#;
+        let mut headers = HeaderMap::new();
+        headers.insert(crate::signature::HeaderTimestamp, "123456".parse().unwrap());
+        let signature = crate::signature::Generate(secret, &headers, body).unwrap();
+        headers.insert(crate::signature::HeaderSig, signature.parse().unwrap());
+
+        crate::event::RegisterHandler(
+            crate::models::gateway::WSDispatchEvent,
+            "WEBHOOK_TEST",
+            capture_session_app_id,
+        );
+        *captured_app_id().lock().unwrap() = None;
+
+        let response = HTTPHandler(body, &headers, "app-id-1", secret).unwrap();
+
+        assert_eq!(response, Some(GenDispatchACK(true).into_bytes()));
+        assert_eq!(
+            captured_app_id().lock().unwrap().as_deref(),
+            Some("app-id-1")
+        );
     }
 }

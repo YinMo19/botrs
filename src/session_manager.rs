@@ -72,6 +72,26 @@ impl Session {
     pub fn shard(&self) -> [u32; 2] {
         [self.shards.shard_id, self.shards.shard_count]
     }
+
+    pub fn from_app_id(app_id: impl Into<String>) -> Self {
+        Self {
+            id: String::new(),
+            url: String::new(),
+            token: Token::new("", ""),
+            intent: Intents::default(),
+            last_seq: 0,
+            shards: crate::models::api::ShardConfig {
+                shard_id: 0,
+                shard_count: 0,
+            },
+            app_id: Some(app_id.into()),
+        }
+    }
+
+    #[allow(non_snake_case)]
+    pub fn FromAppID(app_id: impl Into<String>) -> Self {
+        Self::from_app_id(app_id)
+    }
 }
 
 /// Session manager interface aligned with botgo's SessionManager.
@@ -162,9 +182,13 @@ impl ChanManager {
         event_sender: mpsc::UnboundedSender<GatewayEvent>,
         session: Session,
     ) {
-        let (reconnect_session, result) = connect_fn(session, event_sender).await;
+        let (mut reconnect_session, result) = connect_fn(session, event_sender).await;
         if let Err(err) = result {
             error!("[ws/session/local] Listening err {}", err);
+            if CanNotResume(&err) {
+                reconnect_session.id.clear();
+                reconnect_session.last_seq = 0;
+            }
             if CanNotIdentify(&err) {
                 error!("can not identify because server return {}", err);
                 return;
@@ -344,5 +368,51 @@ mod tests {
             .map(|session| session.shard())
             .collect::<Vec<_>>();
         assert_eq!(shards, vec![[0, 3], [1, 3], [2, 3]]);
+    }
+
+    #[test]
+    fn app_id_session_matches_botgo_webhook_shape() {
+        let session = Session::from_app_id("app-id-1");
+
+        assert_eq!(session.app_id.as_deref(), Some("app-id-1"));
+        assert!(session.id.is_empty());
+        assert_eq!(session.last_seq, 0);
+        assert_eq!(session.shard(), [0, 0]);
+    }
+
+    #[tokio::test]
+    async fn non_resumable_error_clears_session_before_requeue() {
+        let (session_tx, mut session_rx) = mpsc::unbounded_channel();
+        let (event_tx, _event_rx) = mpsc::unbounded_channel();
+        let connect_fn: std::sync::Arc<SessionConnectFn> =
+            std::sync::Arc::new(|session, _event_sender| {
+                Box::pin(async move {
+                    let mut next = session;
+                    next.id = "stale-session".to_string();
+                    next.last_seq = 42;
+                    (
+                        next,
+                        Err(New(CodeConnCloseCantResume, "invalid session").into()),
+                    )
+                })
+            });
+
+        ChanManager::new_connect(
+            session_tx,
+            connect_fn,
+            event_tx,
+            Session::new(
+                "wss://example.com",
+                Token::new("app_id", "secret"),
+                Intents::default(),
+                0,
+                1,
+            ),
+        )
+        .await;
+
+        let session = session_rx.recv().await.unwrap();
+        assert!(session.id.is_empty());
+        assert_eq!(session.last_seq, 0);
     }
 }
