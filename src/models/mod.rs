@@ -123,63 +123,6 @@ pub trait HasName {
     fn name(&self) -> &str;
 }
 
-/// Represents the type of a channel.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
-#[serde(from = "u8", into = "u8")]
-#[repr(u8)]
-pub enum ChannelType {
-    /// Text channel
-    Text = 0,
-    /// Voice channel
-    Voice = 2,
-    /// Category channel
-    Category = 4,
-    /// Announcement channel
-    Announcement = 5,
-    /// Thread channel
-    Thread = 10,
-    /// Live channel
-    Live = 12,
-    /// Application channel
-    Application = 13,
-    /// Forum channel
-    Forum = 15,
-    /// Unknown channel type
-    Unknown(u8),
-}
-
-impl From<u8> for ChannelType {
-    fn from(value: u8) -> Self {
-        match value {
-            0 => Self::Text,
-            2 => Self::Voice,
-            4 => Self::Category,
-            5 => Self::Announcement,
-            10 => Self::Thread,
-            12 => Self::Live,
-            13 => Self::Application,
-            15 => Self::Forum,
-            other => Self::Unknown(other),
-        }
-    }
-}
-
-impl From<ChannelType> for u8 {
-    fn from(channel_type: ChannelType) -> Self {
-        match channel_type {
-            ChannelType::Text => 0,
-            ChannelType::Voice => 2,
-            ChannelType::Category => 4,
-            ChannelType::Announcement => 5,
-            ChannelType::Thread => 10,
-            ChannelType::Live => 12,
-            ChannelType::Application => 13,
-            ChannelType::Forum => 15,
-            ChannelType::Unknown(value) => value,
-        }
-    }
-}
-
 /// Represents the type of a message.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(from = "u8", into = "u8")]
@@ -268,15 +211,6 @@ impl std::fmt::Display for Color {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn test_channel_type_conversion() {
-        assert_eq!(ChannelType::from(0), ChannelType::Text);
-        assert_eq!(u8::from(ChannelType::Text), 0);
-
-        assert_eq!(ChannelType::from(99), ChannelType::Unknown(99));
-        assert_eq!(u8::from(ChannelType::Unknown(99)), 99);
-    }
 
     #[test]
     fn test_color() {

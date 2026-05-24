@@ -255,8 +255,8 @@ async fn create_text_channel(
 ) -> Result<Channel, BotError> {
     let channel_data = serde_json::json!({
         "name": channel_name,
-        "type": ChannelType::Text as u8,
-        "sub_type": ChannelSubType::Chat as u8,
+        "type": u32::from(ChannelType::Text),
+        "sub_type": u32::from(ChannelSubType::Chat),
         "position": 1
     });
     

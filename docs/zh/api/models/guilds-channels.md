@@ -125,14 +125,14 @@ pub struct Channel {
     pub guild_id: String,
     pub name: String,
     pub channel_type: ChannelType,
-    pub sub_type: Option<ChannelSubType>,
-    pub position: Option<u32>,
-    pub parent_id: Option<String>,
-    pub owner_id: Option<String>,
-    pub private_type: Option<u32>,
-    pub speak_permission: Option<u32>,
-    pub application_id: Option<String>,
-    pub permissions: Option<String>,
+    pub sub_type: ChannelSubType,
+    pub position: i64,
+    pub parent_id: String,
+    pub owner_id: String,
+    pub private_type: PrivateType,
+    pub speak_permission: SpeakPermission,
+    pub application_id: String,
+    pub permissions: String,
 }
 ```
 
@@ -181,12 +181,11 @@ async fn handle_channel_create(ctx: Context, channel: Channel) {
 ```rust
 pub enum ChannelType {
     Text = 0,
-    Voice = 1,
+    Voice = 2,
     Category = 4,
-    Announcement = 5,
-    Forum = 10,
-    Live = 11,
-    Application = 12,
+    Live = 10005,
+    Application = 10006,
+    Forum = 10007,
 }
 ```
 
@@ -195,10 +194,9 @@ pub enum ChannelType {
 - `Text`: 用于消息的文字子频道
 - `Voice`: 用于音频通信的语音子频道
 - `Category`: 用于组织子频道的分类
-- `Announcement`: 公告子频道
-- `Forum`: 用于话题讨论的论坛子频道
 - `Live`: 直播子频道
 - `Application`: 应用程序特定子频道
+- `Forum`: 用于话题讨论的论坛子频道
 
 #### 示例
 
@@ -208,7 +206,7 @@ async fn create_text_channel(ctx: Context, guild_id: &str, name: &str) -> Result
         guild_id,
         name,
         ChannelType::Text,
-        None, // sub_type
+        ChannelSubType::Chat,
         None, // position
         None, // parent_id
         None, // private_type
@@ -332,7 +330,7 @@ async fn setup_guild_channels(ctx: Context, guild_id: &str) -> Result<()> {
         guild_id,
         "闲聊",
         ChannelType::Text,
-        Some(ChannelSubType::Chat),
+        ChannelSubType::Chat,
         Some(1),
         Some(&category.id), // 父分类
         None,
@@ -344,7 +342,7 @@ async fn setup_guild_channels(ctx: Context, guild_id: &str) -> Result<()> {
         guild_id,
         "公告",
         ChannelType::Text,
-        Some(ChannelSubType::Announcement),
+        ChannelSubType::Notice,
         Some(2),
         Some(&category.id),
         None,
@@ -472,10 +470,10 @@ async fn explore_guilds(ctx: Context) -> Result<()> {
                 ChannelType::Text => "文字",
                 ChannelType::Voice => "语音",
                 ChannelType::Category => "分类",
-                ChannelType::Announcement => "公告",
                 ChannelType::Forum => "论坛",
                 ChannelType::Live => "直播",
                 ChannelType::Application => "应用",
+                ChannelType::Unknown(_) => "未知",
             };
             
             println!("    {} - {} ({})", channel.name, type_name, channel.id);
@@ -501,7 +499,7 @@ async fn organize_channels(ctx: Context, guild_id: &str) -> Result<()> {
             (ChannelType::Category, _) => {
                 categories.insert(channel.id.clone(), (channel, Vec::new()));
             }
-            (_, Some(parent_id)) => {
+            (_, parent_id) if !parent_id.is_empty() => {
                 if let Some((_, children)) = categories.get_mut(parent_id) {
                     children.push(channel);
                 }

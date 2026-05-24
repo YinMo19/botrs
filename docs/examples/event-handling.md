@@ -516,10 +516,10 @@ impl ComprehensiveBot {
                         botrs::models::channel::ChannelType::Text => "💬",
                         botrs::models::channel::ChannelType::Voice => "🔊",
                         botrs::models::channel::ChannelType::Category => "📁",
-                        botrs::models::channel::ChannelType::Announcement => "📢",
                         botrs::models::channel::ChannelType::Forum => "🧵",
                         botrs::models::channel::ChannelType::Live => "🎥",
                         botrs::models::channel::ChannelType::Application => "🔧",
+                        botrs::models::channel::ChannelType::Unknown(_) => "❔",
                     };
                     
                     channel_list.push_str(&format!("{} {}\n", channel_type, channel.name));

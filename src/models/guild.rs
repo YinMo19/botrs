@@ -651,7 +651,7 @@ impl MemberAddRoleBody {
     /// Creates a body for a channel-specific role.
     pub fn with_channel_id(channel_id: impl Into<String>) -> Self {
         let mut channel = Channel::new();
-        channel.id = Some(channel_id.into());
+        channel.id = channel_id.into();
         Self {
             channel: Some(channel),
         }
@@ -942,7 +942,7 @@ mod tests {
         assert_eq!(guild.id.as_deref(), Some("guild-1"));
         assert_eq!(guild.is_owner, Some(true));
         assert_eq!(guild.channels.len(), 1);
-        assert_eq!(guild.channels[0].id.as_deref(), Some("channel-1"));
+        assert_eq!(guild.channels[0].id, "channel-1");
         assert_eq!(guild.union_world_id.as_deref(), Some("world-1"));
         assert_eq!(guild.union_org_id.as_deref(), Some("org-1"));
         assert_eq!(guild.op_user_id.as_deref(), Some("operator-1"));

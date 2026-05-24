@@ -348,12 +348,11 @@ impl EventType {
 #[derive(Debug, Clone, PartialEq)]
 pub enum ChannelType {
     Text = 0,
-    Voice = 1,
+    Voice = 2,
     Category = 4,
-    Announcement = 5,
-    Forum = 10,
-    Live = 11,
-    Application = 12,
+    Live = 10005,
+    Application = 10006,
+    Forum = 10007,
 }
 ```
 
