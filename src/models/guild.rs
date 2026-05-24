@@ -53,6 +53,7 @@ pub struct Guild {
     /// The ID of the guild owner
     pub owner_id: Option<Snowflake>,
     /// Whether the current user is the owner of this guild
+    #[serde(rename = "owner")]
     pub is_owner: Option<bool>,
     /// The number of members in this guild
     pub member_count: Option<u32>,
@@ -62,6 +63,15 @@ pub struct Guild {
     pub description: Option<String>,
     /// When the current user joined this guild
     pub joined_at: Option<Timestamp>,
+    /// Channels contained in this guild when included by gateway payloads
+    #[serde(default)]
+    pub channels: Vec<Channel>,
+    /// Bound game world/server ID
+    pub union_world_id: Option<String>,
+    /// Bound game organization/team ID
+    pub union_org_id: Option<String>,
+    /// Operator user ID
+    pub op_user_id: Option<Snowflake>,
 }
 
 impl Guild {
@@ -77,11 +87,15 @@ impl Guild {
             max_members: None,
             description: None,
             joined_at: None,
+            channels: Vec::new(),
+            union_world_id: None,
+            union_org_id: None,
+            op_user_id: None,
         }
     }
 
     /// Creates a new guild from API data.
-    pub fn from_data(_api: crate::api::BotApi, id: String, data: serde_json::Value) -> Self {
+    pub fn from_data(api: crate::api::BotApi, id: String, data: serde_json::Value) -> Self {
         Self {
             id: Some(id),
             name: data.get("name").and_then(|v| v.as_str()).map(String::from),
@@ -90,7 +104,10 @@ impl Guild {
                 .get("owner_id")
                 .and_then(|v| v.as_str())
                 .map(String::from),
-            is_owner: data.get("is_owner").and_then(|v| v.as_bool()),
+            is_owner: data
+                .get("owner")
+                .or_else(|| data.get("is_owner"))
+                .and_then(|v| v.as_bool()),
             member_count: data
                 .get("member_count")
                 .and_then(|v| v.as_u64())
@@ -108,6 +125,36 @@ impl Guild {
                 .and_then(|v| v.as_str())
                 .and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok())
                 .map(|dt| dt.with_timezone(&chrono::Utc)),
+            channels: data
+                .get("channels")
+                .and_then(|v| v.as_array())
+                .map(|channels| {
+                    channels
+                        .iter()
+                        .cloned()
+                        .map(|channel| {
+                            let channel_id = channel
+                                .get("id")
+                                .and_then(|v| v.as_str())
+                                .unwrap_or_default()
+                                .to_string();
+                            Channel::from_data(api.clone(), channel_id, channel)
+                        })
+                        .collect::<Vec<_>>()
+                })
+                .unwrap_or_default(),
+            union_world_id: data
+                .get("union_world_id")
+                .and_then(|v| v.as_str())
+                .map(String::from),
+            union_org_id: data
+                .get("union_org_id")
+                .and_then(|v| v.as_str())
+                .map(String::from),
+            op_user_id: data
+                .get("op_user_id")
+                .and_then(|v| v.as_str())
+                .map(String::from),
         }
     }
 
@@ -868,6 +915,43 @@ mod tests {
         assert!(!guild.is_at_member_limit());
         assert!(guild.has_description());
         assert_eq!(guild.display_name(), Some("Test Guild"));
+    }
+
+    #[test]
+    fn botgo_guild_fields_use_official_json_names() {
+        let guild = Guild::from_data(
+            crate::api::BotApi::new(crate::http::HttpClient::new(30, false).unwrap()),
+            "guild-1".to_string(),
+            serde_json::json!({
+                "name": "Guild",
+                "owner": true,
+                "channels": [
+                    {
+                        "id": "channel-1",
+                        "guild_id": "guild-1",
+                        "name": "general",
+                        "type": 0
+                    }
+                ],
+                "union_world_id": "world-1",
+                "union_org_id": "org-1",
+                "op_user_id": "operator-1"
+            }),
+        );
+
+        assert_eq!(guild.id.as_deref(), Some("guild-1"));
+        assert_eq!(guild.is_owner, Some(true));
+        assert_eq!(guild.channels.len(), 1);
+        assert_eq!(guild.channels[0].id.as_deref(), Some("channel-1"));
+        assert_eq!(guild.union_world_id.as_deref(), Some("world-1"));
+        assert_eq!(guild.union_org_id.as_deref(), Some("org-1"));
+        assert_eq!(guild.op_user_id.as_deref(), Some("operator-1"));
+
+        let value = serde_json::to_value(&guild).unwrap();
+        assert_eq!(value["owner"], serde_json::json!(true));
+        assert!(value.get("is_owner").is_none());
+        assert_eq!(value["channels"][0]["id"], serde_json::json!("channel-1"));
+        assert_eq!(value["union_world_id"], serde_json::json!("world-1"));
     }
 
     #[test]
