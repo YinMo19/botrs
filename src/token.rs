@@ -31,6 +31,16 @@ pub fn NewQQBotTokenSource(credentials: &QQBotCredentials) -> QQBotTokenSource {
     Token::new(&credentials.app_id, &credentials.app_secret)
 }
 
+#[derive(Debug, Default)]
+struct TokenState {
+    access_token: Option<String>,
+    expires_at: Option<u64>,
+}
+
+fn default_state() -> Arc<Mutex<TokenState>> {
+    Arc::new(Mutex::new(TokenState::default()))
+}
+
 /// Represents the authentication token for a QQ Guild Bot.
 ///
 /// The token contains the app ID and secret required for authenticating
@@ -51,15 +61,9 @@ pub struct Token {
     app_id: String,
     /// The application secret provided by QQ
     secret: String,
-    /// The current access token (fetched from QQ API)
-    #[serde(skip)]
-    access_token: Option<String>,
-    /// When the access token expires (Unix timestamp)
-    #[serde(skip)]
-    expires_at: Option<u64>,
-    /// Mutex to prevent concurrent token refresh
-    #[serde(skip)]
-    refresh_mutex: Arc<Mutex<()>>,
+    /// Shared token cache and refresh lock.
+    #[serde(skip, default = "default_state")]
+    state: Arc<Mutex<TokenState>>,
 }
 
 impl Token {
@@ -82,9 +86,7 @@ impl Token {
         Self {
             app_id: app_id.into(),
             secret: secret.into(),
-            access_token: None,
-            expires_at: None,
-            refresh_mutex: Arc::new(Mutex::new(())),
+            state: default_state(),
         }
     }
 
@@ -121,12 +123,8 @@ impl Token {
     /// }
     /// ```
     pub async fn authorization_header(&self) -> Result<String> {
-        self.ensure_valid_token().await?;
-        if let Some(access_token) = &self.access_token {
-            Ok(format!("QQBot {access_token}"))
-        } else {
-            Err(BotError::auth("No valid access token available"))
-        }
+        let access_token = self.access_token().await?;
+        Ok(format!("QQBot {access_token}"))
     }
 
     /// Generates the bot token for WebSocket authentication.
@@ -148,28 +146,21 @@ impl Token {
             .map_err(|_| BotError::internal("Failed to get current time"))?
             .as_secs();
 
-        // Check if we need to refresh the token
-        if self.access_token.is_none() || self.expires_at.is_none_or(|exp| current_time >= exp) {
-            self.refresh_access_token().await?;
+        let is_valid = {
+            let state = self.state.lock().await;
+            state.access_token.is_some() && state.expires_at.is_some_and(|exp| current_time < exp)
+        };
+        if !is_valid {
+            self.refresh_access_token(current_time).await?;
         }
 
         Ok(())
     }
 
     /// Refreshes the access token by calling the QQ API.
-    async fn refresh_access_token(&self) -> Result<()> {
-        let _guard = self.refresh_mutex.lock().await;
-
-        // Double-check in case another thread already refreshed it
-        let current_time = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .map_err(|_| BotError::internal("Failed to get current time"))?
-            .as_secs();
-
-        if let Some(expires_at) = self.expires_at
-            && current_time < expires_at
-            && self.access_token.is_some()
-        {
+    async fn refresh_access_token(&self, current_time: u64) -> Result<()> {
+        let mut state = self.state.lock().await;
+        if state.access_token.is_some() && state.expires_at.is_some_and(|exp| current_time < exp) {
             return Ok(());
         }
 
@@ -211,14 +202,20 @@ impl Token {
             .and_then(|s| s.parse::<u64>().ok())
             .ok_or_else(|| BotError::auth("No expires_in in response"))?;
 
-        // Store the new token (we need to use unsafe here since we can't have mutable references)
-        unsafe {
-            let self_mut = self as *const Self as *mut Self;
-            (*self_mut).access_token = Some(access_token.to_string());
-            (*self_mut).expires_at = Some(current_time + expires_in);
-        }
+        state.access_token = Some(access_token.to_string());
+        state.expires_at = Some(current_time + expires_in);
 
         Ok(())
+    }
+
+    async fn access_token(&self) -> Result<String> {
+        self.ensure_valid_token().await?;
+        self.state
+            .lock()
+            .await
+            .access_token
+            .clone()
+            .ok_or_else(|| BotError::auth("No valid access token available"))
     }
 
     /// Validates that the token has non-empty app ID and secret.
@@ -360,6 +357,22 @@ mod tests {
         // Both should fail in the same way since we don't have real credentials
         assert!(bot_token_result.is_err());
         assert!(auth_header_result.is_err());
+    }
+
+    #[tokio::test]
+    async fn cloned_tokens_share_cached_access_token() {
+        let token = Token::new("123", "secret");
+        {
+            let mut state = token.state.lock().await;
+            state.access_token = Some("cached-token".to_string());
+            state.expires_at = Some(u64::MAX);
+        }
+
+        let cloned = token.clone();
+        assert_eq!(
+            cloned.authorization_header().await.unwrap(),
+            "QQBot cached-token"
+        );
     }
 
     #[test]
