@@ -1182,13 +1182,21 @@ impl<H: EventHandler + 'static> Client<H> {
         // Set up event channel
         let (event_sender, mut event_receiver) = mpsc::unbounded_channel();
 
+        let reconnect_interval =
+            Gateway::session_start_interval(gateway_info.session_start_limit.max_concurrency);
+        debug!(
+            "Gateway reconnect interval: {:?} (max_concurrency: {})",
+            reconnect_interval, gateway_info.session_start_limit.max_concurrency
+        );
+
         // Create and connect gateway
         let gateway = Gateway::new(
             gateway_info.url,
             self.token.clone(),
             self.intents,
             None, // TODO: Implement sharding
-        );
+        )
+        .with_reconnect_interval(reconnect_interval);
 
         // Start gateway connection in a separate task with auto-reconnect
         let gateway_task = {
