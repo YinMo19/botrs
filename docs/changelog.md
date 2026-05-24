@@ -16,6 +16,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Documentation improvements and restructuring
 
+## [0.5.0] - 2026-05-25
+
+### Added
+- Botgo-compatible OpenAPI facade, version registry, request options, HTTP filters, and token refresh helpers.
+
+### Changed
+- Aligned OpenAPI success status handling with botgo (`200` and `204` only).
+- Shared token caches across cloned token sources without unsafe mutation.
+- Refreshed the lockfile to avoid yanked transitive dependencies.
+
+### Fixed
+- Reset WebSocket reconnect backoff after successful reconnects.
+- Isolated OpenAPI registry tests to avoid parallel-test flakiness.
+
 ## [0.2.5] - 2025-07-30
 
 ### Added
