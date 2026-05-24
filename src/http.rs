@@ -519,7 +519,7 @@ impl HttpClient {
         })?;
 
         // Check for API errors
-        if !status.is_success() {
+        if !crate::openapi::IsSuccessStatus(status.as_u16()) {
             let api_error = self.parse_api_error(status, &json)?;
             error!("API error: {}", api_error);
             return Err(http_error_from_status(status.as_u16(), api_error.message));
@@ -559,7 +559,7 @@ impl HttpClient {
         }
 
         let body = response.bytes().await.map_err(BotError::Http)?.to_vec();
-        if !status.is_success() {
+        if !crate::openapi::IsSuccessStatus(status.as_u16()) {
             let message = serde_json::from_slice::<Value>(&body)
                 .ok()
                 .and_then(|json| {

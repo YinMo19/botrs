@@ -70,8 +70,8 @@ pub use manage::{
 pub use models::gateway::Ready;
 pub use models::*;
 pub use openapi::{
-    DoReqFilterChains, DoRespFilterChains, FilterContext, HTTPFilter, RegisterReqFilter,
-    RegisterRespFilter,
+    DoReqFilterChains, DoRespFilterChains, FilterContext, HTTPFilter, IsSuccessStatus,
+    RegisterReqFilter, RegisterRespFilter,
 };
 pub use options::{OpenApiOption, Options, WithHideTip, WithURL};
 pub use reaction::{

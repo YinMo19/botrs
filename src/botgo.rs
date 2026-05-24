@@ -87,15 +87,22 @@ pub fn RegisterDispatchEventHandler(event_type: impl Into<EventType>, handler: E
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::sync::{LazyLock, Mutex};
+
+    static OPENAPI_REGISTRY_TEST_LOCK: LazyLock<Mutex<()>> = LazyLock::new(|| Mutex::new(()));
 
     #[test]
     fn select_openapi_version_accepts_v1_only() {
+        let _guard = OPENAPI_REGISTRY_TEST_LOCK.lock().unwrap();
         assert!(SelectOpenAPIVersion(APIv1).is_ok());
         assert!(SelectOpenAPIVersion(99).is_err());
     }
 
     #[test]
     fn new_openapi_uses_requested_environment() {
+        let _guard = OPENAPI_REGISTRY_TEST_LOCK.lock().unwrap();
+        SelectOpenAPIVersion(APIv1).unwrap();
+
         let token = Token::new("app", "secret");
         let api = NewSandboxOpenAPI("app", token);
         assert_eq!(api.Version(), APIv1);
@@ -104,6 +111,7 @@ mod tests {
 
     #[test]
     fn openapi_client_registry_controls_version_selection() {
+        let _guard = OPENAPI_REGISTRY_TEST_LOCK.lock().unwrap();
         let custom_version = 42;
         let template = BotApi::new(HttpClient::new(9, false).unwrap()).SetDebug(true);
         SetOpenAPIClient(custom_version, template);
