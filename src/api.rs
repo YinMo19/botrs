@@ -3586,7 +3586,7 @@ impl BotApi {
         token: &Token,
         channel_id: &str,
         message_id: &str,
-        emoji_type: u32,
+        emoji_type: i32,
         emoji_id: &str,
     ) -> Result<()> {
         debug!(
@@ -3610,16 +3610,8 @@ impl BotApi {
         message_id: &str,
         emoji: &ReactionEmoji,
     ) -> Result<()> {
-        let emoji_type = emoji.emoji_type.unwrap_or(0);
-        let emoji_id = emoji.id.as_deref().unwrap_or_default();
-        self.put_reaction(
-            token,
-            channel_id,
-            message_id,
-            u32::from(emoji_type),
-            emoji_id,
-        )
-        .await
+        self.put_reaction(token, channel_id, message_id, emoji.emoji_type, &emoji.id)
+            .await
     }
 
     /// Removes a reaction from a message.
@@ -3640,7 +3632,7 @@ impl BotApi {
         token: &Token,
         channel_id: &str,
         message_id: &str,
-        emoji_type: u32,
+        emoji_type: i32,
         emoji_id: &str,
     ) -> Result<()> {
         debug!(
@@ -3662,16 +3654,8 @@ impl BotApi {
         message_id: &str,
         emoji: &ReactionEmoji,
     ) -> Result<()> {
-        let emoji_type = emoji.emoji_type.unwrap_or(0);
-        let emoji_id = emoji.id.as_deref().unwrap_or_default();
-        self.delete_reaction(
-            token,
-            channel_id,
-            message_id,
-            u32::from(emoji_type),
-            emoji_id,
-        )
-        .await
+        self.delete_reaction(token, channel_id, message_id, emoji.emoji_type, &emoji.id)
+            .await
     }
 
     /// Updates an interaction response.
@@ -4211,10 +4195,10 @@ impl BotApi {
             message_id, emoji.id
         );
         let params = pager.query_params();
-        let emoji_type = emoji.emoji_type.unwrap_or(0);
-        let emoji_id = emoji.id.as_deref().unwrap_or_default();
         let path = format!(
-            "/channels/{channel_id}/messages/{message_id}/reactions/{emoji_type}/{emoji_id}"
+            "/channels/{channel_id}/messages/{message_id}/reactions/{emoji_type}/{emoji_id}",
+            emoji_type = emoji.emoji_type,
+            emoji_id = emoji.id
         );
         let response = self
             .http

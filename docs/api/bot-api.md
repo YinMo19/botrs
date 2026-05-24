@@ -934,7 +934,22 @@ pub async fn put_reaction(
     token: &Token,
     channel_id: &str,
     message_id: &str,
-    emoji: ReactionEmoji,
+    emoji_type: i32,
+    emoji_id: &str,
+) -> Result<()>
+```
+
+### `create_message_reaction`
+
+Adds a reaction using the botgo-compatible emoji DTO.
+
+```rust
+pub async fn create_message_reaction(
+    &self,
+    token: &Token,
+    channel_id: &str,
+    message_id: &str,
+    emoji: &ReactionEmoji,
 ) -> Result<()>
 ```
 
@@ -948,7 +963,22 @@ pub async fn delete_reaction(
     token: &Token,
     channel_id: &str,
     message_id: &str,
-    emoji: ReactionEmoji,
+    emoji_type: i32,
+    emoji_id: &str,
+) -> Result<()>
+```
+
+### `delete_own_message_reaction`
+
+Removes the bot's own reaction using the botgo-compatible emoji DTO.
+
+```rust
+pub async fn delete_own_message_reaction(
+    &self,
+    token: &Token,
+    channel_id: &str,
+    message_id: &str,
+    emoji: &ReactionEmoji,
 ) -> Result<()>
 ```
 
@@ -962,8 +992,25 @@ pub async fn get_reaction_users(
     token: &Token,
     channel_id: &str,
     message_id: &str,
-    emoji: ReactionEmoji,
-    query: Option<ReactionUsersQuery>,
+    emoji_type: EmojiType,
+    emoji_id: &str,
+    cookie: Option<&str>,
+    limit: Option<u32>,
+) -> Result<ReactionUsers>
+```
+
+### `get_message_reaction_users`
+
+Gets users who reacted with a specific emoji using botgo-compatible DTOs.
+
+```rust
+pub async fn get_message_reaction_users(
+    &self,
+    token: &Token,
+    channel_id: &str,
+    message_id: &str,
+    emoji: &ReactionEmoji,
+    pager: &MessageReactionPager,
 ) -> Result<ReactionUsers>
 ```
 

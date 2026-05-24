@@ -291,23 +291,42 @@ pub struct InteractionData {
 
 ## Reaction Types
 
+### `MessageReaction`
+
+Botgo-compatible gateway DTO for message reaction events.
+
+```rust
+pub struct MessageReaction {
+    pub user_id: String,
+    pub channel_id: String,
+    pub guild_id: String,
+    pub target: ReactionTarget,
+    pub emoji: ReactionEmoji,
+}
+```
+
 ### `Reaction`
 
-Represents emoji reactions on messages.
+Event helper built from `MessageReaction`, with `api()` and `event_id`.
 
 ```rust
 pub struct Reaction {
+    pub user_id: String,
+    pub channel_id: String,
+    pub guild_id: String,
     pub target: ReactionTarget,
-    pub emoji_type: u32,
-    pub emoji_id: String,
+    pub emoji: ReactionEmoji,
+    pub event_id: Option<String>,
 }
 ```
 
 #### Fields
 
+- `user_id`: User who made the reaction
+- `channel_id`: Channel where the reaction occurred
+- `guild_id`: Guild where the reaction occurred
 - `target`: What the reaction is applied to
-- `emoji_type`: Type of emoji (1: system, 2: custom)
-- `emoji_id`: Emoji identifier
+- `emoji`: Emoji identifier and type
 
 ### `ReactionTarget`
 
@@ -315,8 +334,8 @@ Target for emoji reactions.
 
 ```rust
 pub struct ReactionTarget {
-    pub target_type: ReactionTargetType,
     pub id: String,
+    pub target_type: ReactionTargetType,
 }
 ```
 
@@ -332,6 +351,20 @@ Types of reaction targets.
 ```rust
 pub enum ReactionTargetType {
     Message = 0,
+    Post = 1,
+    Comment = 2,
+    Reply = 3,
+}
+```
+
+### `ReactionEmoji`
+
+Emoji object used by botgo-compatible reaction APIs.
+
+```rust
+pub struct ReactionEmoji {
+    pub id: String,
+    pub emoji_type: i32,
 }
 ```
 
@@ -343,7 +376,7 @@ Users who reacted with a specific emoji.
 pub struct ReactionUsers {
     pub users: Vec<User>,
     pub cookie: Option<String>,
-    pub is_end: Option<bool>,
+    pub is_end: bool,
 }
 ```
 
@@ -585,35 +618,28 @@ async fn create_forum_thread(
 
 ```rust
 async fn manage_reactions(ctx: Context, channel_id: &str, message_id: &str) -> Result<()> {
+    let emoji = ReactionEmoji::new("4", 1);
+
     // Add reaction
-    let reaction = Reaction {
-        target: ReactionTarget {
-            target_type: ReactionTargetType::Message,
-            id: message_id.to_string(),
-        },
-        emoji_type: 1, // System emoji
-        emoji_id: "128077".to_string(), // Thumbs up
-    };
-    
-    ctx.add_reaction(channel_id, message_id, &reaction).await?;
+    ctx.create_message_reaction(channel_id, message_id, &emoji).await?;
     println!("Added thumbs up reaction");
     
     // Get users who reacted
-    let reaction_users = ctx.get_reaction_users(
+    let pager = MessageReactionPager::new(None::<String>, Some(50));
+    let reaction_users = ctx.get_message_reaction_users(
         channel_id,
         message_id,
-        &reaction,
-        None, // cookie
-        Some(50), // limit
+        &emoji,
+        &pager,
     ).await?;
     
     println!("Users who reacted:");
     for user in reaction_users.users {
-        println!("  - {}", user.username.as_deref().unwrap_or("Unknown"));
+        println!("  - {}", user.username);
     }
     
     // Remove reaction
-    ctx.remove_reaction(channel_id, message_id, &reaction).await?;
+    ctx.delete_own_message_reaction(channel_id, message_id, &emoji).await?;
     println!("Removed reaction");
     
     Ok(())

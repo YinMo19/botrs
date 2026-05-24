@@ -215,12 +215,16 @@ macro_rules! impl_constructed_payload_data {
     };
 }
 
-impl_constructed_payload_data!(
-    crate::reaction::Reaction,
-    |payload: &WSPayload, data: serde_json::Value| {
-        crate::reaction::Reaction::new(event_api(), payload_event_id(payload), &data)
+impl PayloadData for crate::reaction::Reaction {
+    fn parse_from_payload(payload: &WSPayload, message: &[u8]) -> crate::Result<Self> {
+        let data = ParseData(message)?;
+        Ok(crate::reaction::Reaction::from_message_reaction(
+            event_api(),
+            payload_event_id(payload),
+            data,
+        ))
     }
-);
+}
 impl_constructed_payload_data!(
     crate::forum::Thread,
     |payload: &WSPayload, data: serde_json::Value| {

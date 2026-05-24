@@ -78,8 +78,8 @@ pub use openapi::{
 };
 pub use options::{OpenApiOption, Options, WithHideTip, WithURL};
 pub use reaction::{
-    Emoji as ReactionEmoji, MessageReactionPager, Reaction, ReactionTarget, ReactionTargetType,
-    ReactionUsers,
+    Emoji as ReactionEmoji, MessageReaction, MessageReactionPager, MessageReactionUsers, Reaction,
+    ReactionTarget, ReactionTargetType, ReactionUsers,
 };
 pub use remote::{
     ErrGotLockFailed, ErrProduceFailed, ErrSessionMarshalFailed, ErrorNotOk, Lock,

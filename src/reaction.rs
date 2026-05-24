@@ -4,14 +4,15 @@
 //! emoji reactions, and reaction-related events.
 
 use crate::api::BotApi;
-use crate::models::Pager;
+use crate::models::user::User;
+use crate::models::{Pager, Snowflake};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 /// Reaction target type enumeration
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(from = "u8", into = "u8")]
-#[repr(u8)]
+#[serde(from = "i32", into = "i32")]
+#[repr(i32)]
 pub enum ReactionTargetType {
     /// Message reaction
     Message = 0,
@@ -23,32 +24,32 @@ pub enum ReactionTargetType {
     Reply = 3,
 }
 
-pub const REACTION_TARGET_TYPE_MSG: u8 = 0;
-pub const REACTION_TARGET_TYPE_FEED: u8 = 1;
-pub const REACTION_TARGET_TYPE_COMMENT: u8 = 2;
-pub const REACTION_TARGET_TYPE_REPLY: u8 = 3;
+pub const REACTION_TARGET_TYPE_MSG: i32 = 0;
+pub const REACTION_TARGET_TYPE_FEED: i32 = 1;
+pub const REACTION_TARGET_TYPE_COMMENT: i32 = 2;
+pub const REACTION_TARGET_TYPE_REPLY: i32 = 3;
 #[allow(non_upper_case_globals)]
-pub const ReactionTargetTypeMsg: u8 = REACTION_TARGET_TYPE_MSG;
+pub const ReactionTargetTypeMsg: i32 = REACTION_TARGET_TYPE_MSG;
 #[allow(non_upper_case_globals)]
-pub const ReactionTargetTypeFeed: u8 = REACTION_TARGET_TYPE_FEED;
+pub const ReactionTargetTypeFeed: i32 = REACTION_TARGET_TYPE_FEED;
 #[allow(non_upper_case_globals)]
-pub const ReactionTargetTypeComment: u8 = REACTION_TARGET_TYPE_COMMENT;
+pub const ReactionTargetTypeComment: i32 = REACTION_TARGET_TYPE_COMMENT;
 #[allow(non_upper_case_globals)]
-pub const ReactionTargetTypeReply: u8 = REACTION_TARGET_TYPE_REPLY;
+pub const ReactionTargetTypeReply: i32 = REACTION_TARGET_TYPE_REPLY;
 
-impl From<u8> for ReactionTargetType {
-    fn from(value: u8) -> Self {
+impl From<i32> for ReactionTargetType {
+    fn from(value: i32) -> Self {
         match value {
             0 => Self::Message,
             1 => Self::Post,
             2 => Self::Comment,
             3 => Self::Reply,
-            _ => Self::Message, // Default fallback
+            _ => Self::Message,
         }
     }
 }
 
-impl From<ReactionTargetType> for u8 {
+impl From<ReactionTargetType> for i32 {
     fn from(value: ReactionTargetType) -> Self {
         match value {
             ReactionTargetType::Message => 0,
@@ -60,52 +61,80 @@ impl From<ReactionTargetType> for u8 {
 }
 
 /// Emoji structure for reactions
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Emoji {
     /// Emoji ID
-    pub id: Option<String>,
+    pub id: String,
     /// Emoji type
     #[serde(rename = "type")]
-    pub emoji_type: Option<u8>,
+    pub emoji_type: i32,
 }
 
 impl Emoji {
     /// Creates a new Emoji instance.
-    pub fn with_type(id: impl Into<String>, emoji_type: u8) -> Self {
+    pub fn new(id: impl Into<String>, emoji_type: i32) -> Self {
         Self {
-            id: Some(id.into()),
-            emoji_type: Some(emoji_type),
+            id: id.into(),
+            emoji_type,
         }
     }
 
-    /// Create a new Emoji instance from JSON data
-    pub fn new(data: &Value) -> Self {
-        Self {
-            id: data.get("id").and_then(|v| v.as_str()).map(String::from),
-            emoji_type: data.get("type").and_then(|v| v.as_u64()).map(|v| v as u8),
-        }
+    /// Creates a new Emoji instance.
+    pub fn with_type(id: impl Into<String>, emoji_type: i32) -> Self {
+        Self::new(id, emoji_type)
     }
 }
 
 /// Reaction target structure
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ReactionTarget {
     /// Target ID
-    pub id: Option<String>,
+    pub id: String,
     /// Target type (message, post, comment, reply)
     #[serde(rename = "type")]
-    pub target_type: Option<ReactionTargetType>,
+    pub target_type: ReactionTargetType,
 }
 
 impl ReactionTarget {
-    /// Create a new ReactionTarget instance from JSON data
-    pub fn new(data: &Value) -> Self {
+    /// Creates a new ReactionTarget instance.
+    pub fn new(id: impl Into<String>, target_type: ReactionTargetType) -> Self {
         Self {
-            id: data.get("id").and_then(|v| v.as_str()).map(String::from),
-            target_type: data
-                .get("type")
-                .and_then(|v| v.as_u64())
-                .map(|v| ReactionTargetType::from(v as u8)),
+            id: id.into(),
+            target_type,
+        }
+    }
+}
+
+/// Botgo-compatible message reaction DTO.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct MessageReaction {
+    /// User ID who made the reaction.
+    pub user_id: Snowflake,
+    /// Channel ID where the reaction occurred.
+    pub channel_id: Snowflake,
+    /// Guild ID where the reaction occurred.
+    pub guild_id: Snowflake,
+    /// Target of the reaction.
+    pub target: ReactionTarget,
+    /// Emoji used for the reaction.
+    pub emoji: Emoji,
+}
+
+impl MessageReaction {
+    /// Creates a message reaction DTO.
+    pub fn new(
+        user_id: impl Into<Snowflake>,
+        channel_id: impl Into<Snowflake>,
+        guild_id: impl Into<Snowflake>,
+        target: ReactionTarget,
+        emoji: Emoji,
+    ) -> Self {
+        Self {
+            user_id: user_id.into(),
+            channel_id: channel_id.into(),
+            guild_id: guild_id.into(),
+            target,
+            emoji,
         }
     }
 }
@@ -117,11 +146,11 @@ pub struct Reaction {
     #[serde(skip)]
     api: BotApi,
     /// User ID who made the reaction
-    pub user_id: Option<String>,
+    pub user_id: Snowflake,
     /// Channel ID where the reaction occurred
-    pub channel_id: Option<String>,
+    pub channel_id: Snowflake,
     /// Guild ID where the reaction occurred
-    pub guild_id: Option<String>,
+    pub guild_id: Snowflake,
     /// Emoji used for the reaction
     pub emoji: Emoji,
     /// Target of the reaction (message, post, etc.)
@@ -129,8 +158,6 @@ pub struct Reaction {
     /// Event ID
     pub event_id: Option<String>,
 }
-
-pub type MessageReaction = Reaction;
 
 impl Reaction {
     /// Create a new Reaction instance
@@ -140,30 +167,25 @@ impl Reaction {
     /// * `api` - The Bot API client
     /// * `event_id` - Optional event ID
     /// * `data` - Reaction data from the gateway
-    pub fn new(api: BotApi, event_id: Option<String>, data: &Value) -> Self {
+    pub fn new(api: BotApi, event_id: Option<String>, data: &Value) -> crate::Result<Self> {
+        let message_reaction = serde_json::from_value(data.clone())?;
+        Ok(Self::from_message_reaction(api, event_id, message_reaction))
+    }
+
+    /// Creates a new Reaction instance from the botgo-compatible DTO.
+    pub fn from_message_reaction(
+        api: BotApi,
+        event_id: Option<String>,
+        message_reaction: MessageReaction,
+    ) -> Self {
         Self {
             api,
             event_id,
-            user_id: data
-                .get("user_id")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            channel_id: data
-                .get("channel_id")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            guild_id: data
-                .get("guild_id")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            emoji: Emoji::new(
-                data.get("emoji")
-                    .unwrap_or(&Value::Object(serde_json::Map::new())),
-            ),
-            target: ReactionTarget::new(
-                data.get("target")
-                    .unwrap_or(&Value::Object(serde_json::Map::new())),
-            ),
+            user_id: message_reaction.user_id,
+            channel_id: message_reaction.channel_id,
+            guild_id: message_reaction.guild_id,
+            emoji: message_reaction.emoji,
+            target: message_reaction.target,
         }
     }
 
@@ -174,32 +196,32 @@ impl Reaction {
 
     /// Check if this is a message reaction
     pub fn is_message_reaction(&self) -> bool {
-        matches!(self.target.target_type, Some(ReactionTargetType::Message))
+        self.target.target_type == ReactionTargetType::Message
     }
 
     /// Check if this is a post reaction
     pub fn is_post_reaction(&self) -> bool {
-        matches!(self.target.target_type, Some(ReactionTargetType::Post))
+        self.target.target_type == ReactionTargetType::Post
     }
 
     /// Check if this is a comment reaction
     pub fn is_comment_reaction(&self) -> bool {
-        matches!(self.target.target_type, Some(ReactionTargetType::Comment))
+        self.target.target_type == ReactionTargetType::Comment
     }
 
     /// Check if this is a reply reaction
     pub fn is_reply_reaction(&self) -> bool {
-        matches!(self.target.target_type, Some(ReactionTargetType::Reply))
+        self.target.target_type == ReactionTargetType::Reply
     }
 
     /// Get the target ID
-    pub fn target_id(&self) -> Option<&str> {
-        self.target.id.as_deref()
+    pub fn target_id(&self) -> &str {
+        &self.target.id
     }
 
     /// Get the emoji ID
-    pub fn emoji_id(&self) -> Option<&str> {
-        self.emoji.id.as_deref()
+    pub fn emoji_id(&self) -> &str {
+        &self.emoji.id
     }
 }
 
@@ -207,48 +229,24 @@ impl std::fmt::Display for Reaction {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "Reaction {{ user_id: {:?}, channel_id: {:?}, guild_id: {:?}, target_type: {:?}, event_id: {:?} }}",
+            "Reaction {{ user_id: {}, channel_id: {}, guild_id: {}, target_type: {:?}, event_id: {:?} }}",
             self.user_id, self.channel_id, self.guild_id, self.target.target_type, self.event_id
         )
     }
 }
 
-/// User structure for reaction users list
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ReactionUser {
-    /// User ID
-    pub id: Option<String>,
-    /// Username
-    pub username: Option<String>,
-    /// User avatar URL
-    pub avatar: Option<String>,
-}
-
-impl ReactionUser {
-    /// Create a new ReactionUser instance from JSON data
-    pub fn new(data: &Value) -> Self {
-        Self {
-            id: data.get("id").and_then(|v| v.as_str()).map(String::from),
-            username: data
-                .get("username")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            avatar: data
-                .get("avatar")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-        }
-    }
-}
+pub type ReactionUser = User;
 
 /// Reaction users response structure
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ReactionUsers {
     /// List of users who reacted
-    pub users: Vec<ReactionUser>,
+    #[serde(default)]
+    pub users: Vec<User>,
     /// Pagination cookie for next page
     pub cookie: Option<String>,
     /// Whether this is the last page
+    #[serde(default)]
     pub is_end: bool,
 }
 
@@ -301,21 +299,8 @@ impl Pager for MessageReactionPager {
 
 impl ReactionUsers {
     /// Create a new ReactionUsers instance from JSON data
-    pub fn new(data: &Value) -> Self {
-        let users = data
-            .get("users")
-            .and_then(|v| v.as_array())
-            .map(|arr| arr.iter().map(ReactionUser::new).collect())
-            .unwrap_or_default();
-
-        Self {
-            users,
-            cookie: data
-                .get("cookie")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            is_end: data.get("is_end").and_then(|v| v.as_bool()).unwrap_or(true),
-        }
+    pub fn new(data: &Value) -> crate::Result<Self> {
+        Ok(serde_json::from_value(data.clone())?)
     }
 
     /// Check if there are more pages available
@@ -335,10 +320,10 @@ mod tests {
 
     #[test]
     fn test_reaction_target_type() {
-        assert_eq!(ReactionTargetType::Message as u8, 0);
-        assert_eq!(ReactionTargetType::Post as u8, 1);
-        assert_eq!(ReactionTargetType::Comment as u8, 2);
-        assert_eq!(ReactionTargetType::Reply as u8, 3);
+        assert_eq!(i32::from(ReactionTargetType::Message), 0);
+        assert_eq!(i32::from(ReactionTargetType::Post), 1);
+        assert_eq!(i32::from(ReactionTargetType::Comment), 2);
+        assert_eq!(i32::from(ReactionTargetType::Reply), 3);
     }
 
     #[test]
@@ -352,24 +337,16 @@ mod tests {
 
     #[test]
     fn test_emoji_creation() {
-        let data = serde_json::json!({
-            "id": "emoji123",
-            "type": 1
-        });
-        let emoji = Emoji::new(&data);
-        assert_eq!(emoji.id, Some("emoji123".to_string()));
-        assert_eq!(emoji.emoji_type, Some(1));
+        let emoji = Emoji::new("emoji123", 1);
+        assert_eq!(emoji.id, "emoji123");
+        assert_eq!(emoji.emoji_type, 1);
     }
 
     #[test]
     fn test_reaction_target_creation() {
-        let data = serde_json::json!({
-            "id": "target123",
-            "type": 0
-        });
-        let target = ReactionTarget::new(&data);
-        assert_eq!(target.id, Some("target123".to_string()));
-        assert_eq!(target.target_type, Some(ReactionTargetType::Message));
+        let target = ReactionTarget::new("target123", ReactionTargetType::Message);
+        assert_eq!(target.id, "target123");
+        assert_eq!(target.target_type, ReactionTargetType::Message);
     }
 
     #[test]
@@ -379,13 +356,34 @@ mod tests {
             "username": "testuser",
             "avatar": "https://example.com/avatar.png"
         });
-        let user = ReactionUser::new(&data);
-        assert_eq!(user.id, Some("user123".to_string()));
-        assert_eq!(user.username, Some("testuser".to_string()));
+        let user: ReactionUser = serde_json::from_value(data).unwrap();
+        assert_eq!(user.id, "user123");
+        assert_eq!(user.username, "testuser");
         assert_eq!(
             user.avatar,
             Some("https://example.com/avatar.png".to_string())
         );
+    }
+
+    #[test]
+    fn botgo_message_reaction_keeps_official_dto_shape() {
+        let reaction = MessageReaction::new(
+            "user-1",
+            "channel-1",
+            "guild-1",
+            ReactionTarget::new("message-1", ReactionTargetType::Message),
+            Emoji::new("43", 1),
+        );
+        let value = serde_json::to_value(&reaction).unwrap();
+
+        assert_eq!(value["user_id"], "user-1");
+        assert_eq!(value["channel_id"], "channel-1");
+        assert_eq!(value["guild_id"], "guild-1");
+        assert_eq!(value["target"]["id"], "message-1");
+        assert_eq!(value["target"]["type"], 0);
+        assert_eq!(value["emoji"]["id"], "43");
+        assert_eq!(value["emoji"]["type"], 1);
+        assert!(value.get("event_id").is_none());
     }
 
     #[test]
