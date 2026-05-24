@@ -10,11 +10,13 @@ use crate::error::{BotError, Result};
 use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::sync::Arc;
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use tokio::sync::Mutex;
 
 pub const TypeBearer: &str = "Bearer";
 pub const TypeQQBot: &str = "QQBot";
+const DEFAULT_EXPIRY_DELTA_MILLIS: u64 = 9_000;
+const RAND_TIME_UPPER_LIMIT_MILLIS: u64 = 500;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct QQBotCredentials {
@@ -35,6 +37,7 @@ pub fn NewQQBotTokenSource(credentials: &QQBotCredentials) -> QQBotTokenSource {
 struct TokenState {
     access_token: Option<String>,
     expires_at: Option<u64>,
+    expires_in: Option<u64>,
 }
 
 fn default_state() -> Arc<Mutex<TokenState>> {
@@ -100,6 +103,12 @@ impl Token {
         &self.secret
     }
 
+    /// Botgo-compatible app ID accessor.
+    #[allow(non_snake_case)]
+    pub fn GetAppID(&self) -> &str {
+        self.app_id()
+    }
+
     /// Generates the authorization header value for API requests.
     ///
     /// The authorization header uses the format "QQBot {access_token}"
@@ -151,16 +160,19 @@ impl Token {
             state.access_token.is_some() && state.expires_at.is_some_and(|exp| current_time < exp)
         };
         if !is_valid {
-            self.refresh_access_token(current_time).await?;
+            self.refresh_access_token(current_time, false).await?;
         }
 
         Ok(())
     }
 
     /// Refreshes the access token by calling the QQ API.
-    async fn refresh_access_token(&self, current_time: u64) -> Result<()> {
+    async fn refresh_access_token(&self, current_time: u64, force: bool) -> Result<()> {
         let mut state = self.state.lock().await;
-        if state.access_token.is_some() && state.expires_at.is_some_and(|exp| current_time < exp) {
+        if !force
+            && state.access_token.is_some()
+            && state.expires_at.is_some_and(|exp| current_time < exp)
+        {
             return Ok(());
         }
 
@@ -198,14 +210,22 @@ impl Token {
 
         let expires_in = token_response
             .get("expires_in")
-            .and_then(|v| v.as_str())
-            .and_then(|s| s.parse::<u64>().ok())
+            .and_then(parse_expires_in)
             .ok_or_else(|| BotError::auth("No expires_in in response"))?;
 
         state.access_token = Some(access_token.to_string());
         state.expires_at = Some(current_time + expires_in);
+        state.expires_in = Some(expires_in);
 
         Ok(())
+    }
+
+    async fn force_refresh_access_token(&self) -> Result<()> {
+        let current_time = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .map_err(|_| BotError::internal("Failed to get current time"))?
+            .as_secs();
+        self.refresh_access_token(current_time, true).await
     }
 
     async fn access_token(&self) -> Result<String> {
@@ -216,6 +236,10 @@ impl Token {
             .access_token
             .clone()
             .ok_or_else(|| BotError::auth("No valid access token available"))
+    }
+
+    async fn cached_expires_in(&self) -> Option<u64> {
+        self.state.lock().await.expires_in
     }
 
     /// Validates that the token has non-empty app ID and secret.
@@ -299,6 +323,73 @@ impl Token {
     }
 }
 
+#[allow(non_snake_case)]
+pub async fn StartRefreshAccessToken(
+    token_source: QQBotTokenSource,
+) -> Result<tokio::task::JoinHandle<()>> {
+    token_source.ensure_valid_token().await?;
+
+    Ok(tokio::spawn(async move {
+        let mut consecutive_failures = 0;
+        loop {
+            let refresh_millis = if consecutive_failures > 0 {
+                if consecutive_failures > 10 {
+                    panic!("get token failed continuously for more than ten times");
+                }
+                1_000
+            } else {
+                token_source
+                    .cached_expires_in()
+                    .await
+                    .map(get_refresh_millis)
+                    .unwrap_or(1_000)
+            };
+
+            tracing::debug!("refresh after {} milli sec", refresh_millis);
+            tokio::time::sleep(Duration::from_millis(refresh_millis)).await;
+
+            match token_source.force_refresh_access_token().await {
+                Ok(()) => consecutive_failures = 0,
+                Err(err) => {
+                    consecutive_failures += 1;
+                    tracing::error!("refresh access token failed: {}", err);
+                }
+            }
+        }
+    }))
+}
+
+fn parse_expires_in(value: &serde_json::Value) -> Option<u64> {
+    value
+        .as_u64()
+        .or_else(|| value.as_str().and_then(|value| value.parse().ok()))
+}
+
+fn get_refresh_millis(token_ttl_secs: u64) -> u64 {
+    let refresh_millis = token_ttl_secs.saturating_mul(1_000);
+    if refresh_millis < DEFAULT_EXPIRY_DELTA_MILLIS {
+        return refresh_millis;
+    }
+
+    let refresh_millis = refresh_millis - DEFAULT_EXPIRY_DELTA_MILLIS;
+    if refresh_millis > RAND_TIME_UPPER_LIMIT_MILLIS {
+        refresh_millis - jitter_millis(RAND_TIME_UPPER_LIMIT_MILLIS)
+    } else {
+        refresh_millis
+    }
+}
+
+fn jitter_millis(upper_bound: u64) -> u64 {
+    if upper_bound == 0 {
+        return 0;
+    }
+
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|duration| u64::from(duration.subsec_nanos()) % upper_bound)
+        .unwrap_or_default()
+}
+
 impl fmt::Display for Token {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.safe_display())
@@ -366,6 +457,7 @@ mod tests {
             let mut state = token.state.lock().await;
             state.access_token = Some("cached-token".to_string());
             state.expires_at = Some(u64::MAX);
+            state.expires_in = Some(7200);
         }
 
         let cloned = token.clone();
@@ -373,6 +465,26 @@ mod tests {
             cloned.authorization_header().await.unwrap(),
             "QQBot cached-token"
         );
+        assert_eq!(cloned.cached_expires_in().await, Some(7200));
+    }
+
+    #[test]
+    fn refresh_millis_matches_botgo_bounds() {
+        assert_eq!(get_refresh_millis(8), 8_000);
+        assert_eq!(get_refresh_millis(9), 0);
+
+        let refresh_millis = get_refresh_millis(10);
+        assert!((501..=1_000).contains(&refresh_millis));
+
+        let refresh_millis = get_refresh_millis(7200);
+        assert!((7_190_501..=7_191_000).contains(&refresh_millis));
+    }
+
+    #[test]
+    fn parse_expires_in_accepts_number_or_string() {
+        assert_eq!(parse_expires_in(&serde_json::json!("7200")), Some(7200));
+        assert_eq!(parse_expires_in(&serde_json::json!(7200)), Some(7200));
+        assert_eq!(parse_expires_in(&serde_json::json!("bad")), None);
     }
 
     #[test]
@@ -420,6 +532,7 @@ mod tests {
         };
         let token = NewQQBotTokenSource(&credentials);
         assert_eq!(token.app_id(), "123456");
+        assert_eq!(token.GetAppID(), "123456");
         assert_eq!(token.secret(), "secret123");
         assert_eq!(TypeQQBot, "QQBot");
         assert_eq!(TypeBearer, "Bearer");

@@ -89,7 +89,10 @@ pub use session_manager::{
     calc_interval, new_session_manager, set_session_manager_factory,
 };
 pub use signature::{Generate, HeaderSig, HeaderTimestamp, Verify};
-pub use token::Token;
+pub use token::{
+    NewQQBotTokenSource, QQBotCredentials, QQBotTokenSource, StartRefreshAccessToken, Token,
+    TypeBearer, TypeQQBot,
+};
 pub use version::version_string;
 pub use webhook::{
     DefaultGetSecretFunc, GenDispatchACK, GenHeartbeatACK, GenValidationACK, HTTPHandler,
