@@ -25,6 +25,8 @@ impl HttpIdentity {
     }
 }
 
+pub type HTTPIdentity = HttpIdentity;
+
 /// Ready response returned after creating an HTTP webhook session.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct HttpReady {
@@ -37,6 +39,8 @@ pub struct HttpReady {
     /// Shard tuple
     pub shard: [u32; 2],
 }
+
+pub type HTTPReady = HttpReady;
 
 /// HTTP webhook session object.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -59,6 +63,8 @@ pub struct HttpSession {
     pub shards: [i64; 2],
 }
 
+pub type HTTPSession = HttpSession;
+
 /// Webhook callback validation request data.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct WebhookValidationRequest {
@@ -67,6 +73,8 @@ pub struct WebhookValidationRequest {
     /// Event timestamp
     pub event_ts: String,
 }
+
+pub type WHValidationReq = WebhookValidationRequest;
 
 /// Webhook callback validation response data.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
@@ -78,3 +86,5 @@ pub struct WebhookValidationResponse {
     /// Data format version
     pub data_version: String,
 }
+
+pub type WHValidationRsp = WebhookValidationResponse;

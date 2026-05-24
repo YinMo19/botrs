@@ -22,6 +22,19 @@ pub enum ReactionTargetType {
     Reply = 3,
 }
 
+pub const REACTION_TARGET_TYPE_MSG: u8 = 0;
+pub const REACTION_TARGET_TYPE_FEED: u8 = 1;
+pub const REACTION_TARGET_TYPE_COMMENT: u8 = 2;
+pub const REACTION_TARGET_TYPE_REPLY: u8 = 3;
+#[allow(non_upper_case_globals)]
+pub const ReactionTargetTypeMsg: u8 = REACTION_TARGET_TYPE_MSG;
+#[allow(non_upper_case_globals)]
+pub const ReactionTargetTypeFeed: u8 = REACTION_TARGET_TYPE_FEED;
+#[allow(non_upper_case_globals)]
+pub const ReactionTargetTypeComment: u8 = REACTION_TARGET_TYPE_COMMENT;
+#[allow(non_upper_case_globals)]
+pub const ReactionTargetTypeReply: u8 = REACTION_TARGET_TYPE_REPLY;
+
 impl From<u8> for ReactionTargetType {
     fn from(value: u8) -> Self {
         match value {
@@ -115,6 +128,8 @@ pub struct Reaction {
     /// Event ID
     pub event_id: Option<String>,
 }
+
+pub type MessageReaction = Reaction;
 
 impl Reaction {
     /// Create a new Reaction instance
@@ -235,6 +250,8 @@ pub struct ReactionUsers {
     /// Whether this is the last page
     pub is_end: bool,
 }
+
+pub type MessageReactionUsers = ReactionUsers;
 
 /// Pager for message reaction users.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]

@@ -69,6 +69,8 @@ pub struct GatewayResponse {
     pub session_start_limit: SessionStartLimit,
 }
 
+pub type WebsocketAP = GatewayResponse;
+
 /// Session start limit information.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SessionStartLimit {
@@ -80,6 +82,13 @@ pub struct SessionStartLimit {
     pub reset_after: u64,
     /// Maximum number of concurrent sessions
     pub max_concurrency: u32,
+}
+
+/// Botgo-compatible shard configuration.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+pub struct ShardConfig {
+    pub shard_id: u32,
+    pub shard_count: u32,
 }
 
 /// Bot information response.
