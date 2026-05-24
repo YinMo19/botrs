@@ -193,6 +193,21 @@ impl HttpClient {
             .await
     }
 
+    /// Makes a DELETE request with a JSON request body.
+    pub async fn delete_with_body<Q, B>(
+        &self,
+        token: &Token,
+        path: &str,
+        query: Option<&Q>,
+        body: Option<&B>,
+    ) -> Result<serde_json::Value>
+    where
+        Q: Serialize + ?Sized,
+        B: Serialize + ?Sized,
+    {
+        self.request(Method::DELETE, token, path, query, body).await
+    }
+
     /// Makes a PATCH request to the API.
     ///
     /// # Arguments

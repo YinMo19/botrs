@@ -316,6 +316,179 @@ impl HasName for Role {
 // Type alias for backward compatibility
 pub type Roles = Vec<Role>;
 
+/// Pager for guild member list requests.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
+pub struct GuildMembersPager {
+    /// Read members after this user ID
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub after: Option<String>,
+    /// Page size
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub limit: Option<String>,
+}
+
+impl GuildMembersPager {
+    /// Creates a new guild members pager.
+    pub fn new(after: impl Into<String>, limit: impl ToString) -> Self {
+        Self {
+            after: Some(after.into()),
+            limit: Some(limit.to_string()),
+        }
+    }
+}
+
+/// Pager for guild role member list requests.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
+pub struct GuildRoleMembersPager {
+    /// Start index from the previous response's `next` value
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub start_index: Option<String>,
+    /// Page size
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub limit: Option<String>,
+}
+
+impl GuildRoleMembersPager {
+    /// Creates a new guild role members pager.
+    pub fn new(start_index: impl Into<String>, limit: impl ToString) -> Self {
+        Self {
+            start_index: Some(start_index.into()),
+            limit: Some(limit.to_string()),
+        }
+    }
+}
+
+/// Response returned by the guild role members endpoint.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
+pub struct GuildRoleMembers {
+    /// Role members in the current page
+    #[serde(default)]
+    pub data: Vec<Member>,
+    /// Cursor for the next page
+    #[serde(default)]
+    pub next: String,
+}
+
+/// Supported history deletion windows when removing a guild member.
+pub type DeleteHistoryMsgDay = i32;
+
+pub const NO_DELETE: DeleteHistoryMsgDay = 0;
+pub const DELETE_THREE_DAYS: DeleteHistoryMsgDay = 3;
+pub const DELETE_SEVEN_DAYS: DeleteHistoryMsgDay = 7;
+pub const DELETE_FIFTEEN_DAYS: DeleteHistoryMsgDay = 15;
+pub const DELETE_THIRTY_DAYS: DeleteHistoryMsgDay = 30;
+pub const DELETE_ALL: DeleteHistoryMsgDay = -1;
+
+/// Additional options for deleting a guild member.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct MemberDeleteOptions {
+    /// Whether to add the member to the guild blacklist
+    pub add_blacklist: bool,
+    /// How many days of history to retract
+    pub delete_history_msg_days: DeleteHistoryMsgDay,
+}
+
+impl MemberDeleteOptions {
+    /// Creates delete options with official defaults.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Sets whether the member should also be added to the blacklist.
+    pub fn with_add_blacklist(mut self, add_blacklist: bool) -> Self {
+        self.add_blacklist = add_blacklist;
+        self
+    }
+
+    /// Sets the history deletion window.
+    pub fn with_delete_history_msg_days(mut self, days: DeleteHistoryMsgDay) -> Self {
+        self.delete_history_msg_days = normalize_delete_history_msg_days(days);
+        self
+    }
+}
+
+impl Default for MemberDeleteOptions {
+    fn default() -> Self {
+        Self {
+            add_blacklist: false,
+            delete_history_msg_days: NO_DELETE,
+        }
+    }
+}
+
+/// Normalizes history deletion days to the official supported values.
+pub fn normalize_delete_history_msg_days(days: DeleteHistoryMsgDay) -> DeleteHistoryMsgDay {
+    match days {
+        DELETE_THREE_DAYS | DELETE_SEVEN_DAYS | DELETE_FIFTEEN_DAYS | DELETE_THIRTY_DAYS
+        | DELETE_ALL => days,
+        _ => NO_DELETE,
+    }
+}
+
+/// Body for guild mute endpoints.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
+pub struct UpdateGuildMute {
+    /// Mute end timestamp in seconds
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub mute_end_timestamp: Option<String>,
+    /// Mute duration in seconds
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub mute_seconds: Option<String>,
+    /// User IDs for batch mute
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub user_ids: Option<Vec<String>>,
+}
+
+impl UpdateGuildMute {
+    /// Creates a mute request body.
+    pub fn new(mute_end_timestamp: Option<&str>, mute_seconds: Option<&str>) -> Self {
+        Self {
+            mute_end_timestamp: mute_end_timestamp.map(String::from),
+            mute_seconds: mute_seconds.map(String::from),
+            user_ids: None,
+        }
+    }
+
+    /// Creates a batch mute request body.
+    pub fn new_multi(
+        user_ids: Vec<String>,
+        mute_end_timestamp: Option<&str>,
+        mute_seconds: Option<&str>,
+    ) -> Self {
+        Self {
+            mute_end_timestamp: mute_end_timestamp.map(String::from),
+            mute_seconds: mute_seconds.map(String::from),
+            user_ids: Some(user_ids),
+        }
+    }
+
+    /// Creates a request body that cancels mute.
+    pub fn cancel() -> Self {
+        Self {
+            mute_end_timestamp: Some("0".to_string()),
+            mute_seconds: Some("0".to_string()),
+            user_ids: None,
+        }
+    }
+
+    /// Creates a request body that cancels mute for multiple users.
+    pub fn cancel_multi(user_ids: Vec<String>) -> Self {
+        Self {
+            mute_end_timestamp: Some("0".to_string()),
+            mute_seconds: Some("0".to_string()),
+            user_ids: Some(user_ids),
+        }
+    }
+}
+
+/// Response for batch guild mute.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
+pub struct UpdateGuildMuteResponse {
+    /// Successfully muted user IDs
+    #[serde(default)]
+    pub user_ids: Vec<String>,
+}
+
 /// Represents a member of a guild.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Member {

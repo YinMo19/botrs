@@ -522,6 +522,53 @@ impl Default for ChannelPermissions {
     }
 }
 
+/// Channel role permissions response.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
+pub struct ChannelRolesPermissions {
+    /// The channel ID
+    pub channel_id: Option<Snowflake>,
+    /// The role ID
+    pub role_id: Option<Snowflake>,
+    /// The permissions string
+    pub permissions: Option<String>,
+}
+
+/// Body for updating channel user or role permissions.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
+pub struct UpdateChannelPermissions {
+    /// Permissions to add
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub add: Option<String>,
+    /// Permissions to remove
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub remove: Option<String>,
+}
+
+impl UpdateChannelPermissions {
+    /// Creates update-channel-permissions parameters.
+    pub fn new(add: Option<impl ToString>, remove: Option<impl ToString>) -> Self {
+        Self {
+            add: add.map(|value| value.to_string()),
+            remove: remove.map(|value| value.to_string()),
+        }
+    }
+
+    /// Validates that the permission strings can be parsed as unsigned integers.
+    pub fn validate(&self) -> crate::error::Result<()> {
+        if let Some(add) = self.add.as_deref() {
+            add.parse::<u64>().map_err(|err| {
+                crate::error::BotError::invalid_data(format!("invalid parameter add: {err}"))
+            })?;
+        }
+        if let Some(remove) = self.remove.as_deref() {
+            remove.parse::<u64>().map_err(|err| {
+                crate::error::BotError::invalid_data(format!("invalid parameter remove: {err}"))
+            })?;
+        }
+        Ok(())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

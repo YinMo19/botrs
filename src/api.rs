@@ -119,11 +119,15 @@ use crate::models::{
     announce::{Announce, AnnouncesType, RecommendChannel},
     api::{AudioAction, BotInfo, GatewayResponse, MessageResponse},
     channel::{
-        Channel, ChannelPermissions, ChannelSubType, ChannelType, ChannelValueObject, PrivateType,
-        SpeakPermission,
+        Channel, ChannelPermissions, ChannelRolesPermissions, ChannelSubType, ChannelType,
+        ChannelValueObject, PrivateType, SpeakPermission, UpdateChannelPermissions,
     },
     emoji::EmojiType,
-    guild::{Guild, GuildRole, GuildRoles, Member},
+    guild::{
+        Guild, GuildRole, GuildRoleMembers, GuildRoleMembersPager, GuildRoles, Member,
+        MemberDeleteOptions, UpdateGuildMute, UpdateGuildMuteResponse,
+        normalize_delete_history_msg_days,
+    },
     message::{
         Ark, C2CMessageParams, DirectMessageParams, Embed, GroupMessageParams, Keyboard,
         KeyboardPayload, MarkdownPayload, Media, Message, MessageParams, Reference,
@@ -485,7 +489,9 @@ impl BotApi {
         };
 
         let path = format!("/guilds/{guild_id}/members/{user_id}/roles/{role_id}");
-        self.http.delete(token, &path, Some(&body)).await?;
+        self.http
+            .delete_with_body(token, &path, None::<&()>, Some(&body))
+            .await?;
         Ok(())
     }
 
@@ -544,6 +550,38 @@ impl BotApi {
         Ok(serde_json::from_value(response)?)
     }
 
+    /// Gets guild role members list.
+    pub async fn get_guild_role_members(
+        &self,
+        token: &Token,
+        guild_id: &str,
+        role_id: &str,
+        start_index: Option<&str>,
+        limit: Option<u32>,
+    ) -> Result<GuildRoleMembers> {
+        let pager =
+            GuildRoleMembersPager::new(start_index.unwrap_or("0"), limit.unwrap_or(1).to_string());
+        self.get_guild_role_members_with_pager(token, guild_id, role_id, &pager)
+            .await
+    }
+
+    /// Gets guild role members using a botgo-style pager.
+    pub async fn get_guild_role_members_with_pager(
+        &self,
+        token: &Token,
+        guild_id: &str,
+        role_id: &str,
+        pager: &GuildRoleMembersPager,
+    ) -> Result<GuildRoleMembers> {
+        debug!(
+            "Getting role {} members for guild {} with pager {:?}",
+            role_id, guild_id, pager
+        );
+        let path = format!("/guilds/{guild_id}/roles/{role_id}/members");
+        let response = self.http.get(token, &path, Some(pager)).await?;
+        Ok(serde_json::from_value(response)?)
+    }
+
     /// Removes a member from a guild.
     ///
     /// # Arguments
@@ -565,20 +603,31 @@ impl BotApi {
         add_blacklist: Option<bool>,
         delete_history_msg_days: Option<i32>,
     ) -> Result<()> {
-        debug!("Deleting member {} from guild {}", user_id, guild_id);
-
-        let delete_days = match delete_history_msg_days.unwrap_or(0) {
-            3 | 7 | 15 | 30 | -1 => delete_history_msg_days.unwrap_or(0),
-            _ => 0,
+        let options = MemberDeleteOptions {
+            add_blacklist: add_blacklist.unwrap_or(false),
+            delete_history_msg_days: normalize_delete_history_msg_days(
+                delete_history_msg_days.unwrap_or(0),
+            ),
         };
 
-        let body = json!({
-            "add_blacklist": add_blacklist.unwrap_or(false),
-            "delete_history_msg_days": delete_days
-        });
+        self.delete_member_with_options(token, guild_id, user_id, &options)
+            .await
+    }
+
+    /// Removes a member from a guild with botgo-style delete options.
+    pub async fn delete_member_with_options(
+        &self,
+        token: &Token,
+        guild_id: &str,
+        user_id: &str,
+        options: &MemberDeleteOptions,
+    ) -> Result<()> {
+        debug!("Deleting member {} from guild {}", user_id, guild_id);
 
         let path = format!("/guilds/{guild_id}/members/{user_id}");
-        self.http.delete(token, &path, Some(&body)).await?;
+        self.http
+            .delete_with_body(token, &path, None::<&()>, Some(options))
+            .await?;
         Ok(())
     }
 
@@ -1365,14 +1414,11 @@ impl BotApi {
     ) -> Result<()> {
         debug!("Muting all members in guild {}", guild_id);
 
-        let body = json!({
-            "mute_end_timestamp": mute_end_timestamp,
-            "mute_seconds": mute_seconds
-        });
+        let body = UpdateGuildMute::new(mute_end_timestamp, mute_seconds);
 
         let path = format!("/guilds/{guild_id}/mute");
         self.http
-            .put(token, &path, None::<&()>, Some(&body))
+            .patch(token, &path, None::<&()>, Some(&body))
             .await?;
         Ok(())
     }
@@ -1390,14 +1436,11 @@ impl BotApi {
     pub async fn cancel_mute_all(&self, token: &Token, guild_id: &str) -> Result<()> {
         debug!("Canceling mute for all members in guild {}", guild_id);
 
-        let body = json!({
-            "mute_end_timestamp": "0",
-            "mute_seconds": "0"
-        });
+        let body = UpdateGuildMute::cancel();
 
         let path = format!("/guilds/{guild_id}/mute");
         self.http
-            .put(token, &path, None::<&()>, Some(&body))
+            .patch(token, &path, None::<&()>, Some(&body))
             .await?;
         Ok(())
     }
@@ -1425,16 +1468,65 @@ impl BotApi {
     ) -> Result<()> {
         debug!("Muting member {} in guild {}", user_id, guild_id);
 
-        let body = json!({
-            "mute_end_timestamp": mute_end_timestamp,
-            "mute_seconds": mute_seconds
-        });
+        let body = UpdateGuildMute::new(mute_end_timestamp, mute_seconds);
 
         let path = format!("/guilds/{guild_id}/members/{user_id}/mute");
         self.http
-            .put(token, &path, None::<&()>, Some(&body))
+            .patch(token, &path, None::<&()>, Some(&body))
             .await?;
         Ok(())
+    }
+
+    /// Mutes multiple guild members.
+    pub async fn mute_multi_member(
+        &self,
+        token: &Token,
+        guild_id: &str,
+        user_ids: Vec<String>,
+        mute_end_timestamp: Option<&str>,
+        mute_seconds: Option<&str>,
+    ) -> Result<UpdateGuildMuteResponse> {
+        if user_ids.is_empty() {
+            return Err(crate::error::BotError::invalid_data("no user id param"));
+        }
+
+        let body = UpdateGuildMute::new_multi(user_ids, mute_end_timestamp, mute_seconds);
+        self.multi_member_mute(token, guild_id, &body).await
+    }
+
+    /// Cancels mute for multiple guild members.
+    pub async fn cancel_mute_multi_member(
+        &self,
+        token: &Token,
+        guild_id: &str,
+        user_ids: Vec<String>,
+    ) -> Result<UpdateGuildMuteResponse> {
+        if user_ids.is_empty() {
+            return Err(crate::error::BotError::invalid_data("no user id param"));
+        }
+
+        let body = UpdateGuildMute::cancel_multi(user_ids);
+        self.multi_member_mute(token, guild_id, &body).await
+    }
+
+    /// Mutes multiple guild members with a botgo-style request body.
+    pub async fn multi_member_mute(
+        &self,
+        token: &Token,
+        guild_id: &str,
+        mute: &UpdateGuildMute,
+    ) -> Result<UpdateGuildMuteResponse> {
+        if mute.user_ids.as_ref().is_none_or(Vec::is_empty) {
+            return Err(crate::error::BotError::invalid_data("no user id param"));
+        }
+
+        debug!("Muting multiple members in guild {}", guild_id);
+        let path = format!("/guilds/{guild_id}/mute");
+        let response = self
+            .http
+            .patch(token, &path, None::<&()>, Some(mute))
+            .await?;
+        Ok(serde_json::from_value(response)?)
     }
 
     /// Gets channel permissions for a user.
@@ -1463,6 +1555,40 @@ impl BotApi {
         Ok(serde_json::from_value(response)?)
     }
 
+    /// Updates channel permissions for a user.
+    pub async fn put_channel_permissions(
+        &self,
+        token: &Token,
+        channel_id: &str,
+        user_id: &str,
+        permissions: &UpdateChannelPermissions,
+    ) -> Result<()> {
+        permissions.validate()?;
+        debug!(
+            "Updating channel permissions for user {} in channel {}",
+            user_id, channel_id
+        );
+        let path = format!("/channels/{channel_id}/members/{user_id}/permissions");
+        self.http
+            .put(token, &path, None::<&()>, Some(permissions))
+            .await?;
+        Ok(())
+    }
+
+    /// Updates channel permissions for a user.
+    pub async fn update_channel_user_permissions(
+        &self,
+        token: &Token,
+        channel_id: &str,
+        user_id: &str,
+        add: Option<&str>,
+        remove: Option<&str>,
+    ) -> Result<()> {
+        let permissions = UpdateChannelPermissions::new(add, remove);
+        self.put_channel_permissions(token, channel_id, user_id, &permissions)
+            .await
+    }
+
     /// Gets channel permissions for a role.
     ///
     /// # Arguments
@@ -1479,7 +1605,7 @@ impl BotApi {
         token: &Token,
         channel_id: &str,
         role_id: &str,
-    ) -> Result<ChannelPermissions> {
+    ) -> Result<ChannelRolesPermissions> {
         debug!(
             "Getting channel permissions for role {} in channel {}",
             role_id, channel_id
@@ -1487,6 +1613,40 @@ impl BotApi {
         let path = format!("/channels/{channel_id}/roles/{role_id}/permissions");
         let response = self.http.get(token, &path, None::<&()>).await?;
         Ok(serde_json::from_value(response)?)
+    }
+
+    /// Updates channel permissions for a role.
+    pub async fn put_channel_roles_permissions(
+        &self,
+        token: &Token,
+        channel_id: &str,
+        role_id: &str,
+        permissions: &UpdateChannelPermissions,
+    ) -> Result<()> {
+        permissions.validate()?;
+        debug!(
+            "Updating channel permissions for role {} in channel {}",
+            role_id, channel_id
+        );
+        let path = format!("/channels/{channel_id}/roles/{role_id}/permissions");
+        self.http
+            .put(token, &path, None::<&()>, Some(permissions))
+            .await?;
+        Ok(())
+    }
+
+    /// Updates channel permissions for a role.
+    pub async fn update_channel_role_permissions(
+        &self,
+        token: &Token,
+        channel_id: &str,
+        role_id: &str,
+        add: Option<&str>,
+        remove: Option<&str>,
+    ) -> Result<()> {
+        let permissions = UpdateChannelPermissions::new(add, remove);
+        self.put_channel_roles_permissions(token, channel_id, role_id, &permissions)
+            .await
     }
 
     /// Adds a reaction to a message.

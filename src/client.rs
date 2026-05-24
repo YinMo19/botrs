@@ -13,9 +13,15 @@ use crate::intents::Intents;
 use crate::interaction::Interaction;
 use crate::manage::{C2CManageEvent, GroupManageEvent};
 use crate::models::api::AudioAction;
-use crate::models::channel::{ChannelSubType, ChannelType, ChannelValueObject};
+use crate::models::channel::{
+    ChannelRolesPermissions, ChannelSubType, ChannelType, ChannelValueObject,
+    UpdateChannelPermissions,
+};
 use crate::models::gateway::GatewayEvent;
-use crate::models::guild::{GuildRole, GuildRoles, Member as GuildMember};
+use crate::models::guild::{
+    GuildRole, GuildRoleMembers, GuildRoleMembersPager, GuildRoles, Member as GuildMember,
+    MemberDeleteOptions, UpdateGuildMute, UpdateGuildMuteResponse,
+};
 use crate::models::*;
 use crate::reaction::Reaction;
 use crate::token::Token;
@@ -724,6 +730,31 @@ impl Context {
             .await
     }
 
+    /// Gets guild role members list.
+    pub async fn get_guild_role_members(
+        &self,
+        guild_id: &str,
+        role_id: &str,
+        start_index: Option<&str>,
+        limit: Option<u32>,
+    ) -> Result<GuildRoleMembers> {
+        self.api
+            .get_guild_role_members(&self.token, guild_id, role_id, start_index, limit)
+            .await
+    }
+
+    /// Gets guild role members using a pager.
+    pub async fn get_guild_role_members_with_pager(
+        &self,
+        guild_id: &str,
+        role_id: &str,
+        pager: &GuildRoleMembersPager,
+    ) -> Result<GuildRoleMembers> {
+        self.api
+            .get_guild_role_members_with_pager(&self.token, guild_id, role_id, pager)
+            .await
+    }
+
     /// Kicks a member from the guild.
     ///
     /// # Arguments
@@ -751,6 +782,18 @@ impl Context {
                 add_blacklist,
                 delete_history_msg_days,
             )
+            .await
+    }
+
+    /// Kicks a member from the guild with explicit delete options.
+    pub async fn delete_member_with_options(
+        &self,
+        guild_id: &str,
+        user_id: &str,
+        options: &MemberDeleteOptions,
+    ) -> Result<()> {
+        self.api
+            .delete_member_with_options(&self.token, guild_id, user_id, options)
             .await
     }
 
@@ -861,6 +904,47 @@ impl Context {
             .await
     }
 
+    /// Mutes multiple members in a guild.
+    pub async fn mute_multi_member(
+        &self,
+        guild_id: &str,
+        user_ids: Vec<String>,
+        mute_end_timestamp: Option<&str>,
+        mute_seconds: Option<&str>,
+    ) -> Result<UpdateGuildMuteResponse> {
+        self.api
+            .mute_multi_member(
+                &self.token,
+                guild_id,
+                user_ids,
+                mute_end_timestamp,
+                mute_seconds,
+            )
+            .await
+    }
+
+    /// Cancels mute for multiple members in a guild.
+    pub async fn cancel_mute_multi_member(
+        &self,
+        guild_id: &str,
+        user_ids: Vec<String>,
+    ) -> Result<UpdateGuildMuteResponse> {
+        self.api
+            .cancel_mute_multi_member(&self.token, guild_id, user_ids)
+            .await
+    }
+
+    /// Mutes multiple members with a botgo-style request body.
+    pub async fn multi_member_mute(
+        &self,
+        guild_id: &str,
+        mute: &UpdateGuildMute,
+    ) -> Result<UpdateGuildMuteResponse> {
+        self.api
+            .multi_member_mute(&self.token, guild_id, mute)
+            .await
+    }
+
     /// Pins a message.
     ///
     /// # Arguments
@@ -957,6 +1041,31 @@ impl Context {
             .await
     }
 
+    /// Updates channel permissions for a user.
+    pub async fn put_channel_permissions(
+        &self,
+        channel_id: &str,
+        user_id: &str,
+        permissions: &UpdateChannelPermissions,
+    ) -> Result<()> {
+        self.api
+            .put_channel_permissions(&self.token, channel_id, user_id, permissions)
+            .await
+    }
+
+    /// Updates channel permissions for a user.
+    pub async fn update_channel_user_permissions(
+        &self,
+        channel_id: &str,
+        user_id: &str,
+        add: Option<&str>,
+        remove: Option<&str>,
+    ) -> Result<()> {
+        self.api
+            .update_channel_user_permissions(&self.token, channel_id, user_id, add, remove)
+            .await
+    }
+
     /// Gets channel permissions for a role.
     ///
     /// # Arguments
@@ -971,9 +1080,34 @@ impl Context {
         &self,
         channel_id: &str,
         role_id: &str,
-    ) -> Result<ChannelPermissions> {
+    ) -> Result<ChannelRolesPermissions> {
         self.api
             .get_channel_role_permissions(&self.token, channel_id, role_id)
+            .await
+    }
+
+    /// Updates channel permissions for a role.
+    pub async fn put_channel_roles_permissions(
+        &self,
+        channel_id: &str,
+        role_id: &str,
+        permissions: &UpdateChannelPermissions,
+    ) -> Result<()> {
+        self.api
+            .put_channel_roles_permissions(&self.token, channel_id, role_id, permissions)
+            .await
+    }
+
+    /// Updates channel permissions for a role.
+    pub async fn update_channel_role_permissions(
+        &self,
+        channel_id: &str,
+        role_id: &str,
+        add: Option<&str>,
+        remove: Option<&str>,
+    ) -> Result<()> {
+        self.api
+            .update_channel_role_permissions(&self.token, channel_id, role_id, add, remove)
             .await
     }
 
