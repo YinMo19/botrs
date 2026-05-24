@@ -125,6 +125,7 @@ use crate::models::{
         Ark, C2CMessageParams, DirectMessageParams, Embed, GroupMessageParams, Keyboard,
         KeyboardPayload, MarkdownPayload, Media, Message, MessageParams, Reference,
     },
+    message_setting::MessageSetting,
     permission::{APIPermission, APIPermissionDemand, APIPermissionDemandIdentify},
     schedule::{RemindType, Schedule},
 };
@@ -207,6 +208,27 @@ impl BotApi {
     pub async fn get_guild(&self, token: &Token, guild_id: &str) -> Result<Guild> {
         debug!("Getting guild {}", guild_id);
         let path = format!("/guilds/{guild_id}");
+        let response = self.http.get(token, &path, None::<&()>).await?;
+        Ok(serde_json::from_value(response)?)
+    }
+
+    /// Gets guild message frequency settings.
+    ///
+    /// # Arguments
+    ///
+    /// * `token` - Authentication token
+    /// * `guild_id` - The guild ID
+    ///
+    /// # Returns
+    ///
+    /// Message settings for the guild.
+    pub async fn get_message_setting(
+        &self,
+        token: &Token,
+        guild_id: &str,
+    ) -> Result<MessageSetting> {
+        debug!("Getting message setting for guild {}", guild_id);
+        let path = format!("/guilds/{guild_id}/message/setting");
         let response = self.http.get(token, &path, None::<&()>).await?;
         Ok(serde_json::from_value(response)?)
     }
