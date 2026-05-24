@@ -16,6 +16,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Documentation improvements and restructuring
 
+## [0.9.0] - 2026-05-25
+
+### Changed
+- Aligned `MessageReaction` and `WSMessageReactionData` with botgo's pure message reaction DTO.
+- Made reaction `Emoji`, `ReactionTarget`, and `MessageReaction` fields required instead of silently defaulting missing protocol data.
+- Aligned forum `ThreadInfo.title` and `ThreadInfo.content` with botgo by keeping raw strings.
+- Updated GitHub Actions to current major versions to avoid Node 20 action deprecation.
+
+### Fixed
+- Reaction event parsing now propagates malformed payload errors instead of constructing partial empty reaction values.
+
 ## [0.8.0] - 2026-05-25
 
 ### Changed

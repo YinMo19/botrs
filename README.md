@@ -95,7 +95,7 @@ api.post_message_with_params(token, "channel_id", params).await?;
 
 ```toml
 [dependencies]
-botrs = "0.8.0"
+botrs = "0.9.0"
 tokio = { version = "1.0", features = ["full"] }
 tracing = "0.1"
 tracing-subscriber = "0.3"
@@ -641,7 +641,12 @@ BotRS 的设计灵感来自 Python 的 [botpy](https://github.com/tencent-connec
 
 ## 版本历史
 
-### v0.8.0 (最新)
+### v0.9.0 (最新)
+- 🧩 对齐 botgo 的 `MessageReaction` / `WSMessageReactionData` 纯 DTO 形状
+- 🧵 对齐 botgo 的论坛 `ThreadInfo`，`title` / `content` 保持原始字符串
+- 🛠️ 升级 GitHub Actions 主版本，移除 Node 20 action deprecation 风险
+
+### v0.8.0
 - 🔁 对齐 botgo 的 `DirectMessage` 会话 DTO 和私信事件 `Message` payload
 - 🧭 修正私信事件处理示例，统一使用 `DirectMessageParams` 与 `post_dms_with_params`
 - 🧩 补齐 message、guild、interaction 等 DTO/wire format 对齐
