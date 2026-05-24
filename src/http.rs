@@ -8,6 +8,8 @@ use crate::models::api::{ApiError, RateLimit};
 use crate::token::Token;
 use reqwest::{Client, Method, Response, StatusCode, header::HeaderMap};
 use serde::Serialize;
+use serde_json::Value;
+use std::sync::{Arc, RwLock};
 use std::time::Duration;
 use tracing::{debug, error, warn};
 
@@ -22,6 +24,10 @@ pub struct HttpClient {
     is_sandbox: bool,
     /// Request timeout
     timeout: Duration,
+    /// Last trace ID returned by OpenAPI.
+    last_trace_id: Arc<RwLock<Option<String>>>,
+    /// Whether verbose HTTP debug logging is enabled.
+    debug: bool,
 }
 
 impl HttpClient {
@@ -57,7 +63,38 @@ impl HttpClient {
             base_url,
             is_sandbox,
             timeout: Duration::from_secs(timeout),
+            last_trace_id: Arc::new(RwLock::new(None)),
+            debug: false,
         })
+    }
+
+    fn clone_with_client(&self, client: Client, timeout: Duration, debug: bool) -> Self {
+        Self {
+            client,
+            base_url: self.base_url.clone(),
+            is_sandbox: self.is_sandbox,
+            timeout,
+            last_trace_id: Arc::clone(&self.last_trace_id),
+            debug,
+        }
+    }
+
+    /// Returns a client with a different request timeout.
+    pub fn with_timeout(&self, timeout: Duration) -> Result<Self> {
+        let client = Client::builder()
+            .timeout(timeout)
+            .user_agent(format!("BotRS/{}", crate::VERSION))
+            .build()
+            .map_err(BotError::Http)?;
+        Ok(self.clone_with_client(client, timeout, self.debug))
+    }
+
+    /// Returns a client with debug logging toggled.
+    pub fn with_debug(&self, debug: bool) -> Self {
+        Self {
+            debug,
+            ..self.clone()
+        }
     }
 
     /// Makes a GET request to the API.
@@ -234,6 +271,30 @@ impl HttpClient {
         self.request(Method::PATCH, token, path, query, body).await
     }
 
+    /// Passes through an arbitrary request to the provided URL.
+    pub async fn transport<B>(
+        &self,
+        token: &Token,
+        method: Method,
+        url: &str,
+        body: Option<&B>,
+    ) -> Result<Vec<u8>>
+    where
+        B: Serialize + ?Sized,
+    {
+        let mut request = self.client.request(method, url);
+        let auth_header = token.authorization_header().await?;
+        request = request.header("Authorization", auth_header);
+        if body.is_some() {
+            request = request.header("Content-Type", "application/json");
+        }
+        if let Some(body) = body {
+            request = request.json(body);
+        }
+        let response = request.send().await.map_err(BotError::Http)?;
+        self.handle_bytes_response(response).await
+    }
+
     /// Makes a generic HTTP request to the API.
     ///
     /// # Arguments
@@ -302,7 +363,6 @@ impl HttpClient {
             request = request.json(b);
         }
 
-        // Send the request
         let response = request.send().await.map_err(BotError::Http)?;
 
         self.handle_response(response).await
@@ -356,6 +416,7 @@ impl HttpClient {
     async fn handle_response(&self, response: Response) -> Result<serde_json::Value> {
         let status = response.status();
         let headers = response.headers().clone();
+        self.store_trace_id(&headers);
 
         // Check for rate limiting
         if status == StatusCode::TOO_MANY_REQUESTS {
@@ -393,6 +454,51 @@ impl HttpClient {
 
         debug!("Request successful, response: {}", json);
         Ok(json)
+    }
+
+    async fn handle_bytes_response(&self, response: Response) -> Result<Vec<u8>> {
+        let status = response.status();
+        let headers = response.headers().clone();
+        self.store_trace_id(&headers);
+
+        if status == StatusCode::TOO_MANY_REQUESTS {
+            let retry_after = headers
+                .get("retry-after")
+                .and_then(|h| h.to_str().ok())
+                .and_then(|s| s.parse().ok())
+                .unwrap_or(60);
+            return Err(BotError::rate_limit(retry_after));
+        }
+
+        let body = response.bytes().await.map_err(BotError::Http)?.to_vec();
+        if !status.is_success() {
+            let message = serde_json::from_slice::<Value>(&body)
+                .ok()
+                .and_then(|json| {
+                    json.get("message")
+                        .and_then(|value| value.as_str())
+                        .map(ToOwned::to_owned)
+                })
+                .unwrap_or_else(|| String::from_utf8_lossy(&body).into_owned());
+            return Err(http_error_from_status(status.as_u16(), message));
+        }
+
+        Ok(body)
+    }
+
+    fn store_trace_id(&self, headers: &reqwest::header::HeaderMap) {
+        let trace_id = headers
+            .get("X-Tps-trace-ID")
+            .or_else(|| headers.get("x-tps-trace-id"))
+            .and_then(|value| value.to_str().ok())
+            .filter(|value| !value.is_empty())
+            .map(ToOwned::to_owned);
+
+        if let Some(trace_id) = trace_id
+            && let Ok(mut last_trace_id) = self.last_trace_id.write()
+        {
+            *last_trace_id = Some(trace_id);
+        }
     }
 
     /// Parses an API error from the response.
@@ -497,6 +603,20 @@ impl HttpClient {
         self.timeout
     }
 
+    /// Returns the most recent OpenAPI trace ID.
+    pub fn trace_id(&self) -> String {
+        self.last_trace_id
+            .read()
+            .ok()
+            .and_then(|trace_id| trace_id.clone())
+            .unwrap_or_default()
+    }
+
+    /// Returns whether debug logging is enabled.
+    pub fn debug_enabled(&self) -> bool {
+        self.debug
+    }
+
     /// Closes the HTTP client and cleans up resources.
     pub async fn close(&self) {
         // reqwest::Client doesn't need explicit cleanup
@@ -510,6 +630,7 @@ impl std::fmt::Debug for HttpClient {
             .field("base_url", &self.base_url)
             .field("is_sandbox", &self.is_sandbox)
             .field("timeout", &self.timeout)
+            .field("debug", &self.debug)
             .finish()
     }
 }
@@ -563,5 +684,16 @@ mod tests {
         assert_eq!(rate_limit.remaining, 50);
         assert_eq!(rate_limit.reset, 1234567890);
         assert_eq!(rate_limit.bucket, Some("global".to_string()));
+    }
+
+    #[test]
+    fn test_trace_id_storage() {
+        let client = HttpClient::new(30, false).unwrap();
+        let mut headers = reqwest::header::HeaderMap::new();
+        headers.insert("X-Tps-trace-ID", "trace-123".parse().unwrap());
+
+        client.store_trace_id(&headers);
+
+        assert_eq!(client.trace_id(), "trace-123");
     }
 }
