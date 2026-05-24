@@ -58,3 +58,23 @@ pub struct HttpSession {
     /// Shard tuple
     pub shards: [i64; 2],
 }
+
+/// Webhook callback validation request data.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+pub struct WebhookValidationRequest {
+    /// Plain token from the validation request
+    pub plain_token: String,
+    /// Event timestamp
+    pub event_ts: String,
+}
+
+/// Webhook callback validation response data.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+pub struct WebhookValidationResponse {
+    /// Plain token from the validation request
+    pub plain_token: String,
+    /// Signature generated with the app secret
+    pub signature: String,
+    /// Data format version
+    pub data_version: String,
+}
