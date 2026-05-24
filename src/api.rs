@@ -162,6 +162,12 @@ use tracing::debug;
 pub type APIVersion = u32;
 #[allow(non_upper_case_globals)]
 pub const APIv1: APIVersion = 1;
+/// Botgo-compatible OpenAPI v1 idle connection default.
+#[allow(non_upper_case_globals)]
+pub const MaxIdleConns: usize = 3000;
+/// Botgo-compatible interaction callback app ID header.
+#[allow(non_upper_case_globals)]
+pub const HeaderCallbackAppID: &str = "X-Callback-AppID";
 
 #[allow(non_snake_case)]
 pub fn APIVersionString(version: APIVersion) -> String {
@@ -3694,7 +3700,7 @@ impl BotApi {
         };
         let app_id = HeaderValue::from_str(app_id)
             .map_err(|e| crate::BotError::invalid_data(format!("Invalid app ID header: {e}")))?;
-        headers.insert("X-Callback-AppID", app_id);
+        headers.insert(HeaderCallbackAppID, app_id);
 
         let path = format!("/interactions/{interaction_id}");
         self.http
