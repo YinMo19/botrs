@@ -134,6 +134,35 @@ fn is_zero_u32(value: &u32) -> bool {
     *value == 0
 }
 
+fn is_botgo_space(c: char) -> bool {
+    matches!(c, ' ' | '\u{00a0}')
+}
+
+fn remove_botgo_at_mentions(input: &str) -> String {
+    let mut output = String::with_capacity(input.len());
+    let mut rest = input;
+
+    while let Some(start) = rest.find("<@!") {
+        output.push_str(&rest[..start]);
+        let after_marker = &rest[start + 3..];
+        let digit_len = after_marker
+            .chars()
+            .take_while(|c| c.is_ascii_digit())
+            .map(char::len_utf8)
+            .sum::<usize>();
+
+        if digit_len > 0 && after_marker[digit_len..].starts_with('>') {
+            rest = &after_marker[digit_len + 1..];
+        } else {
+            output.push_str("<@!");
+            rest = after_marker;
+        }
+    }
+
+    output.push_str(rest);
+    output
+}
+
 /// Parsed command data.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct CMD {
@@ -179,19 +208,22 @@ pub fn Emoji(id: impl std::fmt::Display) -> String {
 
 #[allow(non_snake_case)]
 pub fn ETLInput(input: &str) -> String {
-    input
-        .split_whitespace()
-        .filter(|part| !(part.starts_with("<@!") && part.ends_with('>')))
-        .collect::<Vec<_>>()
-        .join(" ")
+    remove_botgo_at_mentions(input)
+        .trim_matches(is_botgo_space)
+        .to_string()
 }
 
 pub fn parse_command(input: &str) -> CMD {
     let cleaned = ETLInput(input);
-    let mut parts = cleaned.splitn(2, char::is_whitespace);
-    CMD {
-        cmd: parts.next().unwrap_or_default().trim().to_string(),
-        content: parts.next().unwrap_or_default().trim().to_string(),
+    match cleaned.split_once(' ') {
+        Some((cmd, content)) => CMD {
+            cmd: cmd.trim_matches(is_botgo_space).to_string(),
+            content: content.to_string(),
+        },
+        None => CMD {
+            cmd: cleaned.trim_matches(is_botgo_space).to_string(),
+            content: String::new(),
+        },
     }
 }
 
@@ -1209,10 +1241,24 @@ mod tests {
         assert_eq!(MentionChannel("456"), "<#456>");
         assert_eq!(Emoji(1), "<emoji:1>");
         assert_eq!(ETLInput("<@!123>  ping value"), "ping value");
+        assert_eq!(
+            ETLInput("\u{00a0}<@!123> ping  value\u{00a0}"),
+            "ping  value"
+        );
+        assert_eq!(ETLInput("<@123> ping"), "<@123> ping");
+        assert_eq!(ETLInput("<@!abc> ping"), "<@!abc> ping");
 
         let command = ParseCommand("<@!123>  /ping value");
         assert_eq!(command.cmd, "/ping");
         assert_eq!(command.content, "value");
+
+        let command = ParseCommand("<@!123> /ping value");
+        assert_eq!(command.cmd, "/ping");
+        assert_eq!(command.content, "value");
+
+        let command = ParseCommand("/ping\tvalue");
+        assert_eq!(command.cmd, "/ping\tvalue");
+        assert_eq!(command.content, "");
     }
 
     #[test]
