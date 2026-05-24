@@ -16,6 +16,21 @@ BotRS 的所有重要更改都将记录在此文件中。
 ### 更改
 - 文档改进和重构
 
+## [0.7.0] - 2026-05-25
+
+### 新增
+- 增加 botgo 兼容的 OpenAPI v1 具体实现常量 `HeaderCallbackAppID` 和 `MaxIdleConns`。
+- 增加 `Session::from_app_id` / `Session::FromAppID`，用于 HTTP callback payload session。
+
+### 更改
+- OpenAPI 实例现在会保存 botgo 的 app ID 状态，并在请求中发送 `X-Union-Appid`。
+- `PutInteraction` 现在使用 OpenAPI 实例 app ID 设置 `X-Callback-AppID`，与 botgo 对齐。
+- HTTP webhook dispatch payload 现在会带上包含 app ID 的 session。
+
+### 修复
+- 网关返回不可 resume 错误后，重新入队前会清理过期 session ID 和 sequence。
+- 兼容 botgo 单条消息接口的旧包装响应格式（`{"message": ...}`）。
+
 ## [0.6.0] - 2026-05-25
 
 ### 新增

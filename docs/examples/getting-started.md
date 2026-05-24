@@ -607,7 +607,7 @@ Add these to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-botrs = "0.6.0"
+botrs = "0.7.0"
 tokio = { version = "1.0", features = ["full"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
