@@ -82,6 +82,11 @@ impl Err {
     }
 }
 
+#[allow(non_snake_case)]
+pub fn Code(err: &(dyn std::error::Error + 'static)) -> i32 {
+    Error(err).Code()
+}
+
 impl std::error::Error for Err {}
 
 impl fmt::Display for Err {
