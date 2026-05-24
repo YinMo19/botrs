@@ -36,13 +36,70 @@ pub use webhook::*;
 pub use guild::{Guild, Member, Role};
 
 use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
+use std::{collections::HashMap, str::FromStr, time::Duration as StdDuration};
 
 /// A snowflake ID used throughout the QQ Guild API.
 pub type Snowflake = String;
 
 /// Represents a timestamp in the API.
 pub type Timestamp = DateTime<Utc>;
+
+/// Botgo-compatible duration wrapper parsed from duration strings.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize)]
+pub struct Duration(pub StdDuration);
+
+impl Duration {
+    pub const fn as_std(self) -> StdDuration {
+        self.0
+    }
+}
+
+impl From<StdDuration> for Duration {
+    fn from(duration: StdDuration) -> Self {
+        Self(duration)
+    }
+}
+
+impl From<Duration> for StdDuration {
+    fn from(duration: Duration) -> Self {
+        duration.0
+    }
+}
+
+impl<'de> Deserialize<'de> for Duration {
+    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let value = String::deserialize(deserializer)?;
+        parse_duration(&value)
+            .map(Self)
+            .map_err(serde::de::Error::custom)
+    }
+}
+
+fn parse_duration(value: &str) -> Result<StdDuration, String> {
+    let value = value.trim_matches(['"', '\'']);
+    let (number, unit) = value
+        .find(|ch: char| !ch.is_ascii_digit())
+        .map_or((value, ""), |index| value.split_at(index));
+    let number = u64::from_str(number).map_err(|err| format!("invalid duration {value}: {err}"))?;
+    match unit {
+        "ns" => Ok(StdDuration::from_nanos(number)),
+        "us" | "µs" => Ok(StdDuration::from_micros(number)),
+        "ms" => Ok(StdDuration::from_millis(number)),
+        "s" | "" => Ok(StdDuration::from_secs(number)),
+        "m" => Ok(StdDuration::from_secs(number * 60)),
+        "h" => Ok(StdDuration::from_secs(number * 60 * 60)),
+        _ => Err(format!("unsupported duration unit {unit:?}")),
+    }
+}
+
+/// Botgo-compatible pager trait.
+pub trait Pager {
+    fn query_params(&self) -> HashMap<String, String>;
+}
 
 /// Common trait for objects that have a snowflake ID.
 pub trait HasId {
@@ -230,5 +287,14 @@ mod tests {
         assert_eq!(color.b(), 0x56);
 
         assert_eq!(format!("{}", Color::RED), "#FF0000");
+    }
+
+    #[test]
+    fn test_botgo_duration_deserialization() {
+        let duration: Duration = serde_json::from_str("\"1500ms\"").unwrap();
+        assert_eq!(duration.as_std(), std::time::Duration::from_millis(1500));
+
+        let duration: Duration = serde_json::from_str("\"2h\"").unwrap();
+        assert_eq!(duration.as_std(), std::time::Duration::from_secs(7200));
     }
 }
