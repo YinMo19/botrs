@@ -89,12 +89,14 @@ impl Gateway {
 
 ### Automatic Reconnection
 
-The Gateway handles disconnections gracefully with exponential backoff:
+The Gateway handles disconnections with the same session-start throttling model
+used by the official SDKs:
 
 ```rust
-// Reconnection is automatic with intelligent backoff
-// - Initial attempts: 5 second delay
-// - Subsequent attempts: exponential backoff (5, 10, 20, 40 seconds max)
+// Reconnection is automatic with a fixed session-manager interval
+// - Interval is calculated from gateway session_start_limit.max_concurrency
+// - Formula matches botgo: round(2 / max_concurrency), minimum 1 second
+// - Successful reconnects do not inherit any previous backoff state
 // - Maximum attempts: unlimited until explicitly stopped
 ```
 
@@ -314,7 +316,7 @@ The Gateway is designed for efficient memory usage:
 ### Network Efficiency
 
 - Compression support for WebSocket messages
-- Intelligent reconnection with exponential backoff
+- Botgo-style fixed reconnect throttling
 - Heartbeat optimization (30-second fixed interval)
 - Event filtering based on intents
 
