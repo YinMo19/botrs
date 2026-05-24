@@ -26,7 +26,7 @@ use crate::models::message::{MessagePagerType, MessagesPager};
 use crate::models::webhook::{HttpIdentity, HttpReady, HttpSession};
 use crate::models::*;
 use crate::reaction::{Emoji as ReactionEmoji, MessageReactionPager, Reaction, ReactionUsers};
-use crate::session_manager::{CheckSessionLimit, NewSessionManager, SessionManager};
+use crate::session_manager::{CheckSessionLimit, NewSessionManager};
 use crate::token::Token;
 use std::sync::Arc;
 use tokio::sync::mpsc;

@@ -5,7 +5,7 @@
 use std::collections::HashSet;
 use std::future::Future;
 use std::pin::Pin;
-use std::sync::LazyLock;
+use std::sync::{LazyLock, RwLock};
 use std::time::Duration;
 
 use tokio::sync::mpsc;
@@ -29,6 +29,11 @@ pub static CanNotIdentifyErrSet: LazyLock<HashSet<i32>> =
 pub type SessionFuture = Pin<Box<dyn Future<Output = (Session, crate::Result<()>)> + Send>>;
 pub type SessionConnectFn =
     dyn Fn(Session, mpsc::UnboundedSender<GatewayEvent>) -> SessionFuture + Send + Sync;
+pub type BoxedSessionManager = Box<dyn SessionManager>;
+pub type SessionManagerFactory = dyn Fn() -> BoxedSessionManager + Send + Sync;
+
+static DEFAULT_SESSION_MANAGER: LazyLock<RwLock<Box<SessionManagerFactory>>> =
+    LazyLock::new(|| RwLock::new(Box::new(|| Box::new(ChanManager::new()))));
 
 /// Botgo-compatible websocket session descriptor.
 #[derive(Debug, Clone)]
@@ -93,6 +98,7 @@ pub trait SessionManager: Send + Sync {
 }
 
 /// Local, channel-backed session manager matching botgo's default manager.
+#[derive(Clone)]
 pub struct ChanManager {
     session_sender: Option<mpsc::UnboundedSender<Session>>,
     connect_fn: std::sync::Arc<SessionConnectFn>,
@@ -208,13 +214,33 @@ impl SessionManager for ChanManager {
     }
 }
 
-pub fn new_session_manager() -> ChanManager {
-    ChanManager::new()
+pub fn new_session_manager() -> BoxedSessionManager {
+    let factory = DEFAULT_SESSION_MANAGER
+        .read()
+        .expect("default session manager lock poisoned");
+    factory()
 }
 
 #[allow(non_snake_case)]
-pub fn NewSessionManager() -> ChanManager {
+pub fn NewSessionManager() -> BoxedSessionManager {
     new_session_manager()
+}
+
+pub fn set_session_manager_factory(
+    factory: impl Fn() -> BoxedSessionManager + Send + Sync + 'static,
+) {
+    *DEFAULT_SESSION_MANAGER
+        .write()
+        .expect("default session manager lock poisoned") = Box::new(factory);
+}
+
+pub fn set_session_manager(manager: impl SessionManager + Clone + 'static) {
+    set_session_manager_factory(move || Box::new(manager.clone()));
+}
+
+#[allow(non_snake_case)]
+pub fn SetSessionManager(manager: impl SessionManager + Clone + 'static) {
+    set_session_manager(manager);
 }
 
 pub fn calc_interval(max_concurrency: u32) -> Duration {
