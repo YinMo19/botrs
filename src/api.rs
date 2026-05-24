@@ -1547,6 +1547,23 @@ impl BotApi {
         Ok(())
     }
 
+    /// Clears all pinned messages in a channel.
+    ///
+    /// # Arguments
+    ///
+    /// * `token` - Authentication token
+    /// * `channel_id` - The channel ID
+    ///
+    /// # Returns
+    ///
+    /// Success indication.
+    pub async fn clean_pins(&self, token: &Token, channel_id: &str) -> Result<()> {
+        debug!("Clearing pinned messages in channel {}", channel_id);
+        let path = format!("/channels/{channel_id}/pins/all");
+        self.http.delete(token, &path, None::<&()>).await?;
+        Ok(())
+    }
+
     /// Gets pinned messages.
     ///
     /// # Arguments

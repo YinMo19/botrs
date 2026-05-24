@@ -874,6 +874,19 @@ impl Context {
         self.api.get_pins(&self.token, channel_id).await
     }
 
+    /// Clears all pinned messages in a channel.
+    ///
+    /// # Arguments
+    ///
+    /// * `channel_id` - The channel ID
+    ///
+    /// # Returns
+    ///
+    /// Result indicating success or failure.
+    pub async fn clean_pins(&self, channel_id: &str) -> Result<()> {
+        self.api.clean_pins(&self.token, channel_id).await
+    }
+
     /// Gets channel permissions for a user.
     ///
     /// # Arguments
