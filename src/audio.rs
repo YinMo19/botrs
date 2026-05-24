@@ -21,6 +21,15 @@ pub enum AudioStatus {
     Stop = 3,
 }
 
+#[allow(non_upper_case_globals)]
+pub const AudioStatusStart: AudioStatus = AudioStatus::Start;
+#[allow(non_upper_case_globals)]
+pub const AudioStatusPause: AudioStatus = AudioStatus::Pause;
+#[allow(non_upper_case_globals)]
+pub const AudioStatusResume: AudioStatus = AudioStatus::Resume;
+#[allow(non_upper_case_globals)]
+pub const AudioStatusStop: AudioStatus = AudioStatus::Stop;
+
 /// Public audio channel type
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[repr(u8)]

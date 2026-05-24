@@ -21,6 +21,11 @@ pub enum InteractionType {
     InlineKeyboard = 11,
 }
 
+#[allow(non_upper_case_globals)]
+pub const InteractionTypePing: InteractionType = InteractionType::Ping;
+#[allow(non_upper_case_globals)]
+pub const InteractionTypeCommand: InteractionType = InteractionType::ApplicationCommand;
+
 impl From<u8> for InteractionType {
     fn from(value: u8) -> Self {
         match value {
@@ -50,6 +55,29 @@ pub enum InteractionDataType {
     /// Clear session click
     ClearSessionClick = 14,
 }
+
+#[allow(non_upper_case_globals)]
+pub const InteractionDataTypeChatSearch: InteractionDataType = InteractionDataType::ChatInputSearch;
+#[allow(non_upper_case_globals)]
+pub const InteractionDataTypeInlineKeyboardClick: InteractionDataType =
+    InteractionDataType::InlineKeyboardButtonClick;
+#[allow(non_upper_case_globals)]
+pub const InteractionDataTypeCallbackCommandClick: InteractionDataType =
+    InteractionDataType::CallbackCommandClick;
+#[allow(non_upper_case_globals)]
+pub const InteractionDataTypeMessageFeedbackClick: InteractionDataType =
+    InteractionDataType::MessageFeedbackClick;
+#[allow(non_upper_case_globals)]
+pub const InteractionDataTypeClearSessionClick: InteractionDataType =
+    InteractionDataType::ClearSessionClick;
+
+pub type LayoutType = u32;
+pub const LAYOUT_TYPE_IMAGE_TEXT: LayoutType = 0;
+#[allow(non_upper_case_globals)]
+pub const LayoutTypeImageText: LayoutType = LAYOUT_TYPE_IMAGE_TEXT;
+pub const ACTION_TYPE_SEND_ARK: crate::models::message::ActionType = 0;
+#[allow(non_upper_case_globals)]
+pub const ActionTypeSendARK: crate::models::message::ActionType = ACTION_TYPE_SEND_ARK;
 
 impl From<u8> for InteractionDataType {
     fn from(value: u8) -> Self {

@@ -134,6 +134,42 @@ fn is_zero_u32(value: &u32) -> bool {
     *value == 0
 }
 
+/// Parsed command data.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+pub struct CMD {
+    pub cmd: String,
+    pub content: String,
+}
+
+pub fn mention_user(user_id: impl std::fmt::Display) -> String {
+    format!("<@{user_id}>")
+}
+
+pub fn mention_all_user() -> &'static str {
+    "@everyone"
+}
+
+pub fn mention_channel(channel_id: impl std::fmt::Display) -> String {
+    format!("<#{channel_id}>")
+}
+
+pub fn emoji(id: impl std::fmt::Display) -> String {
+    format!("<emoji:{id}>")
+}
+
+pub fn parse_command(input: &str) -> CMD {
+    let cleaned = input
+        .split_whitespace()
+        .filter(|part| !(part.starts_with("<@!") && part.ends_with('>')))
+        .collect::<Vec<_>>()
+        .join(" ");
+    let mut parts = cleaned.splitn(2, char::is_whitespace);
+    CMD {
+        cmd: parts.next().unwrap_or_default().trim().to_string(),
+        content: parts.next().unwrap_or_default().trim().to_string(),
+    }
+}
+
 /// Message scene metadata.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct MessageScene {
@@ -1655,6 +1691,23 @@ pub enum MessageCreateType {
     Unknown(u32),
 }
 
+#[allow(non_upper_case_globals)]
+pub const TextMsg: MessageCreateType = MessageCreateType::Text;
+#[allow(non_upper_case_globals)]
+pub const MarkdownMsg: MessageCreateType = MessageCreateType::Markdown;
+#[allow(non_upper_case_globals)]
+pub const ArkMsg: MessageCreateType = MessageCreateType::Ark;
+#[allow(non_upper_case_globals)]
+pub const EmbedMsg: MessageCreateType = MessageCreateType::Embed;
+#[allow(non_upper_case_globals)]
+pub const ATMsg: MessageCreateType = MessageCreateType::At;
+#[allow(non_upper_case_globals)]
+pub const InputNotifyMsg: MessageCreateType = MessageCreateType::InputNotify;
+#[allow(non_upper_case_globals)]
+pub const RichMediaMsg: MessageCreateType = MessageCreateType::RichMedia;
+#[allow(non_upper_case_globals)]
+pub const RichMedia: SendType = SendType::RichMedia;
+
 impl From<u32> for MessageCreateType {
     fn from(value: u32) -> Self {
         match value {
@@ -1960,6 +2013,13 @@ pub enum MessagePagerType {
     /// Pull messages after the given message ID
     After,
 }
+
+#[allow(non_upper_case_globals)]
+pub const MPTAround: MessagePagerType = MessagePagerType::Around;
+#[allow(non_upper_case_globals)]
+pub const MPTBefore: MessagePagerType = MessagePagerType::Before;
+#[allow(non_upper_case_globals)]
+pub const MPTAfter: MessagePagerType = MessagePagerType::After;
 
 impl MessagePagerType {
     /// Returns the query parameter name for this pager type.
