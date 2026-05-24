@@ -6,6 +6,7 @@ pub mod api;
 pub mod audio;
 pub mod client;
 pub mod connection;
+pub mod constant;
 pub mod error;
 pub mod forum;
 pub mod gateway;
@@ -16,12 +17,14 @@ pub mod manage;
 pub mod models;
 pub mod reaction;
 pub mod token;
+pub mod version;
 
 // Re-export main types for convenience
 pub use api::BotApi;
 pub use audio::{Audio, AudioControl, AudioStatus, PublicAudio, PublicAudioType};
 pub use client::{Client, Context, EventHandler};
 pub use connection::{ConnectionSession, ConnectionState, Session};
+pub use constant::*;
 pub use error::{BotError, Result};
 pub use forum::{
     Content, Format, ForumAuditResult, OpenThread, Post, PostInfo, Reply, ReplyInfo, Thread,
@@ -43,6 +46,7 @@ pub use reaction::{
     ReactionUsers,
 };
 pub use token::Token;
+pub use version::version_string;
 
 /// The current version of the library
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
