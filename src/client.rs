@@ -21,6 +21,7 @@ use crate::reaction::Reaction;
 use crate::token::Token;
 use std::sync::Arc;
 use tokio::sync::mpsc;
+use tokio::time::sleep;
 use tracing::{debug, error, info};
 
 /// Event handler trait for processing gateway events.
@@ -1176,6 +1177,13 @@ impl<H: EventHandler + 'static> Client<H> {
         let gateway_info = self.api.get_gateway(&self.token).await?;
         info!("Gateway URL: {}", gateway_info.url);
 
+        if gateway_info.shards > gateway_info.session_start_limit.remaining {
+            return Err(BotError::session(format!(
+                "Session start limit exceeded: shards={}, remaining={}",
+                gateway_info.shards, gateway_info.session_start_limit.remaining
+            )));
+        }
+
         // Create context
         let ctx = Context::new(self.api.clone(), self.token.clone()).with_bot_info(bot_info);
 
@@ -1189,27 +1197,32 @@ impl<H: EventHandler + 'static> Client<H> {
             reconnect_interval, gateway_info.session_start_limit.max_concurrency
         );
 
-        // Create and connect gateway
-        let gateway = Gateway::new(
-            gateway_info.url,
-            self.token.clone(),
-            self.intents,
-            None, // TODO: Implement sharding
-        )
-        .with_reconnect_interval(reconnect_interval);
+        info!(
+            "Starting {} gateway shard(s) with interval {:?}",
+            gateway_info.shards, reconnect_interval
+        );
+        for shard_id in 0..gateway_info.shards {
+            sleep(reconnect_interval).await;
 
-        // Start gateway connection in a separate task with auto-reconnect
-        let gateway_task = {
-            let mut gateway_clone = gateway;
-            async move {
-                // Gateway now handles auto-reconnect internally
-                if let Err(e) = gateway_clone.connect(event_sender).await {
-                    error!("Gateway connection failed permanently: {}", e);
+            let mut gateway = Gateway::new(
+                gateway_info.url.clone(),
+                self.token.clone(),
+                self.intents,
+                Some([shard_id, gateway_info.shards]),
+            )
+            .with_reconnect_interval(reconnect_interval);
+            let shard_sender = event_sender.clone();
+
+            tokio::spawn(async move {
+                if let Err(e) = gateway.connect(shard_sender).await {
+                    error!(
+                        "Gateway shard {}/{} connection failed permanently: {}",
+                        shard_id, gateway_info.shards, e
+                    );
                 }
-            }
-        };
-
-        tokio::spawn(gateway_task);
+            });
+        }
+        drop(event_sender);
 
         // Main event processing loop - continue running even if gateway disconnects
         info!("Bot client started, waiting for events...");

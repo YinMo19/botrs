@@ -20,7 +20,7 @@ use tracing::{debug, info, warn};
 use url::Url;
 
 type WsStream = WebSocketStream<MaybeTlsStream<tokio::net::TcpStream>>;
-const SESSION_START_LIMIT_WINDOW_SECS: u64 = 5;
+const SESSION_START_LIMIT_WINDOW_SECS: u64 = 2;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum GatewayAction {
@@ -127,11 +127,10 @@ impl Gateway {
         self
     }
 
-    /// Calculates a botpy-style session start interval from gateway limits.
+    /// Calculates a botgo-style session start interval from gateway limits.
     ///
-    /// botpy uses `round(5 / max_concurrency)`. botgo applies the same fixed
-    /// session-manager throttling pattern and guards the interval to at least
-    /// one second. This combines those behaviors for Rust.
+    /// botgo uses `round(2 / max_concurrency)` and guards the interval to at
+    /// least one second before starting the next websocket session.
     pub fn session_start_interval(max_concurrency: u32) -> Duration {
         let max_concurrency = u64::from(max_concurrency.max(1));
         let quotient = SESSION_START_LIMIT_WINDOW_SECS / max_concurrency;
@@ -805,10 +804,10 @@ mod tests {
 
     #[test]
     fn test_session_start_interval() {
-        assert_eq!(Gateway::session_start_interval(0), Duration::from_secs(5));
-        assert_eq!(Gateway::session_start_interval(1), Duration::from_secs(5));
-        assert_eq!(Gateway::session_start_interval(2), Duration::from_secs(2));
-        assert_eq!(Gateway::session_start_interval(3), Duration::from_secs(2));
+        assert_eq!(Gateway::session_start_interval(0), Duration::from_secs(2));
+        assert_eq!(Gateway::session_start_interval(1), Duration::from_secs(2));
+        assert_eq!(Gateway::session_start_interval(2), Duration::from_secs(1));
+        assert_eq!(Gateway::session_start_interval(3), Duration::from_secs(1));
         assert_eq!(Gateway::session_start_interval(5), Duration::from_secs(1));
         assert_eq!(Gateway::session_start_interval(100), Duration::from_secs(1));
     }
