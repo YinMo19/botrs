@@ -359,10 +359,7 @@ mod tests {
         let user: ReactionUser = serde_json::from_value(data).unwrap();
         assert_eq!(user.id, "user123");
         assert_eq!(user.username, "testuser");
-        assert_eq!(
-            user.avatar,
-            Some("https://example.com/avatar.png".to_string())
-        );
+        assert_eq!(user.avatar, "https://example.com/avatar.png");
     }
 
     #[test]
