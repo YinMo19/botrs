@@ -68,6 +68,11 @@ impl From<RemindType> for u8 {
 }
 
 impl RemindType {
+    /// Returns the botgo wire value for this reminder type.
+    pub fn to_botgo_string(self) -> String {
+        u8::from(self).to_string()
+    }
+
     /// Returns a human-readable description of the reminder type.
     pub fn description(&self) -> &'static str {
         match self {
@@ -107,71 +112,33 @@ impl std::fmt::Display for RemindType {
     }
 }
 
-/// Represents a creator of a schedule (Member information).
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct ScheduleCreator {
-    /// User ID of the creator
-    pub user_id: Option<Snowflake>,
-    /// Nickname of the creator
-    pub nick: Option<String>,
-    /// Username of the creator
-    pub username: Option<String>,
-    /// Avatar URL of the creator
-    pub avatar: Option<String>,
-}
-
-impl ScheduleCreator {
-    /// Creates a new ScheduleCreator instance.
-    pub fn new(
-        user_id: Option<String>,
-        nick: Option<String>,
-        username: Option<String>,
-        avatar: Option<String>,
-    ) -> Self {
-        Self {
-            user_id,
-            nick,
-            username,
-            avatar,
-        }
-    }
-}
-
-impl HasId for ScheduleCreator {
-    fn id(&self) -> Option<&Snowflake> {
-        self.user_id.as_ref()
-    }
-}
-
-impl HasName for ScheduleCreator {
-    fn name(&self) -> &str {
-        self.nick
-            .as_deref()
-            .or(self.username.as_deref())
-            .unwrap_or("Unknown")
-    }
-}
-
 /// Represents a schedule event in a channel.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct Schedule {
     /// Unique identifier for the schedule
-    pub id: Option<Snowflake>,
+    #[serde(default)]
+    pub id: Snowflake,
     /// Name of the schedule event
+    #[serde(default)]
     pub name: String,
     /// Description of the schedule event
-    pub description: Option<String>,
+    #[serde(default)]
+    pub description: String,
     /// Start timestamp (Unix timestamp as string)
+    #[serde(default)]
     pub start_timestamp: String,
     /// End timestamp (Unix timestamp as string)
+    #[serde(default)]
     pub end_timestamp: String,
-    /// Creator of the schedule
-    pub creator: Option<ScheduleCreator>,
     /// Channel ID to jump to when the event starts
-    pub jump_channel_id: Option<Snowflake>,
+    #[serde(default)]
+    pub jump_channel_id: Snowflake,
     /// Reminder type for the schedule
-    #[serde(alias = "reminder_id")]
-    pub remind_type: Option<RemindType>,
+    #[serde(default)]
+    pub remind_type: String,
+    /// Creator of the schedule
+    #[serde(default)]
+    pub creator: Option<Member>,
 }
 
 impl Schedule {
@@ -192,45 +159,46 @@ impl Schedule {
         remind_type: RemindType,
     ) -> Self {
         Self {
-            id: None,
+            id: String::new(),
             name: name.into(),
-            description: None,
+            description: String::new(),
             start_timestamp: start_timestamp.into(),
             end_timestamp: end_timestamp.into(),
+            jump_channel_id: jump_channel_id.unwrap_or_default(),
+            remind_type: remind_type.to_botgo_string(),
             creator: None,
-            jump_channel_id,
-            remind_type: Some(remind_type),
         }
     }
 
     /// Sets the description for this schedule.
     pub fn with_description(mut self, description: impl Into<String>) -> Self {
-        self.description = Some(description.into());
+        self.description = description.into();
         self
     }
 
     /// Sets the creator for this schedule.
-    pub fn with_creator(mut self, creator: ScheduleCreator) -> Self {
+    pub fn with_creator(mut self, creator: Member) -> Self {
         self.creator = Some(creator);
         self
     }
 
     /// Sets the ID for this schedule.
     pub fn with_id(mut self, id: impl Into<String>) -> Self {
-        self.id = Some(id.into());
+        self.id = id.into();
         self
     }
 
     /// Returns true if the schedule has a reminder set.
     pub fn has_reminder(&self) -> bool {
-        !matches!(self.remind_type, Some(RemindType::None) | None)
+        !self.remind_type.is_empty() && self.remind_type != "0"
     }
 
     /// Gets the reminder description.
     pub fn reminder_description(&self) -> &'static str {
         self.remind_type
-            .as_ref()
-            .map(|r| r.description())
+            .parse::<u8>()
+            .map(RemindType::from)
+            .map(|remind_type| remind_type.description())
             .unwrap_or("No reminder")
     }
 
@@ -253,39 +221,34 @@ impl Schedule {
 
     /// Returns true if this schedule has a jump channel set.
     pub fn has_jump_channel(&self) -> bool {
-        self.jump_channel_id.is_some()
+        !self.jump_channel_id.is_empty()
     }
 }
 
 /// Wrapper used by schedule create and update endpoints.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct ScheduleWrapper {
-    pub schedule: Schedule,
+    #[serde(default)]
+    pub schedule: Option<Schedule>,
 }
 
 impl ScheduleWrapper {
     /// Creates a new schedule wrapper.
     pub fn new(schedule: Schedule) -> Self {
-        Self { schedule }
+        Self {
+            schedule: Some(schedule),
+        }
     }
-}
 
-/// Botgo-compatible schedule model with a full member creator.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct BotgoSchedule {
-    pub id: Option<Snowflake>,
-    pub name: Option<String>,
-    pub description: Option<String>,
-    pub start_timestamp: Option<String>,
-    pub end_timestamp: Option<String>,
-    pub jump_channel_id: Option<Snowflake>,
-    pub remind_type: Option<String>,
-    pub creator: Option<Member>,
+    /// Creates an empty wrapper matching botgo's zero-value body.
+    pub fn empty() -> Self {
+        Self::default()
+    }
 }
 
 impl HasId for Schedule {
     fn id(&self) -> Option<&Snowflake> {
-        self.id.as_ref()
+        (!self.id.is_empty()).then_some(&self.id)
     }
 }
 
@@ -300,7 +263,7 @@ impl std::fmt::Display for Schedule {
         write!(
             f,
             "Schedule {{ id: {:?}, name: {}, start: {}, end: {}, reminder: {} }}",
-            self.id,
+            self.id(),
             self.name,
             self.start_timestamp,
             self.end_timestamp,
@@ -345,34 +308,6 @@ mod tests {
     }
 
     #[test]
-    fn test_schedule_creator() {
-        let creator = ScheduleCreator::new(
-            Some("user123".to_string()),
-            Some("TestUser".to_string()),
-            Some("testuser".to_string()),
-            Some("https://example.com/avatar.png".to_string()),
-        );
-
-        assert_eq!(creator.id(), Some(&"user123".to_string()));
-        assert_eq!(creator.name(), "TestUser");
-    }
-
-    #[test]
-    fn test_schedule_creator_fallback_name() {
-        let creator = ScheduleCreator::new(
-            Some("user123".to_string()),
-            None,
-            Some("testuser".to_string()),
-            None,
-        );
-
-        assert_eq!(creator.name(), "testuser");
-
-        let creator_no_name = ScheduleCreator::new(None, None, None, None);
-        assert_eq!(creator_no_name.name(), "Unknown");
-    }
-
-    #[test]
     fn test_schedule_creation() {
         let schedule = Schedule::new(
             "Team Meeting",
@@ -385,8 +320,8 @@ mod tests {
         assert_eq!(schedule.name, "Team Meeting");
         assert_eq!(schedule.start_timestamp, "1640995200");
         assert_eq!(schedule.end_timestamp, "1640998800");
-        assert_eq!(schedule.jump_channel_id, Some("channel123".to_string()));
-        assert_eq!(schedule.remind_type, Some(RemindType::Before15Minutes));
+        assert_eq!(schedule.jump_channel_id, "channel123");
+        assert_eq!(schedule.remind_type, "3");
         assert!(schedule.has_reminder());
         assert!(schedule.has_jump_channel());
     }
@@ -404,7 +339,7 @@ mod tests {
 
         assert_eq!(
             schedule.description,
-            Some("Daily team standup meeting".to_string())
+            "Daily team standup meeting".to_string()
         );
     }
 
@@ -464,5 +399,52 @@ mod tests {
         assert!(schedule.start_timestamp_parsed().is_ok());
         assert!(schedule.end_timestamp_parsed().is_err());
         assert_eq!(schedule.duration_seconds(), None);
+    }
+
+    #[test]
+    fn botgo_schedule_uses_required_zero_value_fields() {
+        let schedule: Schedule = serde_json::from_value(serde_json::json!({})).unwrap();
+
+        assert_eq!(schedule.id, "");
+        assert_eq!(schedule.name, "");
+        assert_eq!(schedule.description, "");
+        assert_eq!(schedule.start_timestamp, "");
+        assert_eq!(schedule.end_timestamp, "");
+        assert_eq!(schedule.jump_channel_id, "");
+        assert_eq!(schedule.remind_type, "");
+        assert!(schedule.creator.is_none());
+        assert!(!schedule.has_jump_channel());
+        assert!(!schedule.has_reminder());
+    }
+
+    #[test]
+    fn botgo_schedule_keeps_official_json_shape() {
+        let schedule = Schedule {
+            id: "schedule-1".to_string(),
+            name: "meeting".to_string(),
+            description: "planning".to_string(),
+            start_timestamp: "1640995200".to_string(),
+            end_timestamp: "1640998800".to_string(),
+            jump_channel_id: "channel-1".to_string(),
+            remind_type: "3".to_string(),
+            creator: None,
+        };
+        let value = serde_json::to_value(&schedule).unwrap();
+
+        assert_eq!(value["id"], "schedule-1");
+        assert_eq!(value["name"], "meeting");
+        assert_eq!(value["description"], "planning");
+        assert_eq!(value["start_timestamp"], "1640995200");
+        assert_eq!(value["end_timestamp"], "1640998800");
+        assert_eq!(value["jump_channel_id"], "channel-1");
+        assert_eq!(value["remind_type"], "3");
+    }
+
+    #[test]
+    fn botgo_schedule_wrapper_allows_empty_zero_value_body() {
+        let wrapper = ScheduleWrapper::empty();
+        let value = serde_json::to_value(&wrapper).unwrap();
+
+        assert_eq!(value["schedule"], serde_json::Value::Null);
     }
 }

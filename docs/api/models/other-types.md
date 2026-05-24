@@ -201,11 +201,11 @@ Represents a scheduled event or task.
 pub struct Schedule {
     pub id: String,
     pub name: String,
-    pub description: Option<String>,
+    pub description: String,
     pub start_timestamp: String,
     pub end_timestamp: String,
     pub creator: Option<Member>,
-    pub jump_channel_id: Option<String>,
+    pub jump_channel_id: String,
     pub remind_type: String,
 }
 ```
@@ -214,7 +214,7 @@ pub struct Schedule {
 
 - `id`: Unique schedule identifier
 - `name`: Schedule name/title
-- `description`: Optional description
+- `description`: Schedule description
 - `start_timestamp`: When the event starts
 - `end_timestamp`: When the event ends
 - `creator`: Member who created the schedule
@@ -660,11 +660,11 @@ async fn create_schedule(
     let schedule = Schedule {
         id: String::new(), // Will be assigned by server
         name: name.to_string(),
-        description: Some(description.to_string()),
+        description: description.to_string(),
         start_timestamp: start_time.to_string(),
         end_timestamp: end_time.to_string(),
         creator: None,
-        jump_channel_id: Some(channel_id.to_string()),
+        jump_channel_id: channel_id.to_string(),
         remind_type: "1".to_string(), // Remind before start
     };
     
