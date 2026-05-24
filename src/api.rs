@@ -130,7 +130,8 @@ use crate::models::{
     },
     message::{
         Ark, C2CMessageParams, DirectMessageParams, Embed, GroupMessageParams, Keyboard,
-        KeyboardPayload, MarkdownPayload, Media, Message, MessageParams, Reference,
+        KeyboardPayload, MarkdownPayload, Media, Message, MessagePagerType, MessageParams,
+        MessagesPager, Reference, SettingGuide, SettingGuideToCreate,
     },
     message_setting::MessageSetting,
     permission::{APIPermission, APIPermissionDemand, APIPermissionDemandIdentify},
@@ -860,6 +861,44 @@ impl BotApi {
         Ok(serde_json::from_value(response)?)
     }
 
+    /// Gets channel messages using botgo-compatible pagination.
+    pub async fn get_messages(
+        &self,
+        token: &Token,
+        channel_id: &str,
+        pager: &MessagesPager,
+    ) -> Result<Vec<Message>> {
+        debug!("Getting messages in channel {}", channel_id);
+        let params = pager.query_params();
+        let path = format!("/channels/{channel_id}/messages");
+        let response = self
+            .http
+            .get(
+                token,
+                &path,
+                if params.is_empty() {
+                    None
+                } else {
+                    Some(&params)
+                },
+            )
+            .await?;
+        Ok(serde_json::from_value(response)?)
+    }
+
+    /// Gets channel messages using simple pagination parameters.
+    pub async fn get_messages_with_params(
+        &self,
+        token: &Token,
+        channel_id: &str,
+        pager_type: Option<MessagePagerType>,
+        message_id: Option<&str>,
+        limit: Option<u32>,
+    ) -> Result<Vec<Message>> {
+        let pager = MessagesPager::new(pager_type, message_id, limit);
+        self.get_messages(token, channel_id, &pager).await
+    }
+
     /// Sends a message to a channel using MessageParams.
     ///
     /// This is the new, recommended way to send channel messages. It uses a parameter struct
@@ -908,6 +947,36 @@ impl BotApi {
             .post(token, &path, None::<&()>, Some(&body))
             .await?;
         Ok(serde_json::from_value(response)?)
+    }
+
+    /// Edits a channel message using MessageParams.
+    pub async fn patch_message_with_params(
+        &self,
+        token: &Token,
+        channel_id: &str,
+        message_id: &str,
+        params: MessageParams,
+    ) -> Result<MessageResponse> {
+        debug!("Editing message {} in channel {}", message_id, channel_id);
+        let body = serde_json::to_value(&params)?;
+        let path = format!("/channels/{channel_id}/messages/{message_id}");
+        let response = self
+            .http
+            .patch(token, &path, None::<&()>, Some(&body))
+            .await?;
+        Ok(serde_json::from_value(response)?)
+    }
+
+    /// Alias for editing a channel message.
+    pub async fn patch_message(
+        &self,
+        token: &Token,
+        channel_id: &str,
+        message_id: &str,
+        params: MessageParams,
+    ) -> Result<MessageResponse> {
+        self.patch_message_with_params(token, channel_id, message_id, params)
+            .await
     }
 
     /// Sends a message to a channel (legacy API for backward compatibility).
@@ -1290,6 +1359,50 @@ impl BotApi {
         Ok(response)
     }
 
+    /// Posts a channel setting guide message.
+    pub async fn post_setting_guide(
+        &self,
+        token: &Token,
+        channel_id: &str,
+        at_user_ids: Vec<String>,
+    ) -> Result<MessageResponse> {
+        let content = at_user_ids
+            .iter()
+            .map(|user_id| format!("<@{user_id}>"))
+            .collect::<String>();
+        let body = SettingGuideToCreate {
+            content: Some(content),
+            setting_guide: None,
+        };
+        let path = format!("/channels/{channel_id}/settingguide");
+        let response = self
+            .http
+            .post(token, &path, None::<&()>, Some(&body))
+            .await?;
+        Ok(serde_json::from_value(response)?)
+    }
+
+    /// Posts a DM setting guide message.
+    pub async fn post_dm_setting_guide(
+        &self,
+        token: &Token,
+        guild_id: &str,
+        jump_guild_id: &str,
+    ) -> Result<MessageResponse> {
+        let body = SettingGuideToCreate {
+            content: None,
+            setting_guide: Some(SettingGuide {
+                guild_id: jump_guild_id.to_string(),
+            }),
+        };
+        let path = format!("/dms/{guild_id}/settingguide");
+        let response = self
+            .http
+            .post(token, &path, None::<&()>, Some(&body))
+            .await?;
+        Ok(serde_json::from_value(response)?)
+    }
+
     /// Recalls (deletes) a message.
     ///
     /// # Arguments
@@ -1324,6 +1437,93 @@ impl BotApi {
 
         let path = format!("/channels/{channel_id}/messages/{message_id}");
         self.http.delete(token, &path, Some(&params)).await?;
+        Ok(())
+    }
+
+    /// Recalls a C2C message.
+    pub async fn retract_c2c_message(
+        &self,
+        token: &Token,
+        openid: &str,
+        message_id: &str,
+        hidetip: Option<bool>,
+    ) -> Result<()> {
+        debug!("Retracting C2C message {} for {}", message_id, openid);
+        let mut params = HashMap::new();
+        if hidetip.unwrap_or(false) {
+            params.insert("hidetip", "true".to_string());
+        }
+        let path = format!("/v2/users/{openid}/messages/{message_id}");
+        self.http
+            .delete(
+                token,
+                &path,
+                if params.is_empty() {
+                    None
+                } else {
+                    Some(&params)
+                },
+            )
+            .await?;
+        Ok(())
+    }
+
+    /// Recalls a group message.
+    pub async fn retract_group_message(
+        &self,
+        token: &Token,
+        group_openid: &str,
+        message_id: &str,
+        hidetip: Option<bool>,
+    ) -> Result<()> {
+        debug!(
+            "Retracting group message {} for {}",
+            message_id, group_openid
+        );
+        let mut params = HashMap::new();
+        if hidetip.unwrap_or(false) {
+            params.insert("hidetip", "true".to_string());
+        }
+        let path = format!("/v2/groups/{group_openid}/messages/{message_id}");
+        self.http
+            .delete(
+                token,
+                &path,
+                if params.is_empty() {
+                    None
+                } else {
+                    Some(&params)
+                },
+            )
+            .await?;
+        Ok(())
+    }
+
+    /// Recalls a direct message.
+    pub async fn retract_dm_message(
+        &self,
+        token: &Token,
+        guild_id: &str,
+        message_id: &str,
+        hidetip: Option<bool>,
+    ) -> Result<()> {
+        debug!("Retracting DM message {} in {}", message_id, guild_id);
+        let mut params = HashMap::new();
+        if hidetip.unwrap_or(false) {
+            params.insert("hidetip", "true".to_string());
+        }
+        let path = format!("/dms/{guild_id}/messages/{message_id}");
+        self.http
+            .delete(
+                token,
+                &path,
+                if params.is_empty() {
+                    None
+                } else {
+                    Some(&params)
+                },
+            )
+            .await?;
         Ok(())
     }
 

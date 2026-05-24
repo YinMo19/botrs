@@ -22,6 +22,7 @@ use crate::models::guild::{
     GuildRole, GuildRoleMembers, GuildRoleMembersPager, GuildRoles, Member as GuildMember,
     MemberDeleteOptions, UpdateGuildMute, UpdateGuildMuteResponse,
 };
+use crate::models::message::{MessagePagerType, MessagesPager};
 use crate::models::*;
 use crate::reaction::Reaction;
 use crate::token::Token;
@@ -391,6 +392,51 @@ impl Context {
             .await
     }
 
+    /// Gets channel messages using pagination.
+    pub async fn get_messages(
+        &self,
+        channel_id: &str,
+        pager: &MessagesPager,
+    ) -> Result<Vec<Message>> {
+        self.api.get_messages(&self.token, channel_id, pager).await
+    }
+
+    /// Gets channel messages using simple pagination parameters.
+    pub async fn get_messages_with_params(
+        &self,
+        channel_id: &str,
+        pager_type: Option<MessagePagerType>,
+        message_id: Option<&str>,
+        limit: Option<u32>,
+    ) -> Result<Vec<Message>> {
+        self.api
+            .get_messages_with_params(&self.token, channel_id, pager_type, message_id, limit)
+            .await
+    }
+
+    /// Edits a channel message.
+    pub async fn patch_message(
+        &self,
+        channel_id: &str,
+        message_id: &str,
+        params: MessageParams,
+    ) -> Result<MessageResponse> {
+        self.api
+            .patch_message(&self.token, channel_id, message_id, params)
+            .await
+    }
+
+    /// Posts a channel setting guide message.
+    pub async fn post_setting_guide(
+        &self,
+        channel_id: &str,
+        at_user_ids: Vec<String>,
+    ) -> Result<MessageResponse> {
+        self.api
+            .post_setting_guide(&self.token, channel_id, at_user_ids)
+            .await
+    }
+
     /// Recalls (deletes) a message.
     ///
     /// # Arguments
@@ -410,6 +456,42 @@ impl Context {
     ) -> Result<()> {
         self.api
             .recall_message(&self.token, channel_id, message_id, Some(hide_tip))
+            .await
+    }
+
+    /// Recalls a C2C message.
+    pub async fn retract_c2c_message(
+        &self,
+        openid: &str,
+        message_id: &str,
+        hide_tip: bool,
+    ) -> Result<()> {
+        self.api
+            .retract_c2c_message(&self.token, openid, message_id, Some(hide_tip))
+            .await
+    }
+
+    /// Recalls a group message.
+    pub async fn retract_group_message(
+        &self,
+        group_openid: &str,
+        message_id: &str,
+        hide_tip: bool,
+    ) -> Result<()> {
+        self.api
+            .retract_group_message(&self.token, group_openid, message_id, Some(hide_tip))
+            .await
+    }
+
+    /// Recalls a direct message.
+    pub async fn retract_dm_message(
+        &self,
+        guild_id: &str,
+        message_id: &str,
+        hide_tip: bool,
+    ) -> Result<()> {
+        self.api
+            .retract_dm_message(&self.token, guild_id, message_id, Some(hide_tip))
             .await
     }
 
@@ -1193,6 +1275,17 @@ impl Context {
     ) -> Result<serde_json::Value> {
         self.api
             .create_dms(&self.token, recipient_id, source_guild_id)
+            .await
+    }
+
+    /// Posts a DM setting guide message.
+    pub async fn post_dm_setting_guide(
+        &self,
+        guild_id: &str,
+        jump_guild_id: &str,
+    ) -> Result<MessageResponse> {
+        self.api
+            .post_dm_setting_guide(&self.token, guild_id, jump_guild_id)
             .await
     }
 
