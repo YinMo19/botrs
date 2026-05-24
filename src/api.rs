@@ -1400,8 +1400,8 @@ impl BotApi {
     /// Botgo-compatible schedule list API.
     #[allow(non_snake_case)]
     pub async fn ListSchedules(&self, channel_id: &str, since: u64) -> Result<Vec<Schedule>> {
-        let since = (since != 0).then(|| since.to_string());
-        self.get_schedules(self.token_required()?, channel_id, since.as_deref())
+        let since = since.to_string();
+        self.get_schedules(self.token_required()?, channel_id, Some(since.as_str()))
             .await
     }
 
@@ -4236,21 +4236,14 @@ impl BotApi {
     ) -> Result<Vec<Schedule>> {
         debug!("Getting schedules for channel {}", channel_id);
 
-        let body = if let Some(since) = since {
-            json!({ "since": since })
-        } else {
-            json!({})
-        };
+        #[derive(Serialize)]
+        struct ScheduleQuery<'a> {
+            since: &'a str,
+        }
 
+        let query = since.map(|since| ScheduleQuery { since });
         let path = format!("/channels/{channel_id}/schedules");
-        let response = self
-            .http
-            .get(
-                token,
-                &path,
-                if since.is_some() { Some(&body) } else { None },
-            )
-            .await?;
+        let response = self.http.get(token, &path, query.as_ref()).await?;
         Ok(serde_json::from_value(response)?)
     }
 
