@@ -751,7 +751,7 @@ pub async fn update_audio(
     &self,
     token: &Token,
     channel_id: &str,
-    audio_control: AudioControl,
+    audio_control: &AudioControl,
 ) -> Result<()>
 ```
 
@@ -772,7 +772,7 @@ let audio_control = AudioControl {
     status: AudioStatus::Start,
 };
 
-api.update_audio(&token, "channel_123", audio_control).await?;
+api.update_audio(&token, "channel_123", &audio_control).await?;
 ```
 
 ### `on_microphone`

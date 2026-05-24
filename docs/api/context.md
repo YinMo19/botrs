@@ -608,7 +608,7 @@ Updates audio playback in a voice channel.
 pub async fn update_audio(
     &self,
     channel_id: &str,
-    audio_control: AudioControl,
+    audio_control: &AudioControl,
 ) -> Result<()>
 ```
 
@@ -914,7 +914,7 @@ impl AdvancedBot {
                         status: AudioStatus::Start,
                     };
                     
-                    let _ = ctx.update_audio(&msg.channel_id, audio_control).await;
+                    let _ = ctx.update_audio(&msg.channel_id, &audio_control).await;
                 }
             }
             Some(&"kick") => {

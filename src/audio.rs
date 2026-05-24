@@ -5,13 +5,14 @@
 
 use crate::api::BotApi;
 use crate::models::api::AudioAction;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 /// Audio status enumeration
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[repr(u8)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+#[repr(u32)]
 pub enum AudioStatus {
     /// Start audio playback
+    #[default]
     Start = 0,
     /// Pause audio playback
     Pause = 1,
@@ -19,6 +20,32 @@ pub enum AudioStatus {
     Resume = 2,
     /// Stop audio playback
     Stop = 3,
+}
+
+impl Serialize for AudioStatus {
+    fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_u32(*self as u32)
+    }
+}
+
+impl<'de> Deserialize<'de> for AudioStatus {
+    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        match u32::deserialize(deserializer)? {
+            0 => Ok(Self::Start),
+            1 => Ok(Self::Pause),
+            2 => Ok(Self::Resume),
+            3 => Ok(Self::Stop),
+            value => Err(serde::de::Error::custom(format!(
+                "invalid audio status {value}"
+            ))),
+        }
+    }
 }
 
 #[allow(non_upper_case_globals)]
@@ -41,13 +68,16 @@ pub enum PublicAudioType {
 }
 
 /// Audio control structure for managing audio playback
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct AudioControl {
     /// URL of the audio file
+    #[serde(default)]
     pub audio_url: String,
     /// Text description of the audio
+    #[serde(default)]
     pub text: String,
     /// Current audio status
+    #[serde(default)]
     pub status: AudioStatus,
 }
 
@@ -81,10 +111,10 @@ impl Audio {
         Self {
             api,
             event_id,
-            channel_id: data.channel_id,
-            guild_id: data.guild_id,
-            audio_url: data.audio_url,
-            text: data.text,
+            channel_id: non_empty(data.channel_id),
+            guild_id: non_empty(data.guild_id),
+            audio_url: non_empty(data.audio_url),
+            text: non_empty(data.text),
         }
     }
 
@@ -92,6 +122,10 @@ impl Audio {
     pub fn api(&self) -> &BotApi {
         &self.api
     }
+}
+
+fn non_empty(value: String) -> Option<String> {
+    (!value.is_empty()).then_some(value)
 }
 
 impl std::fmt::Display for Audio {
@@ -175,15 +209,58 @@ mod tests {
 
     #[test]
     fn test_audio_status() {
-        assert_eq!(AudioStatus::Start as u8, 0);
-        assert_eq!(AudioStatus::Pause as u8, 1);
-        assert_eq!(AudioStatus::Resume as u8, 2);
-        assert_eq!(AudioStatus::Stop as u8, 3);
+        assert_eq!(AudioStatus::Start as u32, 0);
+        assert_eq!(AudioStatus::Pause as u32, 1);
+        assert_eq!(AudioStatus::Resume as u32, 2);
+        assert_eq!(AudioStatus::Stop as u32, 3);
+    }
+
+    #[test]
+    fn audio_status_uses_botgo_numeric_json() {
+        assert_eq!(
+            serde_json::to_value(AudioStatus::Start).unwrap(),
+            serde_json::json!(0)
+        );
+        assert_eq!(
+            serde_json::to_value(AudioStatus::Pause).unwrap(),
+            serde_json::json!(1)
+        );
+        assert_eq!(
+            serde_json::from_value::<AudioStatus>(serde_json::json!(3)).unwrap(),
+            AudioStatus::Stop
+        );
+        assert!(serde_json::from_value::<AudioStatus>(serde_json::json!(4)).is_err());
+    }
+
+    #[test]
+    fn audio_control_uses_botgo_json_shape() {
+        let control = AudioControl {
+            audio_url: "https://example.com/audio.mp3".to_string(),
+            text: "now playing".to_string(),
+            status: AudioStatus::Start,
+        };
+        let value = serde_json::to_value(&control).unwrap();
+
+        assert_eq!(value["audio_url"], "https://example.com/audio.mp3");
+        assert_eq!(value["text"], "now playing");
+        assert_eq!(value["status"], 0);
     }
 
     #[test]
     fn test_public_audio_type() {
         assert_eq!(PublicAudioType::Voice as u8, 2);
         assert_eq!(PublicAudioType::Live as u8, 5);
+    }
+
+    #[test]
+    fn audio_event_helper_hides_empty_botgo_zero_values() {
+        let http = crate::http::HttpClient::new(30, false).unwrap();
+        let api = BotApi::new(http);
+        let audio = Audio::new(api, None, AudioAction::default());
+
+        assert!(audio.guild_id.is_none());
+        assert!(audio.channel_id.is_none());
+        assert!(audio.audio_url.is_none());
+        assert!(audio.text.is_none());
     }
 }

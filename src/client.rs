@@ -4,7 +4,7 @@
 //! for bot applications, handling connections, events, and API interactions.
 
 use crate::api::BotApi;
-use crate::audio::{Audio, PublicAudio};
+use crate::audio::{Audio, AudioControl, PublicAudio};
 use crate::error::{BotError, Result};
 use crate::forum::{ForumAuditResult, OpenThread, Post, Reply, Thread};
 use crate::http::HttpClient;
@@ -1009,7 +1009,7 @@ impl Context {
     /// # Returns
     ///
     /// Result indicating success or failure.
-    pub async fn update_audio(&self, channel_id: &str, audio_control: &AudioAction) -> Result<()> {
+    pub async fn update_audio(&self, channel_id: &str, audio_control: &AudioControl) -> Result<()> {
         self.api
             .update_audio(&self.token, channel_id, audio_control)
             .await
@@ -1019,8 +1019,8 @@ impl Context {
     pub async fn post_audio(
         &self,
         channel_id: &str,
-        audio_control: &AudioAction,
-    ) -> Result<AudioAction> {
+        audio_control: &AudioControl,
+    ) -> Result<AudioControl> {
         self.api
             .post_audio(&self.token, channel_id, audio_control)
             .await
@@ -1919,84 +1919,28 @@ impl<H: EventHandler + 'static> Client<H> {
             }
             Some("AUDIO_START") => {
                 if let Some(data) = event.data {
-                    let audio_action = AudioAction {
-                        guild_id: data
-                            .get("guild_id")
-                            .and_then(|v| v.as_str())
-                            .map(String::from),
-                        channel_id: data
-                            .get("channel_id")
-                            .and_then(|v| v.as_str())
-                            .map(String::from),
-                        audio_url: data
-                            .get("audio_url")
-                            .and_then(|v| v.as_str())
-                            .map(String::from),
-                        text: data.get("text").and_then(|v| v.as_str()).map(String::from),
-                    };
+                    let audio_action = AudioAction::from_value(&data);
                     let audio = Audio::new(ctx.api.as_ref().clone(), event.id, audio_action);
                     self.handler.audio_start(ctx, audio).await;
                 }
             }
             Some("AUDIO_FINISH") => {
                 if let Some(data) = event.data {
-                    let audio_action = AudioAction {
-                        guild_id: data
-                            .get("guild_id")
-                            .and_then(|v| v.as_str())
-                            .map(String::from),
-                        channel_id: data
-                            .get("channel_id")
-                            .and_then(|v| v.as_str())
-                            .map(String::from),
-                        audio_url: data
-                            .get("audio_url")
-                            .and_then(|v| v.as_str())
-                            .map(String::from),
-                        text: data.get("text").and_then(|v| v.as_str()).map(String::from),
-                    };
+                    let audio_action = AudioAction::from_value(&data);
                     let audio = Audio::new(ctx.api.as_ref().clone(), event.id, audio_action);
                     self.handler.audio_finish(ctx, audio).await;
                 }
             }
             Some("ON_MIC") => {
                 if let Some(data) = event.data {
-                    let audio_action = AudioAction {
-                        guild_id: data
-                            .get("guild_id")
-                            .and_then(|v| v.as_str())
-                            .map(String::from),
-                        channel_id: data
-                            .get("channel_id")
-                            .and_then(|v| v.as_str())
-                            .map(String::from),
-                        audio_url: data
-                            .get("audio_url")
-                            .and_then(|v| v.as_str())
-                            .map(String::from),
-                        text: data.get("text").and_then(|v| v.as_str()).map(String::from),
-                    };
+                    let audio_action = AudioAction::from_value(&data);
                     let audio = Audio::new(ctx.api.as_ref().clone(), event.id, audio_action);
                     self.handler.on_mic(ctx, audio).await;
                 }
             }
             Some("OFF_MIC") => {
                 if let Some(data) = event.data {
-                    let audio_action = AudioAction {
-                        guild_id: data
-                            .get("guild_id")
-                            .and_then(|v| v.as_str())
-                            .map(String::from),
-                        channel_id: data
-                            .get("channel_id")
-                            .and_then(|v| v.as_str())
-                            .map(String::from),
-                        audio_url: data
-                            .get("audio_url")
-                            .and_then(|v| v.as_str())
-                            .map(String::from),
-                        text: data.get("text").and_then(|v| v.as_str()).map(String::from),
-                    };
+                    let audio_action = AudioAction::from_value(&data);
                     let audio = Audio::new(ctx.api.as_ref().clone(), event.id, audio_action);
                     self.handler.off_mic(ctx, audio).await;
                 }

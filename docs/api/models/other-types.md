@@ -6,19 +6,25 @@ This module covers additional data structures and utility types used throughout 
 
 ### `Audio`
 
-Represents audio controls and status in voice channels.
+Represents an audio gateway event.
 
 ```rust
 pub struct Audio {
-    pub audio_control: Option<AudioControl>,
-    pub audio_status: Option<AudioStatus>,
+    pub event_id: Option<String>,
+    pub channel_id: Option<String>,
+    pub guild_id: Option<String>,
+    pub audio_url: Option<String>,
+    pub text: Option<String>,
 }
 ```
 
 #### Fields
 
-- `audio_control`: Control actions for audio playback
-- `audio_status`: Current status of audio in the channel
+- `event_id`: Gateway event ID
+- `channel_id`: ID of the voice channel
+- `guild_id`: ID of the guild
+- `audio_url`: URL of the audio file
+- `text`: Text description of the audio
 
 ### `AudioControl`
 
@@ -26,9 +32,9 @@ Audio control operations.
 
 ```rust
 pub struct AudioControl {
-    pub audio_url: Option<String>,
-    pub text: Option<String>,
-    pub status: Option<u32>,
+    pub audio_url: String,
+    pub text: String,
+    pub status: AudioStatus,
 }
 ```
 
@@ -36,25 +42,27 @@ pub struct AudioControl {
 
 - `audio_url`: URL of the audio file to play
 - `text`: Text description of the audio
-- `status`: Audio playback status (0: pause, 1: play)
+- `status`: Audio playback status
 
 ### `AudioStatus`
 
-Current audio playback status.
+Audio playback status.
 
 ```rust
-pub struct AudioStatus {
-    pub start_time: Option<String>,
-    pub end_time: Option<String>,
-    pub status: Option<u32>,
+pub enum AudioStatus {
+    Start = 0,
+    Pause = 1,
+    Resume = 2,
+    Stop = 3,
 }
 ```
 
-#### Fields
+#### Variants
 
-- `start_time`: When audio playback started
-- `end_time`: When audio playback ended
-- `status`: Current playback status
+- `Start`: Start playback
+- `Pause`: Pause playback
+- `Resume`: Resume playback
+- `Stop`: Stop playback
 
 ### `PublicAudio`
 
@@ -62,28 +70,28 @@ Public audio channel information.
 
 ```rust
 pub struct PublicAudio {
-    pub audio_type: Option<PublicAudioType>,
-    pub channel_id: Option<String>,
     pub guild_id: Option<String>,
+    pub channel_id: Option<String>,
+    pub channel_type: Option<PublicAudioType>,
     pub user_id: Option<String>,
 }
 ```
 
 #### Fields
 
-- `audio_type`: Type of audio event (enter/exit)
-- `channel_id`: ID of the audio channel
 - `guild_id`: ID of the guild
+- `channel_id`: ID of the audio channel
+- `channel_type`: Type of audio channel
 - `user_id`: ID of the user involved
 
 ### `PublicAudioType`
 
-Audio channel event types.
+Audio channel type.
 
 ```rust
 pub enum PublicAudioType {
-    Enter = 1,
-    Exit = 2,
+    Voice = 2,
+    Live = 5,
 }
 ```
 
@@ -554,9 +562,9 @@ pub struct SessionStartLimit {
 async fn manage_audio_channel(ctx: Context, channel_id: &str) -> Result<()> {
     // Play audio in channel
     let audio_control = AudioControl {
-        audio_url: Some("https://example.com/audio.mp3".to_string()),
-        text: Some("Now playing background music".to_string()),
-        status: Some(1), // Play
+        audio_url: "https://example.com/audio.mp3".to_string(),
+        text: "Now playing background music".to_string(),
+        status: AudioStatus::Start,
     };
     
     ctx.update_audio(channel_id, &audio_control).await?;
@@ -566,9 +574,9 @@ async fn manage_audio_channel(ctx: Context, channel_id: &str) -> Result<()> {
     tokio::time::sleep(std::time::Duration::from_secs(30)).await;
     
     let stop_control = AudioControl {
-        audio_url: None,
-        text: Some("Audio stopped".to_string()),
-        status: Some(0), // Pause
+        audio_url: String::new(),
+        text: "Audio stopped".to_string(),
+        status: AudioStatus::Stop,
     };
     
     ctx.update_audio(channel_id, &stop_control).await?;

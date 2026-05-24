@@ -6,19 +6,25 @@
 
 ### `Audio`
 
-表示语音子频道中的音频控制和状态。
+表示语音子频道中的音频网关事件。
 
 ```rust
 pub struct Audio {
-    pub audio_control: Option<AudioControl>,
-    pub audio_status: Option<AudioStatus>,
+    pub event_id: Option<String>,
+    pub channel_id: Option<String>,
+    pub guild_id: Option<String>,
+    pub audio_url: Option<String>,
+    pub text: Option<String>,
 }
 ```
 
 #### 字段
 
-- `audio_control`: 音频播放的控制操作
-- `audio_status`: 子频道中音频的当前状态
+- `event_id`: 网关事件 ID
+- `channel_id`: 语音子频道 ID
+- `guild_id`: 频道 ID
+- `audio_url`: 音频文件 URL
+- `text`: 音频文本描述
 
 ### `AudioControl`
 
@@ -26,9 +32,9 @@ pub struct Audio {
 
 ```rust
 pub struct AudioControl {
-    pub audio_url: Option<String>,
-    pub text: Option<String>,
-    pub status: Option<u32>,
+    pub audio_url: String,
+    pub text: String,
+    pub status: AudioStatus,
 }
 ```
 
@@ -36,43 +42,39 @@ pub struct AudioControl {
 
 - `audio_url`: 要播放的音频文件 URL
 - `text`: 音频的文本描述
-- `status`: 音频播放状态（0: 暂停，1: 播放）
+- `status`: 音频播放状态
 
 ### `AudioStatus`
 
-当前音频播放状态。
+音频播放状态。
 
 ```rust
-pub struct AudioStatus {
-    pub start_time: Option<String>,
-    pub end_time: Option<String>,
-    pub status: Option<u32>,
+pub enum AudioStatus {
+    Start = 0,
+    Pause = 1,
+    Resume = 2,
+    Stop = 3,
 }
 ```
 
-#### 字段
+#### 变体
 
-- `start_time`: 音频开始时间
-- `end_time`: 音频结束时间
-- `status`: 播放状态
+- `Start`: 开始播放
+- `Pause`: 暂停播放
+- `Resume`: 继续播放
+- `Stop`: 停止播放
 
 #### 示例
 
 ```rust
 async fn control_audio(ctx: Context, channel_id: &str) -> Result<()> {
     let audio_control = AudioControl {
-        audio_url: Some("https://example.com/audio.mp3".to_string()),
-        text: Some("播放背景音乐".to_string()),
-        status: Some(1), // 开始播放
+        audio_url: "https://example.com/audio.mp3".to_string(),
+        text: "播放背景音乐".to_string(),
+        status: AudioStatus::Start,
     };
 
-    let audio = Audio {
-        audio_control: Some(audio_control),
-        audio_status: None,
-    };
-
-    // 控制音频播放
-    ctx.control_audio(channel_id, audio).await?;
+    ctx.post_audio(channel_id, &audio_control).await?;
     println!("音频播放已开始");
 
     Ok(())

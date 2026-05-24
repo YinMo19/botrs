@@ -8,7 +8,9 @@ use crate::audio::{Audio, PublicAudio};
 use crate::forum::{OpenThread, Thread};
 use crate::interaction::Interaction;
 use crate::manage::{C2CManageEvent, GroupManageEvent};
-use crate::models::{channel::Channel, guild::Guild, message::*, robot::Robot, user::Member};
+use crate::models::{
+    api::AudioAction, channel::Channel, guild::Guild, message::*, robot::Robot, user::Member,
+};
 use crate::reaction::Reaction;
 use futures_util::stream::{SplitSink, SplitStream};
 // use futures_util::StreamExt;
@@ -646,25 +648,7 @@ impl ConnectionState {
     ) -> Option<(&'static str, Value)> {
         let audio_id = payload.get("id").and_then(|v| v.as_str())?;
         let audio_data = payload.get("d")?;
-        // Convert to AudioAction for Audio::new
-        let audio_action = crate::models::api::AudioAction {
-            guild_id: audio_data
-                .get("guild_id")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            channel_id: audio_data
-                .get("channel_id")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            audio_url: audio_data
-                .get("audio_url")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            text: audio_data
-                .get("text")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-        };
+        let audio_action = AudioAction::from_value(audio_data);
         let audio = Audio::new(state.api.clone(), Some(audio_id.to_string()), audio_action);
         Some(("audio_start", serde_json::to_value(audio).ok()?))
     }
@@ -675,24 +659,7 @@ impl ConnectionState {
     ) -> Option<(&'static str, Value)> {
         let audio_id = payload.get("id").and_then(|v| v.as_str())?;
         let audio_data = payload.get("d")?;
-        let audio_action = crate::models::api::AudioAction {
-            guild_id: audio_data
-                .get("guild_id")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            channel_id: audio_data
-                .get("channel_id")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            audio_url: audio_data
-                .get("audio_url")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            text: audio_data
-                .get("text")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-        };
+        let audio_action = AudioAction::from_value(audio_data);
         let audio = Audio::new(state.api.clone(), Some(audio_id.to_string()), audio_action);
         Some(("audio_finish", serde_json::to_value(audio).ok()?))
     }
@@ -700,24 +667,7 @@ impl ConnectionState {
     fn parse_on_mic(state: &ConnectionState, payload: &Value) -> Option<(&'static str, Value)> {
         let audio_id = payload.get("id").and_then(|v| v.as_str())?;
         let audio_data = payload.get("d")?;
-        let audio_action = crate::models::api::AudioAction {
-            guild_id: audio_data
-                .get("guild_id")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            channel_id: audio_data
-                .get("channel_id")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            audio_url: audio_data
-                .get("audio_url")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            text: audio_data
-                .get("text")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-        };
+        let audio_action = AudioAction::from_value(audio_data);
         let audio = Audio::new(state.api.clone(), Some(audio_id.to_string()), audio_action);
         Some(("on_mic", serde_json::to_value(audio).ok()?))
     }
@@ -725,24 +675,7 @@ impl ConnectionState {
     fn parse_off_mic(state: &ConnectionState, payload: &Value) -> Option<(&'static str, Value)> {
         let audio_id = payload.get("id").and_then(|v| v.as_str())?;
         let audio_data = payload.get("d")?;
-        let audio_action = crate::models::api::AudioAction {
-            guild_id: audio_data
-                .get("guild_id")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            channel_id: audio_data
-                .get("channel_id")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            audio_url: audio_data
-                .get("audio_url")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            text: audio_data
-                .get("text")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-        };
+        let audio_action = AudioAction::from_value(audio_data);
         let audio = Audio::new(state.api.clone(), Some(audio_id.to_string()), audio_action);
         Some(("off_mic", serde_json::to_value(audio).ok()?))
     }

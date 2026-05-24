@@ -258,16 +258,39 @@ impl std::fmt::Display for ApiError {
 impl std::error::Error for ApiError {}
 
 /// Audio action data structure for audio events
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct AudioAction {
     /// Guild ID where the audio event occurred
-    pub guild_id: Option<String>,
+    #[serde(default)]
+    pub guild_id: String,
     /// Channel ID where the audio event occurred
-    pub channel_id: Option<String>,
+    #[serde(default)]
+    pub channel_id: String,
     /// URL of the audio file
-    pub audio_url: Option<String>,
+    #[serde(default)]
+    pub audio_url: String,
     /// Text description of the audio
-    pub text: Option<String>,
+    #[serde(default)]
+    pub text: String,
+}
+
+impl AudioAction {
+    pub(crate) fn from_value(value: &serde_json::Value) -> Self {
+        Self {
+            guild_id: string_field(value, "guild_id"),
+            channel_id: string_field(value, "channel_id"),
+            audio_url: string_field(value, "audio_url"),
+            text: string_field(value, "text"),
+        }
+    }
+}
+
+fn string_field(value: &serde_json::Value, key: &str) -> String {
+    value
+        .get(key)
+        .and_then(|value| value.as_str())
+        .unwrap_or_default()
+        .to_string()
 }
 
 /// Response from message sending operations
@@ -360,6 +383,45 @@ mod tests {
 
         let auth_error = ApiError::new(401, "Unauthorized");
         assert!(auth_error.is_auth_error());
+    }
+
+    #[test]
+    fn botgo_audio_action_uses_required_zero_value_fields() {
+        let action: AudioAction = serde_json::from_value(serde_json::json!({})).unwrap();
+
+        assert_eq!(action.guild_id, "");
+        assert_eq!(action.channel_id, "");
+        assert_eq!(action.audio_url, "");
+        assert_eq!(action.text, "");
+    }
+
+    #[test]
+    fn botgo_audio_action_keeps_official_json_shape() {
+        let action = AudioAction {
+            guild_id: "guild-1".to_string(),
+            channel_id: "channel-1".to_string(),
+            audio_url: "https://example.com/audio.mp3".to_string(),
+            text: "now playing".to_string(),
+        };
+        let value = serde_json::to_value(&action).unwrap();
+
+        assert_eq!(value["guild_id"], "guild-1");
+        assert_eq!(value["channel_id"], "channel-1");
+        assert_eq!(value["audio_url"], "https://example.com/audio.mp3");
+        assert_eq!(value["text"], "now playing");
+    }
+
+    #[test]
+    fn botgo_audio_action_from_value_tolerates_missing_fields() {
+        let action = AudioAction::from_value(&serde_json::json!({
+            "guild_id": "guild-1",
+            "channel_id": 123,
+        }));
+
+        assert_eq!(action.guild_id, "guild-1");
+        assert_eq!(action.channel_id, "");
+        assert_eq!(action.audio_url, "");
+        assert_eq!(action.text, "");
     }
 
     #[test]
