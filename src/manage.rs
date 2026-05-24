@@ -94,6 +94,8 @@ pub struct C2CManageEvent {
     pub avatar: Option<String>,
 }
 
+pub type C2CFriendData = C2CManageEvent;
+
 impl C2CManageEvent {
     /// Create a new C2CManageEvent instance
     ///
@@ -158,6 +160,8 @@ pub struct EnterAioEvent {
     #[serde(skip)]
     pub event_id: Option<String>,
 }
+
+pub type EnterAIO = EnterAioEvent;
 
 impl EnterAioEvent {
     /// Creates a new EnterAioEvent from gateway data.

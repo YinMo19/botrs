@@ -231,6 +231,55 @@ pub fn op_means_botgo(op: OpCode) -> &'static str {
 
 pub use op_means_botgo as OPMeans;
 
+pub fn event_to_intent(
+    events: impl IntoIterator<Item = impl AsRef<str>>,
+) -> crate::intents::Intent {
+    events
+        .into_iter()
+        .fold(0, |intents, event| intents | event_intent(event.as_ref()))
+}
+
+#[allow(non_snake_case)]
+pub fn EventToIntent(events: impl IntoIterator<Item = impl AsRef<str>>) -> crate::intents::Intent {
+    event_to_intent(events)
+}
+
+fn event_intent(event: &str) -> crate::intents::Intent {
+    match event {
+        "GUILD_CREATE" | "GUILD_UPDATE" | "GUILD_DELETE" | "CHANNEL_CREATE" | "CHANNEL_UPDATE"
+        | "CHANNEL_DELETE" => crate::intents::IntentGuilds,
+        "GUILD_MEMBER_ADD" | "GUILD_MEMBER_UPDATE" | "GUILD_MEMBER_REMOVE" => {
+            crate::intents::IntentGuildMembers
+        }
+        "MESSAGE_CREATE" | "MESSAGE_DELETE" => crate::intents::IntentGuildMessages,
+        "GROUP_AT_MESSAGE_CREATE"
+        | "C2C_MESSAGE_CREATE"
+        | "SUBSCRIBE_MESSAGE_STATUS"
+        | "FRIEND_ADD"
+        | "FRIEND_DEL" => crate::intents::IntentGroupMessages,
+        "MESSAGE_REACTION_ADD" | "MESSAGE_REACTION_REMOVE" => {
+            crate::intents::IntentGuildMessageReactions
+        }
+        "AT_MESSAGE_CREATE" | "PUBLIC_MESSAGE_DELETE" => crate::intents::IntentGuildAtMessage,
+        "DIRECT_MESSAGE_CREATE" | "DIRECT_MESSAGE_DELETE" => crate::intents::IntentDirectMessages,
+        "AUDIO_START" | "AUDIO_FINISH" | "AUDIO_ON_MIC" | "AUDIO_OFF_MIC" => {
+            crate::intents::IntentAudio
+        }
+        "MESSAGE_AUDIT_PASS" | "MESSAGE_AUDIT_REJECT" => crate::intents::IntentAudit,
+        "FORUM_THREAD_CREATE"
+        | "FORUM_THREAD_UPDATE"
+        | "FORUM_THREAD_DELETE"
+        | "FORUM_POST_CREATE"
+        | "FORUM_POST_DELETE"
+        | "FORUM_REPLY_CREATE"
+        | "FORUM_REPLY_DELETE"
+        | "FORUM_PUBLISH_AUDIT_RESULT" => crate::intents::IntentForum,
+        "INTERACTION_CREATE" => crate::intents::IntentInteraction,
+        "ENTER_AIO" => crate::intents::IntentEnterAIO,
+        _ => crate::intents::IntentNone,
+    }
+}
+
 /// Hello payload from the gateway.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Hello {
@@ -429,3 +478,41 @@ pub type WSC2CMessageData = crate::models::message::Message;
 pub type WSC2CFriendData = crate::manage::C2CManageEvent;
 pub type WSSubscribeMsgStatus = crate::manage::SubscribeMessageStatusData;
 pub type WSEnterAIOData = crate::manage::EnterAioEvent;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::intents::{
+        IntentEnterAIO, IntentForum, IntentGroupMessages, IntentGuildAtMessage, IntentGuildMembers,
+        IntentGuildMessages, IntentGuilds, IntentNone,
+    };
+
+    #[test]
+    fn test_event_to_intent_matches_botgo_mapping() {
+        let intent = event_to_intent([
+            EventGuildCreate,
+            EventChannelDelete,
+            EventGuildMemberAdd,
+            EventMessageCreate,
+            EventGroupAtMessageCreate,
+            EventC2CFriendDel,
+            EventEnterAIO,
+            "UNKNOWN_EVENT",
+        ]);
+
+        assert_eq!(intent & IntentGuilds, IntentGuilds);
+        assert_eq!(intent & IntentGuildMembers, IntentGuildMembers);
+        assert_eq!(intent & IntentGuildMessages, IntentGuildMessages);
+        assert_eq!(intent & IntentGroupMessages, IntentGroupMessages);
+        assert_eq!(intent & IntentEnterAIO, IntentEnterAIO);
+        assert_eq!(event_to_intent(["UNKNOWN_EVENT"]), IntentNone);
+    }
+
+    #[test]
+    fn test_event_to_intent_botgo_function_name() {
+        assert_eq!(
+            EventToIntent([EventAtMessageCreate, EventForumAuditResult]),
+            IntentGuildAtMessage | IntentForum
+        );
+    }
+}

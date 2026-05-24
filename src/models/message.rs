@@ -1256,6 +1256,8 @@ pub struct ArkKv {
     pub obj: Option<Vec<ArkObj>>,
 }
 
+pub type ArkKV = ArkKv;
+
 /// Ark object structure.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ArkObj {
@@ -1271,6 +1273,8 @@ pub struct ArkObjKv {
     /// Value
     pub value: Option<String>,
 }
+
+pub type ArkObjKV = ArkObjKv;
 
 /// Embed message structure.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
@@ -1331,6 +1335,8 @@ pub struct EmbedThumbnail {
     /// Thumbnail height
     pub height: Option<u32>,
 }
+
+pub type MessageEmbedThumbnail = EmbedThumbnail;
 
 /// Embed video structure.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
