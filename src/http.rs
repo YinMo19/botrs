@@ -97,6 +97,18 @@ impl HttpClient {
         }
     }
 
+    /// Returns a client for the requested API environment while preserving
+    /// timeout and debug settings.
+    pub fn with_sandbox(&self, is_sandbox: bool) -> Result<Self> {
+        Self::new(self.timeout.as_secs(), is_sandbox).map(|client| {
+            if self.debug {
+                client.with_debug(true)
+            } else {
+                client
+            }
+        })
+    }
+
     /// Makes a GET request to the API.
     ///
     /// # Arguments
