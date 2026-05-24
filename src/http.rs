@@ -6,7 +6,7 @@
 use crate::error::{BotError, Result, http_error_from_status};
 use crate::models::api::{ApiError, RateLimit};
 use crate::token::Token;
-use reqwest::{Client, Method, Response, StatusCode};
+use reqwest::{Client, Method, Response, StatusCode, header::HeaderMap};
 use serde::Serialize;
 use std::time::Duration;
 use tracing::{debug, error, warn};
@@ -136,6 +136,39 @@ impl HttpClient {
         self.request(Method::PUT, token, path, query, body).await
     }
 
+    /// Makes a PUT request with additional headers.
+    pub async fn put_with_headers<Q, B>(
+        &self,
+        token: &Token,
+        path: &str,
+        query: Option<&Q>,
+        body: Option<&B>,
+        headers: HeaderMap,
+    ) -> Result<serde_json::Value>
+    where
+        Q: Serialize + ?Sized,
+        B: Serialize + ?Sized,
+    {
+        self.request_with_headers(Method::PUT, token, path, query, body, headers)
+            .await
+    }
+
+    /// Makes a PUT request with a raw request body and additional headers.
+    pub async fn put_raw_with_headers<Q>(
+        &self,
+        token: &Token,
+        path: &str,
+        query: Option<&Q>,
+        body: impl Into<String>,
+        headers: HeaderMap,
+    ) -> Result<serde_json::Value>
+    where
+        Q: Serialize + ?Sized,
+    {
+        self.request_raw_with_headers(Method::PUT, token, path, query, body, headers)
+            .await
+    }
+
     /// Makes a DELETE request to the API.
     ///
     /// # Arguments
@@ -211,6 +244,23 @@ impl HttpClient {
         Q: Serialize + ?Sized,
         B: Serialize + ?Sized,
     {
+        self.request_with_headers(method, token, path, query, body, HeaderMap::new())
+            .await
+    }
+
+    async fn request_with_headers<Q, B>(
+        &self,
+        method: Method,
+        token: &Token,
+        path: &str,
+        query: Option<&Q>,
+        body: Option<&B>,
+        headers: HeaderMap,
+    ) -> Result<serde_json::Value>
+    where
+        Q: Serialize + ?Sized,
+        B: Serialize + ?Sized,
+    {
         let url = format!("{}{}", self.base_url, path);
         debug!("Making {} request to: {}", method, url);
 
@@ -219,6 +269,8 @@ impl HttpClient {
         // Add authorization header
         let auth_header = token.authorization_header().await?;
         request = request.header("Authorization", auth_header);
+
+        request = request.headers(headers);
 
         // Add content type for requests with body
         if body.is_some() {
@@ -237,6 +289,42 @@ impl HttpClient {
 
         // Send the request
         let response = request.send().await.map_err(BotError::Http)?;
+
+        self.handle_response(response).await
+    }
+
+    async fn request_raw_with_headers<Q>(
+        &self,
+        method: Method,
+        token: &Token,
+        path: &str,
+        query: Option<&Q>,
+        body: impl Into<String>,
+        headers: HeaderMap,
+    ) -> Result<serde_json::Value>
+    where
+        Q: Serialize + ?Sized,
+    {
+        let url = format!("{}{}", self.base_url, path);
+        debug!("Making {} request to: {}", method, url);
+
+        let mut request = self.client.request(method, &url);
+
+        let auth_header = token.authorization_header().await?;
+        request = request
+            .header("Authorization", auth_header)
+            .header("Content-Type", "application/json")
+            .headers(headers);
+
+        if let Some(q) = query {
+            request = request.query(q);
+        }
+
+        let response = request
+            .body(body.into())
+            .send()
+            .await
+            .map_err(BotError::Http)?;
 
         self.handle_response(response).await
     }

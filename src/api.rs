@@ -132,6 +132,7 @@ use crate::models::{
 use crate::reaction::ReactionUsers;
 use crate::token::Token;
 use base64::Engine;
+use reqwest::header::{HeaderMap, HeaderValue};
 use serde_json::{Value, json};
 use std::collections::HashMap;
 use tracing::debug;
@@ -1517,6 +1518,36 @@ impl BotApi {
             "/channels/{channel_id}/messages/{message_id}/reactions/{emoji_type}/{emoji_id}"
         );
         self.http.delete(token, &path, None::<&()>).await?;
+        Ok(())
+    }
+
+    /// Updates an interaction response.
+    ///
+    /// # Arguments
+    ///
+    /// * `token` - Authentication token
+    /// * `interaction_id` - The interaction ID
+    /// * `body` - JSON body string to send
+    ///
+    /// # Returns
+    ///
+    /// Success indication.
+    pub async fn put_interaction(
+        &self,
+        token: &Token,
+        interaction_id: &str,
+        body: &str,
+    ) -> Result<()> {
+        debug!("Updating interaction {}", interaction_id);
+        let mut headers = HeaderMap::new();
+        let app_id = HeaderValue::from_str(token.app_id())
+            .map_err(|e| crate::BotError::invalid_data(format!("Invalid app ID header: {e}")))?;
+        headers.insert("X-Callback-AppID", app_id);
+
+        let path = format!("/interactions/{interaction_id}");
+        self.http
+            .put_raw_with_headers(token, &path, None::<&()>, body, headers)
+            .await?;
         Ok(())
     }
 
