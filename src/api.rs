@@ -173,6 +173,8 @@ pub fn APIVersionString(version: APIVersion) -> String {
 pub struct BotApi {
     /// The HTTP client used for making requests
     http: HttpClient,
+    /// Bot application ID stored on the OpenAPI instance like botgo's openAPI.appID.
+    app_id: String,
     /// Optional token stored for botgo-style OpenAPI calls.
     token: Option<Token>,
 }
@@ -194,13 +196,18 @@ impl BotApi {
     /// let api = BotApi::new(http);
     /// ```
     pub fn new(http: HttpClient) -> Self {
-        Self { http, token: None }
+        Self {
+            http,
+            app_id: String::new(),
+            token: None,
+        }
     }
 
     /// Creates a Bot API client that carries its token like botgo's OpenAPI.
     pub fn with_token(http: HttpClient, token: Token) -> Self {
         Self {
             http,
+            app_id: token.app_id().to_string(),
             token: Some(token),
         }
     }
@@ -208,11 +215,15 @@ impl BotApi {
     /// Creates a new instance from this client as a botgo OpenAPI template.
     pub fn setup_from_template(
         &self,
-        _bot_app_id: impl Into<String>,
+        bot_app_id: impl Into<String>,
         token: Token,
         in_sandbox: bool,
     ) -> Result<Self> {
-        Ok(Self::with_token(self.http.with_sandbox(in_sandbox)?, token))
+        Ok(Self {
+            http: self.http.with_sandbox(in_sandbox)?,
+            app_id: bot_app_id.into(),
+            token: Some(token),
+        })
     }
 
     /// Creates a configured API client and token, mirroring botgo's setup step.
@@ -255,6 +266,7 @@ impl BotApi {
     pub fn with_timeout(&self, duration: Duration) -> Result<Self> {
         Ok(Self {
             http: self.http.with_timeout(duration)?,
+            app_id: self.app_id.clone(),
             token: self.token.clone(),
         })
     }
@@ -269,6 +281,7 @@ impl BotApi {
     pub fn set_debug(&self, debug: bool) -> Self {
         Self {
             http: self.http.with_debug(debug),
+            app_id: self.app_id.clone(),
             token: self.token.clone(),
         }
     }
@@ -282,6 +295,17 @@ impl BotApi {
     /// Returns the token stored for botgo-style OpenAPI calls.
     pub fn token(&self) -> Option<&Token> {
         self.token.as_ref()
+    }
+
+    /// Returns the bot app ID stored on this OpenAPI instance.
+    pub fn get_app_id(&self) -> &str {
+        &self.app_id
+    }
+
+    /// Botgo-compatible app ID accessor for the v1 OpenAPI implementation.
+    #[allow(non_snake_case)]
+    pub fn GetAppID(&self) -> &str {
+        self.get_app_id()
     }
 
     fn token_required(&self) -> Result<&Token> {
@@ -3645,7 +3669,12 @@ impl BotApi {
     ) -> Result<()> {
         debug!("Updating interaction {}", interaction_id);
         let mut headers = HeaderMap::new();
-        let app_id = HeaderValue::from_str(token.app_id())
+        let app_id = if self.app_id.is_empty() {
+            token.app_id()
+        } else {
+            &self.app_id
+        };
+        let app_id = HeaderValue::from_str(app_id)
             .map_err(|e| crate::BotError::invalid_data(format!("Invalid app ID header: {e}")))?;
         headers.insert("X-Callback-AppID", app_id);
 
@@ -4486,13 +4515,16 @@ mod tests {
         assert_eq!(api.Version(), APIv1);
         assert_eq!(APIVersionString(api.version()), "v1");
         assert_eq!(token.app_id(), "app-id");
+        assert_eq!(api.GetAppID(), "app-id");
         assert!(api.http().is_sandbox());
 
         let api = api.WithTimeout(Duration::from_secs(7)).unwrap();
         assert_eq!(api.http().timeout(), Duration::from_secs(7));
+        assert_eq!(api.GetAppID(), "app-id");
 
         let api = api.SetDebug(true);
         assert!(api.http().debug_enabled());
+        assert_eq!(api.GetAppID(), "app-id");
         assert_eq!(api.TraceID(), "");
     }
 
