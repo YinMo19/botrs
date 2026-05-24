@@ -6,7 +6,7 @@
 use crate::api::BotApi;
 use crate::audio::{Audio, PublicAudio};
 use crate::error::{BotError, Result};
-use crate::forum::{OpenThread, Thread};
+use crate::forum::{ForumAuditResult, OpenThread, Post, Reply, Thread};
 use crate::gateway::Gateway;
 use crate::http::HttpClient;
 use crate::intents::Intents;
@@ -159,19 +159,19 @@ pub trait EventHandler: Send + Sync {
     async fn forum_thread_delete(&self, _ctx: Context, _thread: Thread) {}
 
     /// Called when a forum post is created.
-    async fn forum_post_create(&self, _ctx: Context, _payload: serde_json::Value) {}
+    async fn forum_post_create(&self, _ctx: Context, _post: Post) {}
 
     /// Called when a forum post is deleted.
-    async fn forum_post_delete(&self, _ctx: Context, _payload: serde_json::Value) {}
+    async fn forum_post_delete(&self, _ctx: Context, _post: Post) {}
 
     /// Called when a forum reply is created.
-    async fn forum_reply_create(&self, _ctx: Context, _payload: serde_json::Value) {}
+    async fn forum_reply_create(&self, _ctx: Context, _reply: Reply) {}
 
     /// Called when a forum reply is deleted.
-    async fn forum_reply_delete(&self, _ctx: Context, _payload: serde_json::Value) {}
+    async fn forum_reply_delete(&self, _ctx: Context, _reply: Reply) {}
 
     /// Called when a forum publish audit result arrives.
-    async fn forum_publish_audit_result(&self, _ctx: Context, _payload: serde_json::Value) {}
+    async fn forum_publish_audit_result(&self, _ctx: Context, _result: ForumAuditResult) {}
 
     /// Called when an open forum thread is created.
     async fn open_forum_thread_create(&self, _ctx: Context, _thread: OpenThread) {}
@@ -2220,27 +2220,32 @@ impl<H: EventHandler + 'static> Client<H> {
             }
             Some("FORUM_POST_CREATE") => {
                 if let Some(data) = event.data {
-                    self.handler.forum_post_create(ctx, data).await;
+                    let post = Post::new(ctx.api.as_ref().clone(), event.id, &data);
+                    self.handler.forum_post_create(ctx, post).await;
                 }
             }
             Some("FORUM_POST_DELETE") => {
                 if let Some(data) = event.data {
-                    self.handler.forum_post_delete(ctx, data).await;
+                    let post = Post::new(ctx.api.as_ref().clone(), event.id, &data);
+                    self.handler.forum_post_delete(ctx, post).await;
                 }
             }
             Some("FORUM_REPLY_CREATE") => {
                 if let Some(data) = event.data {
-                    self.handler.forum_reply_create(ctx, data).await;
+                    let reply = Reply::new(ctx.api.as_ref().clone(), event.id, &data);
+                    self.handler.forum_reply_create(ctx, reply).await;
                 }
             }
             Some("FORUM_REPLY_DELETE") => {
                 if let Some(data) = event.data {
-                    self.handler.forum_reply_delete(ctx, data).await;
+                    let reply = Reply::new(ctx.api.as_ref().clone(), event.id, &data);
+                    self.handler.forum_reply_delete(ctx, reply).await;
                 }
             }
             Some("FORUM_PUBLISH_AUDIT_RESULT") => {
                 if let Some(data) = event.data {
-                    self.handler.forum_publish_audit_result(ctx, data).await;
+                    let result = ForumAuditResult::new(event.id, &data);
+                    self.handler.forum_publish_audit_result(ctx, result).await;
                 }
             }
             Some("OPEN_FORUM_THREAD_CREATE") => {

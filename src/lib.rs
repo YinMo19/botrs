@@ -23,7 +23,10 @@ pub use audio::{Audio, AudioControl, AudioStatus, PublicAudio, PublicAudioType};
 pub use client::{Client, Context, EventHandler};
 pub use connection::{ConnectionSession, ConnectionState, Session};
 pub use error::{BotError, Result};
-pub use forum::{Content, Format, OpenThread, Thread, ThreadInfo, Title};
+pub use forum::{
+    Content, Format, ForumAuditResult, OpenThread, Post, PostInfo, Reply, ReplyInfo, Thread,
+    ThreadInfo, Title,
+};
 pub use intents::Intents;
 pub use interaction::{
     Interaction, InteractionData, InteractionDataType, InteractionType, SearchInputResolved,

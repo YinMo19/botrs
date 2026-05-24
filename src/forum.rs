@@ -355,6 +355,48 @@ impl ThreadInfo {
     }
 }
 
+/// Post info structure.
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct PostInfo {
+    /// Thread ID
+    pub thread_id: Option<String>,
+    /// Post ID
+    pub post_id: Option<String>,
+    /// Post content
+    pub content: Option<String>,
+    /// Creation date and time
+    pub date_time: Option<String>,
+}
+
+impl PostInfo {
+    /// Create a new PostInfo instance.
+    pub fn new(data: &Value) -> Self {
+        serde_json::from_value(data.clone()).unwrap_or_default()
+    }
+}
+
+/// Reply info structure.
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct ReplyInfo {
+    /// Thread ID
+    pub thread_id: Option<String>,
+    /// Post ID
+    pub post_id: Option<String>,
+    /// Reply ID
+    pub reply_id: Option<String>,
+    /// Reply content
+    pub content: Option<String>,
+    /// Creation date and time
+    pub date_time: Option<String>,
+}
+
+impl ReplyInfo {
+    /// Create a new ReplyInfo instance.
+    pub fn new(data: &Value) -> Self {
+        serde_json::from_value(data.clone()).unwrap_or_default()
+    }
+}
+
 /// Forum thread structure
 #[derive(Debug, Clone, Serialize)]
 pub struct Thread {
@@ -420,6 +462,144 @@ impl std::fmt::Display for Thread {
     }
 }
 
+/// Forum post structure.
+#[derive(Debug, Clone, Serialize)]
+pub struct Post {
+    /// API client reference
+    #[serde(skip)]
+    api: BotApi,
+    /// Guild ID
+    pub guild_id: Option<String>,
+    /// Channel ID
+    pub channel_id: Option<String>,
+    /// Author ID
+    pub author_id: Option<String>,
+    /// Post information
+    pub post_info: PostInfo,
+    /// Event ID
+    pub event_id: Option<String>,
+}
+
+impl Post {
+    /// Create a new Post instance.
+    pub fn new(api: BotApi, event_id: Option<String>, data: &Value) -> Self {
+        Self {
+            api,
+            event_id,
+            guild_id: data
+                .get("guild_id")
+                .and_then(|v| v.as_str())
+                .map(String::from),
+            channel_id: data
+                .get("channel_id")
+                .and_then(|v| v.as_str())
+                .map(String::from),
+            author_id: data
+                .get("author_id")
+                .and_then(|v| v.as_str())
+                .map(String::from),
+            post_info: PostInfo::new(
+                data.get("post_info")
+                    .unwrap_or(&Value::Object(serde_json::Map::new())),
+            ),
+        }
+    }
+
+    /// Get the API client reference.
+    pub fn api(&self) -> &BotApi {
+        &self.api
+    }
+}
+
+/// Forum reply structure.
+#[derive(Debug, Clone, Serialize)]
+pub struct Reply {
+    /// API client reference
+    #[serde(skip)]
+    api: BotApi,
+    /// Guild ID
+    pub guild_id: Option<String>,
+    /// Channel ID
+    pub channel_id: Option<String>,
+    /// Author ID
+    pub author_id: Option<String>,
+    /// Reply information
+    pub reply_info: ReplyInfo,
+    /// Event ID
+    pub event_id: Option<String>,
+}
+
+impl Reply {
+    /// Create a new Reply instance.
+    pub fn new(api: BotApi, event_id: Option<String>, data: &Value) -> Self {
+        Self {
+            api,
+            event_id,
+            guild_id: data
+                .get("guild_id")
+                .and_then(|v| v.as_str())
+                .map(String::from),
+            channel_id: data
+                .get("channel_id")
+                .and_then(|v| v.as_str())
+                .map(String::from),
+            author_id: data
+                .get("author_id")
+                .and_then(|v| v.as_str())
+                .map(String::from),
+            reply_info: ReplyInfo::new(
+                data.get("reply_info")
+                    .unwrap_or(&Value::Object(serde_json::Map::new())),
+            ),
+        }
+    }
+
+    /// Get the API client reference.
+    pub fn api(&self) -> &BotApi {
+        &self.api
+    }
+}
+
+/// Forum publish audit result.
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct ForumAuditResult {
+    /// Audit task ID
+    pub task_id: Option<String>,
+    /// Guild ID
+    pub guild_id: Option<String>,
+    /// Channel ID
+    pub channel_id: Option<String>,
+    /// Author ID
+    pub author_id: Option<String>,
+    /// Thread ID
+    pub thread_id: Option<String>,
+    /// Post ID
+    pub post_id: Option<String>,
+    /// Reply ID
+    pub reply_id: Option<String>,
+    /// Publish type
+    #[serde(rename = "type")]
+    pub publish_type: Option<u32>,
+    /// Audit result
+    pub result: Option<u32>,
+    /// Error message
+    pub err_msg: Option<String>,
+    /// Creation date and time
+    pub date_time: Option<String>,
+    /// Event ID
+    #[serde(skip)]
+    pub event_id: Option<String>,
+}
+
+impl ForumAuditResult {
+    /// Create a forum audit result from gateway data.
+    pub fn new(event_id: Option<String>, data: &Value) -> Self {
+        let mut result = serde_json::from_value::<Self>(data.clone()).unwrap_or_default();
+        result.event_id = event_id;
+        result
+    }
+}
+
 /// Open forum thread structure
 #[derive(Debug, Clone, Serialize)]
 pub struct OpenThread {
@@ -432,6 +612,12 @@ pub struct OpenThread {
     pub guild_id: Option<String>,
     /// Author ID
     pub author_id: Option<String>,
+    /// Thread information when present
+    pub thread_info: Option<ThreadInfo>,
+    /// Post information when present
+    pub post_info: Option<PostInfo>,
+    /// Reply information when present
+    pub reply_info: Option<ReplyInfo>,
     /// Event ID
     pub event_id: Option<String>,
 }
@@ -459,6 +645,9 @@ impl OpenThread {
                 .get("author_id")
                 .and_then(|v| v.as_str())
                 .map(String::from),
+            thread_info: data.get("thread_info").map(ThreadInfo::new),
+            post_info: data.get("post_info").map(PostInfo::new),
+            reply_info: data.get("reply_info").map(ReplyInfo::new),
         }
     }
 
