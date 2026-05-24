@@ -488,7 +488,7 @@ impl HttpClient {
 
     fn store_trace_id(&self, headers: &reqwest::header::HeaderMap) {
         let trace_id = headers
-            .get("X-Tps-trace-ID")
+            .get(crate::constant::HeaderTraceID)
             .or_else(|| headers.get("x-tps-trace-id"))
             .and_then(|value| value.to_str().ok())
             .filter(|value| !value.is_empty())

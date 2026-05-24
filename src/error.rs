@@ -2,10 +2,145 @@
 //!
 //! This module defines all the error types that can occur when using the BotRS framework.
 
+#![allow(non_upper_case_globals)]
+
 use std::fmt;
 
 /// A specialized Result type for BotRS operations.
 pub type Result<T> = std::result::Result<T, BotError>;
+
+pub const CodeNeedReConnect: i32 = 9000;
+pub const CodeInvalidSession: i32 = 9001;
+pub const CodeURLInvalid: i32 = 9002;
+pub const CodeNotFoundOpenAPI: i32 = 9003;
+pub const CodeSessionLimit: i32 = 9004;
+pub const CodeConnCloseCantResume: i32 = 9005;
+pub const CodeConnCloseCantIdentify: i32 = 9006;
+pub const CodePagerIsNil: i32 = 9007;
+
+pub const WSCodeBackendUnknownError: u16 = 4000;
+pub const WSCodeBackendUnknownOpCode: u16 = 4001;
+pub const WSCodeBackendDecodeError: u16 = 4002;
+pub const WSCodeBackendNotAuthenticate: u16 = 4003;
+pub const WSCodeBackendAuthenticationFail: u16 = 4004;
+pub const WSCodeBackendAlreadyAuthenticate: u16 = 4005;
+pub const WSCodeBackendSessionNoLongerValid: u16 = 4006;
+pub const WSCodeBackendInvalidSeq: u16 = 4007;
+pub const WSCodeBackendRateLimit: u16 = 4008;
+pub const WSCodeBackendSessionTimeOut: u16 = 4009;
+pub const WSCodeBackendInvalidShard: u16 = 4010;
+pub const WSCodeBackendShardingRequired: u16 = 4011;
+pub const WSCodeBackendInvalidAPIVersion: u16 = 4012;
+pub const WSCodeBackendInvalidIntents: u16 = 4013;
+pub const WSCodeBackendDisallowdIntents: u16 = 4014;
+pub const WSCodeBackendBotOffline: u16 = 4914;
+pub const WSCodeBackendBotBanned: u16 = 4915;
+
+pub const APICodeTokenExpireOrNotExist: u32 = 11244;
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Err {
+    code: i32,
+    text: String,
+    trace: String,
+}
+
+impl Err {
+    pub fn new(code: i32, text: impl Into<String>, trace: Option<impl Into<String>>) -> Self {
+        Self {
+            code,
+            text: text.into(),
+            trace: trace.map(Into::into).unwrap_or_default(),
+        }
+    }
+
+    pub const fn code(&self) -> i32 {
+        self.code
+    }
+
+    pub fn text(&self) -> &str {
+        &self.text
+    }
+
+    pub fn trace(&self) -> &str {
+        &self.trace
+    }
+
+    #[allow(non_snake_case)]
+    pub const fn Code(&self) -> i32 {
+        self.code()
+    }
+
+    #[allow(non_snake_case)]
+    pub fn Text(&self) -> &str {
+        self.text()
+    }
+
+    #[allow(non_snake_case)]
+    pub fn Trace(&self) -> &str {
+        self.trace()
+    }
+}
+
+impl std::error::Error for Err {}
+
+impl fmt::Display for Err {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "code:{}, text:{}, traceID:{}",
+            self.code, self.text, self.trace
+        )
+    }
+}
+
+#[allow(non_snake_case)]
+pub fn New(code: i32, text: impl Into<String>) -> Err {
+    Err::new(code, text, None::<String>)
+}
+
+#[allow(non_snake_case)]
+pub fn Error(err: &(dyn std::error::Error + 'static)) -> Err {
+    err.downcast_ref::<Err>()
+        .cloned()
+        .unwrap_or_else(|| Err::new(9999, err.to_string(), None::<String>))
+}
+
+pub fn err_need_reconnect() -> Err {
+    Err::new(CodeNeedReConnect, "need reconnect", None::<String>)
+}
+
+pub fn err_invalid_session() -> Err {
+    Err::new(CodeConnCloseCantResume, "invalid session", None::<String>)
+}
+
+pub fn err_url_invalid() -> Err {
+    Err::new(
+        CodeConnCloseCantIdentify,
+        "ws ap url is invalid",
+        None::<String>,
+    )
+}
+
+pub fn err_session_limit() -> Err {
+    Err::new(
+        CodeConnCloseCantIdentify,
+        "session num limit",
+        None::<String>,
+    )
+}
+
+pub fn err_not_found_openapi() -> Err {
+    Err::new(
+        CodeNotFoundOpenAPI,
+        "not found openapi version",
+        None::<String>,
+    )
+}
+
+pub fn err_pager_is_nil() -> Err {
+    Err::new(CodePagerIsNil, "pager is nil", None::<String>)
+}
 
 /// The main error type for BotRS operations.
 #[derive(Debug, thiserror::Error)]
@@ -211,5 +346,22 @@ pub fn http_error_from_status(status: u16, message: String) -> BotError {
         429 => BotError::SequenceNumber(message),
         500 | 504 => BotError::Server(message),
         _ => BotError::api(status as u32, message),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_botgo_err_helpers() {
+        let err = New(CodeNeedReConnect, "need reconnect");
+        assert_eq!(err.Code(), CodeNeedReConnect);
+        assert_eq!(err.Text(), "need reconnect");
+        assert_eq!(err.Trace(), "");
+        assert_eq!(err.to_string(), "code:9000, text:need reconnect, traceID:");
+
+        assert_eq!(err_pager_is_nil().Code(), CodePagerIsNil);
+        assert_eq!(err_invalid_session().Code(), CodeConnCloseCantResume);
     }
 }

@@ -3,6 +3,8 @@
 //! This module provides the `Token` struct for managing bot authentication
 //! credentials including app ID and secret, with access token management.
 
+#![allow(non_upper_case_globals)]
+
 use crate::error::{BotError, Result};
 // use base64::{engine::general_purpose, Engine as _};
 use serde::{Deserialize, Serialize};
@@ -10,6 +12,24 @@ use std::fmt;
 use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
 use tokio::sync::Mutex;
+
+pub const TypeBearer: &str = "Bearer";
+pub const TypeQQBot: &str = "QQBot";
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct QQBotCredentials {
+    #[serde(alias = "appid", alias = "appId")]
+    pub app_id: String,
+    #[serde(alias = "secret", alias = "appSecret")]
+    pub app_secret: String,
+}
+
+pub type QQBotTokenSource = Token;
+
+#[allow(non_snake_case)]
+pub fn NewQQBotTokenSource(credentials: &QQBotCredentials) -> QQBotTokenSource {
+    Token::new(&credentials.app_id, &credentials.app_secret)
+}
 
 /// Represents the authentication token for a QQ Guild Bot.
 ///
@@ -377,5 +397,18 @@ mod tests {
         assert!(debug_str.contains("123456"));
         assert!(debug_str.contains("[REDACTED]"));
         assert!(!debug_str.contains("secret123"));
+    }
+
+    #[test]
+    fn test_botgo_token_source_alias() {
+        let credentials = QQBotCredentials {
+            app_id: "123456".to_string(),
+            app_secret: "secret123".to_string(),
+        };
+        let token = NewQQBotTokenSource(&credentials);
+        assert_eq!(token.app_id(), "123456");
+        assert_eq!(token.secret(), "secret123");
+        assert_eq!(TypeQQBot, "QQBot");
+        assert_eq!(TypeBearer, "Bearer");
     }
 }
