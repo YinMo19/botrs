@@ -18,6 +18,7 @@ pub mod interaction;
 pub mod log;
 pub mod manage;
 pub mod models;
+pub mod openapi;
 pub mod options;
 pub mod reaction;
 pub mod remote;
@@ -68,6 +69,10 @@ pub use manage::{
 };
 pub use models::gateway::Ready;
 pub use models::*;
+pub use openapi::{
+    DoReqFilterChains, DoRespFilterChains, FilterContext, HTTPFilter, RegisterReqFilter,
+    RegisterRespFilter,
+};
 pub use options::{OpenApiOption, Options, WithHideTip, WithURL};
 pub use reaction::{
     Emoji as ReactionEmoji, MessageReactionPager, Reaction, ReactionTarget, ReactionTargetType,

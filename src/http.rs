@@ -310,17 +310,25 @@ impl HttpClient {
     where
         B: Serialize + ?Sized,
     {
-        let mut request = self.client.request(method, url);
-        let auth_header = token.authorization_header().await?;
-        request = request.header("Authorization", auth_header);
+        let mut headers = self.authorized_headers(token, HeaderMap::new()).await?;
         if body.is_some() {
-            request = request.header("Content-Type", "application/json");
+            headers.insert("Content-Type", "application/json".parse().unwrap());
         }
+
+        let mut context = crate::openapi::FilterContext::request(method.clone(), url, headers);
+        crate::openapi::DoReqFilterChains(&mut context)?;
+
+        let request_headers = context.request_headers.clone();
+        let mut request = self
+            .client
+            .request(method.clone(), url)
+            .headers(request_headers.clone());
         if let Some(body) = body {
             request = request.json(body);
         }
         let response = request.send().await.map_err(BotError::Http)?;
-        self.handle_bytes_response(response).await
+        self.handle_bytes_response(response, method, url, request_headers)
+            .await
     }
 
     /// Makes a generic HTTP request to the API.
@@ -385,32 +393,32 @@ impl HttpClient {
     {
         debug!("Making {} request to: {}", method, url);
 
-        let mut request = self.client.request(method, url);
-
-        // Add authorization header
-        let auth_header = token.authorization_header().await?;
-        request = request.header("Authorization", auth_header);
-
-        request = request.headers(headers);
-
-        // Add content type for requests with body
+        let mut headers = self.authorized_headers(token, headers).await?;
         if body.is_some() {
-            request = request.header("Content-Type", "application/json");
+            headers.insert("Content-Type", "application/json".parse().unwrap());
         }
 
-        // Add query parameters
+        let mut context = crate::openapi::FilterContext::request(method.clone(), url, headers);
+        crate::openapi::DoReqFilterChains(&mut context)?;
+        let request_headers = context.request_headers.clone();
+
+        let mut request = self
+            .client
+            .request(method.clone(), url)
+            .headers(request_headers.clone());
+
         if let Some(q) = query {
             request = request.query(q);
         }
 
-        // Add body
         if let Some(b) = body {
             request = request.json(b);
         }
 
         let response = request.send().await.map_err(BotError::Http)?;
 
-        self.handle_response(response).await
+        self.handle_response(response, method, url, request_headers)
+            .await
     }
 
     async fn request_raw_with_headers<Q>(
@@ -428,13 +436,17 @@ impl HttpClient {
         let url = format!("{}{}", self.base_url, path);
         debug!("Making {} request to: {}", method, url);
 
-        let mut request = self.client.request(method, &url);
+        let mut headers = self.authorized_headers(token, headers).await?;
+        headers.insert("Content-Type", "application/json".parse().unwrap());
 
-        let auth_header = token.authorization_header().await?;
-        request = request
-            .header("Authorization", auth_header)
-            .header("Content-Type", "application/json")
-            .headers(headers);
+        let mut context = crate::openapi::FilterContext::request(method.clone(), &url, headers);
+        crate::openapi::DoReqFilterChains(&mut context)?;
+        let request_headers = context.request_headers.clone();
+
+        let mut request = self
+            .client
+            .request(method.clone(), &url)
+            .headers(request_headers.clone());
 
         if let Some(q) = query {
             request = request.query(q);
@@ -446,7 +458,18 @@ impl HttpClient {
             .await
             .map_err(BotError::Http)?;
 
-        self.handle_response(response).await
+        self.handle_response(response, method, &url, request_headers)
+            .await
+    }
+
+    async fn authorized_headers(&self, token: &Token, mut headers: HeaderMap) -> Result<HeaderMap> {
+        headers.insert(
+            "Authorization",
+            token.authorization_header().await?.parse().map_err(|err| {
+                BotError::internal(format!("invalid authorization header: {err}"))
+            })?,
+        );
+        Ok(headers)
     }
 
     /// Handles the HTTP response and converts it to a JSON value.
@@ -458,9 +481,19 @@ impl HttpClient {
     /// # Returns
     ///
     /// The response body as a JSON value or an error.
-    async fn handle_response(&self, response: Response) -> Result<serde_json::Value> {
+    async fn handle_response(
+        &self,
+        response: Response,
+        method: Method,
+        url: &str,
+        request_headers: HeaderMap,
+    ) -> Result<serde_json::Value> {
         let status = response.status();
-        let headers = response.headers().clone();
+        let mut headers = response.headers().clone();
+        let mut context =
+            crate::openapi::FilterContext::response(method, url, request_headers, status, headers);
+        crate::openapi::DoRespFilterChains(&mut context)?;
+        headers = context.response_headers;
         self.store_trace_id(&headers);
 
         // Check for rate limiting
@@ -501,9 +534,19 @@ impl HttpClient {
         Ok(json)
     }
 
-    async fn handle_bytes_response(&self, response: Response) -> Result<Vec<u8>> {
+    async fn handle_bytes_response(
+        &self,
+        response: Response,
+        method: Method,
+        url: &str,
+        request_headers: HeaderMap,
+    ) -> Result<Vec<u8>> {
         let status = response.status();
-        let headers = response.headers().clone();
+        let mut headers = response.headers().clone();
+        let mut context =
+            crate::openapi::FilterContext::response(method, url, request_headers, status, headers);
+        crate::openapi::DoRespFilterChains(&mut context)?;
+        headers = context.response_headers;
         self.store_trace_id(&headers);
 
         if status == StatusCode::TOO_MANY_REQUESTS {
