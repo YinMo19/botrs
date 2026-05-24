@@ -4,11 +4,11 @@
 //! including button clicks, command interactions, and other interactive elements.
 
 use crate::api::BotApi;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
 
 /// Interaction type enumeration
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
 pub enum InteractionType {
     /// Ping interaction
@@ -38,8 +38,26 @@ impl From<u8> for InteractionType {
     }
 }
 
+impl Serialize for InteractionType {
+    fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_u8(*self as u8)
+    }
+}
+
+impl<'de> Deserialize<'de> for InteractionType {
+    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        Ok(Self::from(u8::deserialize(deserializer)?))
+    }
+}
+
 /// Interaction data type enumeration
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
 pub enum InteractionDataType {
     /// Chat input search
@@ -90,6 +108,24 @@ impl From<u8> for InteractionDataType {
             14 => Self::ClearSessionClick,
             _ => Self::ChatInputSearch, // Default fallback
         }
+    }
+}
+
+impl Serialize for InteractionDataType {
+    fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_u8(*self as u8)
+    }
+}
+
+impl<'de> Deserialize<'de> for InteractionDataType {
+    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        Ok(Self::from(u8::deserialize(deserializer)?))
     }
 }
 
@@ -172,6 +208,7 @@ pub struct InteractionData {
     /// Interaction name
     pub name: Option<String>,
     /// Data type
+    #[serde(rename = "type")]
     pub data_type: Option<InteractionDataType>,
     /// Resolved data
     pub resolved: Resolved,
@@ -247,6 +284,7 @@ pub struct Interaction {
     /// Application ID
     pub application_id: Option<String>,
     /// Interaction type
+    #[serde(rename = "type")]
     pub interaction_type: Option<InteractionType>,
     /// Scene identifier
     pub scene: Option<String>,
@@ -430,5 +468,52 @@ mod tests {
             InteractionDataType::from(14),
             InteractionDataType::ClearSessionClick
         );
+    }
+
+    #[test]
+    fn interaction_types_serialize_as_botgo_numeric_wire_values() {
+        assert_eq!(
+            serde_json::to_value(InteractionType::ApplicationCommand).unwrap(),
+            serde_json::json!(2)
+        );
+        assert_eq!(
+            serde_json::from_value::<InteractionType>(serde_json::json!(11)).unwrap(),
+            InteractionType::InlineKeyboard
+        );
+        assert_eq!(
+            serde_json::to_value(InteractionDataType::ChatInputSearch).unwrap(),
+            serde_json::json!(9)
+        );
+        assert_eq!(
+            serde_json::from_value::<InteractionDataType>(serde_json::json!(14)).unwrap(),
+            InteractionDataType::ClearSessionClick
+        );
+    }
+
+    #[test]
+    fn interaction_payload_uses_botgo_type_fields() {
+        let interaction = Interaction::new(
+            BotApi::new(crate::http::HttpClient::new(30, false).unwrap()),
+            Some("event-1".to_string()),
+            &serde_json::json!({
+                "id": "interaction-1",
+                "application_id": "app-1",
+                "type": 2,
+                "data": {
+                    "name": "search",
+                    "type": 9,
+                    "resolved": {
+                        "keyword": "botrs"
+                    }
+                },
+                "version": 1
+            }),
+        );
+
+        let value = serde_json::to_value(&interaction).unwrap();
+        assert_eq!(value["type"], serde_json::json!(2));
+        assert_eq!(value["data"]["type"], serde_json::json!(9));
+        assert!(value.get("interaction_type").is_none());
+        assert!(value["data"].get("data_type").is_none());
     }
 }
