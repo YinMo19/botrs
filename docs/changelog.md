@@ -7,14 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
-- Comprehensive documentation website with English and Chinese support
-- API reference documentation for all core components
-- Getting started examples and tutorials
-- Configuration guide with best practices
+## [0.10.0] - 2026-05-25
 
 ### Changed
-- Documentation improvements and restructuring
+- Aligned channel, schedule, audio, announce, and API permission DTOs with botgo zero-value wire shapes.
+- `PostAudio`, `post_audio`, and `Context::post_audio` now use `AudioControl`; audio events retain `AudioAction`.
+- `AudioStatus` now serializes and deserializes as botgo's numeric status values.
+- Updated gateway documentation to describe botgo-style fixed reconnect throttling instead of exponential backoff.
+
+### Fixed
+- `ListSchedules` now always sends the `since` query value, matching botgo behavior.
 
 ## [0.9.0] - 2026-05-25
 

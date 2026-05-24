@@ -7,14 +7,16 @@ BotRS 的所有重要更改都将记录在此文件中。
 
 ## [未发布]
 
-### 新增
-- 支持英文和中文的全面文档网站
-- 所有核心组件的 API 参考文档
-- 入门示例和教程
-- 配置指南和最佳实践
+## [0.10.0] - 2026-05-25
 
 ### 更改
-- 文档改进和重构
+- 对齐 botgo 的 channel、schedule、audio、announce 和 API permission DTO 零值 wire shape。
+- `PostAudio`、`post_audio` 和 `Context::post_audio` 现在使用 `AudioControl`；音频事件继续使用 `AudioAction`。
+- `AudioStatus` 现在按 botgo 的数字状态值进行序列化和反序列化。
+- 网关文档改为描述 botgo 风格固定重连节流，不再描述指数 backoff。
+
+### 修复
+- `ListSchedules` 现在总是发送 `since` 查询参数，与 botgo 行为一致。
 
 ## [0.9.0] - 2026-05-25
 

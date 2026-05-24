@@ -611,7 +611,7 @@ export RUST_LOG="botrs=info"
 
 ```toml
 [dependencies]
-botrs = "0.9.0"
+botrs = "0.10.0"
 tokio = { version = "1.0", features = ["full"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
