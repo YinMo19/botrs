@@ -47,7 +47,7 @@ cd my-qq-bot
 ```toml
 [dependencies]
 # BotRS 框架
-botrs = "0.3.0"
+botrs = "0.4.0"
 
 # 异步运行时
 tokio = { version = "1.0", features = ["full"] }
