@@ -400,7 +400,7 @@ export QQ_BOT_SECRET=your_secret
 2. **在 Cargo.toml 中添加依赖项：**
 ```toml
 [dependencies]
-botrs = "0.3.0"
+botrs = "0.4.0"
 tokio = { version = "1.0", features = ["full"] }
 async-trait = "0.1"
 tracing = "0.1"
