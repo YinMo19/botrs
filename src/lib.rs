@@ -16,6 +16,7 @@ pub mod interaction;
 pub mod manage;
 pub mod models;
 pub mod reaction;
+pub mod session_manager;
 pub mod token;
 pub mod version;
 
@@ -44,6 +45,11 @@ pub use models::*;
 pub use reaction::{
     Emoji as ReactionEmoji, MessageReactionPager, Reaction, ReactionTarget, ReactionTargetType,
     ReactionUsers,
+};
+pub use session_manager::{
+    CalcInterval, CanNotIdentify, CanNotIdentifyErrSet, CanNotResume, CanNotResumeErrSet,
+    ChanManager, CheckSessionLimit, NewSessionManager, Session as ManagedSession, SessionManager,
+    calc_interval, new_session_manager,
 };
 pub use token::Token;
 pub use version::version_string;
