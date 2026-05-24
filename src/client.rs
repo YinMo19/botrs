@@ -45,7 +45,7 @@ pub trait EventHandler: Send + Sync {
     async fn message_create(&self, _ctx: Context, _message: Message) {}
 
     /// Called when a direct message is created.
-    async fn direct_message_create(&self, _ctx: Context, _message: DirectMessage) {}
+    async fn direct_message_create(&self, _ctx: Context, _message: Message) {}
 
     /// Called when a direct message is deleted.
     async fn direct_message_delete(&self, _ctx: Context, _message: MessageDelete) {}
@@ -1828,7 +1828,7 @@ impl<H: EventHandler + 'static> Client<H> {
                     let event_id = event.id.unwrap_or_else(|| {
                         format!("DIRECT_MESSAGE_CREATE_{}", event.sequence.unwrap_or(0))
                     });
-                    let message = DirectMessage::from_data((*ctx.api).clone(), event_id, data);
+                    let message = Message::from_data((*ctx.api).clone(), event_id, data);
                     self.handler.direct_message_create(ctx, message).await;
                 }
             }

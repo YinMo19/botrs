@@ -216,7 +216,7 @@ async fn group_message_create(&self, ctx: Context, message: GroupMessage) {
 }
 
 // 处理私信
-async fn direct_message_create(&self, ctx: Context, message: DirectMessage) {
+async fn direct_message_create(&self, ctx: Context, message: Message) {
     // 处理私人消息
 }
 ```

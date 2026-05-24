@@ -258,7 +258,7 @@ BotRS 支持多种事件类型：
 ### 消息事件
 
 ```rust,no_run
-use botrs::{Message, DirectMessage, GroupMessage, C2CMessage, Context, EventHandler};
+use botrs::{Message, GroupMessage, C2CMessage, Context, EventHandler};
 use botrs::models::message::{MessageParams, GroupMessageParams, C2CMessageParams, DirectMessageParams};
 use tracing::info;
 
@@ -282,7 +282,7 @@ impl EventHandler for MyBot {
 ```
 
 ```rust,no_run
-use botrs::{DirectMessage, Context, EventHandler};
+use botrs::{Message, Context, EventHandler};
 use botrs::models::message::DirectMessageParams;
 use tracing::info;
 
@@ -291,7 +291,7 @@ struct MyBot;
 #[async_trait::async_trait]
 impl EventHandler for MyBot {
     // 私信事件
-    async fn direct_message_create(&self, ctx: Context, message: DirectMessage) {
+    async fn direct_message_create(&self, ctx: Context, message: Message) {
         if let Some(content) = &message.content {
             info!("Received DM: {}", content);
 

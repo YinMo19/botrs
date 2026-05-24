@@ -293,19 +293,13 @@ ctx.api.delete_guild_member_role(
 
 ```rust
 // Create private message session
-let dm_guild = ctx.api.create_direct_message_guild(
-    &ctx.token,
-    &CreateDirectMessageGuild {
-        recipient_id: user_id.clone(),
-        source_guild_id: guild_id.clone(),
-    }
-).await?;
+let dm_session = ctx.api.create_dms(&ctx.token, &guild_id, &user_id).await?;
 
 // Send private message
-let params = MessageParams::new_text("Hello! This is a private message.");
-let dm_message = ctx.api.post_direct_message(
+let params = DirectMessageParams::new_text("Hello! This is a private message.");
+let dm_message = ctx.api.post_dms_with_params(
     &ctx.token,
-    &dm_guild.guild_id,
+    dm_session.guild_id.as_deref().unwrap_or(&guild_id),
     params
 ).await?;
 

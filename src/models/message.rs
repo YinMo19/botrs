@@ -513,42 +513,9 @@ impl HasId for Message {
     }
 }
 
-/// Represents a direct message.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct DirectMessage {
-    /// The message's unique ID
-    pub id: Option<Snowflake>,
-    /// The message content
-    pub content: Option<String>,
-    /// The ID of the channel this message was sent in
-    pub channel_id: Option<Snowflake>,
-    /// The ID of the guild this message was sent in
-    pub guild_id: Option<Snowflake>,
-    /// Whether this is a direct message
-    pub direct_message: Option<bool>,
-    /// The author of this message
-    pub author: Option<DirectMessageUser>,
-    /// The member information of the author
-    pub member: Option<DirectMessageMember>,
-    /// Referenced message information
-    pub message_reference: Option<MessageReference>,
-    /// Attachments in this message
-    pub attachments: Vec<MessageAttachment>,
-    /// Global message sequence number
-    pub seq: Option<u64>,
-    /// Channel-specific message sequence number
-    pub seq_in_channel: Option<String>,
-    /// Source guild ID
-    pub src_guild_id: Option<Snowflake>,
-    /// When this message was sent
-    pub timestamp: Option<Timestamp>,
-    /// Event ID from the gateway
-    pub event_id: Option<String>,
-}
-
 /// Direct message session returned by the direct-message OpenAPI.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
-pub struct DirectMessageSession {
+pub struct DirectMessage {
     /// Guild ID of the DM session
     pub guild_id: Option<Snowflake>,
     /// Channel ID of the DM session
@@ -556,6 +523,9 @@ pub struct DirectMessageSession {
     /// Creation timestamp
     pub create_time: Option<String>,
 }
+
+/// Backward-compatible alias for the botgo direct-message session DTO.
+pub type DirectMessageSession = DirectMessage;
 
 /// Payload for creating a direct message session.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
@@ -577,105 +547,14 @@ impl DirectMessageToCreate {
 }
 
 impl DirectMessage {
-    /// Creates a new direct message.
+    /// Creates a new direct-message session.
     pub fn new() -> Self {
-        Self {
-            id: None,
-            content: None,
-            channel_id: None,
-            guild_id: None,
-            direct_message: None,
-            author: None,
-            member: None,
-            message_reference: None,
-            attachments: Vec::new(),
-            seq: None,
-            seq_in_channel: None,
-            src_guild_id: None,
-            timestamp: None,
-            event_id: None,
-        }
+        Self::default()
     }
 
-    /// Creates a new direct message from API data.
-    pub fn from_data(_api: crate::api::BotApi, event_id: String, data: serde_json::Value) -> Self {
-        Self {
-            id: data.get("id").and_then(|v| v.as_str()).map(String::from),
-            content: data
-                .get("content")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            channel_id: data
-                .get("channel_id")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            guild_id: data
-                .get("guild_id")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            direct_message: data.get("direct_message").and_then(|v| v.as_bool()),
-            author: data
-                .get("author")
-                .map(|v| DirectMessageUser::from_data(v.clone())),
-            member: data
-                .get("member")
-                .map(|v| DirectMessageMember::from_data(v.clone())),
-            message_reference: data
-                .get("message_reference")
-                .map(|v| MessageReference::from_data(v.clone())),
-            attachments: data
-                .get("attachments")
-                .and_then(|v| v.as_array())
-                .map(|arr| {
-                    arr.iter()
-                        .map(|v| MessageAttachment::from_data(v.clone()))
-                        .collect()
-                })
-                .unwrap_or_default(),
-            seq: data.get("seq").and_then(|v| v.as_u64()),
-            seq_in_channel: data
-                .get("seq_in_channel")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            src_guild_id: data
-                .get("src_guild_id")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            timestamp: data
-                .get("timestamp")
-                .and_then(|v| v.as_str())
-                .and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok())
-                .map(|dt| dt.with_timezone(&chrono::Utc)),
-            event_id: Some(event_id),
-        }
-    }
-
-    /// Reply to this direct message
-    pub async fn reply(
-        &self,
-        api: &crate::api::BotApi,
-        token: &crate::token::Token,
-        content: &str,
-    ) -> Result<crate::models::api::MessageResponse, crate::error::BotError> {
-        if let Some(guild_id) = &self.guild_id {
-            let params = DirectMessageParams {
-                content: Some(content.to_string()),
-                msg_id: self.id.clone(),
-                event_id: self.event_id.clone(),
-                ..Default::default()
-            };
-            api.post_dms_with_params(token, guild_id, params).await
-        } else {
-            Err(crate::error::BotError::InvalidData(
-                "Missing guild_id for DM reply".to_string(),
-            ))
-        }
-    }
-}
-
-impl Default for DirectMessage {
-    fn default() -> Self {
-        Self::new()
+    /// Creates a new direct-message session from API data.
+    pub fn from_data(data: serde_json::Value) -> Self {
+        serde_json::from_value(data).unwrap_or_default()
     }
 }
 
@@ -1314,6 +1193,32 @@ mod tests {
         assert!(!message.has_content());
         assert!(!message.has_attachments());
         assert!(!message.has_mentions());
+    }
+
+    #[test]
+    fn botgo_direct_message_is_session_dto() {
+        let session = DirectMessage::from_data(serde_json::json!({
+            "guild_id": "guild-1",
+            "channel_id": "channel-1",
+            "create_time": "2024-01-02T03:04:05+08:00",
+            "content": "ignored"
+        }));
+
+        assert_eq!(session.guild_id.as_deref(), Some("guild-1"));
+        assert_eq!(session.channel_id.as_deref(), Some("channel-1"));
+        assert_eq!(
+            session.create_time.as_deref(),
+            Some("2024-01-02T03:04:05+08:00")
+        );
+
+        let value = serde_json::to_value(&session).unwrap();
+        assert_eq!(value["guild_id"], serde_json::json!("guild-1"));
+        assert_eq!(value["channel_id"], serde_json::json!("channel-1"));
+        assert_eq!(
+            value["create_time"],
+            serde_json::json!("2024-01-02T03:04:05+08:00")
+        );
+        assert!(value.get("content").is_none());
     }
 
     #[test]

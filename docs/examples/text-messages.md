@@ -417,7 +417,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 Handling direct messages in guild contexts.
 
 ```rust
-use botrs::{Client, Context, DirectMessage, EventHandler, Intents, Ready, Token};
+use botrs::{Client, Context, EventHandler, Intents, Message, Ready, Token};
+use botrs::models::message::DirectMessageParams;
 
 struct DirectMessageHandler;
 
@@ -427,7 +428,7 @@ impl EventHandler for DirectMessageHandler {
         println!("DM bot {} is ready!", ready.user.username);
     }
 
-    async fn direct_message_create(&self, ctx: Context, message: DirectMessage) {
+    async fn direct_message_create(&self, ctx: Context, message: Message) {
         if let Some(content) = &message.content {
             println!("Received direct message: {}", content);
 
@@ -439,8 +440,11 @@ impl EventHandler for DirectMessageHandler {
                 _ => "Thanks for your message! Type 'help' for available commands.",
             };
 
-            if let Err(e) = message.reply(&ctx.api, &ctx.token, response).await {
-                eprintln!("Failed to reply to direct message: {}", e);
+            let params = DirectMessageParams::new_text(response);
+            if let Some(guild_id) = &message.guild_id {
+                if let Err(e) = ctx.api.post_dms_with_params(&ctx.token, guild_id, params).await {
+                    eprintln!("Failed to reply to direct message: {}", e);
+                }
             }
         }
     }

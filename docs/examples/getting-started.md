@@ -159,8 +159,9 @@ A bot that handles multiple types of events including guild and member events.
 ```rust
 use botrs::{
     Client, Context, EventHandler, Intents, Message, Ready, Token,
-    Guild, Channel, Member, GroupMessage, DirectMessage
+    Guild, Channel, Member, GroupMessage
 };
+use botrs::models::message::DirectMessageParams;
 use tracing::{info, warn};
 
 struct MultiEventBot;
@@ -201,10 +202,13 @@ impl EventHandler for MultiEventBot {
         }
     }
 
-    async fn direct_message_create(&self, ctx: Context, message: DirectMessage) {
+    async fn direct_message_create(&self, ctx: Context, message: Message) {
         if let Some(content) = &message.content {
             let response = format!("You said: {}", content);
-            let _ = message.reply(&ctx.api, &ctx.token, &response).await;
+            let params = DirectMessageParams::new_text(response);
+            if let Some(guild_id) = &message.guild_id {
+                let _ = ctx.api.post_dms_with_params(&ctx.token, guild_id, params).await;
+            }
         }
     }
 

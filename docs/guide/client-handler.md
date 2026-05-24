@@ -184,7 +184,7 @@ async fn message_create(&self, ctx: Context, message: Message) {
 }
 
 // Direct messages
-async fn direct_message_create(&self, ctx: Context, message: DirectMessage) {
+async fn direct_message_create(&self, ctx: Context, message: Message) {
     // Handle private messages
 }
 

@@ -417,7 +417,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 处理频道环境中的私信。
 
 ```rust
-use botrs::{Client, Context, DirectMessage, EventHandler, Intents, Ready, Token};
+use botrs::{Client, Context, EventHandler, Intents, Message, Ready, Token};
+use botrs::models::message::DirectMessageParams;
 
 struct DirectMessageHandler;
 
@@ -427,7 +428,7 @@ impl EventHandler for DirectMessageHandler {
         println!("私信机器人 {} 已准备就绪！", ready.user.username);
     }
 
-    async fn direct_message_create(&self, ctx: Context, message: DirectMessage) {
+    async fn direct_message_create(&self, ctx: Context, message: Message) {
         if let Some(content) = &message.content {
             println!("收到私信: {}", content);
 
@@ -439,8 +440,11 @@ impl EventHandler for DirectMessageHandler {
                 _ => "感谢你的消息！输入'帮助'查看可用命令。",
             };
 
-            if let Err(e) = message.reply(&ctx.api, &ctx.token, response).await {
-                eprintln!("回复私信失败: {}", e);
+            let params = DirectMessageParams::new_text(response);
+            if let Some(guild_id) = &message.guild_id {
+                if let Err(e) = ctx.api.post_dms_with_params(&ctx.token, guild_id, params).await {
+                    eprintln!("回复私信失败: {}", e);
+                }
             }
         }
     }

@@ -79,7 +79,7 @@ impl EventHandler for NewApiDemoHandler {
         }
     }
 
-    async fn direct_message_create(&self, ctx: botrs::Context, message: botrs::DirectMessage) {
+    async fn direct_message_create(&self, ctx: botrs::Context, message: botrs::Message) {
         let content = match &message.content {
             Some(content) => content.trim(),
             None => return,

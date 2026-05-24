@@ -377,11 +377,11 @@ async fn send_direct_message(
     content: &str
 ) -> Result<DirectMessage, BotError> {
     // 首先创建私信会话
-    let dm_session = api.create_direct_message_session(token, guild_id, user_id).await?;
+    let dm_session = api.create_dms(token, guild_id, user_id).await?;
     
     // 然后发送消息
-    let params = MessageParams::new_text(content);
-    api.post_direct_message_with_params(token, guild_id, &dm_session.channel_id, params).await
+    let params = DirectMessageParams::new_text(content);
+    api.post_dms_with_params(token, guild_id, params).await
 }
 ```
 
