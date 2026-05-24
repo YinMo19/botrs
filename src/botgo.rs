@@ -26,12 +26,18 @@ pub fn SelectOpenAPIVersion(version: APIVersion) -> Result<()> {
     }
 }
 
-pub fn NewOpenAPI(_app_id: impl Into<String>, _token: Token) -> BotApi {
-    BotApi::new(HttpClient::new(crate::DEFAULT_TIMEOUT, false).expect("valid default api client"))
+pub fn NewOpenAPI(_app_id: impl Into<String>, token: Token) -> BotApi {
+    BotApi::with_token(
+        HttpClient::new(crate::DEFAULT_TIMEOUT, false).expect("valid default api client"),
+        token,
+    )
 }
 
-pub fn NewSandboxOpenAPI(_app_id: impl Into<String>, _token: Token) -> BotApi {
-    BotApi::new(HttpClient::new(crate::DEFAULT_TIMEOUT, true).expect("valid sandbox api client"))
+pub fn NewSandboxOpenAPI(_app_id: impl Into<String>, token: Token) -> BotApi {
+    BotApi::with_token(
+        HttpClient::new(crate::DEFAULT_TIMEOUT, true).expect("valid sandbox api client"),
+        token,
+    )
 }
 
 pub fn SetLogger(logger: impl crate::log::Logger + 'static) {
@@ -70,5 +76,6 @@ mod tests {
         let token = Token::new("app", "secret");
         let api = NewSandboxOpenAPI("app", token);
         assert_eq!(api.Version(), APIv1);
+        assert!(api.token().is_some());
     }
 }
