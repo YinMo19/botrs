@@ -118,6 +118,7 @@ mod tests {
         let token = Token::new("app", "secret");
         let api = NewSandboxOpenAPI("app", token);
         assert_eq!(api.Version(), APIv1);
+        assert_eq!(api.GetAppID(), "app");
         assert!(api.token().is_some());
     }
 
