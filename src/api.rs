@@ -147,6 +147,7 @@ use crate::models::{
         HttpIdentity, HttpReady, HttpSession, WebhookValidationRequest, WebhookValidationResponse,
     },
 };
+use crate::options::{OpenApiOption, Options};
 use crate::reaction::{Emoji as ReactionEmoji, MessageReactionPager, ReactionUsers};
 use crate::token::Token;
 use base64::Engine;
@@ -289,6 +290,17 @@ impl BotApi {
                 "BotApi has no stored token; use NewOpenAPI/NewSandboxOpenAPI or explicit-token methods",
             )
         })
+    }
+
+    fn url_with_options(&self, path: &str, options: &Options) -> String {
+        options
+            .url
+            .clone()
+            .unwrap_or_else(|| format!("{}{}", self.http.base_url(), path))
+    }
+
+    fn no_options() -> Vec<OpenApiOption> {
+        Vec::new()
     }
 
     /// Passes through an arbitrary request to a full URL.
@@ -520,22 +532,126 @@ impl BotApi {
     /// Botgo-compatible single message fetch API.
     #[allow(non_snake_case)]
     pub async fn Message(&self, channel_id: &str, message_id: &str) -> Result<Message> {
-        self.get_message(self.token_required()?, channel_id, message_id)
+        self.Message_with_options(channel_id, message_id, Self::no_options())
             .await
+    }
+
+    /// Botgo-compatible single message fetch API with request options.
+    #[allow(non_snake_case)]
+    pub async fn Message_with_options<I, O>(
+        &self,
+        channel_id: &str,
+        message_id: &str,
+        options: I,
+    ) -> Result<Message>
+    where
+        I: IntoIterator<Item = O>,
+        O: Into<OpenApiOption>,
+    {
+        let opts = Options::from_options(options);
+        if opts.url.is_none() {
+            return self
+                .get_message(self.token_required()?, channel_id, message_id)
+                .await;
+        }
+        let path = format!("/channels/{channel_id}/messages/{message_id}");
+        let url = self.url_with_options(&path, &opts);
+        let response = self
+            .http
+            .request_json_url(
+                self.token_required()?,
+                Method::GET,
+                &url,
+                None::<&()>,
+                None::<&()>,
+            )
+            .await?;
+        Ok(serde_json::from_value(response)?)
     }
 
     /// Botgo-compatible message list API.
     #[allow(non_snake_case)]
     pub async fn Messages(&self, channel_id: &str, pager: &MessagesPager) -> Result<Vec<Message>> {
-        self.get_messages(self.token_required()?, channel_id, pager)
+        self.Messages_with_options(channel_id, pager, Self::no_options())
             .await
+    }
+
+    /// Botgo-compatible message list API with request options.
+    #[allow(non_snake_case)]
+    pub async fn Messages_with_options<I, O>(
+        &self,
+        channel_id: &str,
+        pager: &MessagesPager,
+        options: I,
+    ) -> Result<Vec<Message>>
+    where
+        I: IntoIterator<Item = O>,
+        O: Into<OpenApiOption>,
+    {
+        let opts = Options::from_options(options);
+        if opts.url.is_none() {
+            return self
+                .get_messages(self.token_required()?, channel_id, pager)
+                .await;
+        }
+        let path = format!("/channels/{channel_id}/messages");
+        let url = self.url_with_options(&path, &opts);
+        let params = pager.query_params();
+        let response = self
+            .http
+            .request_json_url(
+                self.token_required()?,
+                Method::GET,
+                &url,
+                if params.is_empty() {
+                    None
+                } else {
+                    Some(&params)
+                },
+                None::<&()>,
+            )
+            .await?;
+        Ok(serde_json::from_value(response)?)
     }
 
     /// Botgo-compatible channel message send API.
     #[allow(non_snake_case)]
     pub async fn PostMessage(&self, channel_id: &str, msg: &MessageToCreate) -> Result<Message> {
-        self.post_message_to_create(self.token_required()?, channel_id, msg)
+        self.PostMessage_with_options(channel_id, msg, Self::no_options())
             .await
+    }
+
+    /// Botgo-compatible channel message send API with request options.
+    #[allow(non_snake_case)]
+    pub async fn PostMessage_with_options<I, O>(
+        &self,
+        channel_id: &str,
+        msg: &MessageToCreate,
+        options: I,
+    ) -> Result<Message>
+    where
+        I: IntoIterator<Item = O>,
+        O: Into<OpenApiOption>,
+    {
+        let opts = Options::from_options(options);
+        if opts.url.is_none() {
+            return self
+                .post_message_to_create(self.token_required()?, channel_id, msg)
+                .await;
+        }
+        let path = format!("/channels/{channel_id}/messages");
+        let url = self.url_with_options(&path, &opts);
+        let response = self
+            .http
+            .request_json_url(
+                self.token_required()?,
+                Method::POST,
+                &url,
+                None::<&()>,
+                Some(msg),
+            )
+            .await?;
+        Ok(serde_json::from_value(response)?)
     }
 
     /// Botgo-compatible channel message edit API.
@@ -546,15 +662,89 @@ impl BotApi {
         message_id: &str,
         msg: &MessageToCreate,
     ) -> Result<Message> {
-        self.patch_message_to_create(self.token_required()?, channel_id, message_id, msg)
+        self.PatchMessage_with_options(channel_id, message_id, msg, Self::no_options())
             .await
+    }
+
+    /// Botgo-compatible channel message edit API with request options.
+    #[allow(non_snake_case)]
+    pub async fn PatchMessage_with_options<I, O>(
+        &self,
+        channel_id: &str,
+        message_id: &str,
+        msg: &MessageToCreate,
+        options: I,
+    ) -> Result<Message>
+    where
+        I: IntoIterator<Item = O>,
+        O: Into<OpenApiOption>,
+    {
+        let opts = Options::from_options(options);
+        if opts.url.is_none() {
+            return self
+                .patch_message_to_create(self.token_required()?, channel_id, message_id, msg)
+                .await;
+        }
+        let path = format!("/channels/{channel_id}/messages/{message_id}");
+        let url = self.url_with_options(&path, &opts);
+        let response = self
+            .http
+            .request_json_url(
+                self.token_required()?,
+                Method::PATCH,
+                &url,
+                None::<&()>,
+                Some(msg),
+            )
+            .await?;
+        Ok(serde_json::from_value(response)?)
     }
 
     /// Botgo-compatible channel message retract API.
     #[allow(non_snake_case)]
     pub async fn RetractMessage(&self, channel_id: &str, message_id: &str) -> Result<()> {
-        self.recall_message(self.token_required()?, channel_id, message_id, None)
+        self.RetractMessage_with_options(channel_id, message_id, Self::no_options())
             .await
+    }
+
+    /// Botgo-compatible channel message retract API with request options.
+    #[allow(non_snake_case)]
+    pub async fn RetractMessage_with_options<I, O>(
+        &self,
+        channel_id: &str,
+        message_id: &str,
+        options: I,
+    ) -> Result<()>
+    where
+        I: IntoIterator<Item = O>,
+        O: Into<OpenApiOption>,
+    {
+        let opts = Options::from_options(options);
+        if opts.url.is_none() {
+            return self
+                .recall_message(
+                    self.token_required()?,
+                    channel_id,
+                    message_id,
+                    Some(opts.hide_tip),
+                )
+                .await;
+        }
+        let path = format!("/channels/{channel_id}/messages/{message_id}");
+        let url = self.url_with_options(&path, &opts);
+        let query = opts
+            .hide_tip
+            .then(|| HashMap::from([("hidetip", "true".to_string())]));
+        self.http
+            .request_json_url(
+                self.token_required()?,
+                Method::DELETE,
+                &url,
+                query.as_ref(),
+                None::<&()>,
+            )
+            .await?;
+        Ok(())
     }
 
     /// Botgo-compatible setting guide API.
@@ -564,8 +754,49 @@ impl BotApi {
         channel_id: &str,
         at_user_ids: Vec<String>,
     ) -> Result<Message> {
-        self.post_setting_guide_message(self.token_required()?, channel_id, at_user_ids)
+        self.PostSettingGuide_with_options(channel_id, at_user_ids, Self::no_options())
             .await
+    }
+
+    /// Botgo-compatible setting guide API with request options.
+    #[allow(non_snake_case)]
+    pub async fn PostSettingGuide_with_options<I, O>(
+        &self,
+        channel_id: &str,
+        at_user_ids: Vec<String>,
+        options: I,
+    ) -> Result<Message>
+    where
+        I: IntoIterator<Item = O>,
+        O: Into<OpenApiOption>,
+    {
+        let opts = Options::from_options(options);
+        if opts.url.is_none() {
+            return self
+                .post_setting_guide_message(self.token_required()?, channel_id, at_user_ids)
+                .await;
+        }
+        let content = at_user_ids
+            .iter()
+            .map(|user_id| format!("<@{user_id}>"))
+            .collect::<String>();
+        let body = SettingGuideToCreate {
+            content: Some(content),
+            setting_guide: None,
+        };
+        let path = format!("/channels/{channel_id}/settingguide");
+        let url = self.url_with_options(&path, &opts);
+        let response = self
+            .http
+            .request_json_url(
+                self.token_required()?,
+                Method::POST,
+                &url,
+                None::<&()>,
+                Some(&body),
+            )
+            .await?;
+        Ok(serde_json::from_value(response)?)
     }
 
     /// Botgo-compatible group message send API.
@@ -575,9 +806,45 @@ impl BotApi {
         group_id: &str,
         msg: impl Into<ApiMessage>,
     ) -> Result<Message> {
-        let msg = msg.into();
-        self.post_group_api_message(self.token_required()?, group_id, &msg)
+        self.PostGroupMessage_with_options(group_id, msg, Self::no_options())
             .await
+    }
+
+    /// Botgo-compatible group message send API with request options.
+    #[allow(non_snake_case)]
+    pub async fn PostGroupMessage_with_options<I, O>(
+        &self,
+        group_id: &str,
+        msg: impl Into<ApiMessage>,
+        options: I,
+    ) -> Result<Message>
+    where
+        I: IntoIterator<Item = O>,
+        O: Into<OpenApiOption>,
+    {
+        let msg = msg.into();
+        let opts = Options::from_options(options);
+        if opts.url.is_none() {
+            return self
+                .post_group_api_message(self.token_required()?, group_id, &msg)
+                .await;
+        }
+        let route = match msg.send_type() {
+            SendType::RichMedia => format!("/v2/groups/{group_id}/files"),
+            _ => format!("/v2/groups/{group_id}/messages"),
+        };
+        let url = self.url_with_options(&route, &opts);
+        let response = self
+            .http
+            .request_json_url(
+                self.token_required()?,
+                Method::POST,
+                &url,
+                None::<&()>,
+                Some(&msg),
+            )
+            .await?;
+        Ok(serde_json::from_value(response)?)
     }
 
     /// Botgo-compatible C2C message send API.
@@ -587,23 +854,139 @@ impl BotApi {
         user_id: &str,
         msg: impl Into<ApiMessage>,
     ) -> Result<Message> {
-        let msg = msg.into();
-        self.post_c2c_api_message(self.token_required()?, user_id, &msg)
+        self.PostC2CMessage_with_options(user_id, msg, Self::no_options())
             .await
+    }
+
+    /// Botgo-compatible C2C message send API with request options.
+    #[allow(non_snake_case)]
+    pub async fn PostC2CMessage_with_options<I, O>(
+        &self,
+        user_id: &str,
+        msg: impl Into<ApiMessage>,
+        options: I,
+    ) -> Result<Message>
+    where
+        I: IntoIterator<Item = O>,
+        O: Into<OpenApiOption>,
+    {
+        let msg = msg.into();
+        let opts = Options::from_options(options);
+        if opts.url.is_none() {
+            return self
+                .post_c2c_api_message(self.token_required()?, user_id, &msg)
+                .await;
+        }
+        let route = match msg.send_type() {
+            SendType::RichMedia => format!("/v2/users/{user_id}/files"),
+            _ => format!("/v2/users/{user_id}/messages"),
+        };
+        let url = self.url_with_options(&route, &opts);
+        let response = self
+            .http
+            .request_json_url(
+                self.token_required()?,
+                Method::POST,
+                &url,
+                None::<&()>,
+                Some(&msg),
+            )
+            .await?;
+        Ok(serde_json::from_value(response)?)
     }
 
     /// Botgo-compatible C2C message retract API.
     #[allow(non_snake_case)]
     pub async fn RetractC2CMessage(&self, user_id: &str, message_id: &str) -> Result<()> {
-        self.retract_c2c_message(self.token_required()?, user_id, message_id, None)
+        self.RetractC2CMessage_with_options(user_id, message_id, Self::no_options())
             .await
+    }
+
+    /// Botgo-compatible C2C message retract API with request options.
+    #[allow(non_snake_case)]
+    pub async fn RetractC2CMessage_with_options<I, O>(
+        &self,
+        user_id: &str,
+        message_id: &str,
+        options: I,
+    ) -> Result<()>
+    where
+        I: IntoIterator<Item = O>,
+        O: Into<OpenApiOption>,
+    {
+        let opts = Options::from_options(options);
+        if opts.url.is_none() {
+            return self
+                .retract_c2c_message(
+                    self.token_required()?,
+                    user_id,
+                    message_id,
+                    Some(opts.hide_tip),
+                )
+                .await;
+        }
+        let path = format!("/v2/users/{user_id}/messages/{message_id}");
+        let url = self.url_with_options(&path, &opts);
+        let query = opts
+            .hide_tip
+            .then(|| HashMap::from([("hidetip", "true".to_string())]));
+        self.http
+            .request_json_url(
+                self.token_required()?,
+                Method::DELETE,
+                &url,
+                query.as_ref(),
+                None::<&()>,
+            )
+            .await?;
+        Ok(())
     }
 
     /// Botgo-compatible group message retract API.
     #[allow(non_snake_case)]
     pub async fn RetractGroupMessage(&self, group_id: &str, message_id: &str) -> Result<()> {
-        self.retract_group_message(self.token_required()?, group_id, message_id, None)
+        self.RetractGroupMessage_with_options(group_id, message_id, Self::no_options())
             .await
+    }
+
+    /// Botgo-compatible group message retract API with request options.
+    #[allow(non_snake_case)]
+    pub async fn RetractGroupMessage_with_options<I, O>(
+        &self,
+        group_id: &str,
+        message_id: &str,
+        options: I,
+    ) -> Result<()>
+    where
+        I: IntoIterator<Item = O>,
+        O: Into<OpenApiOption>,
+    {
+        let opts = Options::from_options(options);
+        if opts.url.is_none() {
+            return self
+                .retract_group_message(
+                    self.token_required()?,
+                    group_id,
+                    message_id,
+                    Some(opts.hide_tip),
+                )
+                .await;
+        }
+        let path = format!("/v2/groups/{group_id}/messages/{message_id}");
+        let url = self.url_with_options(&path, &opts);
+        let query = opts
+            .hide_tip
+            .then(|| HashMap::from([("hidetip", "true".to_string())]));
+        self.http
+            .request_json_url(
+                self.token_required()?,
+                Method::DELETE,
+                &url,
+                query.as_ref(),
+                None::<&()>,
+            )
+            .await?;
+        Ok(())
     }
 
     /// Botgo-compatible direct-message session creation API.
@@ -612,7 +995,37 @@ impl BotApi {
         &self,
         dm: &DirectMessageToCreate,
     ) -> Result<DirectMessageSession> {
-        self.create_direct_message(self.token_required()?, dm).await
+        self.CreateDirectMessage_with_options(dm, Self::no_options())
+            .await
+    }
+
+    /// Botgo-compatible direct-message session creation API with request options.
+    #[allow(non_snake_case)]
+    pub async fn CreateDirectMessage_with_options<I, O>(
+        &self,
+        dm: &DirectMessageToCreate,
+        options: I,
+    ) -> Result<DirectMessageSession>
+    where
+        I: IntoIterator<Item = O>,
+        O: Into<OpenApiOption>,
+    {
+        let opts = Options::from_options(options);
+        if opts.url.is_none() {
+            return self.create_direct_message(self.token_required()?, dm).await;
+        }
+        let url = self.url_with_options("/users/@me/dms", &opts);
+        let response = self
+            .http
+            .request_json_url(
+                self.token_required()?,
+                Method::POST,
+                &url,
+                None::<&()>,
+                Some(dm),
+            )
+            .await?;
+        Ok(serde_json::from_value(response)?)
     }
 
     /// Botgo-compatible direct-message send API.
@@ -622,18 +1035,91 @@ impl BotApi {
         dm: &DirectMessageSession,
         msg: &MessageToCreate,
     ) -> Result<Message> {
+        self.PostDirectMessage_with_options(dm, msg, Self::no_options())
+            .await
+    }
+
+    /// Botgo-compatible direct-message send API with request options.
+    #[allow(non_snake_case)]
+    pub async fn PostDirectMessage_with_options<I, O>(
+        &self,
+        dm: &DirectMessageSession,
+        msg: &MessageToCreate,
+        options: I,
+    ) -> Result<Message>
+    where
+        I: IntoIterator<Item = O>,
+        O: Into<OpenApiOption>,
+    {
         let guild_id = dm.guild_id.as_deref().ok_or_else(|| {
             crate::BotError::invalid_data("direct message session missing guild_id")
         })?;
-        self.post_direct_message(self.token_required()?, guild_id, msg)
-            .await
+        let opts = Options::from_options(options);
+        if opts.url.is_none() {
+            return self
+                .post_direct_message(self.token_required()?, guild_id, msg)
+                .await;
+        }
+        let path = format!("/dms/{guild_id}/messages");
+        let url = self.url_with_options(&path, &opts);
+        let response = self
+            .http
+            .request_json_url(
+                self.token_required()?,
+                Method::POST,
+                &url,
+                None::<&()>,
+                Some(msg),
+            )
+            .await?;
+        Ok(serde_json::from_value(response)?)
     }
 
     /// Botgo-compatible direct-message retract API.
     #[allow(non_snake_case)]
     pub async fn RetractDMMessage(&self, guild_id: &str, message_id: &str) -> Result<()> {
-        self.retract_dm_message(self.token_required()?, guild_id, message_id, None)
+        self.RetractDMMessage_with_options(guild_id, message_id, Self::no_options())
             .await
+    }
+
+    /// Botgo-compatible direct-message retract API with request options.
+    #[allow(non_snake_case)]
+    pub async fn RetractDMMessage_with_options<I, O>(
+        &self,
+        guild_id: &str,
+        message_id: &str,
+        options: I,
+    ) -> Result<()>
+    where
+        I: IntoIterator<Item = O>,
+        O: Into<OpenApiOption>,
+    {
+        let opts = Options::from_options(options);
+        if opts.url.is_none() {
+            return self
+                .retract_dm_message(
+                    self.token_required()?,
+                    guild_id,
+                    message_id,
+                    Some(opts.hide_tip),
+                )
+                .await;
+        }
+        let path = format!("/dms/{guild_id}/messages/{message_id}");
+        let url = self.url_with_options(&path, &opts);
+        let query = opts
+            .hide_tip
+            .then(|| HashMap::from([("hidetip", "true".to_string())]));
+        self.http
+            .request_json_url(
+                self.token_required()?,
+                Method::DELETE,
+                &url,
+                query.as_ref(),
+                None::<&()>,
+            )
+            .await?;
+        Ok(())
     }
 
     /// Botgo-compatible DM setting guide API.
@@ -643,11 +1129,50 @@ impl BotApi {
         dm: &DirectMessageSession,
         jump_guild_id: &str,
     ) -> Result<Message> {
+        self.PostDMSettingGuide_with_options(dm, jump_guild_id, Self::no_options())
+            .await
+    }
+
+    /// Botgo-compatible DM setting guide API with request options.
+    #[allow(non_snake_case)]
+    pub async fn PostDMSettingGuide_with_options<I, O>(
+        &self,
+        dm: &DirectMessageSession,
+        jump_guild_id: &str,
+        options: I,
+    ) -> Result<Message>
+    where
+        I: IntoIterator<Item = O>,
+        O: Into<OpenApiOption>,
+    {
         let guild_id = dm.guild_id.as_deref().ok_or_else(|| {
             crate::BotError::invalid_data("direct message session missing guild_id")
         })?;
-        self.post_dm_setting_guide_message(self.token_required()?, guild_id, jump_guild_id)
-            .await
+        let opts = Options::from_options(options);
+        if opts.url.is_none() {
+            return self
+                .post_dm_setting_guide_message(self.token_required()?, guild_id, jump_guild_id)
+                .await;
+        }
+        let body = SettingGuideToCreate {
+            content: None,
+            setting_guide: Some(SettingGuide {
+                guild_id: jump_guild_id.to_string(),
+            }),
+        };
+        let path = format!("/dms/{guild_id}/settingguide");
+        let url = self.url_with_options(&path, &opts);
+        let response = self
+            .http
+            .request_json_url(
+                self.token_required()?,
+                Method::POST,
+                &url,
+                None::<&()>,
+                Some(&body),
+            )
+            .await?;
+        Ok(serde_json::from_value(response)?)
     }
 
     /// Botgo-compatible audio control API.
@@ -3969,5 +4494,28 @@ mod tests {
         let api = api.SetDebug(true);
         assert!(api.http().debug_enabled());
         assert_eq!(api.TraceID(), "");
+    }
+
+    #[test]
+    fn botgo_options_build_custom_urls() {
+        let api = BotApi::new(HttpClient::new(30, false).unwrap());
+        let options = Options::from_options([crate::WithURL("https://example.com/custom")]);
+        assert_eq!(
+            api.url_with_options("/channels/1/messages", &options),
+            "https://example.com/custom"
+        );
+
+        let options = Options::default();
+        assert_eq!(
+            api.url_with_options("/channels/1/messages", &options),
+            format!("{}{}", crate::DEFAULT_API_URL, "/channels/1/messages")
+        );
+    }
+
+    #[test]
+    fn botgo_hide_tip_option_sets_flag() {
+        let options = Options::from_options([crate::WithHideTip()]);
+        assert!(options.hide_tip);
+        assert!(options.url.is_none());
     }
 }

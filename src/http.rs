@@ -159,6 +159,22 @@ impl HttpClient {
         self.request(Method::POST, token, path, query, body).await
     }
 
+    pub(crate) async fn request_json_url<Q, B>(
+        &self,
+        token: &Token,
+        method: Method,
+        url: &str,
+        query: Option<&Q>,
+        body: Option<&B>,
+    ) -> Result<serde_json::Value>
+    where
+        Q: Serialize + ?Sized,
+        B: Serialize + ?Sized,
+    {
+        self.request_json_url_with_headers(method, token, url, query, body, HeaderMap::new())
+            .await
+    }
+
     /// Makes a PUT request to the API.
     ///
     /// # Arguments
@@ -350,9 +366,26 @@ impl HttpClient {
         B: Serialize + ?Sized,
     {
         let url = format!("{}{}", self.base_url, path);
+        self.request_json_url_with_headers(method, token, &url, query, body, headers)
+            .await
+    }
+
+    async fn request_json_url_with_headers<Q, B>(
+        &self,
+        method: Method,
+        token: &Token,
+        url: &str,
+        query: Option<&Q>,
+        body: Option<&B>,
+        headers: HeaderMap,
+    ) -> Result<serde_json::Value>
+    where
+        Q: Serialize + ?Sized,
+        B: Serialize + ?Sized,
+    {
         debug!("Making {} request to: {}", method, url);
 
-        let mut request = self.client.request(method, &url);
+        let mut request = self.client.request(method, url);
 
         // Add authorization header
         let auth_header = token.authorization_header().await?;
