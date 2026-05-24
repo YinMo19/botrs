@@ -43,6 +43,12 @@ pub enum InteractionDataType {
     HttpProxy = 10,
     /// Inline keyboard button click
     InlineKeyboardButtonClick = 11,
+    /// C2C callback command click
+    CallbackCommandClick = 12,
+    /// Message feedback click
+    MessageFeedbackClick = 13,
+    /// Clear session click
+    ClearSessionClick = 14,
 }
 
 impl From<u8> for InteractionDataType {
@@ -51,6 +57,9 @@ impl From<u8> for InteractionDataType {
             9 => Self::ChatInputSearch,
             10 => Self::HttpProxy,
             11 => Self::InlineKeyboardButtonClick,
+            12 => Self::CallbackCommandClick,
+            13 => Self::MessageFeedbackClick,
+            14 => Self::ClearSessionClick,
             _ => Self::ChatInputSearch, // Default fallback
         }
     }
@@ -59,6 +68,8 @@ impl From<u8> for InteractionDataType {
 /// Resolved interaction data
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Resolved {
+    /// Search keyword
+    pub keyword: Option<String>,
     /// Button ID (for button interactions)
     pub button_id: Option<String>,
     /// Button data
@@ -67,14 +78,26 @@ pub struct Resolved {
     pub message_id: Option<String>,
     /// User ID
     pub user_id: Option<String>,
+    /// Request payload
+    pub request: Option<String>,
+    /// Member nickname
+    pub member_nick: Option<String>,
     /// Feature ID
     pub feature_id: Option<String>,
+    /// Message feedback option
+    pub feedback_opt: Option<String>,
+    /// Whether feedback option is checked
+    pub checked: Option<i32>,
 }
 
 impl Resolved {
     /// Create a new Resolved instance from JSON data
     pub fn new(data: &Value) -> Self {
         Self {
+            keyword: data
+                .get("keyword")
+                .and_then(|v| v.as_str())
+                .map(String::from),
             button_id: data
                 .get("button_id")
                 .and_then(|v| v.as_str())
@@ -91,10 +114,26 @@ impl Resolved {
                 .get("user_id")
                 .and_then(|v| v.as_str())
                 .map(String::from),
+            request: data
+                .get("request")
+                .and_then(|v| v.as_str())
+                .map(String::from),
+            member_nick: data
+                .get("member_nick")
+                .and_then(|v| v.as_str())
+                .map(String::from),
             feature_id: data
                 .get("feature_id")
                 .and_then(|v| v.as_str())
                 .map(String::from),
+            feedback_opt: data
+                .get("feedback_opt")
+                .and_then(|v| v.as_str())
+                .map(String::from),
+            checked: data
+                .get("checked")
+                .and_then(|v| v.as_i64())
+                .map(|v| v as i32),
         }
     }
 }
@@ -102,6 +141,8 @@ impl Resolved {
 /// Interaction data structure
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct InteractionData {
+    /// Interaction name
+    pub name: Option<String>,
     /// Data type
     pub data_type: Option<InteractionDataType>,
     /// Resolved data
@@ -112,6 +153,7 @@ impl InteractionData {
     /// Create a new InteractionData instance from JSON data
     pub fn new(data: &Value) -> Self {
         Self {
+            name: data.get("name").and_then(|v| v.as_str()).map(String::from),
             data_type: data
                 .get("type")
                 .and_then(|v| v.as_u64())
@@ -124,6 +166,48 @@ impl InteractionData {
     }
 }
 
+/// Search input resolved data.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+pub struct SearchInputResolved {
+    /// Search keyword
+    pub keyword: Option<String>,
+}
+
+/// Search interaction response.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+pub struct SearchRsp {
+    /// Search layouts
+    #[serde(default)]
+    pub layouts: Vec<SearchLayout>,
+}
+
+/// Search result layout.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+pub struct SearchLayout {
+    /// Layout type
+    pub layout_type: Option<u32>,
+    /// Action type
+    pub action_type: Option<u32>,
+    /// Layout title
+    pub title: Option<String>,
+    /// Search records
+    #[serde(default)]
+    pub records: Vec<SearchRecord>,
+}
+
+/// Search result record.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+pub struct SearchRecord {
+    /// Cover URL
+    pub cover: Option<String>,
+    /// Title
+    pub title: Option<String>,
+    /// Tips
+    pub tips: Option<String>,
+    /// Target URL
+    pub url: Option<String>,
+}
+
 /// Interaction structure representing user interactions
 #[derive(Debug, Clone, Serialize)]
 pub struct Interaction {
@@ -133,7 +217,7 @@ pub struct Interaction {
     /// Interaction ID
     pub id: Option<String>,
     /// Application ID
-    pub application_id: Option<u64>,
+    pub application_id: Option<String>,
     /// Interaction type
     pub interaction_type: Option<InteractionType>,
     /// Scene identifier
@@ -155,7 +239,7 @@ pub struct Interaction {
     /// Group member OpenID
     pub group_member_openid: Option<String>,
     /// Timestamp
-    pub timestamp: Option<u64>,
+    pub timestamp: Option<String>,
     /// Version
     pub version: Option<u64>,
 }
@@ -173,7 +257,11 @@ impl Interaction {
             api,
             event_id,
             id: data.get("id").and_then(|v| v.as_str()).map(String::from),
-            application_id: data.get("application_id").and_then(|v| v.as_u64()),
+            application_id: data.get("application_id").and_then(|v| {
+                v.as_str()
+                    .map(String::from)
+                    .or_else(|| v.as_u64().map(|value| value.to_string()))
+            }),
             interaction_type: data
                 .get("type")
                 .and_then(|v| v.as_u64())
@@ -204,7 +292,11 @@ impl Interaction {
                 .get("group_member_openid")
                 .and_then(|v| v.as_str())
                 .map(String::from),
-            timestamp: data.get("timestamp").and_then(|v| v.as_u64()),
+            timestamp: data.get("timestamp").and_then(|v| {
+                v.as_str()
+                    .map(String::from)
+                    .or_else(|| v.as_u64().map(|value| value.to_string()))
+            }),
             version: data.get("version").and_then(|v| v.as_u64()),
         }
     }
@@ -268,6 +360,9 @@ mod tests {
         assert_eq!(InteractionDataType::ChatInputSearch as u8, 9);
         assert_eq!(InteractionDataType::HttpProxy as u8, 10);
         assert_eq!(InteractionDataType::InlineKeyboardButtonClick as u8, 11);
+        assert_eq!(InteractionDataType::CallbackCommandClick as u8, 12);
+        assert_eq!(InteractionDataType::MessageFeedbackClick as u8, 13);
+        assert_eq!(InteractionDataType::ClearSessionClick as u8, 14);
     }
 
     #[test]
@@ -294,6 +389,18 @@ mod tests {
         assert_eq!(
             InteractionDataType::from(11),
             InteractionDataType::InlineKeyboardButtonClick
+        );
+        assert_eq!(
+            InteractionDataType::from(12),
+            InteractionDataType::CallbackCommandClick
+        );
+        assert_eq!(
+            InteractionDataType::from(13),
+            InteractionDataType::MessageFeedbackClick
+        );
+        assert_eq!(
+            InteractionDataType::from(14),
+            InteractionDataType::ClearSessionClick
         );
     }
 }

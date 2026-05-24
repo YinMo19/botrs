@@ -66,6 +66,7 @@ impl Intents {
                 | Self::PUBLIC_GUILD_MESSAGES
                 | Self::AUDIO_OR_LIVE_CHANNEL_MEMBER
                 | Self::OPEN_FORUM_EVENT
+                | Self::ENTER_AIO
                 | Self::PUBLIC_MESSAGES,
         }
     }
@@ -116,6 +117,9 @@ impl Intents {
 
     /// Open forum event intent - public forum events
     pub const OPEN_FORUM_EVENT: u32 = 1 << 18;
+
+    /// Enter AIO intent
+    pub const ENTER_AIO: u32 = 1 << 23;
 
     /// Public messages intent - group and C2C message events
     pub const PUBLIC_MESSAGES: u32 = 1 << 25;
@@ -197,6 +201,11 @@ impl Intents {
         self.with_intent(Self::OPEN_FORUM_EVENT)
     }
 
+    /// Enable enter AIO intent.
+    pub const fn with_enter_aio(self) -> Self {
+        self.with_intent(Self::ENTER_AIO)
+    }
+
     /// Enable public messages intent.
     pub const fn with_public_messages(self) -> Self {
         self.with_intent(Self::PUBLIC_MESSAGES)
@@ -260,6 +269,11 @@ impl Intents {
     /// Check if open forum event intent is enabled.
     pub const fn open_forum_event(self) -> bool {
         self.contains(Self::OPEN_FORUM_EVENT)
+    }
+
+    /// Check if enter AIO intent is enabled.
+    pub const fn enter_aio(self) -> bool {
+        self.contains(Self::ENTER_AIO)
     }
 
     /// Check if public messages intent is enabled.
@@ -330,6 +344,9 @@ impl fmt::Display for Intents {
         }
         if self.open_forum_event() {
             parts.push("OPEN_FORUM_EVENT");
+        }
+        if self.enter_aio() {
+            parts.push("ENTER_AIO");
         }
         if self.public_messages() {
             parts.push("PUBLIC_MESSAGES");

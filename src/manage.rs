@@ -88,6 +88,10 @@ pub struct C2CManageEvent {
     pub timestamp: Option<u64>,
     /// User OpenID
     pub openid: Option<String>,
+    /// User nickname
+    pub nick: Option<String>,
+    /// User avatar URL
+    pub avatar: Option<String>,
 }
 
 impl C2CManageEvent {
@@ -111,6 +115,11 @@ impl C2CManageEvent {
                 .get("openid")
                 .and_then(|v| v.as_str())
                 .map(String::from),
+            nick: data.get("nick").and_then(|v| v.as_str()).map(String::from),
+            avatar: data
+                .get("avatar")
+                .and_then(|v| v.as_str())
+                .map(String::from),
         }
     }
 
@@ -132,10 +141,78 @@ impl std::fmt::Display for C2CManageEvent {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "C2CManageEvent {{ event_id: {:?}, timestamp: {:?}, openid: {:?} }}",
-            self.event_id, self.timestamp, self.openid
+            "C2CManageEvent {{ event_id: {:?}, timestamp: {:?}, openid: {:?}, nick: {:?}, avatar: {:?} }}",
+            self.event_id, self.timestamp, self.openid, self.nick, self.avatar
         )
     }
+}
+
+/// Event emitted when a user enters AIO.
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct EnterAioEvent {
+    /// User OpenID
+    pub user_openid: Option<String>,
+    /// Source from which the user entered AIO
+    pub from_source: Option<String>,
+    /// Event ID
+    #[serde(skip)]
+    pub event_id: Option<String>,
+}
+
+impl EnterAioEvent {
+    /// Creates a new EnterAioEvent from gateway data.
+    pub fn new(event_id: Option<String>, data: &serde_json::Value) -> Self {
+        Self {
+            user_openid: data
+                .get("user_openid")
+                .and_then(|v| v.as_str())
+                .map(String::from),
+            from_source: data
+                .get("from_source")
+                .and_then(|v| v.as_str())
+                .map(String::from),
+            event_id,
+        }
+    }
+}
+
+/// Subscribe message status event data.
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct SubscribeMessageStatusData {
+    /// Group OpenID, present for group subscription messages
+    pub group_openid: Option<String>,
+    /// User OpenID, present for C2C subscription messages
+    pub openid: Option<String>,
+    /// Template authorization results
+    #[serde(default)]
+    pub result: Vec<SubscribeMsgTemplateResult>,
+    /// Event ID
+    #[serde(skip)]
+    pub event_id: Option<String>,
+}
+
+impl SubscribeMessageStatusData {
+    /// Creates a subscribe status event from gateway data.
+    pub fn new(event_id: Option<String>, data: &serde_json::Value) -> Self {
+        let mut event = serde_json::from_value::<Self>(data.clone()).unwrap_or_default();
+        event.event_id = event_id;
+        event
+    }
+}
+
+/// Subscribe template authorization result.
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct SubscribeMsgTemplateResult {
+    /// Official template ID
+    pub template_id: Option<i32>,
+    /// Custom template ID
+    pub custom_template_id: Option<String>,
+    /// Authorization operation, 1 allow and 2 reject
+    pub op: Option<u32>,
+    /// Subscription ID
+    pub subscribe_id: Option<String>,
+    /// Status update timestamp
+    pub update_ts: Option<u64>,
 }
 
 /// Management event type enumeration
