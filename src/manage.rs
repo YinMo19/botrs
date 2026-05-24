@@ -76,6 +76,29 @@ impl std::fmt::Display for GroupManageEvent {
     }
 }
 
+/// C2C friend event payload matching botgo's DTO.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+pub struct C2CFriendData {
+    /// User OpenID
+    pub openid: String,
+    /// Add/delete timestamp
+    #[serde(default)]
+    pub timestamp: u64,
+    /// User nickname, currently filled by upstream when available
+    #[serde(default)]
+    pub nick: String,
+    /// User avatar URL, currently filled by upstream when available
+    #[serde(default)]
+    pub avatar: String,
+}
+
+impl C2CFriendData {
+    /// Creates a friend event DTO from gateway data.
+    pub fn new(data: &serde_json::Value) -> Self {
+        serde_json::from_value(data.clone()).unwrap_or_default()
+    }
+}
+
 /// C2C (Client-to-Client) management event structure
 #[derive(Debug, Clone, Serialize)]
 pub struct C2CManageEvent {
@@ -93,8 +116,6 @@ pub struct C2CManageEvent {
     /// User avatar URL
     pub avatar: Option<String>,
 }
-
-pub type C2CFriendData = C2CManageEvent;
 
 impl C2CManageEvent {
     /// Create a new C2CManageEvent instance
