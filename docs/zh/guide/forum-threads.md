@@ -102,7 +102,10 @@ impl EventHandler for ForumBot {
         println!("新话题创建: {}", thread.thread_info.thread_id);
         
         // 欢迎新话题
-        let welcome_msg = format!("欢迎来到新话题：{}", thread.thread_info.title);
+        let welcome_msg = format!(
+            "欢迎来到新话题：{}",
+            thread.thread_info.title.as_deref().unwrap_or("未命名话题")
+        );
         if let Err(e) = ctx.send_message(&thread.thread_info.channel_id, &welcome_msg).await {
             eprintln!("发送欢迎消息失败: {}", e);
         }
@@ -415,7 +418,10 @@ impl EventHandler for ForumBot {
         println!("新话题创建: {}", thread.thread_info.thread_id);
         
         // 发送欢迎消息
-        let welcome_msg = format!("欢迎来到新话题：{}", thread.thread_info.title);
+        let welcome_msg = format!(
+            "欢迎来到新话题：{}",
+            thread.thread_info.title.as_deref().unwrap_or("未命名话题")
+        );
         if let Err(e) = ctx.send_message(&thread.thread_info.channel_id, &welcome_msg).await {
             eprintln!("发送欢迎消息失败: {}", e);
         }

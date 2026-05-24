@@ -312,13 +312,13 @@ impl Content {
     }
 }
 
-/// Thread info structure
-#[derive(Debug, Clone, Serialize, Deserialize)]
+/// Thread info structure matching botgo's forum event DTO.
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct ThreadInfo {
     /// Thread title
-    pub title: Title,
+    pub title: Option<String>,
     /// Thread content
-    pub content: Content,
+    pub content: Option<String>,
     /// Thread ID
     pub thread_id: Option<String>,
     /// Creation date and time
@@ -328,30 +328,7 @@ pub struct ThreadInfo {
 impl ThreadInfo {
     /// Create a new ThreadInfo instance
     pub fn new(data: &Value) -> Self {
-        let title_data = data
-            .get("title")
-            .and_then(|v| v.as_str())
-            .and_then(|s| serde_json::from_str(s).ok())
-            .unwrap_or_default();
-
-        let content_data = data
-            .get("content")
-            .and_then(|v| v.as_str())
-            .and_then(|s| serde_json::from_str(s).ok())
-            .unwrap_or_default();
-
-        Self {
-            title: Title::new(&title_data),
-            content: Content::new(&content_data),
-            thread_id: data
-                .get("thread_id")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            date_time: data
-                .get("date_time")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-        }
+        serde_json::from_value(data.clone()).unwrap_or_default()
     }
 }
 
@@ -686,5 +663,34 @@ mod tests {
         });
         let text = Text::new(&data);
         assert_eq!(text.text, Some("Hello, world!".to_string()));
+    }
+
+    #[test]
+    fn botgo_thread_info_keeps_title_and_content_as_strings() {
+        let data = serde_json::json!({
+            "thread_id": "thread-1",
+            "title": "{\"paragraphs\":[]}",
+            "content": "{\"paragraphs\":[{\"elems\":[]}]}",
+            "date_time": "2024-01-02T03:04:05+08:00"
+        });
+
+        let thread_info = ThreadInfo::new(&data);
+        assert_eq!(thread_info.thread_id.as_deref(), Some("thread-1"));
+        assert_eq!(thread_info.title.as_deref(), Some("{\"paragraphs\":[]}"));
+        assert_eq!(
+            thread_info.content.as_deref(),
+            Some("{\"paragraphs\":[{\"elems\":[]}]}")
+        );
+        assert_eq!(
+            thread_info.date_time.as_deref(),
+            Some("2024-01-02T03:04:05+08:00")
+        );
+
+        let value = serde_json::to_value(&thread_info).unwrap();
+        assert_eq!(value["title"], serde_json::json!("{\"paragraphs\":[]}"));
+        assert_eq!(
+            value["content"],
+            serde_json::json!("{\"paragraphs\":[{\"elems\":[]}]}")
+        );
     }
 }

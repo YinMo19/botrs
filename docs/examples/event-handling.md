@@ -240,15 +240,36 @@ impl EventHandler for ComprehensiveBot {
     }
 
     async fn open_forum_thread_create(&self, _ctx: Context, thread: OpenThread) {
-        info!("🧵 New forum thread created: {}", thread.thread_info.title);
+        info!(
+            "🧵 New forum thread created: {}",
+            thread
+                .thread_info
+                .as_ref()
+                .and_then(|info| info.title.as_deref())
+                .unwrap_or("Untitled")
+        );
     }
 
     async fn open_forum_thread_update(&self, _ctx: Context, thread: OpenThread) {
-        info!("🔄 Forum thread updated: {}", thread.thread_info.title);
+        info!(
+            "🔄 Forum thread updated: {}",
+            thread
+                .thread_info
+                .as_ref()
+                .and_then(|info| info.title.as_deref())
+                .unwrap_or("Untitled")
+        );
     }
 
     async fn open_forum_thread_delete(&self, _ctx: Context, thread: OpenThread) {
-        info!("🗑️ Forum thread deleted: {}", thread.thread_info.title);
+        info!(
+            "🗑️ Forum thread deleted: {}",
+            thread
+                .thread_info
+                .as_ref()
+                .and_then(|info| info.title.as_deref())
+                .unwrap_or("Untitled")
+        );
     }
 
     async fn error(&self, error: BotError) {
