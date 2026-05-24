@@ -67,9 +67,7 @@ impl EventHandler for ApiPermissionHandler {
             match ctx.api.get_permissions(&ctx.token, _guild_id).await {
                 Ok(apis) => {
                     for api in apis {
-                        let desc = api.desc.as_deref().unwrap_or("Unknown");
-                        let auth_status = api.auth_status.unwrap_or(0);
-                        info!("api: {}, status: {}", desc, auth_status);
+                        info!("api: {}, status: {}", api.desc, api.auth_status);
                     }
                 }
                 Err(e) => {
@@ -95,9 +93,7 @@ impl EventHandler for ApiPermissionHandler {
                 .await
             {
                 Ok(demand) => {
-                    let title = demand.title.as_deref().unwrap_or("Unknown");
-                    let desc = &demand.desc;
-                    info!("api title: {}, desc: {}", title, desc);
+                    info!("api title: {}, desc: {}", demand.title, demand.desc);
                 }
                 Err(e) => {
                     warn!("Failed to post permission demand: {}", e);
