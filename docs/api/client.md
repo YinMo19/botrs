@@ -163,7 +163,7 @@ Default connection settings:
 - **WebSocket URL**: `wss://api.sgroup.qq.com/websocket`
 - **Timeout**: 30 seconds for HTTP requests
 - **Heartbeat**: Automatic based on server requirements
-- **Reconnection**: Automatic with exponential backoff
+- **Reconnection**: Automatic with botgo-style fixed session start throttling
 
 ## Error Handling
 
