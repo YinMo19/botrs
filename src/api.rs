@@ -332,6 +332,19 @@ impl BotApi {
         Vec::new()
     }
 
+    fn parse_message_response(response: Value) -> Result<Message> {
+        if response
+            .get("id")
+            .and_then(Value::as_str)
+            .unwrap_or_default()
+            .is_empty()
+            && let Some(message) = response.get("message")
+        {
+            return serde_json::from_value(message.clone()).map_err(Into::into);
+        }
+        serde_json::from_value(response).map_err(Into::into)
+    }
+
     /// Passes through an arbitrary request to a full URL.
     pub async fn transport<B>(
         &self,
@@ -2297,7 +2310,7 @@ impl BotApi {
         debug!("Getting message {} in channel {}", message_id, channel_id);
         let path = format!("/channels/{channel_id}/messages/{message_id}");
         let response = self.http.get(token, &path, None::<&()>).await?;
-        Ok(serde_json::from_value(response)?)
+        Self::parse_message_response(response)
     }
 
     /// Gets channel messages using botgo-compatible pagination.
@@ -4555,5 +4568,33 @@ mod tests {
         let options = Options::from_options([crate::WithHideTip()]);
         assert!(options.hide_tip);
         assert!(options.url.is_none());
+    }
+
+    #[test]
+    fn botgo_message_response_accepts_legacy_wrapper() {
+        let message = BotApi::parse_message_response(serde_json::json!({
+            "message": {
+                "id": "msg-1",
+                "content": "wrapped",
+                "channel_id": "channel-1"
+            }
+        }))
+        .unwrap();
+
+        assert_eq!(message.id.as_deref(), Some("msg-1"));
+        assert_eq!(message.content.as_deref(), Some("wrapped"));
+        assert_eq!(message.channel_id.as_deref(), Some("channel-1"));
+    }
+
+    #[test]
+    fn botgo_message_response_keeps_direct_shape() {
+        let message = BotApi::parse_message_response(serde_json::json!({
+            "id": "msg-2",
+            "content": "direct"
+        }))
+        .unwrap();
+
+        assert_eq!(message.id.as_deref(), Some("msg-2"));
+        assert_eq!(message.content.as_deref(), Some("direct"));
     }
 }
