@@ -6,7 +6,10 @@
 use crate::error::{BotError, Result, http_error_from_status};
 use crate::models::api::{ApiError, RateLimit};
 use crate::token::Token;
-use reqwest::{Client, Method, Response, StatusCode, header::HeaderMap};
+use reqwest::{
+    Client, Method, Response, StatusCode,
+    header::{HeaderMap, HeaderValue},
+};
 use serde::Serialize;
 use serde_json::Value;
 use std::sync::{Arc, RwLock};
@@ -28,6 +31,8 @@ pub struct HttpClient {
     last_trace_id: Arc<RwLock<Option<String>>>,
     /// Whether verbose HTTP debug logging is enabled.
     debug: bool,
+    /// OpenAPI instance app ID used by botgo's X-Union-Appid header.
+    union_app_id: Option<String>,
 }
 
 impl HttpClient {
@@ -65,6 +70,7 @@ impl HttpClient {
             timeout: Duration::from_secs(timeout),
             last_trace_id: Arc::new(RwLock::new(None)),
             debug: false,
+            union_app_id: None,
         })
     }
 
@@ -76,6 +82,7 @@ impl HttpClient {
             timeout,
             last_trace_id: Arc::clone(&self.last_trace_id),
             debug,
+            union_app_id: self.union_app_id.clone(),
         }
     }
 
@@ -107,6 +114,14 @@ impl HttpClient {
                 client
             }
         })
+    }
+
+    /// Returns a client that sends botgo's X-Union-Appid header for OpenAPI calls.
+    pub fn with_union_app_id(&self, app_id: impl Into<String>) -> Self {
+        Self {
+            union_app_id: Some(app_id.into()),
+            ..self.clone()
+        }
     }
 
     /// Makes a GET request to the API.
@@ -469,6 +484,18 @@ impl HttpClient {
                 BotError::internal(format!("invalid authorization header: {err}"))
             })?,
         );
+        let app_id = self
+            .union_app_id
+            .as_deref()
+            .unwrap_or_else(|| token.app_id());
+        if !app_id.is_empty() {
+            headers.insert(
+                "X-Union-Appid",
+                HeaderValue::from_str(app_id).map_err(|err| {
+                    BotError::internal(format!("invalid X-Union-Appid header: {err}"))
+                })?,
+            );
+        }
         Ok(headers)
     }
 
@@ -705,6 +732,11 @@ impl HttpClient {
         self.debug
     }
 
+    /// Returns the app ID configured for botgo's X-Union-Appid header.
+    pub fn union_app_id(&self) -> Option<&str> {
+        self.union_app_id.as_deref()
+    }
+
     /// Closes the HTTP client and cleans up resources.
     pub async fn close(&self) {
         // reqwest::Client doesn't need explicit cleanup
@@ -783,5 +815,51 @@ mod tests {
         client.store_trace_id(&headers);
 
         assert_eq!(client.trace_id(), "trace-123");
+    }
+
+    #[tokio::test]
+    async fn authorized_headers_include_botgo_union_app_id() {
+        let client = HttpClient::new(30, false)
+            .unwrap()
+            .with_union_app_id("openapi-app");
+        let token = Token::new("token-app", "secret");
+        token.set_cached_access_token_for_test("cached-token").await;
+
+        let headers = client
+            .authorized_headers(&token, reqwest::header::HeaderMap::new())
+            .await
+            .unwrap();
+
+        assert_eq!(
+            headers
+                .get("Authorization")
+                .and_then(|value| value.to_str().ok()),
+            Some("QQBot cached-token")
+        );
+        assert_eq!(
+            headers
+                .get("X-Union-Appid")
+                .and_then(|value| value.to_str().ok()),
+            Some("openapi-app")
+        );
+    }
+
+    #[tokio::test]
+    async fn authorized_headers_fall_back_to_token_app_id() {
+        let client = HttpClient::new(30, false).unwrap();
+        let token = Token::new("token-app", "secret");
+        token.set_cached_access_token_for_test("cached-token").await;
+
+        let headers = client
+            .authorized_headers(&token, reqwest::header::HeaderMap::new())
+            .await
+            .unwrap();
+
+        assert_eq!(
+            headers
+                .get("X-Union-Appid")
+                .and_then(|value| value.to_str().ok()),
+            Some("token-app")
+        );
     }
 }

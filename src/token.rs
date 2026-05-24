@@ -242,6 +242,13 @@ impl Token {
         self.state.lock().await.expires_in
     }
 
+    #[cfg(test)]
+    pub(crate) async fn set_cached_access_token_for_test(&self, access_token: impl Into<String>) {
+        let mut state = self.state.lock().await;
+        state.access_token = Some(access_token.into());
+        state.expires_at = Some(u64::MAX);
+    }
+
     /// Validates that the token has non-empty app ID and secret.
     ///
     /// # Returns
