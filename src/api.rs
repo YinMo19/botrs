@@ -205,9 +205,10 @@ impl BotApi {
 
     /// Creates a Bot API client that carries its token like botgo's OpenAPI.
     pub fn with_token(http: HttpClient, token: Token) -> Self {
+        let app_id = token.app_id().to_string();
         Self {
-            http,
-            app_id: token.app_id().to_string(),
+            http: http.with_union_app_id(&app_id),
+            app_id,
             token: Some(token),
         }
     }
@@ -219,9 +220,13 @@ impl BotApi {
         token: Token,
         in_sandbox: bool,
     ) -> Result<Self> {
+        let app_id = bot_app_id.into();
         Ok(Self {
-            http: self.http.with_sandbox(in_sandbox)?,
-            app_id: bot_app_id.into(),
+            http: self
+                .http
+                .with_sandbox(in_sandbox)?
+                .with_union_app_id(&app_id),
+            app_id,
             token: Some(token),
         })
     }
@@ -4516,6 +4521,7 @@ mod tests {
         assert_eq!(APIVersionString(api.version()), "v1");
         assert_eq!(token.app_id(), "app-id");
         assert_eq!(api.GetAppID(), "app-id");
+        assert_eq!(api.http().union_app_id(), Some("app-id"));
         assert!(api.http().is_sandbox());
 
         let api = api.WithTimeout(Duration::from_secs(7)).unwrap();
