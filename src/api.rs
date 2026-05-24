@@ -2204,10 +2204,10 @@ impl BotApi {
         user_ids: Vec<String>,
     ) -> Result<Channel> {
         let mut value = value.clone();
-        value.private_type = Some(PrivateType::AdminAndSpecifiedMembers);
+        value.private_type = Some(PrivateType::AdminAndMember);
         if !user_ids.is_empty() {
             value.private_user_ids = Some(user_ids);
-            value.private_type = Some(PrivateType::AdminOnly);
+            value.private_type = Some(PrivateType::OnlyAdmin);
         }
         self.post_channel(token, guild_id, &value).await
     }
