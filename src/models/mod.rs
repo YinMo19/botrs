@@ -15,6 +15,7 @@ pub mod permission;
 pub mod robot;
 pub mod schedule;
 pub mod user;
+pub mod webhook;
 
 // Re-export commonly used types
 pub use announce::*;
@@ -29,6 +30,7 @@ pub use permission::*;
 pub use robot::*;
 pub use schedule::*;
 pub use user::*;
+pub use webhook::*;
 
 // Re-export specific types for convenience
 pub use guild::{Guild, Member, Role};
