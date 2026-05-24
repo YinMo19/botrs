@@ -136,6 +136,7 @@ use crate::models::{
     message_setting::MessageSetting,
     permission::{APIPermission, APIPermissionDemand, APIPermissionDemandIdentify},
     schedule::{RemindType, Schedule},
+    webhook::{HttpIdentity, HttpReady, HttpSession},
 };
 use crate::reaction::ReactionUsers;
 use crate::token::Token;
@@ -2607,6 +2608,60 @@ impl BotApi {
         let path = format!("/channels/{channel_id}/schedules/{schedule_id}");
         let response = self.http.delete(token, &path, None::<&()>).await?;
         Ok(response)
+    }
+
+    /// Creates a new HTTP webhook session.
+    pub async fn create_session(
+        &self,
+        token: &Token,
+        identity: &HttpIdentity,
+    ) -> Result<HttpReady> {
+        debug!("Creating HTTP webhook session");
+        let response = self
+            .http
+            .post(
+                token,
+                "/gateway/webhook/sessions",
+                None::<&()>,
+                Some(identity),
+            )
+            .await?;
+        Ok(serde_json::from_value(response)?)
+    }
+
+    /// Checks HTTP webhook session health.
+    pub async fn check_sessions(&self, token: &Token) -> Result<Vec<HttpSession>> {
+        debug!("Checking HTTP webhook sessions");
+        let mut params = HashMap::new();
+        params.insert("action", "check");
+        let response = self
+            .http
+            .patch(
+                token,
+                "/gateway/webhook/sessions",
+                Some(&params),
+                None::<&()>,
+            )
+            .await?;
+        Ok(serde_json::from_value(response)?)
+    }
+
+    /// Lists active HTTP webhook sessions.
+    pub async fn session_list(&self, token: &Token) -> Result<Vec<HttpSession>> {
+        debug!("Listing HTTP webhook sessions");
+        let response = self
+            .http
+            .get(token, "/gateway/webhook/sessions", None::<&()>)
+            .await?;
+        Ok(serde_json::from_value(response)?)
+    }
+
+    /// Removes an HTTP webhook session.
+    pub async fn remove_session(&self, token: &Token, session_id: &str) -> Result<()> {
+        debug!("Removing HTTP webhook session {}", session_id);
+        let path = format!("/gateway/webhook/sessions/{session_id}");
+        self.http.delete(token, &path, None::<&()>).await?;
+        Ok(())
     }
 
     /// Gets the HTTP client reference.

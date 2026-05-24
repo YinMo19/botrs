@@ -23,6 +23,7 @@ use crate::models::guild::{
     MemberDeleteOptions, UpdateGuildMute, UpdateGuildMuteResponse,
 };
 use crate::models::message::{MessagePagerType, MessagesPager};
+use crate::models::webhook::{HttpIdentity, HttpReady, HttpSession};
 use crate::models::*;
 use crate::reaction::Reaction;
 use crate::token::Token;
@@ -1401,6 +1402,26 @@ impl Context {
     /// Clears all guild announcements.
     pub async fn clean_guild_announces(&self, guild_id: &str) -> Result<()> {
         self.api.clean_guild_announces(&self.token, guild_id).await
+    }
+
+    /// Creates a new HTTP webhook session.
+    pub async fn create_session(&self, identity: &HttpIdentity) -> Result<HttpReady> {
+        self.api.create_session(&self.token, identity).await
+    }
+
+    /// Checks HTTP webhook session health.
+    pub async fn check_sessions(&self) -> Result<Vec<HttpSession>> {
+        self.api.check_sessions(&self.token).await
+    }
+
+    /// Lists active HTTP webhook sessions.
+    pub async fn session_list(&self) -> Result<Vec<HttpSession>> {
+        self.api.session_list(&self.token).await
+    }
+
+    /// Removes an HTTP webhook session.
+    pub async fn remove_session(&self, session_id: &str) -> Result<()> {
+        self.api.remove_session(&self.token, session_id).await
     }
 }
 
