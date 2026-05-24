@@ -1201,6 +1201,14 @@ pub struct Ark {
     pub kv: Option<Vec<ArkKv>>,
 }
 
+/// Botgo-compatible Ark message wrapper.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
+pub struct MessageArk {
+    /// Ark payload
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ark: Option<Ark>,
+}
+
 /// Ark key-value pair.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ArkKv {
@@ -1484,17 +1492,41 @@ pub struct KeyboardPayload {
     pub content: serde_json::Value,
 }
 
+pub type Markdown = MarkdownPayload;
+pub type MarkdownParams = MarkdownParam;
+
 /// Markdown message payload.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct MarkdownPayload {
     /// Template ID
-    pub template_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub template_id: Option<i32>,
     /// Custom template ID
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_template_id: Option<String>,
     /// Template parameters
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub params: Option<Vec<MarkdownParam>>,
     /// Markdown content
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub content: Option<String>,
+    /// Markdown style
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub style: Option<MarkdownStyle>,
+    /// Markdown guide message
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub process_msg: Option<String>,
+}
+
+/// Markdown style.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+pub struct MarkdownStyle {
+    /// Body font size, for example small/middle/large.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub main_font_size: Option<String>,
+    /// Layout, for example hide_avatar_and_center.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub layout: Option<String>,
 }
 
 /// Markdown parameter.
