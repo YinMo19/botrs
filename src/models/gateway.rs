@@ -140,7 +140,7 @@ pub struct GatewayEvent {
 }
 
 /// Botgo-compatible websocket payload.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WSPayload {
     #[serde(flatten)]
     pub base: WSPayloadBase,
@@ -148,6 +148,14 @@ pub struct WSPayload {
     pub data: Option<serde_json::Value>,
     #[serde(skip)]
     pub raw_message: Option<Vec<u8>>,
+    #[serde(skip)]
+    pub session: Option<crate::session_manager::Session>,
+}
+
+impl PartialEq for WSPayload {
+    fn eq(&self, other: &Self) -> bool {
+        self.base == other.base && self.data == other.data && self.raw_message == other.raw_message
+    }
 }
 
 /// Botgo-compatible websocket payload base.
@@ -174,6 +182,7 @@ impl From<GatewayEvent> for WSPayload {
             },
             data: event.data,
             raw_message: None,
+            session: None,
         }
     }
 }
@@ -475,7 +484,7 @@ pub type WSForumAuditData = crate::forum::ForumAuditResult;
 pub type WSInteractionData = crate::interaction::Interaction;
 pub type WSGroupATMessageData = crate::models::message::Message;
 pub type WSC2CMessageData = crate::models::message::Message;
-pub type WSC2CFriendData = crate::manage::C2CManageEvent;
+pub type WSC2CFriendData = crate::manage::C2CFriendData;
 pub type WSSubscribeMsgStatus = crate::manage::SubscribeMessageStatusData;
 pub type WSEnterAIOData = crate::manage::EnterAioEvent;
 
@@ -514,5 +523,31 @@ mod tests {
             EventToIntent([EventAtMessageCreate, EventForumAuditResult]),
             IntentGuildAtMessage | IntentForum
         );
+    }
+
+    #[test]
+    fn websocket_payload_keeps_botgo_session_out_of_json() {
+        let mut payload = WSPayload::from(GatewayEvent {
+            id: Some("event-id".to_string()),
+            event_type: Some(EventMessageCreate.to_string()),
+            data: Some(serde_json::json!({"content": "hello"})),
+            sequence: Some(7),
+            opcode: WSDispatchEvent,
+        });
+        payload.session = Some(crate::session_manager::Session::new(
+            "wss://example.com",
+            crate::Token::new("app", "secret"),
+            crate::Intents::default(),
+            0,
+            1,
+        ));
+
+        let value = serde_json::to_value(&payload).unwrap();
+
+        assert!(value.get("session").is_none());
+        assert_eq!(value["op"], WSDispatchEvent);
+        assert_eq!(value["s"], 7);
+        assert_eq!(value["t"], EventMessageCreate);
+        assert_eq!(value["id"], "event-id");
     }
 }

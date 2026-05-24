@@ -245,22 +245,6 @@ impl_constructed_payload_data!(
         crate::interaction::Interaction::new(event_api(), payload_event_id(payload), &data)
     }
 );
-impl_constructed_payload_data!(
-    crate::manage::C2CManageEvent,
-    |payload: &WSPayload, data: serde_json::Value| {
-        let map = data
-            .as_object()
-            .map(|object| {
-                object
-                    .iter()
-                    .map(|(key, value)| (key.clone(), value.clone()))
-                    .collect()
-            })
-            .unwrap_or_default();
-        crate::manage::C2CManageEvent::new(event_api(), payload_event_id(payload), &map)
-    }
-);
-
 pub trait RegisterableHandler {
     fn register(self) -> Intent;
 }
@@ -510,9 +494,21 @@ mod tests {
             },
             data: None,
             raw_message: Some(body.to_vec()),
+            session: None,
         };
 
         ParseAndHandle(&mut payload).unwrap();
         assert!(MESSAGE_COUNT.load(Ordering::Relaxed) > 0);
+    }
+
+    #[test]
+    fn parse_data_reads_c2c_friend_dto_like_botgo() {
+        let body = br#"{"op":0,"t":"FRIEND_ADD","d":{"openid":"u1","timestamp":123,"nick":"n","avatar":"a"}}"#;
+        let data: WSC2CFriendData = ParseData(body).unwrap();
+
+        assert_eq!(data.openid, "u1");
+        assert_eq!(data.timestamp, 123);
+        assert_eq!(data.nick, "n");
+        assert_eq!(data.avatar, "a");
     }
 }
