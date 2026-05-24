@@ -38,7 +38,10 @@ pub use manage::{
 };
 pub use models::gateway::Ready;
 pub use models::*;
-pub use reaction::{Reaction, ReactionTarget, ReactionTargetType, ReactionUsers};
+pub use reaction::{
+    Emoji as ReactionEmoji, MessageReactionPager, Reaction, ReactionTarget, ReactionTargetType,
+    ReactionUsers,
+};
 pub use token::Token;
 
 /// The current version of the library

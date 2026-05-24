@@ -9,6 +9,7 @@ use serde_json::Value;
 
 /// Reaction target type enumeration
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(from = "u8", into = "u8")]
 #[repr(u8)]
 pub enum ReactionTargetType {
     /// Message reaction
@@ -33,16 +34,36 @@ impl From<u8> for ReactionTargetType {
     }
 }
 
+impl From<ReactionTargetType> for u8 {
+    fn from(value: ReactionTargetType) -> Self {
+        match value {
+            ReactionTargetType::Message => 0,
+            ReactionTargetType::Post => 1,
+            ReactionTargetType::Comment => 2,
+            ReactionTargetType::Reply => 3,
+        }
+    }
+}
+
 /// Emoji structure for reactions
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Emoji {
     /// Emoji ID
     pub id: Option<String>,
     /// Emoji type
+    #[serde(rename = "type")]
     pub emoji_type: Option<u8>,
 }
 
 impl Emoji {
+    /// Creates a new Emoji instance.
+    pub fn with_type(id: impl Into<String>, emoji_type: u8) -> Self {
+        Self {
+            id: Some(id.into()),
+            emoji_type: Some(emoji_type),
+        }
+    }
+
     /// Create a new Emoji instance from JSON data
     pub fn new(data: &Value) -> Self {
         Self {
@@ -58,6 +79,7 @@ pub struct ReactionTarget {
     /// Target ID
     pub id: Option<String>,
     /// Target type (message, post, comment, reply)
+    #[serde(rename = "type")]
     pub target_type: Option<ReactionTargetType>,
 }
 
@@ -212,6 +234,39 @@ pub struct ReactionUsers {
     pub cookie: Option<String>,
     /// Whether this is the last page
     pub is_end: bool,
+}
+
+/// Pager for message reaction users.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+pub struct MessageReactionPager {
+    /// Pagination cursor
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub cookie: Option<String>,
+    /// Page size, 1-1000
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub limit: Option<String>,
+}
+
+impl MessageReactionPager {
+    /// Creates a new message reaction pager.
+    pub fn new(cookie: Option<impl Into<String>>, limit: Option<impl ToString>) -> Self {
+        Self {
+            cookie: cookie.map(Into::into),
+            limit: limit.map(|value| value.to_string()),
+        }
+    }
+
+    /// Converts the pager to query parameters.
+    pub fn query_params(&self) -> std::collections::HashMap<String, String> {
+        let mut query = std::collections::HashMap::new();
+        if let Some(limit) = &self.limit {
+            query.insert("limit".to_string(), limit.clone());
+        }
+        if let Some(cookie) = &self.cookie {
+            query.insert("cookie".to_string(), cookie.clone());
+        }
+        query
+    }
 }
 
 impl ReactionUsers {
