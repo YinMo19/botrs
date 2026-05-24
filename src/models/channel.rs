@@ -27,12 +27,16 @@ pub struct Channel {
     pub owner_id: Option<Snowflake>,
     /// The private type of the channel
     pub private_type: Option<PrivateType>,
+    /// User IDs included when creating a private channel
+    pub private_user_ids: Option<Vec<String>>,
     /// The speak permission setting
     pub speak_permission: Option<SpeakPermission>,
     /// The application ID for application channels
     pub application_id: Option<Snowflake>,
     /// The permissions string
     pub permissions: Option<String>,
+    /// The operator user ID
+    pub op_user_id: Option<Snowflake>,
 }
 
 impl Channel {
@@ -48,9 +52,11 @@ impl Channel {
             parent_id: None,
             owner_id: None,
             private_type: None,
+            private_user_ids: None,
             speak_permission: None,
             application_id: None,
             permissions: None,
+            op_user_id: None,
         }
     }
 
@@ -87,6 +93,14 @@ impl Channel {
                 .get("private_type")
                 .and_then(|v| v.as_u64())
                 .and_then(|v| PrivateType::from_u8(v as u8)),
+            private_user_ids: data.get("private_user_ids").and_then(|v| {
+                v.as_array().map(|values| {
+                    values
+                        .iter()
+                        .filter_map(|value| value.as_str().map(String::from))
+                        .collect()
+                })
+            }),
             speak_permission: data
                 .get("speak_permission")
                 .and_then(|v| v.as_u64())
@@ -97,6 +111,10 @@ impl Channel {
                 .map(String::from),
             permissions: data
                 .get("permissions")
+                .and_then(|v| v.as_str())
+                .map(String::from),
+            op_user_id: data
+                .get("op_user_id")
                 .and_then(|v| v.as_str())
                 .map(String::from),
         }
@@ -189,6 +207,63 @@ impl HasId for Channel {
 impl HasName for Channel {
     fn name(&self) -> &str {
         self.name.as_deref().unwrap_or("")
+    }
+}
+
+/// Channel value object used when creating or modifying a channel.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
+pub struct ChannelValueObject {
+    /// Channel name
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
+    /// Channel type
+    #[serde(rename = "type", skip_serializing_if = "Option::is_none")]
+    pub channel_type: Option<ChannelType>,
+    /// Sort position
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub position: Option<i64>,
+    /// Parent channel ID
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub parent_id: Option<Snowflake>,
+    /// Owner ID
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub owner_id: Option<Snowflake>,
+    /// Channel subtype
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub sub_type: Option<ChannelSubType>,
+    /// Channel visibility type
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub private_type: Option<PrivateType>,
+    /// Private channel member IDs
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub private_user_ids: Option<Vec<String>>,
+    /// Speak permission
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub speak_permission: Option<SpeakPermission>,
+    /// Application ID for application channels
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub application_id: Option<Snowflake>,
+    /// Channel permissions
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub permissions: Option<String>,
+    /// Operator user ID
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub op_user_id: Option<Snowflake>,
+}
+
+impl ChannelValueObject {
+    /// Creates a channel value object with the required create-channel fields.
+    pub fn new(
+        name: impl Into<String>,
+        channel_type: ChannelType,
+        sub_type: ChannelSubType,
+    ) -> Self {
+        Self {
+            name: Some(name.into()),
+            channel_type: Some(channel_type),
+            sub_type: Some(sub_type),
+            ..Default::default()
+        }
     }
 }
 

@@ -118,7 +118,10 @@ use crate::http::HttpClient;
 use crate::models::{
     announce::{Announce, AnnouncesType, RecommendChannel},
     api::{AudioAction, BotInfo, GatewayResponse, MessageResponse},
-    channel::{Channel, ChannelPermissions, ChannelSubType, ChannelType},
+    channel::{
+        Channel, ChannelPermissions, ChannelSubType, ChannelType, ChannelValueObject, PrivateType,
+        SpeakPermission,
+    },
     emoji::EmojiType,
     guild::{Guild, GuildRole, GuildRoles, Member},
     message::{
@@ -634,6 +637,22 @@ impl BotApi {
     /// # Returns
     ///
     /// The created channel.
+    pub async fn post_channel(
+        &self,
+        token: &Token,
+        guild_id: &str,
+        value: &ChannelValueObject,
+    ) -> Result<Channel> {
+        debug!("Creating channel in guild {}", guild_id);
+        let path = format!("/guilds/{guild_id}/channels");
+        let response = self
+            .http
+            .post(token, &path, None::<&()>, Some(value))
+            .await?;
+        Ok(serde_json::from_value(response)?)
+    }
+
+    /// Creates a new channel.
     pub async fn create_channel(
         &self,
         token: &Token,
@@ -648,39 +667,41 @@ impl BotApi {
         speak_permission: Option<u32>,
         application_id: Option<&str>,
     ) -> Result<Channel> {
-        debug!("Creating channel {} in guild {}", name, guild_id);
+        let value = ChannelValueObject {
+            name: Some(name.to_string()),
+            channel_type: Some(channel_type),
+            sub_type: Some(sub_type),
+            position: position.map(i64::from),
+            parent_id: parent_id.map(String::from),
+            private_type: private_type.map(|value| PrivateType::from(value as u8)),
+            private_user_ids,
+            speak_permission: speak_permission.map(|value| SpeakPermission::from(value as u8)),
+            application_id: application_id.map(String::from),
+            ..Default::default()
+        };
 
-        let mut body = json!({
-            "name": name,
-            "type": u32::from(channel_type),
-            "subtype": u32::from(sub_type)
-        });
+        self.post_channel(token, guild_id, &value).await
+    }
 
-        if let Some(pos) = position {
-            body["position"] = json!(pos);
+    /// Creates a private channel following botgo's CreatePrivateChannel behavior.
+    ///
+    /// If `user_ids` is empty, the channel is visible to admins and members.
+    /// If `user_ids` is not empty, the channel is created as admin-only and the
+    /// members are added through `private_user_ids`.
+    pub async fn create_private_channel(
+        &self,
+        token: &Token,
+        guild_id: &str,
+        value: &ChannelValueObject,
+        user_ids: Vec<String>,
+    ) -> Result<Channel> {
+        let mut value = value.clone();
+        value.private_type = Some(PrivateType::AdminAndSpecifiedMembers);
+        if !user_ids.is_empty() {
+            value.private_user_ids = Some(user_ids);
+            value.private_type = Some(PrivateType::AdminOnly);
         }
-        if let Some(parent) = parent_id {
-            body["parent_id"] = json!(parent);
-        }
-        if let Some(private) = private_type {
-            body["private_type"] = json!(private);
-        }
-        if let Some(users) = private_user_ids {
-            body["private_user_ids"] = json!(users);
-        }
-        if let Some(speak) = speak_permission {
-            body["speak_permission"] = json!(speak);
-        }
-        if let Some(app) = application_id {
-            body["application_id"] = json!(app);
-        }
-
-        let path = format!("/guilds/{guild_id}/channels");
-        let response = self
-            .http
-            .post(token, &path, None::<&()>, Some(&body))
-            .await?;
-        Ok(serde_json::from_value(response)?)
+        self.post_channel(token, guild_id, &value).await
     }
 
     /// Updates a channel.
@@ -708,29 +729,30 @@ impl BotApi {
         private_type: Option<u32>,
         speak_permission: Option<u32>,
     ) -> Result<Channel> {
+        let value = ChannelValueObject {
+            name: name.map(String::from),
+            position: position.map(i64::from),
+            parent_id: parent_id.map(String::from),
+            private_type: private_type.map(|value| PrivateType::from(value as u8)),
+            speak_permission: speak_permission.map(|value| SpeakPermission::from(value as u8)),
+            ..Default::default()
+        };
+
+        self.patch_channel(token, channel_id, &value).await
+    }
+
+    /// Updates a channel with a channel value object.
+    pub async fn patch_channel(
+        &self,
+        token: &Token,
+        channel_id: &str,
+        value: &ChannelValueObject,
+    ) -> Result<Channel> {
         debug!("Updating channel {}", channel_id);
-
-        let mut body = json!({});
-        if let Some(name) = name {
-            body["name"] = json!(name);
-        }
-        if let Some(pos) = position {
-            body["position"] = json!(pos);
-        }
-        if let Some(parent) = parent_id {
-            body["parent_id"] = json!(parent);
-        }
-        if let Some(private) = private_type {
-            body["private_type"] = json!(private);
-        }
-        if let Some(speak) = speak_permission {
-            body["speak_permission"] = json!(speak);
-        }
-
         let path = format!("/channels/{channel_id}");
         let response = self
             .http
-            .put(token, &path, None::<&()>, Some(&body))
+            .patch(token, &path, None::<&()>, Some(value))
             .await?;
         Ok(serde_json::from_value(response)?)
     }
@@ -749,6 +771,18 @@ impl BotApi {
         debug!("Deleting channel {}", channel_id);
         let path = format!("/channels/{channel_id}");
         let response = self.http.delete(token, &path, None::<&()>).await?;
+        Ok(serde_json::from_value(response)?)
+    }
+
+    /// Lists members in a voice channel.
+    pub async fn list_voice_channel_members(
+        &self,
+        token: &Token,
+        channel_id: &str,
+    ) -> Result<Vec<Member>> {
+        debug!("Listing voice channel members for channel {}", channel_id);
+        let path = format!("/channels/{channel_id}/voice/members");
+        let response = self.http.get(token, &path, None::<&()>).await?;
         Ok(serde_json::from_value(response)?)
     }
 

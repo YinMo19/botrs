@@ -13,7 +13,7 @@ use crate::intents::Intents;
 use crate::interaction::Interaction;
 use crate::manage::{C2CManageEvent, GroupManageEvent};
 use crate::models::api::AudioAction;
-use crate::models::channel::{ChannelSubType, ChannelType};
+use crate::models::channel::{ChannelSubType, ChannelType, ChannelValueObject};
 use crate::models::gateway::GatewayEvent;
 use crate::models::guild::{GuildRole, GuildRoles, Member as GuildMember};
 use crate::models::*;
@@ -538,6 +538,27 @@ impl Context {
             .await
     }
 
+    /// Creates a new channel from a channel value object.
+    pub async fn post_channel(
+        &self,
+        guild_id: &str,
+        value: &ChannelValueObject,
+    ) -> Result<Channel> {
+        self.api.post_channel(&self.token, guild_id, value).await
+    }
+
+    /// Creates a private channel following the official botgo behavior.
+    pub async fn create_private_channel(
+        &self,
+        guild_id: &str,
+        value: &ChannelValueObject,
+        user_ids: Vec<String>,
+    ) -> Result<Channel> {
+        self.api
+            .create_private_channel(&self.token, guild_id, value, user_ids)
+            .await
+    }
+
     /// Gets guild roles.
     ///
     /// # Arguments
@@ -992,6 +1013,15 @@ impl Context {
             .await
     }
 
+    /// Updates a channel from a channel value object.
+    pub async fn patch_channel(
+        &self,
+        channel_id: &str,
+        value: &ChannelValueObject,
+    ) -> Result<Channel> {
+        self.api.patch_channel(&self.token, channel_id, value).await
+    }
+
     /// Deletes a channel.
     ///
     /// # Arguments
@@ -1003,6 +1033,13 @@ impl Context {
     /// The deleted channel.
     pub async fn delete_channel(&self, channel_id: &str) -> Result<Channel> {
         self.api.delete_channel(&self.token, channel_id).await
+    }
+
+    /// Lists members in a voice channel.
+    pub async fn list_voice_channel_members(&self, channel_id: &str) -> Result<Vec<GuildMember>> {
+        self.api
+            .list_voice_channel_members(&self.token, channel_id)
+            .await
     }
 
     /// Creates a DMS session.
