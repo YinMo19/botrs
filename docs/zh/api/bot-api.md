@@ -421,47 +421,41 @@ api.create_guild_member_mute(&token, "guild_123", "user_456", &mute_data).await?
 
 ## 私信 API
 
-### `create_direct_message_session`
+### `create_dms`
 
 创建私信会话。
 
 ```rust
-pub async fn create_direct_message_session(
+pub async fn create_dms(
     &self,
     token: &Token,
     guild_id: &str,
     user_id: &str,
-) -> Result<DirectMessageSession, BotError>
+) -> Result<DirectMessageSession>
 ```
 
-### `post_direct_message_with_params`
+### `post_dms_with_params`
 
 发送私信消息。
 
 ```rust
-pub async fn post_direct_message_with_params(
+pub async fn post_dms_with_params(
     &self,
     token: &Token,
     guild_id: &str,
-    channel_id: &str,
-    params: MessageParams,
-) -> Result<DirectMessage, BotError>
+    params: DirectMessageParams,
+) -> Result<MessageResponse>
 ```
 
 #### 示例
 
 ```rust
 // 创建私信会话
-let session = api.create_direct_message_session(&token, "guild_123", "user_456").await?;
+let session = api.create_dms(&token, "guild_123", "user_456").await?;
 
 // 发送私信
-let params = MessageParams::new_text("这是一条私信");
-let dm = api.post_direct_message_with_params(
-    &token,
-    "guild_123",
-    &session.channel_id,
-    params
-).await?;
+let params = DirectMessageParams::new_text("这是一条私信");
+let message = api.post_dms_with_params(&token, "guild_123", params).await?;
 ```
 
 ### `get_direct_messages`

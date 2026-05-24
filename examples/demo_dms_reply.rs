@@ -5,7 +5,7 @@
 
 mod common;
 
-use botrs::{Client, Context, DirectMessage, EventHandler, Intents, Message, Ready, Token};
+use botrs::{Client, Context, EventHandler, Intents, Message, Ready, Token};
 use common::{Config, init_logging};
 use std::env;
 use tracing::{info, warn};
@@ -21,7 +21,7 @@ impl EventHandler for DmsReplyHandler {
     }
 
     /// Called when a direct message is created.
-    async fn direct_message_create(&self, ctx: Context, message: DirectMessage) {
+    async fn direct_message_create(&self, ctx: Context, message: Message) {
         // Get message content
         let content = match &message.content {
             Some(content) => content,

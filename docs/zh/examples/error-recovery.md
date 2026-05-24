@@ -511,7 +511,7 @@ impl StatePersistence {
 ## 错误恢复事件处理器
 
 ```rust
-use botrs::{Context, EventHandler, Message, Ready, DirectMessage, GroupMessage};
+use botrs::{Context, EventHandler, Message, Ready, GroupMessage};
 
 pub struct ErrorRecoveryHandler {
     retry_config: RetryConfig,
@@ -657,7 +657,7 @@ impl EventHandler for ErrorRecoveryHandler {
         }
     }
     
-    async fn direct_message_create(&self, ctx: Context, dm: DirectMessage) {
+    async fn direct_message_create(&self, ctx: Context, dm: Message) {
         self.health_checker.update_message_activity();
         
         // 私信也使用相同的错误恢复机制
@@ -665,12 +665,11 @@ impl EventHandler for ErrorRecoveryHandler {
             if content.trim() == "!health" {
                 let health_msg = "私信功能正常，错误恢复机制运行中";
                 
-                if let (Some(guild_id), Err(e)) = (&dm.guild_id, self.safe_send_message(
-                    &ctx, 
-                    &dm.channel_id, 
-                    health_msg
-                ).await) {
-                    self.handle_operation_error("发送私信健康检查回复", &e).await;
+                if let Some(guild_id) = &dm.guild_id {
+                    let params = DirectMessageParams::new_text(health_msg);
+                    if let Err(e) = ctx.api.post_dms_with_params(&ctx.token, guild_id, params).await {
+                        self.handle_operation_error("发送私信健康检查回复", &e).await;
+                    }
                 }
             }
         }

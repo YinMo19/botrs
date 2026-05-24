@@ -11,9 +11,10 @@ Event handling is the core of any bot application. BotRS provides a rich set of 
 ```rust
 use botrs::{
     Client, Context, EventHandler, Intents, Message, Ready, Token, BotError,
-    Guild, Channel, Member, DirectMessage, GroupMessage, C2CMessage,
+    Guild, Channel, Member, GroupMessage, C2CMessage,
     MessageAudit, PublicAudio, OpenThread
 };
+use botrs::models::message::DirectMessageParams;
 use async_trait::async_trait;
 use tracing::{info, warn, error, debug};
 
@@ -95,43 +96,37 @@ impl EventHandler for ComprehensiveBot {
         }
     }
 
-    async fn direct_message_create(&self, ctx: Context, message: DirectMessage) {
+    async fn direct_message_create(&self, ctx: Context, message: Message) {
         info!(
             "📩 Direct message received from user {:?}",
             message.author.as_ref().map(|a| &a.id)
         );
 
-        if let Some(content) = &message.content {
+        if let (Some(guild_id), Some(content)) = (&message.guild_id, &message.content) {
             // Handle DM-specific commands
-            match content.trim() {
+            let response = match content.trim() {
                 "!help" => {
-                    let help_text = "🆘 **Bot Help (Direct Message)**\n\n\
+                    "🆘 **Bot Help (Direct Message)**\n\n\
                         Available commands:\n\
                         • `!help` - Show this help message\n\
                         • `!status` - Show bot status\n\
-                        • `!support` - Get support information";
-                    
-                    let _ = message.reply(&ctx.api, &ctx.token, help_text).await;
+                        • `!support` - Get support information".to_string()
                 }
                 "!status" => {
                     let uptime = self.startup_time.elapsed();
-                    let status = format!(
+                    format!(
                         "🤖 **Bot Status**\n\n\
                          Status: ✅ Online\n\
                          Uptime: {:?}\n\
                          Ready for commands!",
                         uptime
-                    );
-                    let _ = message.reply(&ctx.api, &ctx.token, &status).await;
+                    )
                 }
-                _ => {
-                    let _ = message.reply(
-                        &ctx.api, 
-                        &ctx.token, 
-                        "👋 Hello! Send `!help` for available commands."
-                    ).await;
-                }
-            }
+                _ => "👋 Hello! Send `!help` for available commands.".to_string(),
+            };
+
+            let params = DirectMessageParams::new_text(response);
+            let _ = ctx.api.post_dms_with_params(&ctx.token, guild_id, params).await;
         }
     }
 

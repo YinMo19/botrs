@@ -568,7 +568,7 @@ impl ConnectionState {
     ) -> Option<(&'static str, Value)> {
         let message_id = payload.get("id").and_then(|v| v.as_str())?;
         let message_data = payload.get("d")?;
-        let message = DirectMessage::from_data(
+        let message = Message::from_data(
             state.api.clone(),
             message_id.to_string(),
             message_data.clone(),

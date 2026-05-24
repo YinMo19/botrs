@@ -72,24 +72,28 @@ async fn message_create(&self, ctx: Context, message: Message) {
 
 ### `direct_message_create`
 
-当收到私信消息时调用。
+当收到私信消息时调用。botgo 将网关私信事件 payload 定义为普通
+`Message`；`DirectMessage` DTO 只表示 OpenAPI 返回的私信会话。
 
 ```rust
-async fn direct_message_create(&self, ctx: Context, message: DirectMessage) {}
+async fn direct_message_create(&self, ctx: Context, message: Message) {}
 ```
 
 #### 参数
 
 - `ctx`: API 上下文
-- `message`: 收到的私信对象
+- `message`: 收到的私信消息事件 payload
 
 #### 示例
 
 ```rust
-async fn direct_message_create(&self, ctx: Context, message: DirectMessage) {
+async fn direct_message_create(&self, ctx: Context, message: Message) {
     if let Some(content) = &message.content {
         println!("收到私信: {}", content);
-        let _ = message.reply(&ctx.api, &ctx.token, "感谢您的私信！").await;
+        let params = DirectMessageParams::new_text("感谢您的私信！");
+        if let Some(guild_id) = &message.guild_id {
+            let _ = ctx.api.post_dms_with_params(&ctx.token, guild_id, params).await;
+        }
     }
 }
 ```

@@ -801,7 +801,7 @@ pub async fn create_dms(
     &self,
     recipient_id: &str,
     source_guild_id: &str,
-) -> Result<DirectMessageGuild>
+) -> Result<DirectMessageSession>
 ```
 
 ### `post_group_file`

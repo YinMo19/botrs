@@ -242,7 +242,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 ## 多频道回声机器人
 
 ```rust
-use botrs::{Client, Context, EventHandler, Message, Ready, Intents, Token, DirectMessage, GroupMessage};
+use botrs::{Client, Context, EventHandler, Message, Ready, Intents, Token, GroupMessage};
+use botrs::models::message::DirectMessageParams;
 use tracing::{info, warn};
 
 struct MultiChannelEchoBot;
@@ -266,11 +267,14 @@ impl EventHandler for MultiChannelEchoBot {
         }
     }
 
-    async fn direct_message_create(&self, ctx: Context, msg: DirectMessage) {
+    async fn direct_message_create(&self, ctx: Context, msg: Message) {
         if let Some(content) = &msg.content {
             let echo_msg = format!("私信回声：{}", content);
-            if let Err(e) = msg.reply(&ctx.api, &ctx.token, &echo_msg).await {
-                warn!("发送私信回声消息失败：{}", e);
+            let params = DirectMessageParams::new_text(echo_msg);
+            if let Some(guild_id) = &msg.guild_id {
+                if let Err(e) = ctx.api.post_dms_with_params(&ctx.token, guild_id, params).await {
+                    warn!("发送私信回声消息失败：{}", e);
+                }
             }
         }
     }

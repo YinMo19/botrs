@@ -416,31 +416,26 @@ Creates a direct message session.
 pub async fn create_dms(
     &self,
     token: &Token,
-    create_dms: CreateDirectMessageGuild,
-) -> Result<DirectMessageGuild>
+    guild_id: &str,
+    user_id: &str,
+) -> Result<DirectMessageSession>
 ```
 
 #### Parameters
 
 - `token`: Authentication token
-- `create_dms`: Parameters for creating the DM session
+- `guild_id`: The source guild ID
+- `user_id`: The recipient user ID
 
 #### Returns
 
-Direct message guild information.
+Direct message session information.
 
 #### Example
 
 ```rust
-use botrs::CreateDirectMessageGuild;
-
-let create_dm = CreateDirectMessageGuild {
-    recipient_id: "user_123".to_string(),
-    source_guild_id: "guild_456".to_string(),
-};
-
-let dm_guild = api.create_dms(&token, create_dm).await?;
-println!("DM session created: {}", dm_guild.guild_id);
+let dm_session = api.create_dms(&token, "guild_456", "user_123").await?;
+println!("DM session created: {}", dm_session.guild_id.as_deref().unwrap_or(""));
 ```
 
 ### `post_dms_with_params`
@@ -452,19 +447,19 @@ pub async fn post_dms_with_params(
     &self,
     token: &Token,
     guild_id: &str,
-    params: MessageParams,
-) -> Result<Message>
+    params: DirectMessageParams,
+) -> Result<MessageResponse>
 ```
 
 #### Parameters
 
 - `token`: Authentication token
 - `guild_id`: The DM guild ID
-- `params`: Message parameters
+- `params`: Direct message parameters
 
 #### Returns
 
-The sent direct message.
+The direct message response.
 
 ## Group and C2C Messages
 

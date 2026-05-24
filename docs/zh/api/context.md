@@ -217,17 +217,12 @@ async fn message_create(&self, ctx: Context, message: Message) {
 ### 私信处理
 
 ```rust
-async fn direct_message_create(&self, ctx: Context, dm: DirectMessage) {
+async fn direct_message_create(&self, ctx: Context, dm: Message) {
     // 回复私信
-    let params = MessageParams::new_text("感谢您的私信！");
+    let params = DirectMessageParams::new_text("感谢您的私信！");
     
     if let Some(guild_id) = &dm.guild_id {
-        let _ = ctx.api.post_direct_message_with_params(
-            &ctx.token,
-            guild_id,
-            &dm.channel_id,
-            params
-        ).await;
+        let _ = ctx.api.post_dms_with_params(&ctx.token, guild_id, params).await;
     }
 }
 ```

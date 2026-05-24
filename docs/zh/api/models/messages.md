@@ -101,40 +101,21 @@ pub fn has_mentions(&self) -> bool
 
 ### `DirectMessage`
 
-表示机器人与用户之间的私信。
+表示 direct-message OpenAPI 返回的私信会话。网关私信创建事件使用
+`Message`。
 
 ```rust
 pub struct DirectMessage {
-    pub id: String,
-    pub content: Option<String>,
-    pub channel_id: String,
-    pub guild_id: String,
-    pub direct_message: bool,
-    pub author: Option<DirectMessageUser>,
-    pub member: Option<DirectMessageMember>,
-    pub message_reference: Option<MessageReference>,
-    pub attachments: Vec<MessageAttachment>,
-    pub seq: Option<u64>,
-    pub seq_in_channel: Option<String>,
-    pub src_guild_id: Option<String>,
-    pub timestamp: Option<String>,
-    pub event_id: Option<String>,
+    pub guild_id: Option<String>,
+    pub channel_id: Option<String>,
+    pub create_time: Option<String>,
 }
 ```
 
-#### 方法
-
-##### `reply`
-
-回复私信。
+#### 别名
 
 ```rust
-pub async fn reply(
-    &self,
-    api: &BotApi,
-    token: &Token,
-    content: &str,
-) -> Result<DirectMessage>
+pub type DirectMessageSession = DirectMessage;
 ```
 
 ### `GroupMessage`

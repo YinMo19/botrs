@@ -7,7 +7,7 @@ BotRS 提供了强大而灵活的消息处理系统，支持多种消息类型�
 BotRS 支持以下几种主要的消息类型：
 
 - **频道消息 (Message)**: 在 QQ 频道中的消息，通常需要 @ 机器人才能触发
-- **私信 (DirectMessage)**: 用户与机器人的私人对话
+- **私信事件 (Message)**: 网关私信消息 payload；`DirectMessage` 表示 OpenAPI 返回的私信会话
 - **群聊消息 (GroupMessage)**: QQ 群组中的消息
 - **C2C 消息 (C2CMessage)**: 客户端到客户端的直接消息
 
@@ -77,11 +77,12 @@ impl EventHandler for MyBot {
 ```rust
 #[async_trait::async_trait]
 impl EventHandler for MyBot {
-    async fn direct_message_create(&self, ctx: Context, message: DirectMessage) {
-        if let Some(content) = &message.content {
+    async fn direct_message_create(&self, ctx: Context, message: Message) {
+        if let (Some(guild_id), Some(content)) = (&message.guild_id, &message.content) {
             // 私信通常用于个人化的交互
             let personalized_response = format!("你好！我收到了你的私信: {}", content);
-            message.reply(&ctx.api, &ctx.token, &personalized_response).await?;
+            let params = DirectMessageParams::new_text(personalized_response);
+            ctx.api.post_dms_with_params(&ctx.token, guild_id, params).await?;
         }
     }
 }
@@ -304,7 +305,7 @@ async fn reply_to_message(
 
 ### 便捷回复方法
 
-所有消息类型都提供了便捷的回复方法：
+频道消息和群消息提供了便捷的回复方法；私信事件使用 `DirectMessageParams` 发送回复：
 
 ```rust
 // 对频道消息回复
@@ -314,7 +315,8 @@ message.reply(&ctx.api, &ctx.token, "回复内容").await?;
 group_message.reply(&ctx.api, &ctx.token, "群聊回复").await?;
 
 // 对私信回复
-direct_message.reply(&ctx.api, &ctx.token, "私信回复").await?;
+let params = DirectMessageParams::new_text("私信回复");
+ctx.api.post_dms_with_params(&ctx.token, guild_id, params).await?;
 ```
 
 ## 高级消息处理

@@ -108,30 +108,34 @@ async fn message_create(&self, ctx: Context, message: Message) {
 
 ### `direct_message_create`
 
-Called when a direct message is created.
+Called when a direct message is created. Botgo exposes the gateway payload as a
+regular `Message`; the `DirectMessage` DTO is reserved for direct-message
+sessions returned by the OpenAPI.
 
 ```rust
-async fn direct_message_create(&self, ctx: Context, message: DirectMessage) {}
+async fn direct_message_create(&self, ctx: Context, message: Message) {}
 ```
 
 #### Parameters
 
 - `ctx`: Context for API access
-- `message`: The direct message
+- `message`: The direct message event payload
 
 #### Example
 
 ```rust
-async fn direct_message_create(&self, ctx: Context, message: DirectMessage) {
+async fn direct_message_create(&self, ctx: Context, message: Message) {
     if let Some(content) = &message.content {
         println!("Direct message from {}: {}", 
                  message.author.as_ref()
                      .and_then(|a| a.username.as_deref())
                      .unwrap_or("Unknown"), 
                  content);
-        
-        // Echo back the message
-        let _ = message.reply(&ctx.api, &ctx.token, &format!("You said: {}", content)).await;
+
+        let params = DirectMessageParams::new_text(format!("You said: {}", content));
+        if let Some(guild_id) = &message.guild_id {
+            let _ = ctx.api.post_dms_with_params(&ctx.token, guild_id, params).await;
+        }
     }
 }
 ```

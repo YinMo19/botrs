@@ -211,7 +211,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 ## Multi-Channel Echo Bot
 
 ```rust
-use botrs::{Client, Context, EventHandler, Message, Ready, Intents, DirectMessage, GroupMessage};
+use botrs::{Client, Context, EventHandler, Message, Ready, Intents, GroupMessage};
+use botrs::models::message::DirectMessageParams;
 
 struct MultiChannelEchoBot;
 
@@ -232,12 +233,12 @@ impl EventHandler for MultiChannelEchoBot {
         }
     }
 
-    async fn direct_message_create(&self, ctx: Context, msg: DirectMessage) {
+    async fn direct_message_create(&self, ctx: Context, msg: Message) {
         if let Some(content) = &msg.content {
             let echo_msg = format!("DM Echo: {}", content);
-            // For direct messages, we reply to the same channel
-            if let Some(channel_id) = &msg.channel_id {
-                let _ = ctx.send_message(channel_id, &echo_msg).await;
+            let params = DirectMessageParams::new_text(echo_msg);
+            if let Some(guild_id) = &msg.guild_id {
+                let _ = ctx.api.post_dms_with_params(&ctx.token, guild_id, params).await;
             }
         }
     }
