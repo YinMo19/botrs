@@ -1657,6 +1657,75 @@ impl BotApi {
 
     // Announcement APIs
 
+    /// Creates a channel announcement from a message.
+    ///
+    /// # Arguments
+    ///
+    /// * `token` - Authentication token
+    /// * `channel_id` - The channel ID where the announcement will be created
+    /// * `message_id` - The message ID to turn into an announcement
+    ///
+    /// # Returns
+    ///
+    /// The created announcement.
+    pub async fn create_channel_announce(
+        &self,
+        token: &Token,
+        channel_id: &str,
+        message_id: &str,
+    ) -> Result<Announce> {
+        debug!(
+            "Creating channel announcement in channel {} for message {}",
+            channel_id, message_id
+        );
+
+        let body = json!({
+            "message_id": message_id
+        });
+
+        let path = format!("/channels/{channel_id}/announces");
+        let response = self
+            .http
+            .post(token, &path, None::<&()>, Some(&body))
+            .await?;
+        Ok(serde_json::from_value(response)?)
+    }
+
+    /// Deletes a channel announcement.
+    ///
+    /// # Arguments
+    ///
+    /// * `token` - Authentication token
+    /// * `channel_id` - The channel ID
+    /// * `message_id` - The message ID of the announcement to delete
+    ///
+    /// # Returns
+    ///
+    /// Success indication.
+    pub async fn delete_channel_announce(
+        &self,
+        token: &Token,
+        channel_id: &str,
+        message_id: &str,
+    ) -> Result<()> {
+        debug!(
+            "Deleting announcement {} in channel {}",
+            message_id, channel_id
+        );
+
+        let path = format!("/channels/{channel_id}/announces/{message_id}");
+        self.http.delete(token, &path, None::<&()>).await?;
+        Ok(())
+    }
+
+    /// Clears all channel announcements without checking a message ID.
+    pub async fn clean_channel_announces(&self, token: &Token, channel_id: &str) -> Result<()> {
+        debug!("Clearing announcements in channel {}", channel_id);
+        let path = format!("/channels/{channel_id}/announces/all");
+        self.http.delete(token, &path, None::<&()>).await?;
+        Ok(())
+    }
+
     /// Creates a message-type guild announcement.
     ///
     /// # Arguments
@@ -1694,6 +1763,18 @@ impl BotApi {
         Ok(serde_json::from_value(response)?)
     }
 
+    /// Creates a message-type guild announcement.
+    pub async fn create_guild_announce(
+        &self,
+        token: &Token,
+        guild_id: &str,
+        channel_id: &str,
+        message_id: &str,
+    ) -> Result<Announce> {
+        self.create_announce(token, guild_id, channel_id, message_id)
+            .await
+    }
+
     /// Creates a recommended channel announcement.
     ///
     /// # Arguments
@@ -1728,6 +1809,18 @@ impl BotApi {
         Ok(serde_json::from_value(response)?)
     }
 
+    /// Creates a recommended channel guild announcement.
+    pub async fn create_guild_recommend_announce(
+        &self,
+        token: &Token,
+        guild_id: &str,
+        announces_type: AnnouncesType,
+        recommend_channels: Vec<RecommendChannel>,
+    ) -> Result<Announce> {
+        self.create_recommend_announce(token, guild_id, announces_type, recommend_channels)
+            .await
+    }
+
     /// Deletes a guild announcement.
     ///
     /// # Arguments
@@ -1750,6 +1843,25 @@ impl BotApi {
         let path = format!("/guilds/{guild_id}/announces/{message_id}");
         let response = self.http.delete(token, &path, None::<&()>).await?;
         Ok(response)
+    }
+
+    /// Deletes a guild announcement.
+    pub async fn delete_guild_announce(
+        &self,
+        token: &Token,
+        guild_id: &str,
+        message_id: &str,
+    ) -> Result<()> {
+        self.delete_announce(token, guild_id, message_id).await?;
+        Ok(())
+    }
+
+    /// Clears all guild announcements without checking a message ID.
+    pub async fn clean_guild_announces(&self, token: &Token, guild_id: &str) -> Result<()> {
+        debug!("Clearing announcements in guild {}", guild_id);
+        let path = format!("/guilds/{guild_id}/announces/all");
+        self.http.delete(token, &path, None::<&()>).await?;
+        Ok(())
     }
 
     // Permission APIs
