@@ -285,6 +285,12 @@ impl MessageReactionPager {
         }
         query
     }
+
+    /// Botgo-compatible query parameter accessor.
+    #[allow(non_snake_case)]
+    pub fn QueryParams(&self) -> std::collections::HashMap<String, String> {
+        self.query_params()
+    }
 }
 
 impl Pager for MessageReactionPager {
@@ -380,5 +386,14 @@ mod tests {
             user.avatar,
             Some("https://example.com/avatar.png".to_string())
         );
+    }
+
+    #[test]
+    fn botgo_reaction_pager_query_params() {
+        let pager = MessageReactionPager::new(Some("cursor-1"), Some(20));
+        let query = pager.QueryParams();
+
+        assert_eq!(query.get("cookie").map(String::as_str), Some("cursor-1"));
+        assert_eq!(query.get("limit").map(String::as_str), Some("20"));
     }
 }
