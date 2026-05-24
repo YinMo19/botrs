@@ -20,8 +20,8 @@ use crate::models::channel::{
 use crate::models::gateway::GatewayEvent;
 use crate::models::guild::{
     GuildMembersPager, GuildRole, GuildRoleMembers, GuildRoleMembersPager, GuildRoles,
-    Member as GuildMember, MemberDeleteOptions, UpdateGuildMute, UpdateGuildMuteResponse,
-    UpdateResult,
+    Member as GuildMember, MemberAddRoleBody, MemberDeleteOptions, UpdateGuildMute,
+    UpdateGuildMuteResponse, UpdateResult,
 };
 use crate::models::message::{MessagePagerType, MessagesPager};
 use crate::models::webhook::{HttpIdentity, HttpReady, HttpSession};
@@ -829,6 +829,19 @@ impl Context {
             .await
     }
 
+    /// Adds a role to a guild member with a botgo-compatible body.
+    pub async fn member_add_role(
+        &self,
+        guild_id: &str,
+        role_id: &str,
+        user_id: &str,
+        body: &MemberAddRoleBody,
+    ) -> Result<()> {
+        self.api
+            .member_add_role(&self.token, guild_id, role_id, user_id, body)
+            .await
+    }
+
     /// Removes a role from a guild member.
     ///
     /// # Arguments
@@ -850,6 +863,19 @@ impl Context {
     ) -> Result<()> {
         self.api
             .delete_guild_role_member(&self.token, guild_id, role_id, user_id, channel_id)
+            .await
+    }
+
+    /// Deletes a role from a guild member with a botgo-compatible body.
+    pub async fn member_delete_role(
+        &self,
+        guild_id: &str,
+        role_id: &str,
+        user_id: &str,
+        body: &MemberAddRoleBody,
+    ) -> Result<()> {
+        self.api
+            .member_delete_role(&self.token, guild_id, role_id, user_id, body)
             .await
     }
 
