@@ -124,9 +124,9 @@ use crate::models::{
     },
     emoji::EmojiType,
     guild::{
-        Guild, GuildRole, GuildRoleMembers, GuildRoleMembersPager, GuildRoles, Member,
-        MemberDeleteOptions, UpdateGuildMute, UpdateGuildMuteResponse, UpdateResult, UpdateRole,
-        normalize_delete_history_msg_days,
+        Guild, GuildMembersPager, GuildRole, GuildRoleMembers, GuildRoleMembersPager, GuildRoles,
+        Member, MemberDeleteOptions, UpdateGuildMute, UpdateGuildMuteResponse, UpdateResult,
+        UpdateRole, normalize_delete_history_msg_days,
     },
     message::{
         ApiMessage, Ark, C2CMessageParams, DirectMessageParams, DirectMessageSession,
@@ -561,14 +561,24 @@ impl BotApi {
         after: Option<&str>,
         limit: Option<u32>,
     ) -> Result<Vec<Member>> {
-        debug!("Getting guild members for {}", guild_id);
+        let pager = GuildMembersPager::new(after.unwrap_or("0"), limit.unwrap_or(1).to_string());
+        self.get_guild_members_with_pager(token, guild_id, &pager)
+            .await
+    }
 
-        let mut params = HashMap::new();
-        params.insert("after", after.unwrap_or("0").to_string());
-        params.insert("limit", limit.unwrap_or(1).to_string());
-
+    /// Gets guild members using a botgo-style pager.
+    pub async fn get_guild_members_with_pager(
+        &self,
+        token: &Token,
+        guild_id: &str,
+        pager: &GuildMembersPager,
+    ) -> Result<Vec<Member>> {
+        debug!(
+            "Getting guild members for {} with pager {:?}",
+            guild_id, pager
+        );
         let path = format!("/guilds/{guild_id}/members");
-        let response = self.http.get(token, &path, Some(&params)).await?;
+        let response = self.http.get(token, &path, Some(pager)).await?;
         Ok(serde_json::from_value(response)?)
     }
 

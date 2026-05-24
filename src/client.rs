@@ -19,8 +19,9 @@ use crate::models::channel::{
 };
 use crate::models::gateway::GatewayEvent;
 use crate::models::guild::{
-    GuildRole, GuildRoleMembers, GuildRoleMembersPager, GuildRoles, Member as GuildMember,
-    MemberDeleteOptions, UpdateGuildMute, UpdateGuildMuteResponse, UpdateResult,
+    GuildMembersPager, GuildRole, GuildRoleMembers, GuildRoleMembersPager, GuildRoles,
+    Member as GuildMember, MemberDeleteOptions, UpdateGuildMute, UpdateGuildMuteResponse,
+    UpdateResult,
 };
 use crate::models::message::{MessagePagerType, MessagesPager};
 use crate::models::webhook::{HttpIdentity, HttpReady, HttpSession};
@@ -887,6 +888,17 @@ impl Context {
     ) -> Result<Vec<GuildMember>> {
         self.api
             .get_guild_members(&self.token, guild_id, after, limit)
+            .await
+    }
+
+    /// Gets guild members list using a botgo-style pager.
+    pub async fn get_guild_members_with_pager(
+        &self,
+        guild_id: &str,
+        pager: &GuildMembersPager,
+    ) -> Result<Vec<GuildMember>> {
+        self.api
+            .get_guild_members_with_pager(&self.token, guild_id, pager)
             .await
     }
 
