@@ -101,9 +101,13 @@ pub fn New(code: i32, text: impl Into<String>) -> Err {
 
 #[allow(non_snake_case)]
 pub fn Error(err: &(dyn std::error::Error + 'static)) -> Err {
-    err.downcast_ref::<Err>()
-        .cloned()
-        .unwrap_or_else(|| Err::new(9999, err.to_string(), None::<String>))
+    if let Some(err) = err.downcast_ref::<Err>() {
+        return err.clone();
+    }
+    if let Some(BotError::Sdk(err)) = err.downcast_ref::<BotError>() {
+        return err.clone();
+    }
+    Err::new(9999, err.to_string(), None::<String>)
 }
 
 pub fn err_need_reconnect() -> Err {
@@ -142,9 +146,23 @@ pub fn err_pager_is_nil() -> Err {
     Err::new(CodePagerIsNil, "pager is nil", None::<String>)
 }
 
+pub static ErrNeedReConnect: std::sync::LazyLock<Err> =
+    std::sync::LazyLock::new(err_need_reconnect);
+pub static ErrInvalidSession: std::sync::LazyLock<Err> =
+    std::sync::LazyLock::new(err_invalid_session);
+pub static ErrURLInvalid: std::sync::LazyLock<Err> = std::sync::LazyLock::new(err_url_invalid);
+pub static ErrSessionLimit: std::sync::LazyLock<Err> = std::sync::LazyLock::new(err_session_limit);
+pub static ErrNotFoundOpenAPI: std::sync::LazyLock<Err> =
+    std::sync::LazyLock::new(err_not_found_openapi);
+pub static ErrPagerIsNil: std::sync::LazyLock<Err> = std::sync::LazyLock::new(err_pager_is_nil);
+
 /// The main error type for BotRS operations.
 #[derive(Debug, thiserror::Error)]
 pub enum BotError {
+    /// Botgo-compatible SDK errors.
+    #[error("{0}")]
+    Sdk(#[from] Err),
+
     /// HTTP client errors
     #[error("HTTP error: {0}")]
     Http(#[from] reqwest::Error),

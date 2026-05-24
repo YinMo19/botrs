@@ -3,7 +3,11 @@
 //! This module provides the WebSocket client for connecting to the QQ Guild Bot API gateway,
 //! handling authentication, heartbeats, and event dispatching.
 
-use crate::error::{BotError, Result};
+use crate::error::{
+    BotError, CodeConnCloseCantIdentify, CodeConnCloseCantResume, CodeInvalidSession, Result,
+    WSCodeBackendAuthenticationFail, WSCodeBackendBotBanned, WSCodeBackendBotOffline,
+    WSCodeBackendInvalidSeq, WSCodeBackendSessionNoLongerValid, err_invalid_session,
+};
 use crate::intents::Intents;
 use crate::models::gateway::*;
 use crate::token::Token;
@@ -127,6 +131,16 @@ impl Gateway {
         self
     }
 
+    pub(crate) fn with_resume_state(
+        mut self,
+        session_id: impl Into<String>,
+        last_seq: u64,
+    ) -> Self {
+        self.session_id = Some(session_id.into());
+        self.last_seq.store(last_seq, Ordering::Relaxed);
+        self
+    }
+
     /// Calculates a botgo-style session start interval from gateway limits.
     ///
     /// botgo uses `round(2 / max_concurrency)` and guards the interval to at
@@ -201,6 +215,28 @@ impl Gateway {
         }
 
         Ok(())
+    }
+
+    /// Connects once and returns after the connection ends.
+    ///
+    /// This is the primitive used by botgo-style session managers: reconnect
+    /// throttling and requeueing are owned by the manager, not by recursive
+    /// websocket connection loops.
+    pub async fn connect_once(
+        &mut self,
+        event_sender: mpsc::UnboundedSender<GatewayEvent>,
+    ) -> Result<()> {
+        self.connection_alive.store(false, Ordering::Relaxed);
+        self.is_ready.store(false, Ordering::Relaxed);
+        self.heartbeat_count.store(0, Ordering::Relaxed);
+        self.stop_heartbeat_task();
+
+        let result = self.try_connect(&event_sender).await;
+        if result.is_err() {
+            self.connection_alive.store(false, Ordering::Relaxed);
+            self.is_ready.store(false, Ordering::Relaxed);
+        }
+        result
     }
 
     /// Single connection attempt
@@ -285,7 +321,7 @@ impl Gateway {
                             "[botrs] 关闭, 返回码: {} , 返回信息: {}",
                             frame.code, frame.reason
                         );
-                        self.handle_close_code(frame.code.into()).await;
+                        self.handle_close_code(frame.code.into())?;
                     }
                     // Mark connection as dead and stop heartbeat task
                     self.connection_alive.store(false, Ordering::Relaxed);
@@ -584,30 +620,63 @@ impl Gateway {
     }
 
     /// Handles close codes and determines reconnection behavior
-    async fn handle_close_code(&mut self, close_code: u16) {
-        let invalid_resume_codes = [9001, 9005];
-        let auth_fail_codes = [4004];
-
-        if auth_fail_codes.contains(&close_code) {
+    fn handle_close_code(&mut self, close_code: u16) -> Result<()> {
+        if close_code == WSCodeBackendAuthenticationFail {
             info!("[botrs] 鉴权失败，重置token...");
             self.session_id = None;
             self.last_seq.store(0, Ordering::Relaxed);
             self.is_ready.store(false, Ordering::Relaxed);
         }
 
-        if invalid_resume_codes.contains(&close_code) {
+        if Self::cannot_resume_close_code(close_code) {
             debug!("[botrs] 无法重连，创建新连接!");
             self.session_id = None;
             self.last_seq.store(0, Ordering::Relaxed);
             self.is_ready.store(false, Ordering::Relaxed);
             self.can_reconnect.store(true, Ordering::Relaxed);
+            Err(err_invalid_session().into())
+        } else if Self::cannot_identify_close_code(close_code) {
+            info!("[botrs] 连接关闭且不能重新鉴权，停止连接尝试");
+            self.session_id = None;
+            self.last_seq.store(0, Ordering::Relaxed);
+            self.is_ready.store(false, Ordering::Relaxed);
+            self.can_reconnect.store(false, Ordering::Relaxed);
+            Err(crate::error::New(
+                CodeConnCloseCantIdentify,
+                format!("websocket closed with code {close_code}"),
+            )
+            .into())
         } else if !self.can_reconnect.load(Ordering::Relaxed) {
             debug!("[botrs] 当前状态不允许重连，停止连接尝试");
+            Ok(())
         } else {
             debug!("[botrs] 连接断开，准备重连...");
             self.is_ready.store(false, Ordering::Relaxed);
             self.can_reconnect.store(true, Ordering::Relaxed);
+            Ok(())
         }
+    }
+
+    fn cannot_resume_close_code(close_code: u16) -> bool {
+        const CODE_INVALID_SESSION: u16 = CodeInvalidSession as u16;
+        const CODE_CONN_CLOSE_CANT_RESUME: u16 = CodeConnCloseCantResume as u16;
+        const CODE_SESSION_NO_LONGER_VALID: u16 = WSCodeBackendSessionNoLongerValid;
+        const CODE_INVALID_SEQ: u16 = WSCodeBackendInvalidSeq;
+
+        matches!(
+            close_code,
+            CODE_INVALID_SESSION
+                | CODE_CONN_CLOSE_CANT_RESUME
+                | CODE_SESSION_NO_LONGER_VALID
+                | CODE_INVALID_SEQ
+        )
+    }
+
+    fn cannot_identify_close_code(close_code: u16) -> bool {
+        const CODE_BOT_OFFLINE: u16 = WSCodeBackendBotOffline;
+        const CODE_BOT_BANNED: u16 = WSCodeBackendBotBanned;
+
+        matches!(close_code, CODE_BOT_OFFLINE | CODE_BOT_BANNED)
     }
 
     /// Returns true if the gateway is connected and ready.
@@ -810,5 +879,18 @@ mod tests {
         assert_eq!(Gateway::session_start_interval(3), Duration::from_secs(1));
         assert_eq!(Gateway::session_start_interval(5), Duration::from_secs(1));
         assert_eq!(Gateway::session_start_interval(100), Duration::from_secs(1));
+    }
+
+    #[test]
+    fn test_close_code_classification() {
+        assert!(Gateway::cannot_resume_close_code(
+            WSCodeBackendSessionNoLongerValid
+        ));
+        assert!(Gateway::cannot_resume_close_code(WSCodeBackendInvalidSeq));
+        assert!(Gateway::cannot_identify_close_code(WSCodeBackendBotOffline));
+        assert!(Gateway::cannot_identify_close_code(WSCodeBackendBotBanned));
+        assert!(!Gateway::cannot_resume_close_code(
+            WSCodeBackendAuthenticationFail
+        ));
     }
 }

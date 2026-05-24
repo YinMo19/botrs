@@ -7,7 +7,6 @@ use crate::api::BotApi;
 use crate::audio::{Audio, PublicAudio};
 use crate::error::{BotError, Result};
 use crate::forum::{ForumAuditResult, OpenThread, Post, Reply, Thread};
-use crate::gateway::Gateway;
 use crate::http::HttpClient;
 use crate::intents::Intents;
 use crate::interaction::Interaction;
@@ -27,10 +26,10 @@ use crate::models::message::{MessagePagerType, MessagesPager};
 use crate::models::webhook::{HttpIdentity, HttpReady, HttpSession};
 use crate::models::*;
 use crate::reaction::{Emoji as ReactionEmoji, MessageReactionPager, Reaction, ReactionUsers};
+use crate::session_manager::{CheckSessionLimit, NewSessionManager, SessionManager};
 use crate::token::Token;
 use std::sync::Arc;
 use tokio::sync::mpsc;
-use tokio::time::sleep;
 use tracing::{debug, error, info};
 
 /// Event handler trait for processing gateway events.
@@ -1731,12 +1730,7 @@ impl<H: EventHandler + 'static> Client<H> {
         let gateway_info = self.api.get_gateway(&self.token).await?;
         info!("Gateway URL: {}", gateway_info.url);
 
-        if gateway_info.shards > gateway_info.session_start_limit.remaining {
-            return Err(BotError::session(format!(
-                "Session start limit exceeded: shards={}, remaining={}",
-                gateway_info.shards, gateway_info.session_start_limit.remaining
-            )));
-        }
+        CheckSessionLimit(&gateway_info)?;
 
         // Create context
         let ctx = Context::new(self.api.clone(), self.token.clone()).with_bot_info(bot_info);
@@ -1745,7 +1739,7 @@ impl<H: EventHandler + 'static> Client<H> {
         let (event_sender, mut event_receiver) = mpsc::unbounded_channel();
 
         let reconnect_interval =
-            Gateway::session_start_interval(gateway_info.session_start_limit.max_concurrency);
+            crate::session_manager::CalcInterval(gateway_info.session_start_limit.max_concurrency);
         debug!(
             "Gateway reconnect interval: {:?} (max_concurrency: {})",
             reconnect_interval, gateway_info.session_start_limit.max_concurrency
@@ -1755,27 +1749,21 @@ impl<H: EventHandler + 'static> Client<H> {
             "Starting {} gateway shard(s) with interval {:?}",
             gateway_info.shards, reconnect_interval
         );
-        for shard_id in 0..gateway_info.shards {
-            sleep(reconnect_interval).await;
-
-            let mut gateway = Gateway::new(
-                gateway_info.url.clone(),
-                self.token.clone(),
-                self.intents,
-                Some([shard_id, gateway_info.shards]),
-            )
-            .with_reconnect_interval(reconnect_interval);
-            let shard_sender = event_sender.clone();
-
-            tokio::spawn(async move {
-                if let Err(e) = gateway.connect(shard_sender).await {
-                    error!(
-                        "Gateway shard {}/{} connection failed permanently: {}",
-                        shard_id, gateway_info.shards, e
-                    );
+        let mut session_manager = NewSessionManager();
+        tokio::spawn({
+            let gateway_info = gateway_info.clone();
+            let token = self.token.clone();
+            let intents = self.intents;
+            let event_sender = event_sender.clone();
+            async move {
+                if let Err(e) = session_manager
+                    .start(&gateway_info, token, intents, event_sender)
+                    .await
+                {
+                    error!("Gateway session manager stopped: {}", e);
                 }
-            });
-        }
+            }
+        });
         drop(event_sender);
 
         // Main event processing loop - continue running even if gateway disconnects
