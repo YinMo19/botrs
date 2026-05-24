@@ -2,9 +2,12 @@
 //!
 //! This module contains guild types that correspond to the Python botpy implementation.
 
-use crate::models::{HasId, HasName, Snowflake, Timestamp, channel::Channel};
+use crate::models::{HasId, HasName, Pager, Snowflake, Timestamp, channel::Channel};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::collections::HashMap;
+
+#[allow(non_upper_case_globals)]
+pub const DefaultColor: u32 = 4_278_245_297;
 
 fn insert_query_param(query: &mut HashMap<String, String>, key: &str, value: &Option<String>) {
     if let Some(value) = value.as_ref().filter(|value| !value.is_empty()) {
@@ -462,6 +465,12 @@ impl GuildMembersPager {
     }
 }
 
+impl Pager for GuildMembersPager {
+    fn query_params(&self) -> HashMap<String, String> {
+        GuildMembersPager::query_params(self)
+    }
+}
+
 /// Pager for guild role member list requests.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct GuildRoleMembersPager {
@@ -488,6 +497,12 @@ impl GuildRoleMembersPager {
         insert_query_param(&mut query, "limit", &self.limit);
         insert_query_param(&mut query, "start_index", &self.start_index);
         query
+    }
+}
+
+impl Pager for GuildRoleMembersPager {
+    fn query_params(&self) -> HashMap<String, String> {
+        GuildRoleMembersPager::query_params(self)
     }
 }
 
@@ -535,6 +550,12 @@ impl GuildPager {
             insert_query_param(&mut query, "before", &self.before);
         }
         query
+    }
+}
+
+impl Pager for GuildPager {
+    fn query_params(&self) -> HashMap<String, String> {
+        GuildPager::query_params(self)
     }
 }
 

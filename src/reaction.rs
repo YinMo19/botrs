@@ -4,6 +4,7 @@
 //! emoji reactions, and reaction-related events.
 
 use crate::api::BotApi;
+use crate::models::Pager;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
@@ -283,6 +284,12 @@ impl MessageReactionPager {
             query.insert("cookie".to_string(), cookie.clone());
         }
         query
+    }
+}
+
+impl Pager for MessageReactionPager {
+    fn query_params(&self) -> std::collections::HashMap<String, String> {
+        MessageReactionPager::query_params(self)
     }
 }
 

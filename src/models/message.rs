@@ -125,7 +125,7 @@
 //!
 //! See the examples in `/examples` directory for comprehensive usage patterns.
 
-use crate::models::{HasId, Snowflake, Timestamp};
+use crate::models::{HasId, Pager, Snowflake, Timestamp};
 use base64::Engine;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -145,29 +145,59 @@ pub fn mention_user(user_id: impl std::fmt::Display) -> String {
     format!("<@{user_id}>")
 }
 
+#[allow(non_snake_case)]
+pub fn MentionUser(user_id: impl std::fmt::Display) -> String {
+    mention_user(user_id)
+}
+
 pub fn mention_all_user() -> &'static str {
     "@everyone"
+}
+
+#[allow(non_snake_case)]
+pub fn MentionAllUser() -> &'static str {
+    mention_all_user()
 }
 
 pub fn mention_channel(channel_id: impl std::fmt::Display) -> String {
     format!("<#{channel_id}>")
 }
 
+#[allow(non_snake_case)]
+pub fn MentionChannel(channel_id: impl std::fmt::Display) -> String {
+    mention_channel(channel_id)
+}
+
 pub fn emoji(id: impl std::fmt::Display) -> String {
     format!("<emoji:{id}>")
 }
 
-pub fn parse_command(input: &str) -> CMD {
-    let cleaned = input
+#[allow(non_snake_case)]
+pub fn Emoji(id: impl std::fmt::Display) -> String {
+    emoji(id)
+}
+
+#[allow(non_snake_case)]
+pub fn ETLInput(input: &str) -> String {
+    input
         .split_whitespace()
         .filter(|part| !(part.starts_with("<@!") && part.ends_with('>')))
         .collect::<Vec<_>>()
-        .join(" ");
+        .join(" ")
+}
+
+pub fn parse_command(input: &str) -> CMD {
+    let cleaned = ETLInput(input);
     let mut parts = cleaned.splitn(2, char::is_whitespace);
     CMD {
         cmd: parts.next().unwrap_or_default().trim().to_string(),
         content: parts.next().unwrap_or_default().trim().to_string(),
     }
+}
+
+#[allow(non_snake_case)]
+pub fn ParseCommand(input: &str) -> CMD {
+    parse_command(input)
 }
 
 /// Message scene metadata.
@@ -1173,6 +1203,19 @@ mod tests {
     use super::*;
 
     #[test]
+    fn test_botgo_message_helpers() {
+        assert_eq!(MentionUser("123"), "<@123>");
+        assert_eq!(MentionAllUser(), "@everyone");
+        assert_eq!(MentionChannel("456"), "<#456>");
+        assert_eq!(Emoji(1), "<emoji:1>");
+        assert_eq!(ETLInput("<@!123>  ping value"), "ping value");
+
+        let command = ParseCommand("<@!123>  /ping value");
+        assert_eq!(command.cmd, "/ping");
+        assert_eq!(command.content, "value");
+    }
+
+    #[test]
     fn test_message_creation() {
         let message = Message::new();
         assert!(message.id.is_none());
@@ -2076,6 +2119,12 @@ impl MessagesPager {
             query.insert(pager_type.as_str().to_string(), id.clone());
         }
         query
+    }
+}
+
+impl Pager for MessagesPager {
+    fn query_params(&self) -> std::collections::HashMap<String, String> {
+        MessagesPager::query_params(self)
     }
 }
 
