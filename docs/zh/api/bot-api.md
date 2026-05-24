@@ -662,16 +662,16 @@ pub async fn get_channel_audio_members(
 ) -> Result<Vec<Member>, BotError>
 ```
 
-### `audio_control`
+### `post_audio`
 
 控制音频播放。
 
 ```rust
-pub async fn audio_control(
+pub async fn post_audio(
     &self,
     token: &Token,
     channel_id: &str,
-    control_data: &serde_json::Value,
+    audio_control: &AudioControl,
 ) -> Result<AudioControl, BotError>
 ```
 

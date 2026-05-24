@@ -113,6 +113,7 @@
 //! [`C2CMessageParams`]: crate::models::message::C2CMessageParams
 //! [`DirectMessageParams`]: crate::models::message::DirectMessageParams
 
+use crate::audio::AudioControl;
 use crate::error::Result;
 use crate::http::HttpClient;
 use crate::models::user::User;
@@ -120,7 +121,7 @@ use crate::models::{
     announce::{
         Announce, AnnouncesType, ChannelAnnouncesToCreate, GuildAnnouncesToCreate, RecommendChannel,
     },
-    api::{AudioAction, BotInfo, GatewayResponse, MessageResponse, PinsMessage},
+    api::{BotInfo, GatewayResponse, MessageResponse, PinsMessage},
     channel::{
         Channel, ChannelPermissions, ChannelRolesPermissions, ChannelSubType, ChannelType,
         ChannelValueObject, PrivateType, SpeakPermission, UpdateChannelPermissions,
@@ -1228,8 +1229,8 @@ impl BotApi {
     pub async fn PostAudio(
         &self,
         channel_id: &str,
-        audio_control: &AudioAction,
-    ) -> Result<AudioAction> {
+        audio_control: &AudioControl,
+    ) -> Result<AudioControl> {
         self.post_audio(self.token_required()?, channel_id, audio_control)
             .await
     }
@@ -3252,7 +3253,7 @@ impl BotApi {
         &self,
         token: &Token,
         channel_id: &str,
-        audio_control: &AudioAction,
+        audio_control: &AudioControl,
     ) -> Result<()> {
         self.post_audio(token, channel_id, audio_control).await?;
         Ok(())
@@ -3263,8 +3264,8 @@ impl BotApi {
         &self,
         token: &Token,
         channel_id: &str,
-        audio_control: &AudioAction,
-    ) -> Result<AudioAction> {
+        audio_control: &AudioControl,
+    ) -> Result<AudioControl> {
         debug!("Updating audio in channel {}", channel_id);
         let path = format!("/channels/{channel_id}/audio");
         let _response = self

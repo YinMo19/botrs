@@ -170,10 +170,10 @@ impl MyBot {
         match ctx.get_audio_status(channel_id).await {
             Ok(status) => {
                 let status_msg = match status {
-                    AudioStatus::Playing => "正在播放",
-                    AudioStatus::Paused => "已暂停",
-                    AudioStatus::Stopped => "已停止",
-                    AudioStatus::Loading => "加载中",
+                    AudioStatus::Start => "正在播放",
+                    AudioStatus::Pause => "已暂停",
+                    AudioStatus::Stop => "已停止",
+                    AudioStatus::Resume => "加载中",
                 };
                 
                 ctx.send_message(channel_id, &format!("当前音频状态: {}", status_msg))
@@ -397,7 +397,7 @@ impl AudioSessionManager {
             channel_id: channel_id.clone(),
             start_time: Utc::now(),
             current_track: None,
-            status: AudioStatus::Starting,
+            status: AudioStatus::Start,
         };
         
         self.active_sessions.insert(channel_id, session);

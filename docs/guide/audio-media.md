@@ -119,7 +119,7 @@ impl MyBot {
                     status: AudioStatus::Start,
                 };
                 
-                if let Err(e) = ctx.update_audio(channel_id, audio_control).await {
+                if let Err(e) = ctx.update_audio(channel_id, &audio_control).await {
                     eprintln!("Failed to start audio: {}", e);
                 }
             }
@@ -130,7 +130,7 @@ impl MyBot {
                     status: AudioStatus::Pause,
                 };
                 
-                if let Err(e) = ctx.update_audio(channel_id, audio_control).await {
+                if let Err(e) = ctx.update_audio(channel_id, &audio_control).await {
                     eprintln!("Failed to pause audio: {}", e);
                 }
             }
@@ -141,7 +141,7 @@ impl MyBot {
                     status: AudioStatus::Resume,
                 };
                 
-                if let Err(e) = ctx.update_audio(channel_id, audio_control).await {
+                if let Err(e) = ctx.update_audio(channel_id, &audio_control).await {
                     eprintln!("Failed to resume audio: {}", e);
                 }
             }
@@ -152,7 +152,7 @@ impl MyBot {
                     status: AudioStatus::Stop,
                 };
                 
-                if let Err(e) = ctx.update_audio(channel_id, audio_control).await {
+                if let Err(e) = ctx.update_audio(channel_id, &audio_control).await {
                     eprintln!("Failed to stop audio: {}", e);
                 }
             }
@@ -497,7 +497,7 @@ impl EventHandler for AudioBot {
                     status: AudioStatus::Start,
                 };
                 
-                let _ = ctx.update_audio(channel_id, welcome_audio).await;
+                let _ = ctx.update_audio(channel_id, &welcome_audio).await;
             }
         }
     }
@@ -522,7 +522,7 @@ impl AudioBot {
                         status: AudioStatus::Start,
                     };
                     
-                    if let Ok(_) = ctx.update_audio(channel_id, audio_control).await {
+                    if let Ok(_) = ctx.update_audio(channel_id, &audio_control).await {
                         self.session_manager.start_session(channel_id.to_string(), url.to_string()).await;
                         let _ = ctx.send_message(channel_id, "Audio playback started").await;
                     }
@@ -535,7 +535,7 @@ impl AudioBot {
                     status: AudioStatus::Stop,
                 };
                 
-                if let Ok(_) = ctx.update_audio(channel_id, audio_control).await {
+                if let Ok(_) = ctx.update_audio(channel_id, &audio_control).await {
                     if let Some(duration) = self.session_manager.get_session_duration(channel_id).await {
                         let _ = ctx.send_message(
                             channel_id, 
@@ -552,7 +552,7 @@ impl AudioBot {
                     status: AudioStatus::Pause,
                 };
                 
-                if let Ok(_) = ctx.update_audio(channel_id, audio_control).await {
+                if let Ok(_) = ctx.update_audio(channel_id, &audio_control).await {
                     self.session_manager.update_session_status(channel_id, AudioStatus::Pause).await;
                     let _ = ctx.send_message(channel_id, "Audio paused").await;
                 }
@@ -564,7 +564,7 @@ impl AudioBot {
                     status: AudioStatus::Resume,
                 };
                 
-                if let Ok(_) = ctx.update_audio(channel_id, audio_control).await {
+                if let Ok(_) = ctx.update_audio(channel_id, &audio_control).await {
                     self.session_manager.update_session_status(channel_id, AudioStatus::Resume).await;
                     let _ = ctx.send_message(channel_id, "Audio resumed").await;
                 }
