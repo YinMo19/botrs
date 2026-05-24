@@ -7,6 +7,10 @@ use std::sync::{Arc, LazyLock, RwLock};
 
 use reqwest::{Method, StatusCode, header::HeaderMap};
 
+pub fn IsSuccessStatus(code: u16) -> bool {
+    matches!(code, 200 | 204)
+}
+
 /// Request/response view passed to OpenAPI filters.
 #[derive(Debug, Clone, Default)]
 pub struct FilterContext {
@@ -127,6 +131,15 @@ pub fn DoRespFilterChains(context: &mut FilterContext) -> crate::Result<()> {
 mod tests {
     use super::*;
     use reqwest::header::HeaderValue;
+
+    #[test]
+    fn success_status_matches_botgo() {
+        assert!(IsSuccessStatus(200));
+        assert!(IsSuccessStatus(204));
+        assert!(!IsSuccessStatus(201));
+        assert!(!IsSuccessStatus(202));
+        assert!(!IsSuccessStatus(400));
+    }
 
     #[test]
     fn filters_run_in_registration_order_and_skip_duplicate_names() {
