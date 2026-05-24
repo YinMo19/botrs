@@ -20,6 +20,13 @@ use tracing::{debug, info, warn};
 use url::Url;
 
 type WsStream = WebSocketStream<MaybeTlsStream<tokio::net::TcpStream>>;
+const SESSION_START_LIMIT_WINDOW_SECS: u64 = 5;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum GatewayAction {
+    Continue,
+    Reconnect,
+}
 
 /// WebSocket gateway client for the QQ Guild Bot API.
 pub struct Gateway {
@@ -55,6 +62,8 @@ pub struct Gateway {
     last_heartbeat_ack: Arc<AtomicU64>,
     /// Heartbeat sent time for ACK tracking
     last_heartbeat_sent: Arc<AtomicU64>,
+    /// Fixed interval between reconnect attempts, derived from gateway session limits
+    reconnect_interval: Duration,
 }
 
 impl Gateway {
@@ -100,7 +109,42 @@ impl Gateway {
             heartbeat_count: Arc::new(AtomicU64::new(0)),
             last_heartbeat_ack: Arc::new(AtomicU64::new(0)),
             last_heartbeat_sent: Arc::new(AtomicU64::new(0)),
+            reconnect_interval: Duration::from_secs(SESSION_START_LIMIT_WINDOW_SECS),
         }
+    }
+
+    /// Configures the fixed reconnect interval used after a connection exits.
+    ///
+    /// Official SDKs throttle new websocket starts with a session-manager interval
+    /// rather than a long-lived exponential backoff. A zero duration is normalized
+    /// to one second to avoid tight reconnect loops.
+    pub fn with_reconnect_interval(mut self, reconnect_interval: Duration) -> Self {
+        self.reconnect_interval = if reconnect_interval.is_zero() {
+            Duration::from_secs(1)
+        } else {
+            reconnect_interval
+        };
+        self
+    }
+
+    /// Calculates a botpy-style session start interval from gateway limits.
+    ///
+    /// botpy uses `round(5 / max_concurrency)`. botgo applies the same fixed
+    /// session-manager throttling pattern and guards the interval to at least
+    /// one second. This combines those behaviors for Rust.
+    pub fn session_start_interval(max_concurrency: u32) -> Duration {
+        let max_concurrency = u64::from(max_concurrency.max(1));
+        let quotient = SESSION_START_LIMIT_WINDOW_SECS / max_concurrency;
+        let remainder = SESSION_START_LIMIT_WINDOW_SECS % max_concurrency;
+
+        let rounded = match remainder.saturating_mul(2).cmp(&max_concurrency) {
+            std::cmp::Ordering::Less => quotient,
+            std::cmp::Ordering::Greater => quotient + 1,
+            std::cmp::Ordering::Equal if quotient % 2 == 0 => quotient,
+            std::cmp::Ordering::Equal => quotient + 1,
+        };
+
+        Duration::from_secs(rounded.max(1))
     }
 
     /// Connects to the gateway and starts the event loop.
@@ -117,10 +161,10 @@ impl Gateway {
         &mut self,
         event_sender: mpsc::UnboundedSender<GatewayEvent>,
     ) -> Result<()> {
-        let mut connection_attempt: u32 = 0;
+        let mut connection_count: u64 = 0;
         loop {
-            connection_attempt += 1;
-            debug!("[botrs] 启动中... (第{}次连接尝试)", connection_attempt);
+            connection_count += 1;
+            debug!("[botrs] 启动中... (第{}次连接)", connection_count);
             debug!("[botrs] 连接到网关: {}", self.url);
 
             // Reset states before attempting connection (like Python's session reset)
@@ -150,23 +194,11 @@ impl Gateway {
                 break;
             }
 
-            // Dynamic reconnect interval like Python: round(5 / max_concurrency)
-            // For single connection, use 5 seconds, but add exponential backoff for frequent failures
-            let base_interval = 5_u64;
-            let reconnect_interval = if connection_attempt <= 3 {
-                base_interval
-            } else {
-                // Exponential backoff: 5, 10, 20, 40 seconds max
-                // Use saturating math to avoid overflow/panic on long reconnect loops.
-                let shift = connection_attempt.saturating_sub(3).min(3);
-                base_interval.saturating_mul(1_u64 << shift).min(40)
-            };
-
             debug!(
-                "[botrs] 等待{}秒后重连... (第{}次尝试)",
-                reconnect_interval, connection_attempt
+                "[botrs] 等待{}秒后重连...",
+                self.reconnect_interval.as_secs()
             );
-            tokio::time::sleep(Duration::from_secs(reconnect_interval)).await;
+            tokio::time::sleep(self.reconnect_interval).await;
         }
 
         Ok(())
@@ -211,21 +243,39 @@ impl Gateway {
             match message {
                 Ok(Message::Text(text)) => {
                     debug!("[botrs] 接收消息: {}", text);
-                    if let Err(e) = self
+                    match self
                         .handle_message_content(&text, &event_sender, &write)
                         .await
                     {
-                        debug!("Error handling message: {}", e);
+                        Ok(GatewayAction::Continue) => {}
+                        Ok(GatewayAction::Reconnect) => {
+                            debug!("[botrs] 系统事件要求重连，退出当前连接");
+                            self.connection_alive.store(false, Ordering::Relaxed);
+                            self.stop_heartbeat_task();
+                            return Ok(());
+                        }
+                        Err(e) => {
+                            debug!("Error handling message: {}", e);
+                        }
                     }
                 }
                 Ok(Message::Binary(data)) => {
                     if let Ok(text) = String::from_utf8(data) {
                         debug!("[botrs] 接收消息: {}", text);
-                        if let Err(e) = self
+                        match self
                             .handle_message_content(&text, &event_sender, &write)
                             .await
                         {
-                            debug!("Error handling binary message: {}", e);
+                            Ok(GatewayAction::Continue) => {}
+                            Ok(GatewayAction::Reconnect) => {
+                                debug!("[botrs] 系统事件要求重连，退出当前连接");
+                                self.connection_alive.store(false, Ordering::Relaxed);
+                                self.stop_heartbeat_task();
+                                return Ok(());
+                            }
+                            Err(e) => {
+                                debug!("Error handling binary message: {}", e);
+                            }
                         }
                     }
                 }
@@ -311,13 +361,13 @@ impl Gateway {
         text: &str,
         event_sender: &mpsc::UnboundedSender<GatewayEvent>,
         write: &Arc<Mutex<futures_util::stream::SplitSink<WsStream, Message>>>,
-    ) -> Result<()> {
+    ) -> Result<GatewayAction> {
         // Parse the gateway event
         let event: GatewayEvent = serde_json::from_str(text).map_err(BotError::Json)?;
 
         // Check if this is a system event first (like Python's _is_system_event)
-        if self.is_system_event(&event, write).await? {
-            return Ok(());
+        if let Some(action) = self.handle_system_event(&event, write).await? {
+            return Ok(action);
         }
 
         // Update sequence number if present
@@ -380,15 +430,15 @@ impl Gateway {
             }
         }
 
-        Ok(())
+        Ok(GatewayAction::Continue)
     }
 
     /// Handle system events like Python's _is_system_event
-    async fn is_system_event(
+    async fn handle_system_event(
         &mut self,
         event: &GatewayEvent,
         write: &Arc<Mutex<futures_util::stream::SplitSink<WsStream, Message>>>,
-    ) -> Result<bool> {
+    ) -> Result<Option<GatewayAction>> {
         match event.opcode {
             opcodes::HELLO => {
                 // Hello message with heartbeat interval
@@ -409,7 +459,7 @@ impl Gateway {
                         }
                     }
                 }
-                Ok(true)
+                Ok(Some(GatewayAction::Continue))
             }
             opcodes::HEARTBEAT_ACK => {
                 let now = SystemTime::now()
@@ -429,17 +479,30 @@ impl Gateway {
                     "[botrs] 收到心跳确认 (HEARTBEAT_ACK)，延迟: {}ms",
                     ack_latency
                 );
-                Ok(true)
+                Ok(Some(GatewayAction::Continue))
             }
             opcodes::RECONNECT => {
                 info!("[botrs] 服务器请求重连 (RECONNECT)");
                 self.can_reconnect.store(true, Ordering::Relaxed);
-                Ok(true)
+                self.connection_alive.store(false, Ordering::Relaxed);
+                let mut writer = write.lock().await;
+                if let Err(e) = writer.send(Message::Close(None)).await {
+                    debug!("Failed to close websocket after RECONNECT: {}", e);
+                }
+                Ok(Some(GatewayAction::Reconnect))
             }
             opcodes::INVALID_SESSION => {
                 info!("[botrs] 会话无效 (INVALID_SESSION)");
-                self.can_reconnect.store(false, Ordering::Relaxed);
-                Ok(true)
+                self.session_id = None;
+                self.last_seq.store(0, Ordering::Relaxed);
+                self.is_ready.store(false, Ordering::Relaxed);
+                self.can_reconnect.store(true, Ordering::Relaxed);
+                self.connection_alive.store(false, Ordering::Relaxed);
+                let mut writer = write.lock().await;
+                if let Err(e) = writer.send(Message::Close(None)).await {
+                    debug!("Failed to close websocket after INVALID_SESSION: {}", e);
+                }
+                Ok(Some(GatewayAction::Reconnect))
             }
             opcodes::HEARTBEAT => {
                 // Server requesting heartbeat
@@ -465,9 +528,9 @@ impl Gateway {
                         debug!("Failed to send immediate heartbeat: {}", e);
                     }
                 }
-                Ok(true)
+                Ok(Some(GatewayAction::Continue))
             }
-            _ => Ok(false),
+            _ => Ok(None),
         }
     }
 
@@ -523,7 +586,7 @@ impl Gateway {
 
     /// Handles close codes and determines reconnection behavior
     async fn handle_close_code(&mut self, close_code: u16) {
-        let invalid_reconnect_codes = [9001, 9005];
+        let invalid_resume_codes = [9001, 9005];
         let auth_fail_codes = [4004];
 
         if auth_fail_codes.contains(&close_code) {
@@ -533,14 +596,14 @@ impl Gateway {
             self.is_ready.store(false, Ordering::Relaxed);
         }
 
-        if invalid_reconnect_codes.contains(&close_code)
-            || !self.can_reconnect.load(Ordering::Relaxed)
-        {
+        if invalid_resume_codes.contains(&close_code) {
             debug!("[botrs] 无法重连，创建新连接!");
             self.session_id = None;
             self.last_seq.store(0, Ordering::Relaxed);
             self.is_ready.store(false, Ordering::Relaxed);
-            self.can_reconnect.store(false, Ordering::Relaxed);
+            self.can_reconnect.store(true, Ordering::Relaxed);
+        } else if !self.can_reconnect.load(Ordering::Relaxed) {
+            debug!("[botrs] 当前状态不允许重连，停止连接尝试");
         } else {
             debug!("[botrs] 连接断开，准备重连...");
             self.is_ready.store(false, Ordering::Relaxed);
@@ -738,5 +801,15 @@ mod tests {
         let gateway = Gateway::new("wss://example.com", token, intents, Some([0, 1]));
 
         assert_eq!(gateway.shard, Some([0, 1]));
+    }
+
+    #[test]
+    fn test_session_start_interval() {
+        assert_eq!(Gateway::session_start_interval(0), Duration::from_secs(5));
+        assert_eq!(Gateway::session_start_interval(1), Duration::from_secs(5));
+        assert_eq!(Gateway::session_start_interval(2), Duration::from_secs(2));
+        assert_eq!(Gateway::session_start_interval(3), Duration::from_secs(2));
+        assert_eq!(Gateway::session_start_interval(5), Duration::from_secs(1));
+        assert_eq!(Gateway::session_start_interval(100), Duration::from_secs(1));
     }
 }
