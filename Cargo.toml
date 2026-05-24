@@ -1,6 +1,6 @@
 [package]
 name = "botrs"
-version = "0.4.0"
+version = "0.5.0"
 edition = "2024"
 authors = ["YinMo19"]
 description = "A Rust QQ Bot framework based on QQ Guild Bot API"
@@ -10,6 +10,12 @@ keywords = ["qq", "bot", "guild", "api", "async"]
 readme = "README.md"
 categories = ["api-bindings", "asynchronous", "network-programming"]
 documentation = "https://docs.rs/botrs"
+exclude = [
+    ".github/",
+    "docs/.vitepress/",
+    "package.json",
+    "pnpm-lock.yaml",
+]
 
 [dependencies]
 # Async runtime

@@ -16,6 +16,20 @@ BotRS 的所有重要更改都将记录在此文件中。
 ### 更改
 - 文档改进和重构
 
+## [0.5.0] - 2026-05-25
+
+### 新增
+- 对齐 botgo 的 OpenAPI facade、版本注册表、请求选项、HTTP filter 和 token 后台刷新辅助接口。
+
+### 更改
+- OpenAPI 成功状态码处理与 botgo 对齐，仅 `200` 和 `204` 视为成功。
+- 克隆后的 token source 共享 token 缓存，并移除 unsafe 状态写入。
+- 刷新 lockfile，避免已 yanked 的传递依赖。
+
+### 修复
+- WebSocket 重连成功后重置 backoff，避免后续一直使用 40s 间隔。
+- 隔离 OpenAPI registry 测试，避免并行测试随机失败。
+
 ## [0.2.5] - 2025-07-30
 
 ### 新增
