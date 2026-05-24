@@ -16,6 +16,16 @@ BotRS 的所有重要更改都将记录在此文件中。
 ### 更改
 - 文档改进和重构
 
+## [0.6.0] - 2026-05-25
+
+### 新增
+- 对齐 botgo 的 `WSPayload.session`、`C2CFriendData`、`WSC2CFriendData`、消息辅助接口、分页辅助接口和 OpenAPI facade 名称。
+- 增加 `APIMessage`、`GetEventID`、`GetSendType`、`QueryParams`、OpenAPI 分组别名、`openapi::Register` 和 `DefaultImpl` 兼容入口。
+
+### 更改
+- WebSocket 事件 payload DTO 和 C2C 好友事件改为更贴近 botgo 的纯数据模型形态。
+- 保留 Rust 风格小写 helper，同时增加 botgo 风格导出名称，便于迁移。
+
 ## [0.5.0] - 2026-05-25
 
 ### 新增
