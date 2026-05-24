@@ -20,7 +20,7 @@ use crate::models::channel::{
 use crate::models::gateway::GatewayEvent;
 use crate::models::guild::{
     GuildRole, GuildRoleMembers, GuildRoleMembersPager, GuildRoles, Member as GuildMember,
-    MemberDeleteOptions, UpdateGuildMute, UpdateGuildMuteResponse,
+    MemberDeleteOptions, UpdateGuildMute, UpdateGuildMuteResponse, UpdateResult,
 };
 use crate::models::message::{MessagePagerType, MessagesPager};
 use crate::models::webhook::{HttpIdentity, HttpReady, HttpSession};
@@ -685,6 +685,17 @@ impl Context {
             .await
     }
 
+    /// Creates a guild role with a botgo-style role body.
+    pub async fn create_guild_role_with_update(
+        &self,
+        guild_id: &str,
+        role: GuildRole,
+    ) -> Result<UpdateResult> {
+        self.api
+            .create_guild_role_with_update(&self.token, guild_id, role)
+            .await
+    }
+
     /// Updates a guild role.
     ///
     /// # Arguments
@@ -708,6 +719,18 @@ impl Context {
     ) -> Result<GuildRole> {
         self.api
             .update_guild_role(&self.token, guild_id, role_id, name, color, hoist)
+            .await
+    }
+
+    /// Updates a guild role with a botgo-style role body.
+    pub async fn update_guild_role_with_update(
+        &self,
+        guild_id: &str,
+        role_id: &str,
+        role: GuildRole,
+    ) -> Result<UpdateResult> {
+        self.api
+            .update_guild_role_with_update(&self.token, guild_id, role_id, role)
             .await
     }
 
@@ -893,6 +916,17 @@ impl Context {
     pub async fn update_audio(&self, channel_id: &str, audio_control: &AudioAction) -> Result<()> {
         self.api
             .update_audio(&self.token, channel_id, audio_control)
+            .await
+    }
+
+    /// Updates audio control and returns the submitted audio control body.
+    pub async fn post_audio(
+        &self,
+        channel_id: &str,
+        audio_control: &AudioAction,
+    ) -> Result<AudioAction> {
+        self.api
+            .post_audio(&self.token, channel_id, audio_control)
             .await
     }
 

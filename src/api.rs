@@ -125,7 +125,7 @@ use crate::models::{
     emoji::EmojiType,
     guild::{
         Guild, GuildRole, GuildRoleMembers, GuildRoleMembersPager, GuildRoles, Member,
-        MemberDeleteOptions, UpdateGuildMute, UpdateGuildMuteResponse,
+        MemberDeleteOptions, UpdateGuildMute, UpdateGuildMuteResponse, UpdateResult, UpdateRole,
         normalize_delete_history_msg_days,
     },
     message::{
@@ -323,6 +323,22 @@ impl BotApi {
     /// # Returns
     ///
     /// The created role.
+    pub async fn create_guild_role_with_update(
+        &self,
+        token: &Token,
+        guild_id: &str,
+        role: GuildRole,
+    ) -> Result<UpdateResult> {
+        debug!("Creating guild role in {}", guild_id);
+        let body = UpdateRole::new(guild_id, role);
+        let path = format!("/guilds/{guild_id}/roles");
+        let response = self
+            .http
+            .post(token, &path, None::<&()>, Some(&body))
+            .await?;
+        Ok(serde_json::from_value(response)?)
+    }
+
     pub async fn create_guild_role(
         &self,
         token: &Token,
@@ -331,25 +347,18 @@ impl BotApi {
         color: Option<u32>,
         hoist: Option<bool>,
     ) -> Result<GuildRole> {
-        debug!("Creating guild role in {}", guild_id);
-
-        let mut body = HashMap::new();
-        if let Some(name) = name {
-            body.insert("name", json!(name));
-        }
-        if let Some(color) = color {
-            body.insert("color", json!(color));
-        }
-        if let Some(hoist) = hoist {
-            body.insert("hoist", json!(if hoist { 1 } else { 0 }));
-        }
-
-        let path = format!("/guilds/{guild_id}/roles");
-        let response = self
-            .http
-            .post(token, &path, None::<&()>, Some(&body))
+        let role = GuildRole {
+            id: None,
+            name: name.map(String::from),
+            color,
+            hoist,
+            number: None,
+            member_limit: None,
+        };
+        let result = self
+            .create_guild_role_with_update(token, guild_id, role)
             .await?;
-        Ok(serde_json::from_value(response)?)
+        Ok(result.role.unwrap_or_default())
     }
 
     /// Updates a guild role.
@@ -366,6 +375,23 @@ impl BotApi {
     /// # Returns
     ///
     /// The updated role.
+    pub async fn update_guild_role_with_update(
+        &self,
+        token: &Token,
+        guild_id: &str,
+        role_id: &str,
+        role: GuildRole,
+    ) -> Result<UpdateResult> {
+        debug!("Updating guild role {} in {}", role_id, guild_id);
+        let body = UpdateRole::new(guild_id, role);
+        let path = format!("/guilds/{guild_id}/roles/{role_id}");
+        let response = self
+            .http
+            .patch(token, &path, None::<&()>, Some(&body))
+            .await?;
+        Ok(serde_json::from_value(response)?)
+    }
+
     pub async fn update_guild_role(
         &self,
         token: &Token,
@@ -375,25 +401,18 @@ impl BotApi {
         color: Option<u32>,
         hoist: Option<bool>,
     ) -> Result<GuildRole> {
-        debug!("Updating guild role {} in {}", role_id, guild_id);
-
-        let mut body = HashMap::new();
-        if let Some(name) = name {
-            body.insert("name", json!(name));
-        }
-        if let Some(color) = color {
-            body.insert("color", json!(color));
-        }
-        if let Some(hoist) = hoist {
-            body.insert("hoist", json!(if hoist { 1 } else { 0 }));
-        }
-
-        let path = format!("/guilds/{guild_id}/roles/{role_id}");
-        let response = self
-            .http
-            .put(token, &path, None::<&()>, Some(&body))
+        let role = GuildRole {
+            id: Some(role_id.to_string()),
+            name: name.map(String::from),
+            color,
+            hoist,
+            number: None,
+            member_limit: None,
+        };
+        let result = self
+            .update_guild_role_with_update(token, guild_id, role_id, role)
             .await?;
-        Ok(serde_json::from_value(response)?)
+        Ok(result.role.unwrap_or_default())
     }
 
     /// Deletes a guild role.
@@ -1547,13 +1566,24 @@ impl BotApi {
         channel_id: &str,
         audio_control: &AudioAction,
     ) -> Result<()> {
+        self.post_audio(token, channel_id, audio_control).await?;
+        Ok(())
+    }
+
+    /// Updates audio control and returns the submitted audio control body.
+    pub async fn post_audio(
+        &self,
+        token: &Token,
+        channel_id: &str,
+        audio_control: &AudioAction,
+    ) -> Result<AudioAction> {
         debug!("Updating audio in channel {}", channel_id);
         let path = format!("/channels/{channel_id}/audio");
         let _response = self
             .http
             .post(token, &path, None::<&()>, Some(audio_control))
             .await?;
-        Ok(())
+        Ok(audio_control.clone())
     }
 
     /// Turn on microphone.

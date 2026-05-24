@@ -3,7 +3,33 @@
 //! This module contains guild types that correspond to the Python botpy implementation.
 
 use crate::models::{HasId, HasName, Snowflake, Timestamp};
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
+
+mod role_hoist_serde {
+    use super::*;
+
+    pub fn serialize<S>(value: &Option<bool>, serializer: S) -> std::result::Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        match value {
+            Some(value) => serializer.serialize_some(&u32::from(*value)),
+            None => serializer.serialize_none(),
+        }
+    }
+
+    pub fn deserialize<'de, D>(deserializer: D) -> std::result::Result<Option<bool>, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let value = Option::<serde_json::Value>::deserialize(deserializer)?;
+        Ok(value.and_then(|value| match value {
+            serde_json::Value::Bool(value) => Some(value),
+            serde_json::Value::Number(value) => value.as_u64().map(|value| value != 0),
+            _ => None,
+        }))
+    }
+}
 
 /// Represents a guild (server) in the QQ Guild system.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -143,6 +169,8 @@ impl HasName for Guild {
 /// Guild roles response wrapper.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct GuildRoles {
+    /// Guild ID
+    pub guild_id: Option<Snowflake>,
     /// List of roles in the guild
     pub roles: Vec<GuildRole>,
     /// Number of roles
@@ -153,6 +181,7 @@ impl GuildRoles {
     /// Creates a new guild roles wrapper.
     pub fn new(roles: Vec<GuildRole>) -> Self {
         Self {
+            guild_id: None,
             roles,
             role_num_limit: None,
         }
@@ -169,11 +198,72 @@ pub struct GuildRole {
     /// The role's color (ARGB hex as decimal)
     pub color: Option<u32>,
     /// Whether this role is displayed separately in the member list
+    #[serde(with = "role_hoist_serde", default)]
     pub hoist: Option<bool>,
     /// The number of members with this role
     pub number: Option<u32>,
     /// The number of online members with this role
     pub member_limit: Option<u32>,
+}
+
+impl GuildRole {
+    fn default_color() -> u32 {
+        4_278_245_297
+    }
+
+    fn hoist_value(&self) -> u32 {
+        self.hoist.map(u32::from).unwrap_or(0)
+    }
+}
+
+/// Filter identifying which role fields are being updated.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct UpdateRoleFilter {
+    pub name: u32,
+    pub color: u32,
+    pub hoist: u32,
+}
+
+impl Default for UpdateRoleFilter {
+    fn default() -> Self {
+        Self {
+            name: 1,
+            color: 1,
+            hoist: 1,
+        }
+    }
+}
+
+/// Botgo-compatible role update body.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct UpdateRole {
+    pub guild_id: String,
+    pub filter: UpdateRoleFilter,
+    #[serde(rename = "info")]
+    pub update: GuildRole,
+}
+
+impl UpdateRole {
+    /// Creates a role update body with botgo-compatible defaults.
+    pub fn new(guild_id: impl Into<String>, mut role: GuildRole) -> Self {
+        if role.color.unwrap_or(0) == 0 {
+            role.color = Some(GuildRole::default_color());
+        }
+        role.hoist = Some(role.is_hoisted());
+        Self {
+            guild_id: guild_id.into(),
+            filter: UpdateRoleFilter::default(),
+            update: role,
+        }
+    }
+}
+
+/// Result returned from role create/update APIs.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct UpdateResult {
+    pub role_id: Option<Snowflake>,
+    pub guild_id: Option<Snowflake>,
+    pub role: Option<GuildRole>,
 }
 
 impl GuildRole {
@@ -192,6 +282,11 @@ impl GuildRole {
     /// Returns true if this role is hoisted (displayed separately).
     pub fn is_hoisted(&self) -> bool {
         self.hoist.unwrap_or(false)
+    }
+
+    /// Converts the role to the numeric hoist value expected by the API.
+    pub fn hoist_as_u32(&self) -> u32 {
+        self.hoist_value()
     }
 
     /// Gets the role's color as a hex value.
