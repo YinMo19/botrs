@@ -90,6 +90,22 @@ pub struct Announce {
     pub recommend_channels: Option<Vec<RecommendChannel>>,
 }
 
+pub type Announces = Announce;
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+pub struct ChannelAnnouncesToCreate {
+    pub message_id: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+pub struct GuildAnnouncesToCreate {
+    pub channel_id: String,
+    pub message_id: String,
+    pub announces_type: u32,
+    #[serde(default)]
+    pub recommend_channels: Vec<RecommendChannel>,
+}
+
 impl Announce {
     /// Creates a new message-type announcement.
     ///
