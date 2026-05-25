@@ -93,9 +93,10 @@ pub type LayoutType = u32;
 pub const LAYOUT_TYPE_IMAGE_TEXT: LayoutType = 0;
 #[allow(non_upper_case_globals)]
 pub const LayoutTypeImageText: LayoutType = LAYOUT_TYPE_IMAGE_TEXT;
-pub const ACTION_TYPE_SEND_ARK: crate::models::message::ActionType = 0;
+pub type ActionType = u32;
+pub const ACTION_TYPE_SEND_ARK: ActionType = 0;
 #[allow(non_upper_case_globals)]
-pub const ActionTypeSendARK: crate::models::message::ActionType = ACTION_TYPE_SEND_ARK;
+pub const ActionTypeSendARK: ActionType = ACTION_TYPE_SEND_ARK;
 
 impl From<u8> for InteractionDataType {
     fn from(value: u8) -> Self {
@@ -129,88 +130,87 @@ impl<'de> Deserialize<'de> for InteractionDataType {
     }
 }
 
-/// Resolved interaction data
-#[derive(Debug, Clone, Serialize, Deserialize)]
+fn is_default<T>(value: &T) -> bool
+where
+    T: Default + PartialEq,
+{
+    value == &T::default()
+}
+
+fn string_field(data: &Value, key: &str) -> String {
+    data.get(key)
+        .and_then(Value::as_str)
+        .unwrap_or_default()
+        .to_string()
+}
+
+/// Resolved interaction data.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct Resolved {
     /// Search keyword
-    pub keyword: Option<String>,
-    /// Button ID (for button interactions)
-    pub button_id: Option<String>,
-    /// Button data
-    pub button_data: Option<String>,
-    /// Message ID
-    pub message_id: Option<String>,
+    #[serde(default)]
+    pub keyword: String,
     /// User ID
-    pub user_id: Option<String>,
+    #[serde(default)]
+    pub user_id: String,
     /// Request payload
-    pub request: Option<String>,
+    #[serde(default)]
+    pub request: String,
+    /// Message ID
+    #[serde(default)]
+    pub message_id: String,
     /// Member nickname
-    pub member_nick: Option<String>,
+    #[serde(default)]
+    pub member_nick: String,
+    /// Button data
+    #[serde(default)]
+    pub button_data: String,
+    /// Button ID (for button interactions)
+    #[serde(default)]
+    pub button_id: String,
     /// Feature ID
-    pub feature_id: Option<String>,
+    #[serde(default)]
+    pub feature_id: String,
     /// Message feedback option
-    pub feedback_opt: Option<String>,
+    #[serde(default)]
+    pub feedback_opt: String,
     /// Whether feedback option is checked
-    pub checked: Option<i32>,
+    #[serde(default)]
+    pub checked: i32,
 }
 
 impl Resolved {
     /// Create a new Resolved instance from JSON data
     pub fn new(data: &Value) -> Self {
         Self {
-            keyword: data
-                .get("keyword")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            button_id: data
-                .get("button_id")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            button_data: data
-                .get("button_data")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            message_id: data
-                .get("message_id")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            user_id: data
-                .get("user_id")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            request: data
-                .get("request")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            member_nick: data
-                .get("member_nick")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            feature_id: data
-                .get("feature_id")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            feedback_opt: data
-                .get("feedback_opt")
-                .and_then(|v| v.as_str())
-                .map(String::from),
+            keyword: string_field(data, "keyword"),
+            user_id: string_field(data, "user_id"),
+            request: string_field(data, "request"),
+            message_id: string_field(data, "message_id"),
+            member_nick: string_field(data, "member_nick"),
+            button_data: string_field(data, "button_data"),
+            button_id: string_field(data, "button_id"),
+            feature_id: string_field(data, "feature_id"),
+            feedback_opt: string_field(data, "feedback_opt"),
             checked: data
                 .get("checked")
-                .and_then(|v| v.as_i64())
-                .map(|v| v as i32),
+                .and_then(Value::as_i64)
+                .map_or(0, |value| value as i32),
         }
     }
 }
 
 /// Interaction data structure
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct InteractionData {
     /// Interaction name
-    pub name: Option<String>,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub name: String,
     /// Data type
-    #[serde(rename = "type")]
+    #[serde(rename = "type", default, skip_serializing_if = "Option::is_none")]
     pub data_type: Option<InteractionDataType>,
     /// Resolved data
+    #[serde(default, skip_serializing_if = "is_default")]
     pub resolved: Resolved,
 }
 
@@ -218,11 +218,11 @@ impl InteractionData {
     /// Create a new InteractionData instance from JSON data
     pub fn new(data: &Value) -> Self {
         Self {
-            name: data.get("name").and_then(|v| v.as_str()).map(String::from),
+            name: string_field(data, "name"),
             data_type: data
                 .get("type")
-                .and_then(|v| v.as_u64())
-                .map(|v| InteractionDataType::from(v as u8)),
+                .and_then(Value::as_u64)
+                .map(|value| InteractionDataType::from(value as u8)),
             resolved: Resolved::new(
                 data.get("resolved")
                     .unwrap_or(&Value::Object(serde_json::Map::new())),
@@ -235,7 +235,8 @@ impl InteractionData {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct SearchInputResolved {
     /// Search keyword
-    pub keyword: Option<String>,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub keyword: String,
 }
 
 /// Search interaction response.
@@ -250,13 +251,16 @@ pub struct SearchRsp {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct SearchLayout {
     /// Layout type
-    pub layout_type: Option<u32>,
+    #[serde(rename = "LayoutType")]
+    pub layout_type: LayoutType,
     /// Action type
-    pub action_type: Option<u32>,
+    #[serde(rename = "ActionType")]
+    pub action_type: ActionType,
     /// Layout title
-    pub title: Option<String>,
+    #[serde(rename = "Title")]
+    pub title: String,
     /// Search records
-    #[serde(default)]
+    #[serde(rename = "Records", default)]
     pub records: Vec<SearchRecord>,
 }
 
@@ -264,13 +268,17 @@ pub struct SearchLayout {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct SearchRecord {
     /// Cover URL
-    pub cover: Option<String>,
+    #[serde(default)]
+    pub cover: String,
     /// Title
-    pub title: Option<String>,
+    #[serde(default)]
+    pub title: String,
     /// Tips
-    pub tips: Option<String>,
+    #[serde(default)]
+    pub tips: String,
     /// Target URL
-    pub url: Option<String>,
+    #[serde(rename = "url", alias = "URL", default)]
+    pub url: String,
 }
 
 /// Interaction structure representing user interactions
@@ -280,33 +288,46 @@ pub struct Interaction {
     #[serde(skip)]
     api: BotApi,
     /// Interaction ID
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub id: Option<String>,
     /// Application ID
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub application_id: Option<String>,
     /// Interaction type
-    #[serde(rename = "type")]
+    #[serde(rename = "type", skip_serializing_if = "Option::is_none")]
     pub interaction_type: Option<InteractionType>,
     /// Scene identifier
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub scene: Option<String>,
     /// Chat type
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub chat_type: Option<u64>,
     /// Event ID
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub event_id: Option<String>,
     /// Interaction data
+    #[serde(skip_serializing_if = "is_default")]
     pub data: InteractionData,
     /// Guild ID
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub guild_id: Option<String>,
     /// Channel ID
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub channel_id: Option<String>,
     /// User OpenID
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub user_openid: Option<String>,
     /// Group OpenID
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub group_openid: Option<String>,
     /// Group member OpenID
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub group_member_openid: Option<String>,
     /// Timestamp
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub timestamp: Option<String>,
     /// Version
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub version: Option<u64>,
 }
 
@@ -390,12 +411,13 @@ impl Interaction {
 
     /// Get the button ID if this is a button interaction
     pub fn button_id(&self) -> Option<&str> {
-        self.data.resolved.button_id.as_deref()
+        (!self.data.resolved.button_id.is_empty()).then_some(self.data.resolved.button_id.as_str())
     }
 
     /// Get the button data if this is a button interaction
     pub fn button_data(&self) -> Option<&str> {
-        self.data.resolved.button_data.as_deref()
+        (!self.data.resolved.button_data.is_empty())
+            .then_some(self.data.resolved.button_data.as_str())
     }
 }
 
@@ -515,5 +537,73 @@ mod tests {
         assert_eq!(value["data"]["type"], serde_json::json!(9));
         assert!(value.get("interaction_type").is_none());
         assert!(value["data"].get("data_type").is_none());
+    }
+
+    #[test]
+    fn botgo_resolved_uses_required_zero_value_fields() {
+        let resolved: Resolved = serde_json::from_value(serde_json::json!({
+            "button_id": "btn-1",
+            "checked": 1
+        }))
+        .unwrap();
+
+        assert_eq!(resolved.keyword, "");
+        assert_eq!(resolved.user_id, "");
+        assert_eq!(resolved.request, "");
+        assert_eq!(resolved.message_id, "");
+        assert_eq!(resolved.member_nick, "");
+        assert_eq!(resolved.button_data, "");
+        assert_eq!(resolved.button_id, "btn-1");
+        assert_eq!(resolved.feature_id, "");
+        assert_eq!(resolved.feedback_opt, "");
+        assert_eq!(resolved.checked, 1);
+
+        let value = serde_json::to_value(Resolved::default()).unwrap();
+        assert_eq!(value["keyword"], "");
+        assert_eq!(value["button_id"], "");
+        assert_eq!(value["checked"], 0);
+    }
+
+    #[test]
+    fn botgo_search_dtos_keep_official_json_shape() {
+        let resolved = SearchInputResolved {
+            keyword: "botrs".to_string(),
+        };
+        let resolved_value = serde_json::to_value(&resolved).unwrap();
+        assert_eq!(resolved_value["keyword"], "botrs");
+
+        let empty_resolved = serde_json::to_value(SearchInputResolved::default()).unwrap();
+        assert!(empty_resolved.get("keyword").is_none());
+
+        let response = SearchRsp {
+            layouts: vec![SearchLayout {
+                layout_type: LayoutTypeImageText,
+                action_type: ActionTypeSendARK,
+                title: "docs".to_string(),
+                records: vec![SearchRecord {
+                    cover: "https://example.com/cover.png".to_string(),
+                    title: "BotRS".to_string(),
+                    tips: "Rust SDK".to_string(),
+                    url: "https://example.com".to_string(),
+                }],
+            }],
+        };
+        let value = serde_json::to_value(&response).unwrap();
+
+        assert_eq!(value["layouts"][0]["LayoutType"], 0);
+        assert_eq!(value["layouts"][0]["ActionType"], 0);
+        assert_eq!(value["layouts"][0]["Title"], "docs");
+        assert_eq!(
+            value["layouts"][0]["Records"][0]["cover"],
+            "https://example.com/cover.png"
+        );
+        assert_eq!(value["layouts"][0]["Records"][0]["title"], "BotRS");
+        assert_eq!(value["layouts"][0]["Records"][0]["tips"], "Rust SDK");
+        assert_eq!(
+            value["layouts"][0]["Records"][0]["url"],
+            "https://example.com"
+        );
+        assert!(value["layouts"][0].get("layout_type").is_none());
+        assert!(value["layouts"][0].get("action_type").is_none());
     }
 }
