@@ -33,6 +33,9 @@ impl EventHandler for AudioOrLiveChannelMemberHandler {
             Some(PublicAudioType::Live) => {
                 info!("{} 加入了直播子频道", user_id);
             }
+            Some(PublicAudioType::Unknown(value)) => {
+                warn!("Unrecognized channel type {} for user: {}", value, user_id);
+            }
             None => {
                 warn!("Unknown channel type for user: {}", user_id);
             }
@@ -51,6 +54,9 @@ impl EventHandler for AudioOrLiveChannelMemberHandler {
             }
             Some(PublicAudioType::Live) => {
                 info!("{} 退出了直播子频道", user_id);
+            }
+            Some(PublicAudioType::Unknown(value)) => {
+                warn!("Unrecognized channel type {} for user: {}", value, user_id);
             }
             None => {
                 warn!("Unknown channel type for user: {}", user_id);
