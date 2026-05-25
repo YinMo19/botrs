@@ -50,23 +50,23 @@ async fn handle_user_info(user: User) {
 
 ```rust
 pub struct Member {
+    pub guild_id: String,
     pub user: Option<User>,
-    pub nick: Option<String>,
+    pub nick: String,
     pub roles: Vec<String>,
-    pub joined_at: Option<String>,
-    pub deaf: Option<bool>,
-    pub mute: Option<bool>,
+    pub joined_at: String,
+    pub op_user_id: String,
 }
 ```
 
 #### 字段
 
+- `guild_id`: 频道 ID
 - `user`: 该成员的用户信息
 - `nick`: 成员在频道中的昵称
 - `roles`: 分配给成员的身份组 ID 列表
 - `joined_at`: 成员加入频道的时间戳
-- `deaf`: 成员在语音子频道中是否被拒听
-- `mute`: 成员在语音子频道中是否被静音
+- `op_user_id`: 操作人用户 ID
 
 #### 方法
 
@@ -253,8 +253,8 @@ async fn get_user_details(ctx: Context, user_id: &str) -> Result<()> {
     if let Some(user) = &member.user {
         println!("频道成员: {}", user.username);
         
-        if let Some(nick) = &member.nick {
-            println!("昵称: {}", nick);
+        if !member.nick.is_empty() {
+            println!("昵称: {}", member.nick);
         }
         
         println!("身份组: {:?}", member.roles);
@@ -321,18 +321,18 @@ async fn bulk_user_operations(ctx: Context, guild_id: &str) -> Result<()> {
     
     // 找到最近加入的成员
     let mut recent_members: Vec<_> = members.iter()
-        .filter(|m| m.joined_at.is_some())
+        .filter(|m| !m.joined_at.is_empty())
         .collect();
     
     recent_members.sort_by(|a, b| {
-        b.joined_at.as_ref().unwrap().cmp(a.joined_at.as_ref().unwrap())
+        b.joined_at.cmp(&a.joined_at)
     });
     
     println!("最近加入的 5 个成员:");
     for member in recent_members.iter().take(5) {
         println!("  - {}", member.display_name());
-        if let Some(joined) = &member.joined_at {
-            println!("    加入时间: {}", joined.format("%Y-%m-%d %H:%M:%S"));
+        if !member.joined_at.is_empty() {
+            println!("    加入时间: {}", member.joined_at);
         }
     }
     
@@ -354,15 +354,6 @@ async fn check_user_permissions(ctx: Context, guild_id: &str, user_id: &str) -> 
         println!("用户 {} 拥有管理权限", member.display_name());
     } else {
         println!("用户 {} 是普通成员", member.display_name());
-    }
-    
-    // 检查用户状态
-    if member.deaf.unwrap_or(false) {
-        println!("用户在语音中被拒听");
-    }
-    
-    if member.mute.unwrap_or(false) {
-        println!("用户在语音中被静音");
     }
     
     // 获取用户在特定子频道的权限
@@ -432,17 +423,16 @@ async fn display_user_card(ctx: Context, user: User, member: Option<Member>) -> 
     }
     
     if let Some(member) = member {
-        if let Some(nick) = &member.nick {
-            card.push_str(&format!("昵称: {}\n", nick));
+        if !member.nick.is_empty() {
+            card.push_str(&format!("昵称: {}\n", member.nick));
         }
         
         if !member.roles.is_empty() {
             card.push_str(&format!("身份组数量: {}\n", member.roles.len()));
         }
         
-        if let Some(joined) = &member.joined_at {
-            card.push_str(&format!("加入时间: {}\n", 
-                joined.format("%Y-%m-%d %H:%M:%S")));
+        if !member.joined_at.is_empty() {
+            card.push_str(&format!("加入时间: {}\n", member.joined_at));
         }
     }
     
@@ -468,11 +458,6 @@ async fn verify_user_access(ctx: Context, guild_id: &str, user_id: &str, require
         return Ok(false);
     }
     
-    // 检查用户状态
-    if member.mute.unwrap_or(false) || member.deaf.unwrap_or(false) {
-        return Ok(false);
-    }
-    
     Ok(true)
 }
 ```
@@ -490,9 +475,9 @@ async fn analyze_user_activity(ctx: Context, guild_id: &str) -> Result<()> {
     let mut old_members = 0;
     
     for member in &members {
-        if let Some(joined) = &member.joined_at {
-            let days_ago = (now - *joined).num_days();
-            
+        if let Ok(joined) = chrono::DateTime::parse_from_rfc3339(&member.joined_at) {
+            let days_ago = (now - joined.with_timezone(&chrono::Utc)).num_days();
+
             if days_ago <= 7 {
                 new_members += 1;
             } else if days_ago <= 30 {

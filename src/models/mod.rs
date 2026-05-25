@@ -35,15 +35,14 @@ pub use webhook::*;
 // Re-export specific types for convenience
 pub use guild::{Guild, Member, Role};
 
-use chrono::{DateTime, Utc};
 use serde::{Deserialize, Deserializer, Serialize};
 use std::{collections::HashMap, str::FromStr, time::Duration as StdDuration};
 
 /// A snowflake ID used throughout the QQ Guild API.
 pub type Snowflake = String;
 
-/// Represents a timestamp in the API.
-pub type Timestamp = DateTime<Utc>;
+/// Botgo-compatible timestamp string used by the API.
+pub type Timestamp = String;
 
 /// Botgo-compatible duration wrapper parsed from duration strings.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize)]

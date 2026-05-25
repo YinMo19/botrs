@@ -143,9 +143,8 @@ impl Member {
         let joined_at = data
             .get("joined_at")
             .and_then(|v| v.as_str())
-            .and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok())
-            .map(|dt| dt.with_timezone(&chrono::Utc))
-            .unwrap_or_else(chrono::Utc::now);
+            .unwrap_or_default()
+            .to_string();
 
         Self {
             user,
@@ -289,7 +288,6 @@ impl crate::models::HasName for Role {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use chrono::Utc;
 
     #[test]
     fn test_user_creation() {
@@ -346,7 +344,7 @@ mod tests {
     #[test]
     fn test_member_display_name() {
         let user = User::new("123456789", "TestUser");
-        let mut member = Member::new(user, Utc::now());
+        let mut member = Member::new(user, "2024-01-01T00:00:00Z".to_string());
 
         // Without nickname, should return username
         assert_eq!(member.display_name(), "TestUser");
@@ -359,7 +357,7 @@ mod tests {
     #[test]
     fn test_member_roles() {
         let user = User::new("123456789", "TestUser");
-        let mut member = Member::new(user, Utc::now());
+        let mut member = Member::new(user, "2024-01-01T00:00:00Z".to_string());
 
         member.roles = vec!["role1".to_string(), "role2".to_string()];
 

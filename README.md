@@ -367,23 +367,17 @@ struct MyBot;
 impl EventHandler for MyBot {
     // 加入频道
     async fn guild_create(&self, _ctx: Context, guild: Guild) {
-        if let Some(name) = &guild.name {
-            info!("Joined guild: {}", name);
-        }
+        info!("Joined guild: {}", guild.name);
     }
 
     // 频道更新
     async fn guild_update(&self, _ctx: Context, guild: Guild) {
-        if let Some(name) = &guild.name {
-            info!("Guild updated: {}", name);
-        }
+        info!("Guild updated: {}", guild.name);
     }
 
     // 离开频道
     async fn guild_delete(&self, _ctx: Context, guild: Guild) {
-        if let Some(name) = &guild.name {
-            info!("Left guild: {}", name);
-        }
+        info!("Left guild: {}", guild.name);
     }
 }
 ```

@@ -12,15 +12,17 @@ Represents a QQ guild (server) that the bot has access to.
 pub struct Guild {
     pub id: String,
     pub name: String,
-    pub icon: Option<String>,
+    pub icon: String,
     pub owner_id: String,
-    pub owner: bool,
-    pub member_count: Option<u32>,
-    pub max_members: Option<u32>,
-    pub description: Option<String>,
-    pub joined_at: Option<String>,
-    pub features: Vec<String>,
-    pub op_user_id: Option<String>,
+    pub is_owner: bool,
+    pub member_count: i32,
+    pub max_members: i64,
+    pub description: String,
+    pub joined_at: String,
+    pub channels: Vec<Channel>,
+    pub union_world_id: String,
+    pub union_org_id: String,
+    pub op_user_id: String,
 }
 ```
 
@@ -28,14 +30,16 @@ pub struct Guild {
 
 - `id`: Unique identifier for the guild
 - `name`: Guild name
-- `icon`: Guild icon URL (optional)
+- `icon`: Guild icon URL
 - `owner_id`: User ID of the guild owner
-- `owner`: Whether the bot is the owner of the guild
+- `is_owner`: Whether the bot is the owner of the guild (`owner` in JSON)
 - `member_count`: Current number of members
 - `max_members`: Maximum allowed members
 - `description`: Guild description
 - `joined_at`: Timestamp when the bot joined the guild
-- `features`: List of guild features enabled
+- `channels`: Channel list included by gateway payloads
+- `union_world_id`: Bound game world/server ID
+- `union_org_id`: Bound game organization/team ID
 - `op_user_id`: Operator user ID
 
 #### Example
@@ -43,9 +47,9 @@ pub struct Guild {
 ```rust
 async fn handle_guild_create(ctx: Context, guild: Guild) {
     println!("Joined guild: {} (ID: {})", guild.name, guild.id);
-    println!("Member count: {}", guild.member_count.unwrap_or(0));
+    println!("Member count: {}", guild.member_count);
     
-    if guild.owner {
+    if guild.is_owner {
         println!("Bot is the owner of this guild");
     }
 }
@@ -59,10 +63,10 @@ Represents a role within a guild.
 pub struct GuildRole {
     pub id: String,
     pub name: String,
-    pub color: Option<u32>,
-    pub hoist: Option<bool>,
-    pub number: Option<u32>,
-    pub member_limit: Option<u32>,
+    pub color: u32,
+    pub hoist: u32,
+    pub member_count: u32,
+    pub member_limit: u32,
 }
 ```
 
@@ -71,8 +75,8 @@ pub struct GuildRole {
 - `id`: Unique identifier for the role
 - `name`: Role name
 - `color`: Role color (as hex value)
-- `hoist`: Whether the role is displayed separately in member list
-- `number`: Role position/priority
+- `hoist`: Whether the role is displayed separately in member list (numeric flag)
+- `member_count`: Number of members with this role
 - `member_limit`: Maximum number of members that can have this role
 
 #### Example
@@ -83,11 +87,11 @@ async fn list_guild_roles(ctx: Context, guild_id: &str) -> Result<()> {
     
     for role in roles.roles {
         println!("Role: {} (ID: {})", role.name, role.id);
-        if let Some(color) = role.color {
-            println!("  Color: #{:06X}", color);
+        if role.color != 0 {
+            println!("  Color: #{:06X}", role.color);
         }
-        if let Some(limit) = role.member_limit {
-            println!("  Member limit: {}", limit);
+        if role.member_limit != 0 {
+            println!("  Member limit: {}", role.member_limit);
         }
     }
     
@@ -103,7 +107,7 @@ Container for guild role information.
 pub struct GuildRoles {
     pub guild_id: String,
     pub roles: Vec<GuildRole>,
-    pub role_num_limit: Option<u32>,
+    pub num_limit: String,
 }
 ```
 
@@ -111,7 +115,7 @@ pub struct GuildRoles {
 
 - `guild_id`: ID of the guild these roles belong to
 - `roles`: List of roles in the guild
-- `role_num_limit`: Maximum number of roles allowed in the guild
+- `num_limit`: Maximum number of roles allowed in the guild (`role_num_limit` in JSON)
 
 ## Channel Types
 
@@ -247,23 +251,23 @@ Represents a member of a guild.
 
 ```rust
 pub struct Member {
+    pub guild_id: String,
     pub user: Option<User>,
-    pub nick: Option<String>,
+    pub nick: String,
     pub roles: Vec<String>,
-    pub joined_at: Option<String>,
-    pub deaf: Option<bool>,
-    pub mute: Option<bool>,
+    pub joined_at: String,
+    pub op_user_id: String,
 }
 ```
 
 #### Fields
 
+- `guild_id`: Guild ID
 - `user`: User information for this member
 - `nick`: Member's nickname in the guild
 - `roles`: List of role IDs assigned to the member
 - `joined_at`: Timestamp when the member joined the guild
-- `deaf`: Whether the member is deafened in voice channels
-- `mute`: Whether the member is muted in voice channels
+- `op_user_id`: Operator user ID
 
 #### Example
 
@@ -272,8 +276,8 @@ async fn handle_member_update(ctx: Context, member: Member) {
     if let Some(user) = &member.user {
         println!("Member updated: {}", user.username);
         
-        if let Some(nick) = &member.nick {
-            println!("Nickname: {}", nick);
+        if !member.nick.is_empty() {
+            println!("Nickname: {}", member.nick);
         }
         
         println!("Roles: {:?}", member.roles);
@@ -387,8 +391,8 @@ async fn manage_guild_members(ctx: Context, guild_id: &str) -> Result<()> {
             println!("Member: {}", user.username);
             println!("  Roles: {:?}", member.roles);
             
-            if let Some(joined) = &member.joined_at {
-                println!("  Joined: {}", joined);
+            if !member.joined_at.is_empty() {
+                println!("  Joined: {}", member.joined_at);
             }
         }
     }

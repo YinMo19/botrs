@@ -538,7 +538,7 @@ Member information including roles and permissions.
 
 ```rust
 let member = api.get_guild_member(&token, "guild_123", "user_456").await?;
-println!("Member: {}", member.nick.unwrap_or_default());
+println!("Member: {}", member.nick);
 ```
 
 ### `get_guild_members`

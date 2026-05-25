@@ -46,9 +46,7 @@ impl EventHandler for BasicEventHandler {
     }
 
     async fn guild_create(&self, _ctx: Context, guild: Guild) {
-        info!("加入新频道: {} (ID: {})", 
-              guild.name.unwrap_or_default(), 
-              guild.id);
+        info!("加入新频道: {} (ID: {})", guild.name, guild.id);
     }
 
     async fn guild_member_add(&self, _ctx: Context, member: Member) {
@@ -210,8 +208,8 @@ impl EventHandler for ModularEventHandler {
     }
 
     async fn guild_create(&self, ctx: Context, guild: Guild) {
-        info!("加入频道: {}", guild.name.unwrap_or_default());
-        
+        info!("加入频道: {}", guild.name);
+
         {
             let mut stats = self.statistics.write().await;
             stats.guild_events += 1;
@@ -469,7 +467,7 @@ impl LoggingListener {
 #[async_trait::async_trait]
 impl EventListener for LoggingListener {
     async fn on_guild_join(&self, ctx: &Context, guild: &Guild) {
-        let details = format!("机器人加入频道: {}", guild.name.as_deref().unwrap_or("未知"));
+        let details = format!("机器人加入频道: {}", guild.name);
         self.log_event(ctx, "GUILD_JOIN", &details).await;
     }
 
@@ -636,7 +634,7 @@ impl AsyncEventProcessor {
                 Self::process_member_leave_async(&context, &member).await;
             }
             BotEvent::GuildJoined { guild, context } => {
-                info!("处理频道加入事件: {}", guild.name.unwrap_or_default());
+                info!("处理频道加入事件: {}", guild.name);
                 Self::process_guild_join_async(&context, &guild).await;
             }
         }

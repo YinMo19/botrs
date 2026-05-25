@@ -23,7 +23,11 @@ impl EventHandler for GuildMemberEventHandler {
     /// Called when a guild member is added.
     async fn guild_member_add(&self, ctx: Context, member: Member) {
         // Get member nickname for logging
-        let nick = member.nick.as_deref().unwrap_or("Unknown");
+        let nick = if member.nick.is_empty() {
+            "Unknown"
+        } else {
+            &member.nick
+        };
         info!("{} 加入频道", nick);
 
         // Get user ID from the member (Member has an optional User)
@@ -66,13 +70,21 @@ impl EventHandler for GuildMemberEventHandler {
 
     /// Called when a guild member is updated.
     async fn guild_member_update(&self, _ctx: Context, member: Member) {
-        let nick = member.nick.as_deref().unwrap_or("Unknown");
+        let nick = if member.nick.is_empty() {
+            "Unknown"
+        } else {
+            &member.nick
+        };
         info!("{} 更新了资料", nick);
     }
 
     /// Called when a guild member is removed.
     async fn guild_member_remove(&self, _ctx: Context, member: Member) {
-        let nick = member.nick.as_deref().unwrap_or("Unknown");
+        let nick = if member.nick.is_empty() {
+            "Unknown"
+        } else {
+            &member.nick
+        };
         info!("{} 退出了频道", nick);
     }
 

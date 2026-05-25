@@ -12,15 +12,17 @@
 pub struct Guild {
     pub id: String,
     pub name: String,
-    pub icon: Option<String>,
+    pub icon: String,
     pub owner_id: String,
-    pub owner: bool,
-    pub member_count: Option<u32>,
-    pub max_members: Option<u32>,
-    pub description: Option<String>,
-    pub joined_at: Option<String>,
-    pub features: Vec<String>,
-    pub op_user_id: Option<String>,
+    pub is_owner: bool,
+    pub member_count: i32,
+    pub max_members: i64,
+    pub description: String,
+    pub joined_at: String,
+    pub channels: Vec<Channel>,
+    pub union_world_id: String,
+    pub union_org_id: String,
+    pub op_user_id: String,
 }
 ```
 
@@ -28,14 +30,16 @@ pub struct Guild {
 
 - `id`: 频道的唯一标识符
 - `name`: 频道名称
-- `icon`: 频道图标 URL（可选）
+- `icon`: 频道图标 URL
 - `owner_id`: 频道所有者的用户 ID
-- `owner`: 机器人是否为频道所有者
+- `is_owner`: 机器人是否为频道所有者（JSON 字段为 `owner`）
 - `member_count`: 当前成员数量
 - `max_members`: 允许的最大成员数
 - `description`: 频道描述
 - `joined_at`: 机器人加入频道的时间戳
-- `features`: 启用的频道功能列表
+- `channels`: 网关载荷中包含的子频道列表
+- `union_world_id`: 游戏绑定区服 ID
+- `union_org_id`: 游戏绑定公会/战队 ID
 - `op_user_id`: 操作员用户 ID
 
 #### 示例
@@ -43,9 +47,9 @@ pub struct Guild {
 ```rust
 async fn handle_guild_create(ctx: Context, guild: Guild) {
     println!("加入频道: {} (ID: {})", guild.name, guild.id);
-    println!("成员数量: {}", guild.member_count.unwrap_or(0));
+    println!("成员数量: {}", guild.member_count);
 
-    if guild.owner {
+    if guild.is_owner {
         println!("机器人是该频道的所有者");
     }
 }
@@ -59,10 +63,10 @@ async fn handle_guild_create(ctx: Context, guild: Guild) {
 pub struct GuildRole {
     pub id: String,
     pub name: String,
-    pub color: Option<u32>,
-    pub hoist: Option<bool>,
-    pub number: Option<u32>,
-    pub member_limit: Option<u32>,
+    pub color: u32,
+    pub hoist: u32,
+    pub member_count: u32,
+    pub member_limit: u32,
 }
 ```
 
@@ -71,8 +75,8 @@ pub struct GuildRole {
 - `id`: 身份组的唯一标识符
 - `name`: 身份组名称
 - `color`: 身份组颜色（十六进制值）
-- `hoist`: 是否在成员列表中单独显示
-- `number`: 身份组位置/优先级
+- `hoist`: 是否在成员列表中单独显示（数字标记）
+- `member_count`: 拥有该身份组的成员数量
 - `member_limit`: 可拥有此身份组的最大成员数
 
 #### 示例
@@ -83,11 +87,11 @@ async fn list_guild_roles(ctx: Context, guild_id: &str) -> Result<()> {
 
     for role in roles.roles {
         println!("身份组: {} (ID: {})", role.name, role.id);
-        if let Some(color) = role.color {
-            println!("  颜色: #{:06X}", color);
+        if role.color != 0 {
+            println!("  颜色: #{:06X}", role.color);
         }
-        if let Some(limit) = role.member_limit {
-            println!("  成员限制: {}", limit);
+        if role.member_limit != 0 {
+            println!("  成员限制: {}", role.member_limit);
         }
     }
 
@@ -103,7 +107,7 @@ async fn list_guild_roles(ctx: Context, guild_id: &str) -> Result<()> {
 pub struct GuildRoles {
     pub guild_id: String,
     pub roles: Vec<GuildRole>,
-    pub role_num_limit: Option<u32>,
+    pub num_limit: String,
 }
 ```
 
@@ -111,7 +115,7 @@ pub struct GuildRoles {
 
 - `guild_id`: 这些身份组所属频道的 ID
 - `roles`: 频道中的身份组列表
-- `role_num_limit`: 频道中允许的最大身份组数量
+- `num_limit`: 频道中允许的最大身份组数量（JSON 字段为 `role_num_limit`）
 
 ## 子频道类型
 
@@ -247,24 +251,23 @@ pub enum ChannelSubType {
 
 ```rust
 pub struct Member {
+    pub guild_id: String,
     pub user: Option<User>,
-    pub nick: Option
-<String>,
+    pub nick: String,
     pub roles: Vec<String>,
-    pub joined_at: Option<String>,
-    pub deaf: Option<bool>,
-    pub mute: Option<bool>,
+    pub joined_at: String,
+    pub op_user_id: String,
 }
 ```
 
 #### 字段
 
+- `guild_id`: 频道 ID
 - `user`: 该成员的用户信息
 - `nick`: 成员在频道中的昵称
 - `roles`: 分配给成员的身份组 ID 列表
 - `joined_at`: 成员加入频道的时间戳
-- `deaf`: 成员在语音子频道中是否被拒听
-- `mute`: 成员在语音子频道中是否被静音
+- `op_user_id`: 操作人用户 ID
 
 #### 示例
 
@@ -273,8 +276,8 @@ async fn handle_member_update(ctx: Context, member: Member) {
     if let Some(user) = &member.user {
         println!("成员更新: {}", user.username);
 
-        if let Some(nick) = &member.nick {
-            println!("昵称: {}", nick);
+        if !member.nick.is_empty() {
+            println!("昵称: {}", member.nick);
         }
 
         println!("身份组: {:?}", member.roles);
@@ -388,8 +391,8 @@ async fn manage_guild_members(ctx: Context, guild_id: &str) -> Result<()> {
             println!("成员: {}", user.username);
             println!("  身份组: {:?}", member.roles);
 
-            if let Some(joined) = &member.joined_at {
-                println!("  加入时间: {}", joined);
+            if !member.joined_at.is_empty() {
+                println!("  加入时间: {}", member.joined_at);
             }
         }
     }

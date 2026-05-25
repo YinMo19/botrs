@@ -3,7 +3,7 @@
 //! This module contains guild types that correspond to the Python botpy implementation.
 
 use crate::models::{HasId, HasName, Pager, Snowflake, Timestamp, channel::Channel};
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 #[allow(non_upper_case_globals)]
@@ -15,232 +15,140 @@ fn insert_query_param(query: &mut HashMap<String, String>, key: &str, value: &Op
     }
 }
 
-mod role_hoist_serde {
-    use super::*;
-
-    pub fn serialize<S>(value: &Option<bool>, serializer: S) -> std::result::Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        match value {
-            Some(value) => serializer.serialize_some(&u32::from(*value)),
-            None => serializer.serialize_none(),
-        }
-    }
-
-    pub fn deserialize<'de, D>(deserializer: D) -> std::result::Result<Option<bool>, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        let value = Option::<serde_json::Value>::deserialize(deserializer)?;
-        Ok(value.and_then(|value| match value {
-            serde_json::Value::Bool(value) => Some(value),
-            serde_json::Value::Number(value) => value.as_u64().map(|value| value != 0),
-            _ => None,
-        }))
-    }
-}
-
 /// Represents a guild (server) in the QQ Guild system.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct Guild {
     /// The guild's unique ID
-    pub id: Option<Snowflake>,
+    #[serde(default)]
+    pub id: Snowflake,
     /// The guild's name
-    pub name: Option<String>,
+    #[serde(default)]
+    pub name: String,
     /// The guild's icon hash
-    pub icon: Option<String>,
+    #[serde(default)]
+    pub icon: String,
     /// The ID of the guild owner
-    pub owner_id: Option<Snowflake>,
+    #[serde(default)]
+    pub owner_id: Snowflake,
     /// Whether the current user is the owner of this guild
     #[serde(rename = "owner")]
-    pub is_owner: Option<bool>,
+    #[serde(default)]
+    pub is_owner: bool,
     /// The number of members in this guild
-    pub member_count: Option<u32>,
+    #[serde(default)]
+    pub member_count: i32,
     /// The maximum number of members for this guild
-    pub max_members: Option<u32>,
+    #[serde(default)]
+    pub max_members: i64,
     /// The guild's description
-    pub description: Option<String>,
+    #[serde(default)]
+    pub description: String,
     /// When the current user joined this guild
-    pub joined_at: Option<Timestamp>,
+    #[serde(default)]
+    pub joined_at: Timestamp,
     /// Channels contained in this guild when included by gateway payloads
     #[serde(default)]
     pub channels: Vec<Channel>,
     /// Bound game world/server ID
-    pub union_world_id: Option<String>,
+    #[serde(default)]
+    pub union_world_id: String,
     /// Bound game organization/team ID
-    pub union_org_id: Option<String>,
+    #[serde(default)]
+    pub union_org_id: String,
     /// Operator user ID
-    pub op_user_id: Option<Snowflake>,
+    #[serde(default)]
+    pub op_user_id: Snowflake,
 }
 
 impl Guild {
     /// Creates a new guild.
     pub fn new() -> Self {
-        Self {
-            id: None,
-            name: None,
-            icon: None,
-            owner_id: None,
-            is_owner: None,
-            member_count: None,
-            max_members: None,
-            description: None,
-            joined_at: None,
-            channels: Vec::new(),
-            union_world_id: None,
-            union_org_id: None,
-            op_user_id: None,
-        }
+        Self::default()
     }
 
     /// Creates a new guild from API data.
-    pub fn from_data(api: crate::api::BotApi, id: String, data: serde_json::Value) -> Self {
-        Self {
-            id: Some(id),
-            name: data.get("name").and_then(|v| v.as_str()).map(String::from),
-            icon: data.get("icon").and_then(|v| v.as_str()).map(String::from),
-            owner_id: data
-                .get("owner_id")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            is_owner: data
-                .get("owner")
-                .or_else(|| data.get("is_owner"))
-                .and_then(|v| v.as_bool()),
-            member_count: data
-                .get("member_count")
-                .and_then(|v| v.as_u64())
-                .map(|v| v as u32),
-            max_members: data
-                .get("max_members")
-                .and_then(|v| v.as_u64())
-                .map(|v| v as u32),
-            description: data
-                .get("description")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            joined_at: data
-                .get("joined_at")
-                .and_then(|v| v.as_str())
-                .and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok())
-                .map(|dt| dt.with_timezone(&chrono::Utc)),
-            channels: data
-                .get("channels")
-                .and_then(|v| v.as_array())
-                .map(|channels| {
-                    channels
-                        .iter()
-                        .cloned()
-                        .map(|channel| {
-                            let channel_id = channel
-                                .get("id")
-                                .and_then(|v| v.as_str())
-                                .unwrap_or_default()
-                                .to_string();
-                            Channel::from_data(api.clone(), channel_id, channel)
-                        })
-                        .collect::<Vec<_>>()
-                })
-                .unwrap_or_default(),
-            union_world_id: data
-                .get("union_world_id")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            union_org_id: data
-                .get("union_org_id")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            op_user_id: data
-                .get("op_user_id")
-                .and_then(|v| v.as_str())
-                .map(String::from),
+    pub fn from_data(_api: crate::api::BotApi, id: String, data: serde_json::Value) -> Self {
+        let mut guild = serde_json::from_value::<Self>(data).unwrap_or_default();
+        if guild.id.is_empty() {
+            guild.id = id;
         }
+        guild
     }
 
     /// Gets the guild's icon URL if it has one.
     pub fn icon_url(&self) -> Option<String> {
-        self.icon.as_ref().map(|hash| {
+        (!self.icon.is_empty()).then(|| {
             format!(
                 "https://groupprofile.qq.com/groupicon/{}/{}",
-                self.id.as_ref().unwrap_or(&String::new()),
-                hash
+                self.id, self.icon
             )
         })
     }
 
     /// Returns true if the current user owns this guild.
     pub fn is_owned_by_current_user(&self) -> bool {
-        self.is_owner.unwrap_or(false)
+        self.is_owner
     }
 
     /// Gets the guild's member count.
-    pub fn get_member_count(&self) -> u32 {
-        self.member_count.unwrap_or(0)
+    pub fn get_member_count(&self) -> i32 {
+        self.member_count
     }
 
     /// Gets the guild's maximum member count.
-    pub fn get_max_members(&self) -> u32 {
-        self.max_members.unwrap_or(0)
+    pub fn get_max_members(&self) -> i64 {
+        self.max_members
     }
 
     /// Returns true if the guild has reached its member limit.
     pub fn is_at_member_limit(&self) -> bool {
-        match (self.member_count, self.max_members) {
-            (Some(current), Some(max)) => current >= max,
-            _ => false,
-        }
+        self.max_members > 0 && i64::from(self.member_count) >= self.max_members
     }
 
     /// Gets the guild's display name (same as name for guilds).
     pub fn display_name(&self) -> Option<&str> {
-        self.name.as_deref()
+        (!self.name.is_empty()).then_some(self.name.as_str())
     }
 
     /// Returns true if the guild has a description.
     pub fn has_description(&self) -> bool {
-        self.description
-            .as_ref()
-            .is_some_and(|desc| !desc.is_empty())
-    }
-}
-
-impl Default for Guild {
-    fn default() -> Self {
-        Self::new()
+        !self.description.is_empty()
     }
 }
 
 impl HasId for Guild {
     fn id(&self) -> Option<&Snowflake> {
-        self.id.as_ref()
+        (!self.id.is_empty()).then_some(&self.id)
     }
 }
 
 impl HasName for Guild {
     fn name(&self) -> &str {
-        self.name.as_deref().unwrap_or("")
+        &self.name
     }
 }
 
 /// Guild roles response wrapper.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct GuildRoles {
     /// Guild ID
-    pub guild_id: Option<Snowflake>,
+    #[serde(default)]
+    pub guild_id: Snowflake,
     /// List of roles in the guild
+    #[serde(default)]
     pub roles: Vec<GuildRole>,
     /// Number of roles
-    pub role_num_limit: Option<String>,
+    #[serde(default, rename = "role_num_limit")]
+    pub num_limit: String,
 }
 
 impl GuildRoles {
     /// Creates a new guild roles wrapper.
     pub fn new(roles: Vec<GuildRole>) -> Self {
         Self {
-            guild_id: None,
+            guild_id: String::new(),
             roles,
-            role_num_limit: None,
+            num_limit: String::new(),
         }
     }
 }
@@ -252,6 +160,10 @@ pub type RoleID = RoleId;
 /// Default role color used by botgo when creating or updating roles.
 pub const DEFAULT_ROLE_COLOR: u32 = 4_278_245_297;
 
+fn is_zero_u32(value: &u32) -> bool {
+    *value == 0
+}
+
 /// Botgo-compatible role update info body.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct UpdateRoleInfo {
@@ -261,21 +173,26 @@ pub struct UpdateRoleInfo {
 }
 
 /// Represents a role in a guild.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct GuildRole {
     /// The role's unique ID
-    pub id: Option<Snowflake>,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub id: Snowflake,
     /// The role's name
-    pub name: Option<String>,
+    #[serde(default)]
+    pub name: String,
     /// The role's color (ARGB hex as decimal)
-    pub color: Option<u32>,
+    #[serde(default)]
+    pub color: u32,
     /// Whether this role is displayed separately in the member list
-    #[serde(with = "role_hoist_serde", default)]
-    pub hoist: Option<bool>,
+    #[serde(default)]
+    pub hoist: u32,
     /// The number of members with this role
-    pub number: Option<u32>,
+    #[serde(default, rename = "number", skip_serializing_if = "is_zero_u32")]
+    pub member_count: u32,
     /// The number of online members with this role
-    pub member_limit: Option<u32>,
+    #[serde(default, skip_serializing_if = "is_zero_u32")]
+    pub member_limit: u32,
 }
 
 impl GuildRole {
@@ -284,7 +201,7 @@ impl GuildRole {
     }
 
     fn hoist_value(&self) -> u32 {
-        self.hoist.map(u32::from).unwrap_or(0)
+        self.hoist
     }
 }
 
@@ -318,10 +235,9 @@ pub struct UpdateRole {
 impl UpdateRole {
     /// Creates a role update body with botgo-compatible defaults.
     pub fn new(guild_id: impl Into<String>, mut role: GuildRole) -> Self {
-        if role.color.unwrap_or(0) == 0 {
-            role.color = Some(GuildRole::default_color());
+        if role.color == 0 {
+            role.color = GuildRole::default_color();
         }
-        role.hoist = Some(role.is_hoisted());
         Self {
             guild_id: guild_id.into(),
             filter: UpdateRoleFilter::default(),
@@ -331,29 +247,25 @@ impl UpdateRole {
 }
 
 /// Result returned from role create/update APIs.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct UpdateResult {
-    pub role_id: Option<Snowflake>,
-    pub guild_id: Option<Snowflake>,
+    #[serde(default)]
+    pub role_id: Snowflake,
+    #[serde(default)]
+    pub guild_id: Snowflake,
+    #[serde(default)]
     pub role: Option<GuildRole>,
 }
 
 impl GuildRole {
     /// Creates a new role.
     pub fn new() -> Self {
-        Self {
-            id: None,
-            name: None,
-            color: None,
-            hoist: None,
-            number: None,
-            member_limit: None,
-        }
+        Self::default()
     }
 
     /// Returns true if this role is hoisted (displayed separately).
     pub fn is_hoisted(&self) -> bool {
-        self.hoist.unwrap_or(false)
+        self.hoist != 0
     }
 
     /// Converts the role to the numeric hoist value expected by the API.
@@ -363,120 +275,101 @@ impl GuildRole {
 
     /// Gets the role's color as a hex value.
     pub fn color_hex(&self) -> Option<String> {
-        self.color.map(|c| format!("#{c:06X}"))
+        (self.color != 0).then(|| format!("#{:06X}", self.color))
     }
 
     /// Gets the number of members with this role.
     pub fn member_count(&self) -> u32 {
-        self.number.unwrap_or(0)
+        self.member_count
     }
 
     /// Gets the member limit for this role.
     pub fn get_member_limit(&self) -> u32 {
-        self.member_limit.unwrap_or(0)
+        self.member_limit
     }
 
     /// Returns true if the role has reached its member limit.
     pub fn is_at_member_limit(&self) -> bool {
-        match (self.number, self.member_limit) {
-            (Some(current), Some(limit)) => current >= limit,
-            _ => false,
-        }
-    }
-}
-
-impl Default for GuildRole {
-    fn default() -> Self {
-        Self::new()
+        self.member_limit > 0 && self.member_count >= self.member_limit
     }
 }
 
 impl HasId for GuildRole {
     fn id(&self) -> Option<&Snowflake> {
-        self.id.as_ref()
+        (!self.id.is_empty()).then_some(&self.id)
     }
 }
 
 impl HasName for GuildRole {
     fn name(&self) -> &str {
-        self.name.as_deref().unwrap_or("")
+        &self.name
     }
 }
 
 /// Represents a role in a guild (legacy type alias).
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct Role {
     /// The role's unique ID
-    pub id: Option<Snowflake>,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub id: Snowflake,
     /// The role's name
-    pub name: Option<String>,
+    #[serde(default)]
+    pub name: String,
     /// The role's color (ARGB hex as decimal)
-    pub color: Option<u32>,
+    #[serde(default)]
+    pub color: u32,
     /// Whether this role is displayed separately in the member list
-    pub hoist: Option<bool>,
+    #[serde(default)]
+    pub hoist: u32,
     /// The number of members with this role
-    pub number: Option<u32>,
+    #[serde(default, rename = "number", skip_serializing_if = "is_zero_u32")]
+    pub member_count: u32,
     /// The number of online members with this role
-    pub member_limit: Option<u32>,
+    #[serde(default, skip_serializing_if = "is_zero_u32")]
+    pub member_limit: u32,
 }
 
 impl Role {
     /// Creates a new role.
     pub fn new() -> Self {
-        Self {
-            id: None,
-            name: None,
-            color: None,
-            hoist: None,
-            number: None,
-            member_limit: None,
-        }
+        Self::default()
     }
 
     /// Returns true if this role is hoisted (displayed separately).
     pub fn is_hoisted(&self) -> bool {
-        self.hoist.unwrap_or(false)
+        self.hoist != 0
     }
 
     /// Gets the role's color as a hex value.
     pub fn color_hex(&self) -> Option<String> {
-        self.color.map(|c| format!("#{c:06X}"))
+        (self.color != 0).then(|| format!("#{:06X}", self.color))
     }
 
     /// Gets the number of members with this role.
     pub fn member_count(&self) -> u32 {
-        self.number.unwrap_or(0)
+        self.member_count
     }
 
     /// Gets the member limit for this role.
     pub fn get_member_limit(&self) -> u32 {
-        self.member_limit.unwrap_or(0)
+        self.member_limit
     }
 
     /// Returns true if the role has reached its member limit.
     pub fn is_at_member_limit(&self) -> bool {
-        match (self.number, self.member_limit) {
-            (Some(current), Some(limit)) => current >= limit,
-            _ => false,
-        }
-    }
-}
-
-impl Default for Role {
-    fn default() -> Self {
-        Self::new()
+        self.member_limit > 0 && self.member_count >= self.member_limit
     }
 }
 
 impl HasId for Role {
     fn id(&self) -> Option<&Snowflake> {
-        self.id.as_ref()
+        (!self.id.is_empty()).then_some(&self.id)
     }
 }
 
 impl HasName for Role {
     fn name(&self) -> &str {
-        self.name.as_deref().unwrap_or("")
+        &self.name
     }
 }
 
@@ -809,39 +702,38 @@ pub struct UpdateGuildMuteResponse {
 }
 
 /// Represents a member of a guild.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct Member {
     /// Guild ID
-    pub guild_id: Option<Snowflake>,
+    #[serde(default)]
+    pub guild_id: Snowflake,
     /// The user information
+    #[serde(default)]
     pub user: Option<crate::models::User>,
     /// The member's nickname in the guild
-    pub nick: Option<String>,
+    #[serde(default)]
+    pub nick: String,
     /// The member's roles in the guild
-    pub roles: Option<Vec<Snowflake>>,
+    #[serde(default)]
+    pub roles: Vec<Snowflake>,
     /// When the member joined the guild
-    pub joined_at: Option<Timestamp>,
+    #[serde(default)]
+    pub joined_at: Timestamp,
     /// Operator user ID
-    pub op_user_id: Option<Snowflake>,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub op_user_id: Snowflake,
 }
 
 impl Member {
     /// Creates a new member.
     pub fn new() -> Self {
-        Self {
-            guild_id: None,
-            user: None,
-            nick: None,
-            roles: None,
-            joined_at: None,
-            op_user_id: None,
-        }
+        Self::default()
     }
 
     /// Gets the member's display name (nickname or username).
     pub fn display_name(&self) -> Option<&str> {
-        self.nick
-            .as_deref()
+        (!self.nick.is_empty())
+            .then_some(self.nick.as_str())
             .or_else(|| self.user.as_ref().map(|u| u.username.as_str()))
     }
 
@@ -862,18 +754,12 @@ impl Member {
 
     /// Gets the member's roles.
     pub fn role_ids(&self) -> &[Snowflake] {
-        self.roles.as_deref().unwrap_or(&[])
+        &self.roles
     }
 
     /// Returns true if the member has a specific role.
     pub fn has_role(&self, role_id: &str) -> bool {
         self.role_ids().iter().any(|id| id == role_id)
-    }
-}
-
-impl Default for Member {
-    fn default() -> Self {
-        Self::new()
     }
 }
 
@@ -890,8 +776,8 @@ mod tests {
     #[test]
     fn test_guild_creation() {
         let guild = Guild::new();
-        assert!(guild.id.is_none());
-        assert!(guild.name.is_none());
+        assert_eq!(guild.id, "");
+        assert_eq!(guild.name, "");
         assert!(!guild.is_owned_by_current_user());
         assert_eq!(guild.get_member_count(), 0);
         assert_eq!(guild.get_max_members(), 0);
@@ -900,12 +786,12 @@ mod tests {
     #[test]
     fn test_guild_with_data() {
         let mut guild = Guild::new();
-        guild.id = Some("123456789".to_string());
-        guild.name = Some("Test Guild".to_string());
-        guild.is_owner = Some(true);
-        guild.member_count = Some(100);
-        guild.max_members = Some(500);
-        guild.description = Some("A test guild".to_string());
+        guild.id = "123456789".to_string();
+        guild.name = "Test Guild".to_string();
+        guild.is_owner = true;
+        guild.member_count = 100;
+        guild.max_members = 500;
+        guild.description = "A test guild".to_string();
 
         assert_eq!(guild.id(), Some(&"123456789".to_string()));
         assert_eq!(guild.name(), "Test Guild");
@@ -939,13 +825,13 @@ mod tests {
             }),
         );
 
-        assert_eq!(guild.id.as_deref(), Some("guild-1"));
-        assert_eq!(guild.is_owner, Some(true));
+        assert_eq!(guild.id, "guild-1");
+        assert!(guild.is_owner);
         assert_eq!(guild.channels.len(), 1);
         assert_eq!(guild.channels[0].id, "channel-1");
-        assert_eq!(guild.union_world_id.as_deref(), Some("world-1"));
-        assert_eq!(guild.union_org_id.as_deref(), Some("org-1"));
-        assert_eq!(guild.op_user_id.as_deref(), Some("operator-1"));
+        assert_eq!(guild.union_world_id, "world-1");
+        assert_eq!(guild.union_org_id, "org-1");
+        assert_eq!(guild.op_user_id, "operator-1");
 
         let value = serde_json::to_value(&guild).unwrap();
         assert_eq!(value["owner"], serde_json::json!(true));
@@ -955,16 +841,35 @@ mod tests {
     }
 
     #[test]
+    fn botgo_guild_uses_required_zero_value_fields() {
+        let guild: Guild = serde_json::from_value(serde_json::json!({})).unwrap();
+
+        assert_eq!(guild.id, "");
+        assert_eq!(guild.name, "");
+        assert_eq!(guild.icon, "");
+        assert_eq!(guild.owner_id, "");
+        assert!(!guild.is_owner);
+        assert_eq!(guild.member_count, 0);
+        assert_eq!(guild.max_members, 0);
+        assert_eq!(guild.description, "");
+        assert_eq!(guild.joined_at, "");
+        assert!(guild.channels.is_empty());
+        assert_eq!(guild.union_world_id, "");
+        assert_eq!(guild.union_org_id, "");
+        assert_eq!(guild.op_user_id, "");
+    }
+
+    #[test]
     fn test_member_limit() {
         let mut guild = Guild::new();
-        guild.member_count = Some(500);
-        guild.max_members = Some(500);
+        guild.member_count = 500;
+        guild.max_members = 500;
         assert!(guild.is_at_member_limit());
 
-        guild.member_count = Some(499);
+        guild.member_count = 499;
         assert!(!guild.is_at_member_limit());
 
-        guild.member_count = Some(501);
+        guild.member_count = 501;
         assert!(guild.is_at_member_limit());
     }
 
@@ -973,8 +878,8 @@ mod tests {
         let mut guild = Guild::new();
         assert!(guild.icon_url().is_none());
 
-        guild.id = Some("123456789".to_string());
-        guild.icon = Some("abc123".to_string());
+        guild.id = "123456789".to_string();
+        guild.icon = "abc123".to_string();
         let url = guild.icon_url().unwrap();
         assert!(url.contains("123456789"));
         assert!(url.contains("abc123"));
@@ -983,8 +888,8 @@ mod tests {
     #[test]
     fn test_role_creation() {
         let role = Role::new();
-        assert!(role.id.is_none());
-        assert!(role.name.is_none());
+        assert_eq!(role.id, "");
+        assert_eq!(role.name, "");
         assert!(!role.is_hoisted());
         assert_eq!(role.member_count(), 0);
     }
@@ -992,12 +897,12 @@ mod tests {
     #[test]
     fn test_role_with_data() {
         let mut role = Role::new();
-        role.id = Some("role123".to_string());
-        role.name = Some("Admin".to_string());
-        role.color = Some(0xFF0000);
-        role.hoist = Some(true);
-        role.number = Some(5);
-        role.member_limit = Some(10);
+        role.id = "role123".to_string();
+        role.name = "Admin".to_string();
+        role.color = 0xFF0000;
+        role.hoist = 1;
+        role.member_count = 5;
+        role.member_limit = 10;
 
         assert_eq!(role.id(), Some(&"role123".to_string()));
         assert_eq!(role.name(), "Admin");
@@ -1006,6 +911,36 @@ mod tests {
         assert_eq!(role.member_count(), 5);
         assert_eq!(role.get_member_limit(), 10);
         assert!(!role.is_at_member_limit());
+    }
+
+    #[test]
+    fn botgo_role_keeps_official_json_shape() {
+        let role = GuildRole {
+            id: "role-1".to_string(),
+            name: "Admin".to_string(),
+            color: 0xFF0000,
+            hoist: 1,
+            member_count: 5,
+            member_limit: 10,
+        };
+        let value = serde_json::to_value(&role).unwrap();
+
+        assert_eq!(value["id"], "role-1");
+        assert_eq!(value["name"], "Admin");
+        assert_eq!(value["color"], 0xFF0000);
+        assert_eq!(value["hoist"], 1);
+        assert_eq!(value["number"], 5);
+        assert_eq!(value["member_limit"], 10);
+
+        let roles = GuildRoles {
+            guild_id: "guild-1".to_string(),
+            roles: vec![role],
+            num_limit: "30".to_string(),
+        };
+        let value = serde_json::to_value(&roles).unwrap();
+        assert_eq!(value["guild_id"], "guild-1");
+        assert_eq!(value["role_num_limit"], "30");
+        assert!(value.get("num_limit").is_none());
     }
 
     #[test]
@@ -1038,18 +973,37 @@ mod tests {
     fn test_member_creation() {
         let member = Member::new();
         assert!(member.user.is_none());
-        assert!(member.nick.is_none());
+        assert_eq!(member.nick, "");
         assert_eq!(member.role_ids().len(), 0);
     }
 
     #[test]
     fn test_member_with_roles() {
         let mut member = Member::new();
-        member.roles = Some(vec!["role1".to_string(), "role2".to_string()]);
+        member.roles = vec!["role1".to_string(), "role2".to_string()];
 
         assert!(member.has_role("role1"));
         assert!(member.has_role("role2"));
         assert!(!member.has_role("role3"));
         assert_eq!(member.role_ids().len(), 2);
+    }
+
+    #[test]
+    fn botgo_member_uses_required_zero_value_fields() {
+        let member: Member = serde_json::from_value(serde_json::json!({})).unwrap();
+
+        assert_eq!(member.guild_id, "");
+        assert!(member.user.is_none());
+        assert_eq!(member.nick, "");
+        assert!(member.roles.is_empty());
+        assert_eq!(member.joined_at, "");
+        assert_eq!(member.op_user_id, "");
+
+        let value = serde_json::to_value(&member).unwrap();
+        assert_eq!(value["guild_id"], "");
+        assert_eq!(value["nick"], "");
+        assert_eq!(value["roles"], serde_json::json!([]));
+        assert_eq!(value["joined_at"], "");
+        assert!(value.get("op_user_id").is_none());
     }
 }

@@ -220,7 +220,7 @@ pub async fn get_guild(
 
 ```rust
 let guild = api.get_guild(&token, "guild_123").await?;
-println!("频道名称: {}", guild.name.unwrap_or_default());
+println!("频道名称: {}", guild.name);
 ```
 
 ### `get_guild_channels`

@@ -215,8 +215,8 @@ impl EventHandler for MultiEventBot {
     async fn guild_create(&self, _ctx: Context, guild: Guild) {
         info!(
             "加入频道：{}（ID：{}）",
-            guild.name.as_deref().unwrap_or("未知"),
-            guild.id.as_deref().unwrap_or("未知")
+            guild.name,
+            guild.id
         );
     }
 
