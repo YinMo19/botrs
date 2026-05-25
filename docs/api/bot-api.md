@@ -1,1121 +1,168 @@
-# BotApi API Reference
+# BotApi
 
-The `BotApi` struct provides direct access to QQ Guild's REST API endpoints. It handles HTTP requests, authentication, and response parsing for all bot operations.
+`BotApi` is the synchronous-style facade over the QQ Bot Open API. It owns the HTTP client, builds requests, signs them with a `Token`, and returns parsed model types. Every method is `async` and returns `Result<T, BotError>`.
 
-## Overview
-
-```rust
-use botrs::{BotApi, Token, Result};
-
-// Create API client
-let api = BotApi::new(http_client);
-
-// Use with token
-let token = Token::new("app_id", "secret");
-let bot_info = api.get_bot_info(&token).await?;
-```
-
-The `BotApi` is the core interface for making HTTP requests to QQ Guild's API. It provides methods for:
-
-- Bot information and authentication
-- Guild and channel management
-- Message operations
-- Member management
-- Audio and voice controls
-- File uploads and media
-- Permissions and roles
-
-## Constructor
-
-### `new`
-
-Creates a new BotApi instance.
+## Construction
 
 ```rust
-pub fn new(http: HttpClient) -> Self
-```
+use botrs::{BotApi, http::HttpClient, Token};
 
-#### Parameters
-
-- `http`: The HTTP client to use for requests
-
-#### Example
-
-```rust
-use botrs::{BotApi, HttpClient};
-
-let http = HttpClient::new(30, false)?;
+let http = HttpClient::new(/* timeout secs */ 30, /* sandbox */ false)?;
 let api = BotApi::new(http);
+let token = Token::new("app_id", "secret");
+
+let me = api.get_bot_info(&token).await?;
 ```
 
-## Bot Information
+`BotApi` is `Clone` and cheap to clone; the inner HTTP client is reference-counted. For a bot client driven by `Client`, the same `BotApi` is exposed through `Context::api`.
 
-### `get_bot_info`
+## Method index
 
-Gets information about the current bot.
+Every method takes `&self, token: &Token, …` and returns `Result<…>`. The lists below group the 100+ routes by domain. Look up parameter and response types in [Models](./models/messages.md), [Guilds & Channels](./models/guilds-channels.md), and [Other Types](./models/other-types.md).
+
+### Bot identity
+
+- `get_bot_info` — `/users/@me`, returns `BotInfo`.
+- `get_gateway` — gateway URL + recommended shard count.
+
+### Guilds
+
+- `get_guild` / `get_guilds` / `get_guilds_with_pager`
+- guild members: `get_guild_member`, `get_guild_members`, `get_guild_members_with_pager`
+- role members: `get_guild_role_members`, `get_guild_role_members_with_pager`
+- mute: `mute_all`, `cancel_mute_all`, `mute_member`, `mute_multi_member`, `multi_member_mute`, `cancel_mute_multi_member`
+
+### Channels
+
+- `get_channel`, `get_channels`
+- `create_channel`, `create_private_channel`, `update_channel` / `patch_channel`, `delete_channel`
+- permissions: `get_channel_user_permissions`, `get_channel_role_permissions`, `update_channel_user_permissions`, `update_channel_role_permissions`, `put_channel_permissions`, `put_channel_roles_permissions`
+
+### Roles
+
+- `get_guild_roles`
+- `create_guild_role`, `create_guild_role_with_update`, `update_guild_role`, `update_guild_role_with_update`, `delete_guild_role`
+- assign / remove: `create_guild_role_member`, `delete_guild_role_member`, `member_add_role`, `member_delete_role`, `delete_member`, `delete_member_with_options`
+
+### Messages (channel)
+
+- `get_message`, `get_messages`, `get_messages_with_params`
+- send: `post_message_with_params` (recommended). Legacy: `post_message`, `post_message_to_create`, `post_message_api`.
+- edit: `patch_message_with_params` (recommended). Legacy: `patch_message`, `patch_message_to_create`, `patch_message_api`.
+- recall: `recall_message`.
+
+### Direct messages
+
+- create session: `create_dms` (alias `create_direct_message`).
+- send: `post_dms_with_params`. Legacy: `post_dms`, `post_direct_message`.
+- recall: `retract_dm_message`.
+- setting guide: `post_dm_setting_guide`, `post_dm_setting_guide_message`.
+
+### Group / C2C messages
+
+- send: `post_group_message_with_params`, `post_c2c_message_with_params` (`post_c` is the C2C alias). Legacy: `post_group_message`, `post_group_message_to_create`, `post_group_api_message`, `post_group_rich_media_message`.
+- recall: `retract_group_message`, `retract_c`.
+- file upload: `post_group_file`, `post_c2c_file`.
+
+### Reactions
+
+- `put_reaction`, `delete_reaction`, `delete_own_message_reaction`
+- `create_message_reaction`, `get_reaction_users`, `get_message_reaction_users`
+
+### Pins
+
+- `put_pin`, `delete_pin`, `get_pins`, `clean_pins`
+
+### Announces
+
+- guild: `create_guild_announce`, `delete_guild_announce`, `clean_guild_announces`, `create_guild_recommend_announce`, `create_recommend_announce`
+- channel: `create_channel_announce`, `delete_channel_announce`, `clean_channel_announces`
+- shorthand: `create_announce`, `delete_announce`
+
+### Schedules
+
+- `get_schedules`, `get_schedule`, `create_schedule`, `create_schedule_with_model`, `update_schedule`, `update_schedule_with_model`, `delete_schedule`
+
+### API permissions
+
+- `get_permissions` (alias `get_api_permissions`), `post_permission_demand`, `require_api_permissions`
+
+### Audio / voice
+
+- `post_audio` (uses `AudioControl`), `update_audio`
+- `on_microphone`, `off_microphone`, `list_voice_channel_members`
+
+### Setting guide
+
+- `post_setting_guide`, `post_setting_guide_message`
+
+### Interaction
+
+- `put_interaction` — acknowledges a button/interaction event.
+
+### Webhook sessions
+
+- `create_session`, `check_sessions`, `session_list`, `remove_session`, `transport`
+
+### Message setting
+
+- `get_message_setting` — guild push and DM toggles.
+
+### Lifecycle
+
+- `close` — drains in-flight requests and shuts down the client.
+- `http` — borrow the underlying `HttpClient` for advanced use.
+
+## Worked examples
+
+**Reply to an @-mention with a keyboard.** Build the keyboard once, attach to `MessageParams`, and dispatch with the `_with_params` helper.
 
 ```rust
-pub async fn get_bot_info(&self, token: &Token) -> Result<BotInfo>
+let keyboard = MessageKeyboard::new()
+    .with_row(MessageKeyboardRow::new()
+        .with_button(MessageKeyboardButton::primary("ok", "OK"))
+        .with_button(MessageKeyboardButton::secondary("cancel", "Cancel")));
+
+let params = MessageParams::new_text("Choose:")
+    .with_reply(message.id.as_deref().unwrap_or(""))
+    .with_keyboard(keyboard);
+
+api.post_message_with_params(&token, &channel_id, params).await?;
 ```
 
-#### Parameters
-
-- `token`: Authentication token
-
-#### Returns
-
-Bot information including username, ID, and other details.
-
-#### Example
+**Paginated member listing.** Use the pager helper to avoid manually threading `after`.
 
 ```rust
-let bot_info = api.get_bot_info(&token).await?;
-println!("Bot: {} (ID: {})", bot_info.username, bot_info.id);
-```
-
-### `get_gateway`
-
-Gets the WebSocket gateway URL for real-time events.
-
-```rust
-pub async fn get_gateway(&self, token: &Token) -> Result<GatewayResponse>
-```
-
-#### Parameters
-
-- `token`: Authentication token
-
-#### Returns
-
-Gateway information including WebSocket URL and connection details.
-
-#### Example
-
-```rust
-let gateway = api.get_gateway(&token).await?;
-println!("Gateway URL: {}", gateway.url);
-```
-
-## Guild Operations
-
-### `get_guild`
-
-Gets detailed information about a specific guild.
-
-```rust
-pub async fn get_guild(&self, token: &Token, guild_id: &str) -> Result<Guild>
-```
-
-#### Parameters
-
-- `token`: Authentication token
-- `guild_id`: The guild ID to retrieve
-
-#### Returns
-
-Complete guild information including channels, roles, and settings.
-
-#### Example
-
-```rust
-let guild = api.get_guild(&token, "guild_123").await?;
-println!("Guild: {} with {} members", guild.name, guild.member_count);
-```
-
-### `get_guilds`
-
-Gets a list of guilds the bot is in.
-
-```rust
-pub async fn get_guilds(&self, token: &Token) -> Result<Vec<Guild>>
-```
-
-#### Parameters
-
-- `token`: Authentication token
-
-#### Returns
-
-List of guilds the bot has access to.
-
-#### Example
-
-```rust
-let guilds = api.get_guilds(&token).await?;
-for guild in guilds {
-    println!("Guild: {} ({})", guild.name, guild.id);
-}
-```
-
-## Channel Operations
-
-### `get_channel`
-
-Gets information about a specific channel.
-
-```rust
-pub async fn get_channel(&self, token: &Token, channel_id: &str) -> Result<Channel>
-```
-
-#### Parameters
-
-- `token`: Authentication token
-- `channel_id`: The channel ID to retrieve
-
-#### Returns
-
-Channel information including name, type, and permissions.
-
-#### Example
-
-```rust
-let channel = api.get_channel(&token, "channel_123").await?;
-println!("Channel: {} (Type: {:?})", channel.name, channel.type_);
-```
-
-### `get_channels`
-
-Gets all channels in a guild.
-
-```rust
-pub async fn get_channels(&self, token: &Token, guild_id: &str) -> Result<Vec<Channel>>
-```
-
-#### Parameters
-
-- `token`: Authentication token
-- `guild_id`: The guild ID to get channels from
-
-#### Returns
-
-List of channels in the guild.
-
-#### Example
-
-```rust
-let channels = api.get_channels(&token, "guild_123").await?;
-for channel in channels {
-    println!("Channel: {} ({})", channel.name, channel.id);
-}
-```
-
-### `create_channel`
-
-Creates a new channel in a guild.
-
-```rust
-pub async fn create_channel(
-    &self,
-    token: &Token,
-    guild_id: &str,
-    channel: CreateChannel,
-) -> Result<Channel>
-```
-
-#### Parameters
-
-- `token`: Authentication token
-- `guild_id`: The guild to create the channel in
-- `channel`: Channel creation parameters
-
-#### Returns
-
-The created channel information.
-
-#### Example
-
-```rust
-use botrs::{CreateChannel, ChannelType, ChannelSubType};
-
-let new_channel = CreateChannel {
-    name: "new-text-channel".to_string(),
-    type_: ChannelType::Text,
-    sub_type: ChannelSubType::Chat,
-    position: None,
-    parent_id: None,
-    private_type: None,
-    private_user_ids: None,
-    speak_permission: None,
-    application_id: None,
-};
-
-let channel = api.create_channel(&token, "guild_123", new_channel).await?;
-println!("Created channel: {}", channel.name);
-```
-
-### `update_channel`
-
-Updates an existing channel.
-
-```rust
-pub async fn update_channel(
-    &self,
-    token: &Token,
-    channel_id: &str,
-    update: UpdateChannel,
-) -> Result<Channel>
-```
-
-#### Parameters
-
-- `token`: Authentication token
-- `channel_id`: The channel to update
-- `update`: Channel update parameters
-
-#### Returns
-
-The updated channel information.
-
-### `delete_channel`
-
-Deletes a channel.
-
-```rust
-pub async fn delete_channel(&self, token: &Token, channel_id: &str) -> Result<()>
-```
-
-#### Parameters
-
-- `token`: Authentication token
-- `channel_id`: The channel to delete
-
-#### Example
-
-```rust
-api.delete_channel(&token, "channel_123").await?;
-println!("Channel deleted");
-```
-
-## Message Operations
-
-### `get_message`
-
-Gets a specific message by ID.
-
-```rust
-pub async fn get_message(
-    &self,
-    token: &Token,
-    channel_id: &str,
-    message_id: &str,
-) -> Result<Message>
-```
-
-#### Parameters
-
-- `token`: Authentication token
-- `channel_id`: The channel containing the message
-- `message_id`: The message ID to retrieve
-
-#### Returns
-
-The message data.
-
-#### Example
-
-```rust
-let message = api.get_message(&token, "channel_123", "msg_456").await?;
-println!("Message: {}", message.content.unwrap_or_default());
-```
-
-### `post_message_with_params`
-
-Sends a message using structured parameters.
-
-```rust
-pub async fn post_message_with_params(
-    &self,
-    token: &Token,
-    channel_id: &str,
-    params: MessageParams,
-) -> Result<Message>
-```
-
-#### Parameters
-
-- `token`: Authentication token
-- `channel_id`: The channel to send the message to
-- `params`: Message parameters including content, embeds, files, etc.
-
-#### Returns
-
-The sent message data.
-
-#### Example
-
-```rust
-use botrs::MessageParams;
-
-let params = MessageParams::new_text("Hello, world!")
-    .with_reply("original_msg_id")
-    .with_markdown(true);
-
-let message = api.post_message_with_params(&token, "channel_123", params).await?;
-println!("Message sent: {}", message.id);
-```
-
-### `post_message`
-
-Sends a simple text message (legacy method).
-
-```rust
-pub async fn post_message(
-    &self,
-    token: &Token,
-    channel_id: &str,
-    content: Option<&str>,
-    embed: Option<MessageEmbed>,
-    ark: Option<MessageArk>,
-    reference: Option<MessageReference>,
-    image: Option<&str>,
-    msg_id: Option<&str>,
-    event_id: Option<&str>,
-    markdown: Option<MarkdownParams>,
-    keyboard: Option<MessageKeyboard>,
-    media: Option<FileInfo>,
-) -> Result<Message>
-```
-
-**Note**: This method is deprecated. Use `post_message_with_params` instead.
-
-### `recall_message`
-
-Recalls (deletes) a message.
-
-```rust
-pub async fn recall_message(
-    &self,
-    token: &Token,
-    channel_id: &str,
-    message_id: &str,
-    hidetip: bool,
-) -> Result<()>
-```
-
-#### Parameters
-
-- `token`: Authentication token
-- `channel_id`: The channel containing the message
-- `message_id`: The message to recall
-- `hidetip`: Whether to hide the deletion notification
-
-#### Example
-
-```rust
-api.recall_message(&token, "channel_123", "msg_456", false).await?;
-println!("Message recalled");
-```
-
-## Direct Messages
-
-### `create_dms`
-
-Creates a direct message session.
-
-```rust
-pub async fn create_dms(
-    &self,
-    token: &Token,
-    guild_id: &str,
-    user_id: &str,
-) -> Result<DirectMessageSession>
-```
-
-#### Parameters
-
-- `token`: Authentication token
-- `guild_id`: The source guild ID
-- `user_id`: The recipient user ID
-
-#### Returns
-
-Direct message session information.
-
-#### Example
-
-```rust
-let dm_session = api.create_dms(&token, "guild_456", "user_123").await?;
-println!("DM session created: {}", dm_session.guild_id.as_deref().unwrap_or(""));
-```
-
-### `post_dms_with_params`
-
-Sends a direct message using structured parameters.
-
-```rust
-pub async fn post_dms_with_params(
-    &self,
-    token: &Token,
-    guild_id: &str,
-    params: DirectMessageParams,
-) -> Result<MessageResponse>
-```
-
-#### Parameters
-
-- `token`: Authentication token
-- `guild_id`: The DM guild ID
-- `params`: Direct message parameters
-
-#### Returns
-
-The direct message response.
-
-## Group and C2C Messages
-
-### `post_group_message_with_params`
-
-Sends a group message using structured parameters.
-
-```rust
-pub async fn post_group_message_with_params(
-    &self,
-    token: &Token,
-    group_openid: &str,
-    params: GroupMessageParams,
-) -> Result<Message>
-```
-
-#### Parameters
-
-- `token`: Authentication token
-- `group_openid`: The group identifier
-- `params`: Group message parameters
-
-#### Returns
-
-The sent group message.
-
-### `post_c2c_message_with_params`
-
-Sends a C2C (client-to-client) message using structured parameters.
-
-```rust
-pub async fn post_c2c_message_with_params(
-    &self,
-    token: &Token,
-    openid: &str,
-    params: C2CMessageParams,
-) -> Result<Message>
-```
-
-#### Parameters
-
-- `token`: Authentication token
-- `openid`: The user identifier
-- `params`: C2C message parameters
-
-#### Returns
-
-The sent C2C message.
-
-## Member Management
-
-### `get_guild_member`
-
-Gets information about a specific guild member.
-
-```rust
-pub async fn get_guild_member(
-    &self,
-    token: &Token,
-    guild_id: &str,
-    user_id: &str,
-) -> Result<Member>
-```
-
-#### Parameters
-
-- `token`: Authentication token
-- `guild_id`: The guild ID
-- `user_id`: The user ID
-
-#### Returns
-
-Member information including roles and permissions.
-
-#### Example
-
-```rust
-let member = api.get_guild_member(&token, "guild_123", "user_456").await?;
-println!("Member: {}", member.nick);
-```
-
-### `get_guild_members`
-
-Gets a list of guild members with pagination.
-
-```rust
-pub async fn get_guild_members(
-    &self,
-    token: &Token,
-    guild_id: &str,
-    query: Option<&MemberQuery>,
-) -> Result<Vec<Member>>
-```
-
-#### Parameters
-
-- `token`: Authentication token
-- `guild_id`: The guild ID
-- `query`: Optional query parameters for pagination and filtering
-
-#### Returns
-
-List of guild members.
-
-#### Example
-
-```rust
-use botrs::MemberQuery;
-
-let query = MemberQuery {
-    after: None,
-    limit: Some(100),
-};
-
-let members = api.get_guild_members(&token, "guild_123", Some(&query)).await?;
-println!("Found {} members", members.len());
-```
-
-### `delete_member`
-
-Removes a member from the guild.
-
-```rust
-pub async fn delete_member(
-    &self,
-    token: &Token,
-    guild_id: &str,
-    user_id: &str,
-    add_blacklist: bool,
-    delete_history_msg_days: Option<u8>,
-    reason: Option<&str>,
-) -> Result<()>
-```
-
-#### Parameters
-
-- `token`: Authentication token
-- `guild_id`: The guild ID
-- `user_id`: The user to remove
-- `add_blacklist`: Whether to add to blacklist
-- `delete_history_msg_days`: Days of message history to delete
-- `reason`: Reason for removal
-
-#### Example
-
-```rust
-api.delete_member(
-    &token,
-    "guild_123",
-    "user_456",
-    false,
-    Some(7),
-    Some("Violated community guidelines")
+let pager = ctx.api.get_guild_members_with_pager(
+    &ctx.token, &guild_id, GuildMembersPager::default(),
 ).await?;
-```
-
-## Role Management
-
-### `get_guild_roles`
-
-Gets all roles in a guild.
-
-```rust
-pub async fn get_guild_roles(&self, token: &Token, guild_id: &str) -> Result<GuildRoles>
-```
-
-#### Parameters
-
-- `token`: Authentication token
-- `guild_id`: The guild ID
-
-#### Returns
-
-Guild roles information.
-
-#### Example
-
-```rust
-let roles = api.get_guild_roles(&token, "guild_123").await?;
-for role in &roles.roles {
-    println!("Role: {} (ID: {})", role.name, role.id);
+for member in pager.items {
+    /* ... */
 }
 ```
 
-### `create_guild_role`
-
-Creates a new role in a guild.
+**Update channel permissions safely.** The `validate()` helper rejects non-numeric strings before they reach the server.
 
 ```rust
-pub async fn create_guild_role(
-    &self,
-    token: &Token,
-    guild_id: &str,
-    role: CreateRole,
-) -> Result<CreateRoleResponse>
+let body = UpdateChannelPermissions::new(Some("1024"), Some("0"));
+body.validate()?;
+api.update_channel_user_permissions(&token, &channel_id, &user_id, &body).await?;
 ```
 
-#### Parameters
+## Error handling
 
-- `token`: Authentication token
-- `guild_id`: The guild ID
-- `role`: Role creation parameters
+Every call returns `Result<T, BotError>`. Match on `BotError` to distinguish:
 
-#### Returns
+- `BotError::Http` — transport-level failures (timeout, DNS).
+- `BotError::Api { code, message, .. }` — non-2xx response with the QQ-defined error code.
+- `BotError::Auth` — token signing or refresh failure.
+- `BotError::InvalidData` — local validation failure (e.g. malformed permission string).
 
-The created role information.
+For 429 responses, `BotError::Api` carries the `Retry-After` hint when present; the framework does not retry automatically — wrap calls with your own backoff if you need that behavior.
 
-#### Example
+## See also
 
-```rust
-use botrs::CreateRole;
-
-let new_role = CreateRole {
-    name: "Moderator".to_string(),
-    color: Some(0x9932cc),
-    hoist: Some(true),
-    mentionable: Some(true),
-};
-
-let role = api.create_guild_role(&token, "guild_123", new_role).await?;
-println!("Created role: {}", role.role.name);
-```
-
-### `update_guild_role`
-
-Updates an existing guild role.
-
-```rust
-pub async fn update_guild_role(
-    &self,
-    token: &Token,
-    guild_id: &str,
-    role_id: &str,
-    role: UpdateRole,
-) -> Result<UpdateRoleResponse>
-```
-
-### `delete_guild_role`
-
-Deletes a guild role.
-
-```rust
-pub async fn delete_guild_role(
-    &self,
-    token: &Token,
-    guild_id: &str,
-    role_id: &str,
-) -> Result<()>
-```
-
-### `create_guild_role_member`
-
-Assigns a role to a guild member.
-
-```rust
-pub async fn create_guild_role_member(
-    &self,
-    token: &Token,
-    guild_id: &str,
-    role_id: &str,
-    user_id: &str,
-    channel: Option<MemberAddRoleChannel>,
-) -> Result<()>
-```
-
-### `delete_guild_role_member`
-
-Removes a role from a guild member.
-
-```rust
-pub async fn delete_guild_role_member(
-    &self,
-    token: &Token,
-    guild_id: &str,
-    role_id: &str,
-    user_id: &str,
-    channel: Option<MemberAddRoleChannel>,
-) -> Result<()>
-```
-
-## Audio and Voice
-
-### `update_audio`
-
-Updates audio playback in a voice channel.
-
-```rust
-pub async fn update_audio(
-    &self,
-    token: &Token,
-    channel_id: &str,
-    audio_control: &AudioControl,
-) -> Result<()>
-```
-
-#### Parameters
-
-- `token`: Authentication token
-- `channel_id`: The voice channel ID
-- `audio_control`: Audio control parameters
-
-#### Example
-
-```rust
-use botrs::{AudioControl, AudioStatus};
-
-let audio_control = AudioControl {
-    audio_url: "https://example.com/audio.mp3".to_string(),
-    text: "Now playing music".to_string(),
-    status: AudioStatus::Start,
-};
-
-api.update_audio(&token, "channel_123", &audio_control).await?;
-```
-
-### `on_microphone`
-
-Enables microphone for a user in voice channel.
-
-```rust
-pub async fn on_microphone(
-    &self,
-    token: &Token,
-    channel_id: &str,
-    user_id: &str,
-) -> Result<()>
-```
-
-### `off_microphone`
-
-Disables microphone for a user in voice channel.
-
-```rust
-pub async fn off_microphone(
-    &self,
-    token: &Token,
-    channel_id: &str,
-    user_id: &str,
-) -> Result<()>
-```
-
-### `mute_all`
-
-Mutes all users in a voice channel.
-
-```rust
-pub async fn mute_all(&self, token: &Token, channel_id: &str) -> Result<()>
-```
-
-### `cancel_mute_all`
-
-Unmutes all users in a voice channel.
-
-```rust
-pub async fn cancel_mute_all(&self, token: &Token, channel_id: &str) -> Result<()>
-```
-
-### `mute_member`
-
-Mutes a specific member in a voice channel.
-
-```rust
-pub async fn mute_member(
-    &self,
-    token: &Token,
-    guild_id: &str,
-    user_id: &str,
-    mute_end_timestamp: Option<&str>,
-    mute_seconds: Option<&str>,
-) -> Result<()>
-```
-
-## File Operations
-
-### `post_group_file`
-
-Uploads a file to a group.
-
-```rust
-pub async fn post_group_file(
-    &self,
-    token: &Token,
-    group_openid: &str,
-    file_type: u8,
-    file_data: &[u8],
-) -> Result<FileInfo>
-```
-
-#### Parameters
-
-- `token`: Authentication token
-- `group_openid`: The group identifier
-- `file_type`: Type of file being uploaded
-- `file_data`: The file content as bytes
-
-#### Returns
-
-Information about the uploaded file.
-
-### `post_c2c_file`
-
-Uploads a file for C2C messaging.
-
-```rust
-pub async fn post_c2c_file(
-    &self,
-    token: &Token,
-    openid: &str,
-    file_type: u8,
-    file_data: &[u8],
-) -> Result<FileInfo>
-```
-
-## Permissions
-
-### `get_permissions`
-
-Gets API permissions for the bot.
-
-```rust
-pub async fn get_permissions(&self, token: &Token, guild_id: &str) -> Result<ApiPermissions>
-```
-
-### `post_permission_demand`
-
-Requests additional API permissions.
-
-```rust
-pub async fn post_permission_demand(
-    &self,
-    token: &Token,
-    guild_id: &str,
-    demand: PermissionDemandRequest,
-) -> Result<()>
-```
-
-### `get_channel_user_permissions`
-
-Gets user permissions for a specific channel.
-
-```rust
-pub async fn get_channel_user_permissions(
-    &self,
-    token: &Token,
-    channel_id: &str,
-    user_id: &str,
-) -> Result<ChannelPermissions>
-```
-
-### `get_channel_role_permissions`
-
-Gets role permissions for a specific channel.
-
-```rust
-pub async fn get_channel_role_permissions(
-    &self,
-    token: &Token,
-    channel_id: &str,
-    role_id: &str,
-) -> Result<ChannelPermissions>
-```
-
-## Reactions and Pins
-
-### `put_reaction`
-
-Adds a reaction to a message.
-
-```rust
-pub async fn put_reaction(
-    &self,
-    token: &Token,
-    channel_id: &str,
-    message_id: &str,
-    emoji_type: i32,
-    emoji_id: &str,
-) -> Result<()>
-```
-
-### `create_message_reaction`
-
-Adds a reaction using the QQ Bot Open API emoji DTO.
-
-```rust
-pub async fn create_message_reaction(
-    &self,
-    token: &Token,
-    channel_id: &str,
-    message_id: &str,
-    emoji: &ReactionEmoji,
-) -> Result<()>
-```
-
-### `delete_reaction`
-
-Removes a reaction from a message.
-
-```rust
-pub async fn delete_reaction(
-    &self,
-    token: &Token,
-    channel_id: &str,
-    message_id: &str,
-    emoji_type: i32,
-    emoji_id: &str,
-) -> Result<()>
-```
-
-### `delete_own_message_reaction`
-
-Removes the bot's own reaction using the QQ Bot Open API emoji DTO.
-
-```rust
-pub async fn delete_own_message_reaction(
-    &self,
-    token: &Token,
-    channel_id: &str,
-    message_id: &str,
-    emoji: &ReactionEmoji,
-) -> Result<()>
-```
-
-### `get_reaction_users`
-
-Gets users who reacted with a specific emoji.
-
-```rust
-pub async fn get_reaction_users(
-    &self,
-    token: &Token,
-    channel_id: &str,
-    message_id: &str,
-    emoji_type: EmojiType,
-    emoji_id: &str,
-    cookie: Option<&str>,
-    limit: Option<u32>,
-) -> Result<ReactionUsers>
-```
-
-### `get_message_reaction_users`
-
-Gets users who reacted with a specific emoji using the QQ Bot Open API DTOs.
-
-```rust
-pub async fn get_message_reaction_users(
-    &self,
-    token: &Token,
-    channel_id: &str,
-    message_id: &str,
-    emoji: &ReactionEmoji,
-    pager: &MessageReactionPager,
-) -> Result<ReactionUsers>
-```
-
-### `put_pin`
-
-Pins a message in a channel.
-
-```rust
-pub async fn put_pin(
-    &self,
-    token: &Token,
-    channel_id: &str,
-    message_id: &str,
-) -> Result<PinMessage>
-```
-
-### `delete_pin`
-
-Unpins a message in a channel.
-
-```rust
-pub async fn delete_pin(
-    &self,
-    token: &Token,
-    channel_id: &str,
-    message_id: &str,
-) -> Result<()>
-```
-
-### `get_pins`
-
-Gets all pinned messages in a channel.
-
-```rust
-pub async fn get_pins(&self, token: &Token, channel_id: &str) -> Result<PinMessages>
-```
-
-## Utility Methods
-
-### `http`
-
-Gets a reference to the underlying HTTP client.
-
-```rust
-pub fn http(&self) -> &HttpClient
-```
-
-### `close`
-
-Closes the API client and releases resources.
-
-```rust
-pub async fn close(&self)
-```
-
-## Error Handling
-
-All API methods return `Result<T, BotError>`. Common error scenarios include:
-
-- **Authentication errors**: Invalid token or insufficient permissions
-- **Rate limiting**: Too many requests in a short time
-- **Not found errors**: Resource doesn't exist
-- **Network errors**: Connection problems or timeouts
-
-### Example Error Handling
-
-```rust
-use botrs::BotError;
-
-match api.get_guild(&token, "invalid_guild").await {
-    Ok(guild) => println!("Guild: {}", guild.name),
-    Err(BotError::NotFound(msg)) => println!("Guild not found: {}", msg),
-    Err(BotError::RateLimit { retry_after }) => {
-        println!("Rate limited, retry after {} seconds", retry_after);
-    }
-    Err(e) => eprintln!("API error: {}", e),
-}
-```
-
-## Best Practices
-
-### Performance
-
-1. **Reuse API instances**: Create one `BotApi` instance and reuse it
-2. **Handle rate limits**: Implement proper backoff for rate-limited requests
-3. **Use structured parameters**: Prefer `*_with_params` methods over legacy variants
-4. **Batch operations**: Group related API calls when possible
-
-### Error Handling
-
-1. **Check permissions**: Verify bot has necessary permissions before API calls
-2. **Validate inputs**: Check parameters before making requests
-3. **Implement retries**: Retry transient failures with exponential backoff
-4. **Log errors**: Record API errors for debugging and monitoring
-
-### Security
-
-1. **Protect tokens**: Never log or expose authentication tokens
-2. **Validate user input**: Sanitize user-provided data before API calls
-3. **Respect permissions**: Don't attempt operations the bot isn't authorized for
-4. **Rate limit protection**: Implement client-side rate limiting
-
-## See Also
-
-- [`Client`](./client.md) - High-level bot client
-- [`Context`](./context.md) - API access in event handlers
-- [`Message Types`](./models/messages.md) - Message data structures
-- [`Error Types`](./error-types.md) - Error handling and types
+- [Client](./client.md) — high-level bot loop that owns a `BotApi`.
+- [Context](./context.md) — request-scoped wrapper exposing the same routes during event handling.
+- [Models](./models/messages.md) — request and response struct definitions.
+- [Token](./token.md) — credential management and refresh.
