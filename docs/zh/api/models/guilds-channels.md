@@ -1,540 +1,165 @@
-# 频道与子频道模型 API 参考
+# 频道与子频道
 
-该模块为 QQ 频道机器人 API 中的频道（服务器）和子频道提供数据结构。
+QQ 频道机器人 API 中的频道（Guild）与子频道（Channel）数据结构。`Snowflake` 是 `String` 别名；多数字符串和数值字段都标注了 `#[serde(default)]`，这样部分网关载荷也能正常反序列化。
 
-## 频道类型
+## `Guild`
 
-### `Guild`
-
-表示机器人可以访问的 QQ 频道（服务器）。
+频道接口和网关事件中的频道元信息。
 
 ```rust
 pub struct Guild {
-    pub id: String,
+    pub id: Snowflake,
     pub name: String,
     pub icon: String,
-    pub owner_id: String,
+    pub owner_id: Snowflake,
+    #[serde(rename = "owner")]
     pub is_owner: bool,
     pub member_count: i32,
     pub max_members: i64,
     pub description: String,
-    pub joined_at: String,
-    pub channels: Vec<Channel>,
+    pub joined_at: String,                  // RFC 3339
+    pub channels: Vec<Channel>,             // 仅网关
     pub union_world_id: String,
     pub union_org_id: String,
-    pub op_user_id: String,
+    pub op_user_id: Snowflake,
 }
 ```
 
-#### 字段
+`is_owner` 在协议里叫 `owner`。`channels` 只在 `GUILD_CREATE` 网关事件里被填充。
 
-- `id`: 频道的唯一标识符
-- `name`: 频道名称
-- `icon`: 频道图标 URL
-- `owner_id`: 频道所有者的用户 ID
-- `is_owner`: 机器人是否为频道所有者（JSON 字段为 `owner`）
-- `member_count`: 当前成员数量
-- `max_members`: 允许的最大成员数
-- `description`: 频道描述
-- `joined_at`: 机器人加入频道的时间戳
-- `channels`: 网关载荷中包含的子频道列表
-- `union_world_id`: 游戏绑定区服 ID
-- `union_org_id`: 游戏绑定公会/战队 ID
-- `op_user_id`: 操作员用户 ID
+## `Channel`
 
-#### 示例
+子频道元信息。零值字段使用 `skip_serializing_if`，让创建/更新接口的请求体保持精简。
 
 ```rust
-async fn handle_guild_create(ctx: Context, guild: Guild) {
-    println!("加入频道: {} (ID: {})", guild.name, guild.id);
-    println!("成员数量: {}", guild.member_count);
-
-    if guild.is_owner {
-        println!("机器人是该频道的所有者");
-    }
+pub struct Channel {
+    pub id: Snowflake,
+    pub guild_id: Snowflake,
+    pub name: String,
+    pub channel_type: ChannelType,          // JSON: "type"
+    pub sub_type: ChannelSubType,
+    pub position: i64,
+    pub parent_id: Snowflake,
+    pub owner_id: Snowflake,
+    pub private_type: PrivateType,
+    pub private_user_ids: Vec<String>,
+    pub speak_permission: SpeakPermission,
+    pub application_id: Snowflake,
+    pub permissions: String,
+    pub op_user_id: Snowflake,
 }
 ```
 
-### `GuildRole`
+修改/创建接口使用 `ChannelValueObject`，它把所有字段都包成 `Option<T>`，零值会被跳过。
 
-表示频道内的身份组。
+### 子频道相关枚举
+
+| 枚举                  | 取值                                                                       |
+|-----------------------|----------------------------------------------------------------------------|
+| `ChannelType`         | `Text=0`、`Voice=2`、`Category=4`、`Live=10005`、`Application=10006`、`Forum=10007`，外加 `Unknown(u32)` 兜底 |
+| `ChannelSubType`      | `Chat=0`、`Notice=1`、`Guide=2`、`TeamGame=3`                              |
+| `PrivateType`         | `Public=0`、`OnlyAdmin=1`、`AdminAndMember=2`                              |
+| `SpeakPermission`     | `Invalid=0`、`Public=1`、`AdminAndMember=2`                                |
+
+每个枚举都实现了 `From<u8>`/`From<u32>` 用于数值往返，并提供 Go 风格的常量别名（如 `ChannelTypeText`），方便从官方 Go SDK 迁移过来的用户。
+
+`Channel` 上的常用判断：`is_text()`、`is_voice()`、`is_group()`、`is_live()`、`is_application()`、`is_discussion()`、`is_public()`、`is_admin_only()`、`everyone_can_speak()`、`mention()`（返回 `<#id>`）。
+
+## 子频道权限
+
+读取侧分两份 DTO（按主体类型），更新侧共用一份请求体：
+
+```rust
+pub struct ChannelPermissions {       // 用户权限
+    pub channel_id: Snowflake,
+    pub user_id: Snowflake,
+    pub permissions: String,          // 权限位的十进制字符串
+}
+
+pub struct ChannelRolesPermissions {  // 角色权限
+    pub channel_id: Snowflake,
+    pub role_id: Snowflake,
+    pub permissions: String,
+}
+
+pub struct UpdateChannelPermissions {
+    pub add: Option<String>,          // 需要置位的位
+    pub remove: Option<String>,       // 需要清零的位
+}
+```
+
+`UpdateChannelPermissions::validate()` 会检查字符串能否解析为 `u64`，避免发送非法权限串。
+
+## 角色
 
 ```rust
 pub struct GuildRole {
-    pub id: String,
+    pub id: Snowflake,
     pub name: String,
-    pub color: u32,
-    pub hoist: u32,
-    pub member_count: u32,
-    pub member_limit: u32,
+    pub color: u32,                   // ARGB 颜色（十进制）
+    pub hoist: u32,                   // 0 / 1
+    pub member_count: u32,            // JSON: "number"，omitempty
+    pub member_limit: u32,            // omitempty
 }
-```
 
-#### 字段
-
-- `id`: 身份组的唯一标识符
-- `name`: 身份组名称
-- `color`: 身份组颜色（十六进制值）
-- `hoist`: 是否在成员列表中单独显示（数字标记）
-- `member_count`: 拥有该身份组的成员数量
-- `member_limit`: 可拥有此身份组的最大成员数
-
-#### 示例
-
-```rust
-async fn list_guild_roles(ctx: Context, guild_id: &str) -> Result<()> {
-    let roles = ctx.get_guild_roles(guild_id).await?;
-
-    for role in roles.roles {
-        println!("身份组: {} (ID: {})", role.name, role.id);
-        if role.color != 0 {
-            println!("  颜色: #{:06X}", role.color);
-        }
-        if role.member_limit != 0 {
-            println!("  成员限制: {}", role.member_limit);
-        }
-    }
-
-    Ok(())
-}
-```
-
-### `GuildRoles`
-
-频道身份组信息的容器。
-
-```rust
 pub struct GuildRoles {
-    pub guild_id: String,
+    pub guild_id: Snowflake,
     pub roles: Vec<GuildRole>,
+    #[serde(rename = "role_num_limit")]
     pub num_limit: String,
 }
 ```
 
-#### 字段
-
-- `guild_id`: 这些身份组所属频道的 ID
-- `roles`: 频道中的身份组列表
-- `num_limit`: 频道中允许的最大身份组数量（JSON 字段为 `role_num_limit`）
-
-## 子频道类型
-
-### `Channel`
-
-表示频道内的子频道。
+更新流程涉及三个结构体：
 
 ```rust
-pub struct Channel {
-    pub id: String,
+pub struct UpdateRoleFilter { pub name: u32, pub color: u32, pub hoist: u32 }
+pub struct UpdateRoleInfo   { pub name: String, pub color: u32, pub hoist: u32 }
+pub struct UpdateRole {
     pub guild_id: String,
-    pub name: String,
-    pub channel_type: ChannelType,
-    pub sub_type: ChannelSubType,
-    pub position: i64,
-    pub parent_id: String,
-    pub owner_id: String,
-    pub private_type: PrivateType,
-    pub speak_permission: SpeakPermission,
-    pub application_id: String,
-    pub permissions: String,
+    pub filter: UpdateRoleFilter,     // 1 表示需要更新该字段
+    #[serde(rename = "info")]
+    pub update: GuildRole,
 }
 ```
 
-#### 字段
+`UpdateRoleFilter::default()` 会把每个字段都置为 `1`，相当于全部更新。
 
-- `id`: 子频道的唯一标识符
-- `guild_id`: 该子频道所属频道的 ID
-- `name`: 子频道名称
-- `channel_type`: 子频道类型（文字、语音等）
-- `sub_type`: 子频道子类型，用于额外分类
-- `position`: 子频道在子频道列表中的位置
-- `parent_id`: 父子频道 ID（用于子频道分类）
-- `owner_id`: 子频道所有者的 ID
-- `private_type`: 子频道的隐私设置
-- `speak_permission`: 发言权限要求
-- `application_id`: 关联的应用程序 ID
-- `permissions`: 子频道特定权限
+## Member（频道侧）
 
-#### 示例
-
-```rust
-async fn handle_channel_create(ctx: Context, channel: Channel) {
-    println!("创建新子频道: {} (类型: {:?})", channel.name, channel.channel_type);
-
-    match channel.channel_type {
-        ChannelType::Text => {
-            println!("在频道 {} 中创建了文字子频道", channel.guild_id);
-        }
-        ChannelType::Voice => {
-            println!("在频道 {} 中创建了语音子频道", channel.guild_id);
-        }
-        ChannelType::Category => {
-            println!("在频道 {} 中创建了分类", channel.guild_id);
-        }
-        _ => {
-            println!("创建了其他类型的子频道");
-        }
-    }
-}
-```
-
-### `ChannelType`
-
-不同子频道类型的枚举。
-
-```rust
-pub enum ChannelType {
-    Text = 0,
-    Voice = 2,
-    Category = 4,
-    Live = 10005,
-    Application = 10006,
-    Forum = 10007,
-}
-```
-
-#### 变体
-
-- `Text`: 用于消息的文字子频道
-- `Voice`: 用于音频通信的语音子频道
-- `Category`: 用于组织子频道的分类
-- `Live`: 直播子频道
-- `Application`: 应用程序特定子频道
-- `Forum`: 用于话题讨论的论坛子频道
-
-#### 示例
-
-```rust
-async fn create_text_channel(ctx: Context, guild_id: &str, name: &str) -> Result<Channel> {
-    let channel = ctx.create_channel(
-        guild_id,
-        name,
-        ChannelType::Text,
-        ChannelSubType::Chat,
-        None, // position
-        None, // parent_id
-        None, // private_type
-        None, // speak_permission
-        None, // application_id
-    ).await?;
-
-    println!("创建文字子频道: {}", channel.name);
-    Ok(channel)
-}
-```
-
-### `ChannelSubType`
-
-用于额外分类的子频道子类型枚举。
-
-```rust
-pub enum ChannelSubType {
-    Chat = 0,
-    Announcement = 1,
-    Guide = 2,
-    Game = 3,
-}
-```
-
-#### 变体
-
-- `Chat`: 普通聊天子频道
-- `Announcement`: 公告专用子频道
-- `Guide`: 指南或帮助子频道
-- `Game`: 游戏相关子频道
-
-## 成员类型
-
-### `Member`
-
-表示频道的成员。
+网关事件使用频道作用域的 `Member`，与 `models::user::Member` 不同：
 
 ```rust
 pub struct Member {
-    pub guild_id: String,
+    pub guild_id: Snowflake,
     pub user: Option<User>,
     pub nick: String,
-    pub roles: Vec<String>,
-    pub joined_at: String,
-    pub op_user_id: String,
+    pub roles: Vec<Snowflake>,
+    pub joined_at: Timestamp,
+    pub op_user_id: Snowflake,        // omitempty
 }
 ```
 
-#### 字段
+`MemberAddRoleBody { channel: Option<Channel> }` 是分配子频道管理员身份组接口的请求体。
 
-- `guild_id`: 频道 ID
-- `user`: 该成员的用户信息
-- `nick`: 成员在频道中的昵称
-- `roles`: 分配给成员的身份组 ID 列表
-- `joined_at`: 成员加入频道的时间戳
-- `op_user_id`: 操作人用户 ID
-
-#### 示例
+## 禁言
 
 ```rust
-async fn handle_member_update(ctx: Context, member: Member) {
-    if let Some(user) = &member.user {
-        println!("成员更新: {}", user.username);
-
-        if !member.nick.is_empty() {
-            println!("昵称: {}", member.nick);
-        }
-
-        println!("身份组: {:?}", member.roles);
-    }
+pub struct UpdateGuildMute {
+    pub mute_end_timestamp: String,   // omitempty
+    pub mute_seconds: String,         // omitempty
+    pub user_ids: Vec<String>,        // omitempty，仅批量禁言时填
 }
 ```
 
-### `User`
+构造器：
 
-表示用户信息。
+- `UpdateGuildMute::new(end, seconds)` —— 单人。
+- `UpdateGuildMute::new_multi(user_ids, end, seconds)` —— 批量。
+- `UpdateGuildMute::cancel()` / `cancel_multi(user_ids)` —— 解除禁言。
 
-```rust
-pub struct User {
-    pub id: String,
-    pub username: String,
-    pub avatar: String,
-    pub bot: bool,
-    pub union_openid: String,
-    pub union_user_account: String,
-}
-```
+## 参见
 
-#### 字段
-
-- `id`: 唯一用户标识符
-- `username`: 用户的显示名称
-- `avatar`: 头像图片 URL
-- `bot`: 该用户是否为机器人
-- `union_openid`: 用于跨平台识别的联合 OpenID
-- `union_user_account`: 联合用户账户标识符
-
-## 子频道管理
-
-### 创建子频道
-
-```rust
-async fn setup_guild_channels(ctx: Context, guild_id: &str) -> Result<()> {
-    // 创建分类
-    let category = ctx.create_channel(
-        guild_id,
-        "常规",
-        ChannelType::Category,
-        None,
-        Some(0), // 位置在顶部
-        None,
-        None,
-        None,
-        None,
-    ).await?;
-
-    // 在分类下创建文字子频道
-    let general_chat = ctx.create_channel(
-        guild_id,
-        "闲聊",
-        ChannelType::Text,
-        ChannelSubType::Chat,
-        Some(1),
-        Some(&category.id), // 父分类
-        None,
-        None,
-        None,
-    ).await?;
-
-    let announcements = ctx.create_channel(
-        guild_id,
-        "公告",
-        ChannelType::Text,
-        ChannelSubType::Notice,
-        Some(2),
-        Some(&category.id),
-        None,
-        None,
-        None,
-    ).await?;
-
-    println!("创建分类 '{}' 及其子频道:", category.name);
-    println!("  - {}", general_chat.name);
-    println!("  - {}", announcements.name);
-
-    Ok(())
-}
-```
-
-### 子频道权限
-
-```rust
-async fn manage_channel_permissions(ctx: Context, channel_id: &str, user_id: &str) -> Result<()> {
-    // 获取用户的当前权限
-    let permissions = ctx.get_channel_user_permissions(channel_id, user_id).await?;
-    println!("用户权限: {}", permissions.permissions);
-
-    // 获取身份组权限
-    let role_id = "role_id_here";
-    let role_permissions = ctx.get_channel_role_permissions(channel_id, role_id).await?;
-    println!("身份组权限: {}", role_permissions.permissions);
-
-    Ok(())
-}
-```
-
-### 频道成员管理
-
-```rust
-async fn manage_guild_members(ctx: Context, guild_id: &str) -> Result<()> {
-    // 获取频道成员
-    let members = ctx.get_guild_members(guild_id, Some(100), None).await?;
-    println!("频道有 {} 个成员", members.len());
-
-    for member in &members {
-        if let Some(user) = &member.user {
-            println!("成员: {}", user.username);
-            println!("  身份组: {:?}", member.roles);
-
-            if !member.joined_at.is_empty() {
-                println!("  加入时间: {}", member.joined_at);
-            }
-        }
-    }
-
-    // 获取特定成员
-    let user_id = "specific_user_id";
-    let member = ctx.get_guild_member(guild_id, user_id).await?;
-    if let Some(user) = &member.user {
-        println!("找到成员: {}", user.username);
-    }
-
-    Ok(())
-}
-```
-
-### 身份组管理
-
-```rust
-async fn manage_roles(ctx: Context, guild_id: &str) -> Result<()> {
-    // 创建新身份组
-    let new_role = ctx.create_guild_role(
-        guild_id,
-        "管理员",
-        Some(0x0099ff), // 蓝色
-        Some(true),     // 单独显示
-        Some(100),      // 成员限制
-    ).await?;
-
-    println!("创建身份组: {} (ID: {})", new_role.name, new_role.id);
-
-    // 为用户分配身份组
-    let user_id = "user_id_here";
-    ctx.add_guild_role_member(guild_id, &new_role.id, user_id, None).await?;
-    println!("为用户分配身份组");
-
-    // 更新身份组
-    let updated_role = ctx.update_guild_role(
-        guild_id,
-        &new_role.id,
-        "高级管理员",
-        Some(0xff9900), // 橙色
-        Some(true),
-        Some(50), // 减少成员限制
-    ).await?;
-
-    println!("更新身份组: {}", updated_role.name);
-
-    // 移除用户的身份组
-    ctx.remove_guild_role_member(
-guild_id, &new_role.id, user_id, None).await?;
-    println!("移除用户的身份组");
-    
-    // 删除身份组
-    ctx.delete_guild_role(guild_id, &new_role.id).await?;
-    println!("删除身份组");
-    
-    Ok(())
-}
-```
-
-## 常见使用模式
-
-### 频道发现
-
-```rust
-async fn explore_guilds(ctx: Context) -> Result<()> {
-    let guilds = ctx.get_guilds(None, None).await?;
-    
-    for guild in guilds {
-        println!("频道: {} (ID: {})", guild.name, guild.id);
-        
-        // 获取该频道的子频道
-        let channels = ctx.get_channels(&guild.id).await?;
-        println!("  子频道 ({}):", channels.len());
-        
-        for channel in channels {
-            let type_name = match channel.channel_type {
-                ChannelType::Text => "文字",
-                ChannelType::Voice => "语音",
-                ChannelType::Category => "分类",
-                ChannelType::Forum => "论坛",
-                ChannelType::Live => "直播",
-                ChannelType::Application => "应用",
-                ChannelType::Unknown(_) => "未知",
-            };
-            
-            println!("    {} - {} ({})", channel.name, type_name, channel.id);
-        }
-    }
-    
-    Ok(())
-}
-```
-
-### 子频道组织
-
-```rust
-async fn organize_channels(ctx: Context, guild_id: &str) -> Result<()> {
-    let channels = ctx.get_channels(guild_id).await?;
-    
-    // 按分类分组子频道
-    let mut categories = std::collections::HashMap::new();
-    let mut orphaned_channels = Vec::new();
-    
-    for channel in channels {
-        match (channel.channel_type, &channel.parent_id) {
-            (ChannelType::Category, _) => {
-                categories.insert(channel.id.clone(), (channel, Vec::new()));
-            }
-            (_, parent_id) if !parent_id.is_empty() => {
-                if let Some((_, children)) = categories.get_mut(parent_id) {
-                    children.push(channel);
-                }
-            }
-            (_, None) => {
-                orphaned_channels.push(channel);
-            }
-        }
-    }
-    
-    // 打印组织结构
-    for (_, (category, children)) in categories {
-        println!("分类: {}", category.name);
-        for child in children {
-            println!("  └─ {}", child.name);
-        }
-    }
-    
-    if !orphaned_channels.is_empty() {
-        println!("未分类的子频道:");
-        for channel in orphaned_channels {
-            println!("  - {}", channel.name);
-        }
-    }
-    
-    Ok(())
-}
-```
-
-## 相关文档
-
-- [客户端 API](../client.md) - 频道和子频道操作的主要客户端
-- [上下文 API](../context.md) - API 访问的上下文对象
-- [消息](./messages.md) - 消息类型和处理
-- [用户与成员](./users-members.md) - 用户和成员管理
+- [Bot API](../bot-api.md) —— 频道、子频道、角色、禁言相关接口。
+- [用户与成员](./users-members.md) —— `Member` 内部 `User` 字段的结构。
+- [其他类型](./other-types.md) —— 公告、日程、精华、API 权限申请等。
