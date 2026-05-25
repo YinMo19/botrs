@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-05-25
+
+### Changed
+- Aligned user, guild/member/role, mute, manage-event, gateway/webhook, interaction-search, message-audit, and message-setting DTOs with botgo.
+- Matched botgo zero-value and `omitempty` JSON wire shapes for the updated DTOs.
+
+### Fixed
+- Kept local gateway/event helper context out of DTO JSON where botgo uses pure payload shapes.
+
 ## [0.10.0] - 2026-05-25
 
 ### Changed

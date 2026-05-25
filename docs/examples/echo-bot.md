@@ -367,7 +367,7 @@ Before running any of these examples, make sure to:
 2. **Add dependencies to Cargo.toml:**
    ```toml
    [dependencies]
-   botrs = "0.10.0"
+   botrs = "0.11.0"
    tokio = { version = "1.0", features = ["full"] }
    async-trait = "0.1"
    tracing = "0.1"
