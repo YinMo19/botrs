@@ -105,7 +105,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     info!("Token validated successfully");
 
     // Set up intents - we want to receive public messages (C2C messages)
-    // This is equivalent to: intents = botpy.Intents(public_messages=True)
     let intents = Intents::default().with_public_messages();
 
     info!("Configured intents: {}", intents);
