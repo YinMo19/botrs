@@ -139,17 +139,15 @@ impl NewApiDemoHandler {
         let embed = Embed {
             title: Some("New Message API Demo".to_string()),
             description: Some("This embed was sent using the new MessageParams API!".to_string()),
-            color: Some(0x00ff00), // Green
+            prompt: "New Message API Demo".to_string(),
             fields: Some(vec![
                 EmbedField {
                     name: Some("Feature".to_string()),
                     value: Some("Cleaner API".to_string()),
-                    inline: Some(true),
                 },
                 EmbedField {
                     name: Some("Benefit".to_string()),
                     value: Some("Less None parameters".to_string()),
-                    inline: Some(true),
                 },
             ]),
             ..Default::default()

@@ -36,29 +36,18 @@ impl EventHandler for EmbedReplyHandler {
         // Create an embed message (equivalent to Python version)
         let embed = Embed {
             title: Some("embed消息".to_string()),
-            description: None,
-            prompt: None,
-            url: None,
-            timestamp: None,
-            color: Some(0x00ff00), // Green color
-            footer: None,
-            image: None,
-            thumbnail: None,
-            video: None,
-            provider: None,
-            author: None,
+            prompt: "消息透传显示".to_string(),
             fields: Some(vec![
                 EmbedField {
                     name: Some("<@!1234>hello world".to_string()),
-                    value: Some("第一个字段".to_string()),
-                    inline: Some(false),
+                    ..Default::default()
                 },
                 EmbedField {
                     name: Some("<@!1234>hello world".to_string()),
-                    value: Some("第二个字段".to_string()),
-                    inline: Some(false),
+                    ..Default::default()
                 },
             ]),
+            ..Default::default()
         };
 
         // Send embed message using api.post_message (equivalent to Python version)
