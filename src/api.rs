@@ -3433,7 +3433,7 @@ impl BotApi {
         guild_id: &str,
         mute: &UpdateGuildMute,
     ) -> Result<UpdateGuildMuteResponse> {
-        if mute.user_ids.as_ref().is_none_or(Vec::is_empty) {
+        if mute.user_ids.is_empty() {
             return Err(crate::error::BotError::invalid_data("no user id param"));
         }
 

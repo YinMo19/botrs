@@ -164,6 +164,10 @@ fn is_zero_u32(value: &u32) -> bool {
     *value == 0
 }
 
+fn is_empty_vec<T>(value: &[T]) -> bool {
+    value.is_empty()
+}
+
 /// Botgo-compatible role update info body.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct UpdateRoleInfo {
@@ -641,23 +645,23 @@ pub fn normalize_delete_history_msg_days(days: DeleteHistoryMsgDay) -> DeleteHis
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct UpdateGuildMute {
     /// Mute end timestamp in seconds
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub mute_end_timestamp: Option<String>,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub mute_end_timestamp: String,
     /// Mute duration in seconds
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub mute_seconds: Option<String>,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub mute_seconds: String,
     /// User IDs for batch mute
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub user_ids: Option<Vec<String>>,
+    #[serde(default, skip_serializing_if = "is_empty_vec")]
+    pub user_ids: Vec<String>,
 }
 
 impl UpdateGuildMute {
     /// Creates a mute request body.
     pub fn new(mute_end_timestamp: Option<&str>, mute_seconds: Option<&str>) -> Self {
         Self {
-            mute_end_timestamp: mute_end_timestamp.map(String::from),
-            mute_seconds: mute_seconds.map(String::from),
-            user_ids: None,
+            mute_end_timestamp: mute_end_timestamp.unwrap_or_default().to_string(),
+            mute_seconds: mute_seconds.unwrap_or_default().to_string(),
+            user_ids: Vec::new(),
         }
     }
 
@@ -668,27 +672,27 @@ impl UpdateGuildMute {
         mute_seconds: Option<&str>,
     ) -> Self {
         Self {
-            mute_end_timestamp: mute_end_timestamp.map(String::from),
-            mute_seconds: mute_seconds.map(String::from),
-            user_ids: Some(user_ids),
+            mute_end_timestamp: mute_end_timestamp.unwrap_or_default().to_string(),
+            mute_seconds: mute_seconds.unwrap_or_default().to_string(),
+            user_ids,
         }
     }
 
     /// Creates a request body that cancels mute.
     pub fn cancel() -> Self {
         Self {
-            mute_end_timestamp: Some("0".to_string()),
-            mute_seconds: Some("0".to_string()),
-            user_ids: None,
+            mute_end_timestamp: "0".to_string(),
+            mute_seconds: "0".to_string(),
+            user_ids: Vec::new(),
         }
     }
 
     /// Creates a request body that cancels mute for multiple users.
     pub fn cancel_multi(user_ids: Vec<String>) -> Self {
         Self {
-            mute_end_timestamp: Some("0".to_string()),
-            mute_seconds: Some("0".to_string()),
-            user_ids: Some(user_ids),
+            mute_end_timestamp: "0".to_string(),
+            mute_seconds: "0".to_string(),
+            user_ids,
         }
     }
 }
@@ -941,6 +945,33 @@ mod tests {
         assert_eq!(value["guild_id"], "guild-1");
         assert_eq!(value["role_num_limit"], "30");
         assert!(value.get("num_limit").is_none());
+    }
+
+    #[test]
+    fn botgo_update_guild_mute_uses_zero_value_omitempty_shape() {
+        let empty = serde_json::to_value(UpdateGuildMute::default()).unwrap();
+        assert_eq!(empty, serde_json::json!({}));
+
+        let single = UpdateGuildMute::new(Some("1710000000"), None);
+        let value = serde_json::to_value(&single).unwrap();
+        assert_eq!(single.mute_end_timestamp, "1710000000");
+        assert_eq!(single.mute_seconds, "");
+        assert!(single.user_ids.is_empty());
+        assert_eq!(
+            value,
+            serde_json::json!({"mute_end_timestamp": "1710000000"})
+        );
+
+        let cancel = UpdateGuildMute::cancel_multi(vec!["user-1".to_string()]);
+        let value = serde_json::to_value(&cancel).unwrap();
+        assert_eq!(
+            value,
+            serde_json::json!({
+                "mute_end_timestamp": "0",
+                "mute_seconds": "0",
+                "user_ids": ["user-1"]
+            })
+        );
     }
 
     #[test]
