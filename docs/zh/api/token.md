@@ -1,484 +1,79 @@
-# 令牌 API 参考
+# Token
 
-`Token` 结构体管理 QQ 频道机器人的身份验证凭据，包括应用 ID 和密钥，以及访问令牌的管理。
-
-## 概述
+`Token` 持有机器人的 `app_id` 与 `secret`，负责签名 API 请求，并把访问令牌缓存到所有 `Token` 克隆共享的状态里。缓存按需刷新，受内部 mutex 保护，因此 `Token` 在多任务之间共享非常安全且开销很小。
 
 ```rust
-pub struct Token {
-    app_id: String,
-    secret: String,
-    access_token: Option<String>,
-    expires_at: Option<u64>,
-    refresh_mutex: Arc<Mutex<()>>,
-}
+pub struct Token { /* 私有字段 */ }
 ```
 
-`Token` 包含：
-- 应用 ID 和密钥（由 QQ 提供）
-- 访问令牌（从 QQ API 获取）
-- 令牌过期时间和刷新互斥锁
+`Token` 实现了 `Clone`、`Debug`、`Serialize`、`Deserialize`。序列化时缓存会被丢弃，便于在配置文件里往返携带凭证。
 
-## 构造函数
+## 构造
 
-### `new`
-
-使用给定的应用 ID 和密钥创建新令牌。
+- `Token::new(app_id, secret)` —— 显式凭证。
+- `Token::from_env()` —— 读取 `QQ_BOT_APP_ID` / `QQ_BOT_SECRET`，缺失时返回 `BotError::Config`。
 
 ```rust
-pub fn new<S1: Into<String>, S2: Into<String>>(app_id: S1, secret: S2) -> Self
+let token = Token::new("123456789", "abcdef...");
+let token = Token::from_env()?;       // 走环境变量
 ```
-
-#### 参数
-
-- `app_id`: 机器人的应用 ID
-- `secret`: 机器人的应用密钥
-
-#### 返回值
-
-返回新的 `Token` 实例。
-
-#### 示例
-
-```rust
-use botrs::Token;
-
-let token = Token::new("你的应用ID", "你的密钥");
-```
-
-### `from_env`
-
-从环境变量创建令牌。
-
-```rust
-pub fn from_env() -> Result<Self, BotError>
-```
-
-期望的环境变量：
-- `QQ_BOT_APP_ID`: 应用 ID
-- `QQ_BOT_SECRET`: 应用密钥
-
-#### 返回值
-
-返回 `Result<Token, BotError>` - 成功时返回令牌，环境变量缺失时返回错误。
-
-#### 示例
-
-```rust
-// 设置环境变量
-std::env::set_var("QQ_BOT_APP_ID", "你的应用ID");
-std::env::set_var("QQ_BOT_SECRET", "你的密钥");
-
-let token = Token::from_env()?;
-```
-
-## 方法
-
-### `validate`
-
-验证令牌的格式和有效性。
-
-```rust
-pub fn validate(&self) -> Result<(), BotError>
-```
-
-检查：
-- 应用 ID 不为空且格式正确
-- 密钥不为空且长度足够
-
-#### 返回值
-
-验证成功时返回 `Ok(())`，否则返回描述错误的 `BotError`。
-
-#### 示例
-
-```rust
-let token = Token::new("应用ID", "密钥");
-
-match token.validate() {
-    Ok(_) => println!("令牌有效"),
-    Err(e) => eprintln!("令牌无效: {}", e),
-}
-```
-
-### `authorization_header`
-
-生成用于 API 请求的授权头。
-
-```rust
-pub fn authorization_header(&self) -> String
-```
-
-#### 返回值
-
-返回格式为 `"Bot {app_id}.{secret}"` 的授权字符串。
-
-#### 示例
-
-```rust
-let token = Token::new("123456", "secret123");
-let auth_header = token.authorization_header();
-println!("Authorization: {}", auth_header);
-// 输出: Authorization: Bot 123456.secret123
-```
-
-### `get_access_token`
-
-获取当前的访问令牌，如果过期则自动刷新。
-
-```rust
-pub async fn get_access_token(&self, http_client: &HttpClient) -> Result<String, BotError>
-```
-
-#### 参数
-
-- `http_client`: HTTP 客户端用于刷新令牌
-
-#### 返回值
-
-返回有效的访问令牌或错误。
-
-#### 示例
-
-```rust
-use botrs::{Token, HttpClient};
-
-let token = Token::new("应用ID", "密钥");
-let http_client = HttpClient::new();
-
-match token.get_access_token(&http_client).await {
-    Ok(access_token) => println!("访问令牌: {}", access_token),
-    Err(e) => eprintln!("获取访问令牌失败: {}", e),
-}
-```
-
-### `refresh_access_token`
-
-强制刷新访问令牌。
-
-```rust
-pub async fn refresh_access_token(&self, http_client: &HttpClient) -> Result<(), BotError>
-```
-
-#### 参数
-
-- `http_client`: HTTP 客户端用于 API 请求
-
-#### 返回值
-
-成功时返回 `Ok(())`，失败时返回 `BotError`。
-
-### `is_access_token_expired`
-
-检查当前访问令牌是否已过期。
-
-```rust
-pub fn is_access_token_expired(&self) -> bool
-```
-
-#### 返回值
-
-如果令牌已过期或不存在返回 `true`，否则返回 `false`。
 
 ## 访问器
 
-### `app_id`
+- `app_id()` / `secret()` —— 借用凭证字符串（`&str`）。
+- `safe_display()` —— 返回适合日志的脱敏字符串（如 `Token { app_id: "1234***", secret: "***" }`），任何想打印 token 的地方都应改用这个。
 
-获取应用 ID。
+## 鉴权
 
-```rust
-pub fn app_id(&self) -> &str
-```
+- `authorization_header().await` —— 构造 `Authorization: QQBot <access-token>`，过期时会自动刷新。
+- `bot_token().await` —— 只返回 bot token 本体（不含 `QQBot ` 前缀），由网关 `Identify` 载荷使用。
 
-#### 示例
+两者共用同一份访问令牌缓存。并发调用方在需要刷新时会短暂地等待 refresh mutex，然后无竞争地读到最新值。
 
-```rust
-let token = Token::new("123456", "secret");
-println!("应用 ID: {}", token.app_id());
-```
+## 校验
 
-### `secret`
+`validate()` 做轻量的语法检查（app id 非空、长度合理等），失败时返回 `BotError::Config`。建议在 `Token::new(...)` 之后立即调用，启动阶段就把凭证错误暴露出来。
 
-获取应用密钥（出于安全考虑，实际实现可能会限制访问）。
+## 刷新机制
 
-```rust
-pub fn secret(&self) -> &str
-```
+框架会监控访问令牌的有效期，在到期前自动续期。如果续期失败，下一个调用方会收到 `BotError::Auth` 并附带上游错误信息。`Token` 没有公开的 `refresh()` 方法——刷新由 `authorization_header()` / `bot_token()` 自己驱动。
 
-## 序列化支持
+由于克隆共享同一份 `Arc<Mutex<TokenState>>`，任何一个克隆触发的刷新都会立刻对其他克隆可见，即便在高并发下，一个有效期窗口内也只刷新一次。
 
-`Token` 支持 serde 序列化和反序列化，但访问令牌等敏感信息会被跳过。
+## 示例
+
+**从环境变量构造并在启动时校验一次：**
 
 ```rust
-use serde_json;
-
-let token = Token::new("应用ID", "密钥");
-let json = serde_json::to_string(&token)?;
-let deserialized: Token = serde_json::from_str(&json)?;
+let token = Token::from_env()?;
+token.validate()?;
 ```
 
-## 使用示例
-
-### 基础用法
+**手工构造 HTTP 请求：**
 
 ```rust
-use botrs::{Token, Client, Intents};
-
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // 创建令牌
-    let token = Token::new("你的应用ID", "你的密钥");
-    
-    // 验证令牌
-    token.validate()?;
-    
-    // 使用令牌创建客户端
-    let intents = Intents::default();
-    let client = Client::new(token, intents, handler, false)?;
-    
-    Ok(())
-}
+let auth = token.authorization_header().await?;
+let request = client
+    .get("https://api.example.com/whatever")
+    .header("Authorization", auth)
+    .send()
+    .await?;
 ```
 
-### 从环境变量加载
+**安全打印 token：**
 
 ```rust
-use botrs::Token;
-
-fn load_token() -> Result<Token, Box<dyn std::error::Error>> {
-    // 方法1: 直接从环境变量
-    let token = Token::from_env()?;
-    
-    // 方法2: 手动读取环境变量
-    let app_id = std::env::var("QQ_BOT_APP_ID")?;
-    let secret = std::env::var("QQ_BOT_SECRET")?;
-    let token = Token::new(app_id, secret);
-    
-    token.validate()?;
-    Ok(token)
-}
+info!("starting bot {}", token.safe_display());
 ```
 
-### 配置文件加载
+## 安全建议
 
-```rust
-use serde::{Deserialize, Serialize};
-use std::fs;
+- 永远不要 `Debug`-print `Token`，请走 `safe_display()`。
+- 凭证优先来自环境变量或秘钥管理服务，不要提交到代码仓库的配置文件里。
+- 若怀疑密钥泄漏，先在 QQ 开放平台轮换密钥；轮换后下一次 `authorization_header()` 会返回 `BotError::Auth`，再用新密钥构造新的 `Token` 即可。
 
-#[derive(Serialize, Deserialize)]
-struct Config {
-    app_id: String,
-    secret: String,
-}
+## 参见
 
-fn load_token_from_config(path: &str) -> Result<Token, Box<dyn std::error::Error>> {
-    let config_data = fs::read_to_string(path)?;
-    let config: Config = toml::from_str(&config_data)?;
-    
-    let token = Token::new(config.app_id, config.secret);
-    token.validate()?;
-    
-    Ok(token)
-}
-```
-
-### 访问令牌管理
-
-```rust
-use botrs::{Token, HttpClient};
-
-async fn token_management_example() -> Result<(), Box<dyn std::error::Error>> {
-    let token = Token::new("应用ID", "密钥");
-    let http_client = HttpClient::new();
-    
-    // 检查令牌是否过期
-    if token.is_access_token_expired() {
-        println!("访问令牌已过期，正在刷新...");
-        token.refresh_access_token(&http_client).await?;
-    }
-    
-    // 获取有效的访问令牌
-    let access_token = token.get_access_token(&http_client).await?;
-    println!("当前访问令牌: {}", access_token);
-    
-    Ok(())
-}
-```
-
-### 安全处理
-
-```rust
-use botrs::Token;
-use std::fmt;
-
-// 创建一个包装器来安全显示令牌信息
-struct SafeTokenDisplay<'a>(&'a Token);
-
-impl<'a> fmt::Display for SafeTokenDisplay<'a> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "Token {{ app_id: \"{}\", secret: \"***\" }}", 
-               self.0.app_id())
-    }
-}
-
-fn safe_token_logging() {
-    let token = Token::new("123456", "secret123");
-    
-    // 安全地显示令牌信息
-    println!("令牌信息: {}", SafeTokenDisplay(&token));
-    
-    // 避免直接打印令牌
-    // println!("令牌: {:?}", token); // 不推荐
-}
-```
-
-## 错误处理
-
-### 常见错误类型
-
-```rust
-use botrs::{Token, BotError};
-
-async fn handle_token_errors() {
-    let token = Token::new("", ""); // 无效令牌
-    
-    match token.validate() {
-        Ok(_) => println!("令牌有效"),
-        Err(BotError::Authentication(msg)) => {
-            eprintln!("身份验证错误: {}", msg);
-        }
-        Err(BotError::InvalidInput(msg)) => {
-            eprintln!("输入无效: {}", msg);
-        }
-        Err(e) => {
-            eprintln!("其他错误: {}", e);
-        }
-    }
-}
-```
-
-### 访问令牌刷新错误
-
-```rust
-use botrs::{Token, HttpClient, BotError};
-
-async fn handle_refresh_errors() {
-    let token = Token::new("应用ID", "密钥");
-    let http_client = HttpClient::new();
-    
-    match token.refresh_access_token(&http_client).await {
-        Ok(_) => println!("令牌刷新成功"),
-        Err(BotError::Authentication(_)) => {
-            eprintln!("身份验证失败，检查应用ID和密钥");
-        }
-        Err(BotError::Network(_)) => {
-            eprintln!("网络错误，稍后重试");
-        }
-        Err(BotError::RateLimited(retry_after)) => {
-            eprintln!("速率限制，{}秒后重试", retry_after);
-        }
-        Err(e) => {
-            eprintln!("刷新失败: {}", e);
-        }
-    }
-}
-```
-
-## 最佳实践
-
-### 安全存储
-
-```rust
-// 推荐：使用环境变量
-std::env::set_var("QQ_BOT_APP_ID", "应用ID");
-std::env::set_var("QQ_BOT_SECRET", "密钥");
-
-// 推荐：使用配置文件（不提交到版本控制）
-// config.toml (添加到 .gitignore)
-// app_id = "应用ID"
-// secret = "密钥"
-
-// 不推荐：硬编码在源代码中
-// let token = Token::new("hardcoded_id", "hardcoded_secret");
-```
-
-### 令牌验证
-
-```rust
-fn create_validated_token(app_id: &str, secret: &str) -> Result<Token, BotError> {
-    let token = Token::new(app_id, secret);
-    token.validate()?;
-    Ok(token)
-}
-```
-
-### 生产环境配置
-
-```rust
-use botrs::Token;
-
-fn production_token_setup() -> Result<Token, Box<dyn std::error::Error>> {
-    // 从环境变量或安全的配置服务加载
-    let token = Token::from_env()
-        .or_else(|_| load_from_secure_config())?;
-    
-    // 验证令牌
-    token.validate()?;
-    
-    println!("令牌配置完成，应用ID: {}", token.app_id());
-    Ok(token)
-}
-
-fn load_from_secure_config() -> Result<Token, BotError> {
-    // 从安全配置服务、加密文件等加载
-    todo!("实现安全配置加载")
-}
-```
-
-### 开发环境助手
-
-```rust
-#[cfg(debug_assertions)]
-fn development_token() -> Token {
-    Token::new(
-        std::env::var("DEV_APP_ID").unwrap_or_else(|_| "dev_app_id".to_string()),
-        std::env::var("DEV_SECRET").unwrap_or_else(|_| "dev_secret".to_string())
-    )
-}
-
-#[cfg(not(debug_assertions))]
-fn development_token() -> Token {
-    panic!("开发令牌仅在调试模式下可用");
-}
-```
-
-## 线程安全
-
-`Token` 是线程安全的，可以在多个线程间共享：
-
-```rust
-use std::sync::Arc;
-use tokio::task;
-
-async fn shared_token_usage() {
-    let token = Arc::new(Token::new("应用ID", "密钥"));
-    
-    let handles: Vec<_> = (0..5).map(|i| {
-        let token = token.clone();
-        task::spawn(async move {
-            println!("任务 {} 使用令牌: {}", i, token.app_id());
-        })
-    }).collect();
-    
-    for handle in handles {
-        handle.await.unwrap();
-    }
-}
-```
-
-## 另请参阅
-
-- [`Client`](./client.md) - 使用令牌创建客户端
-- [`BotApi`](./bot-api.md) - API 请求中的令牌使用
-- [配置指南](/zh/guide/configuration.md) - 令牌配置最佳实践
-- [安全指南](/zh/guide/security.md) - 令牌安全存储和使用
+- [Bot API](./bot-api.md) —— 所有接口最终都会消费 `Token`。
+- [Context](./context.md) —— 内嵌 `Token`，省去回调里手动传参。
+- [错误类型](./error-types.md) —— 上文涉及的 `BotError::Auth` 与 `BotError::Config` 行为。
