@@ -537,7 +537,7 @@ impl Context {
             .await
     }
 
-    /// Adds a reaction to a message using a botgo-compatible emoji object.
+    /// Adds a reaction to a message using a structured emoji object.
     pub async fn create_message_reaction(
         &self,
         channel_id: &str,
@@ -573,7 +573,7 @@ impl Context {
             .await
     }
 
-    /// Deletes own reaction from a message using a botgo-compatible emoji object.
+    /// Deletes own reaction from a message using a structured emoji object.
     pub async fn delete_own_message_reaction(
         &self,
         channel_id: &str,
@@ -585,7 +585,7 @@ impl Context {
             .await
     }
 
-    /// Gets message reaction users using botgo-compatible emoji and pager objects.
+    /// Gets message reaction users using structured emoji and pager objects.
     pub async fn get_message_reaction_users(
         &self,
         channel_id: &str,
@@ -620,7 +620,7 @@ impl Context {
             .await
     }
 
-    /// Gets current-user guilds with a botgo-compatible pager.
+    /// Gets current-user guilds with a structured pager.
     pub async fn get_guilds_with_pager(&self, pager: &GuildPager) -> Result<Vec<Guild>> {
         self.api.get_guilds_with_pager(&self.token, pager).await
     }
@@ -695,7 +695,7 @@ impl Context {
         self.api.post_channel(&self.token, guild_id, value).await
     }
 
-    /// Creates a private channel following the official botgo behavior.
+    /// Creates a private channel.
     pub async fn create_private_channel(
         &self,
         guild_id: &str,
@@ -744,7 +744,7 @@ impl Context {
             .await
     }
 
-    /// Creates a guild role with a botgo-style role body.
+    /// Creates a guild role with a structured role body.
     pub async fn create_guild_role_with_update(
         &self,
         guild_id: &str,
@@ -781,7 +781,7 @@ impl Context {
             .await
     }
 
-    /// Updates a guild role with a botgo-style role body.
+    /// Updates a guild role with a structured role body.
     pub async fn update_guild_role_with_update(
         &self,
         guild_id: &str,
@@ -833,7 +833,7 @@ impl Context {
             .await
     }
 
-    /// Adds a role to a guild member with a botgo-compatible body.
+    /// Adds a role to a guild member with a structured body.
     pub async fn member_add_role(
         &self,
         guild_id: &str,
@@ -870,7 +870,7 @@ impl Context {
             .await
     }
 
-    /// Deletes a role from a guild member with a botgo-compatible body.
+    /// Deletes a role from a guild member with a structured body.
     pub async fn member_delete_role(
         &self,
         guild_id: &str,
@@ -921,7 +921,7 @@ impl Context {
             .await
     }
 
-    /// Gets guild members list using a botgo-style pager.
+    /// Gets guild members list using a structured pager.
     pub async fn get_guild_members_with_pager(
         &self,
         guild_id: &str,
@@ -1147,7 +1147,7 @@ impl Context {
             .await
     }
 
-    /// Mutes multiple members with a botgo-style request body.
+    /// Mutes multiple members with a structured request body.
     pub async fn multi_member_mute(
         &self,
         guild_id: &str,

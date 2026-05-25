@@ -302,7 +302,7 @@ mod tests {
     }
 
     #[test]
-    fn botgo_user_uses_required_zero_value_fields() {
+    fn user_uses_required_zero_value_fields() {
         let user: User = serde_json::from_value(serde_json::json!({})).unwrap();
 
         assert_eq!(user.id, "");
@@ -315,7 +315,7 @@ mod tests {
     }
 
     #[test]
-    fn botgo_user_keeps_official_json_shape() {
+    fn user_keeps_official_json_shape() {
         let user = User {
             id: "user-1".to_string(),
             username: "alice".to_string(),

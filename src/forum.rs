@@ -312,7 +312,7 @@ impl Content {
     }
 }
 
-/// Thread info structure matching botgo's forum event DTO.
+/// Thread info structure for forum events.
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct ThreadInfo {
     /// Thread title
@@ -666,7 +666,7 @@ mod tests {
     }
 
     #[test]
-    fn botgo_thread_info_keeps_title_and_content_as_strings() {
+    fn thread_info_keeps_title_and_content_as_strings() {
         let data = serde_json::json!({
             "thread_id": "thread-1",
             "title": "{\"paragraphs\":[]}",

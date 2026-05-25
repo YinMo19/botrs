@@ -1,6 +1,6 @@
 //! Guild-related data models for the QQ Guild Bot API.
 //!
-//! This module contains guild types that correspond to the Python botpy implementation.
+//! This module contains guild types for the QQ Bot Open API.
 
 use crate::models::{HasId, HasName, Pager, Snowflake, Timestamp, channel::Channel};
 use serde::{Deserialize, Serialize};
@@ -155,9 +155,9 @@ impl GuildRoles {
 
 /// Represents a role ID.
 pub type RoleId = Snowflake;
-/// Botgo-compatible role ID alias.
+/// Role ID alias.
 pub type RoleID = RoleId;
-/// Default role color used by botgo when creating or updating roles.
+/// Default role color used when creating or updating roles.
 pub const DEFAULT_ROLE_COLOR: u32 = 4_278_245_297;
 
 fn is_zero_u32(value: &u32) -> bool {
@@ -168,7 +168,7 @@ fn is_empty_vec<T>(value: &[T]) -> bool {
     value.is_empty()
 }
 
-/// Botgo-compatible role update info body.
+/// Role update info body.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct UpdateRoleInfo {
     pub name: String,
@@ -227,7 +227,7 @@ impl Default for UpdateRoleFilter {
     }
 }
 
-/// Botgo-compatible role update body.
+/// Role update body.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct UpdateRole {
     pub guild_id: String,
@@ -237,7 +237,7 @@ pub struct UpdateRole {
 }
 
 impl UpdateRole {
-    /// Creates a role update body with botgo-compatible defaults.
+    /// Creates a role update body with sensible defaults.
     pub fn new(guild_id: impl Into<String>, mut role: GuildRole) -> Self {
         if role.color == 0 {
             role.color = GuildRole::default_color();
@@ -400,7 +400,7 @@ impl GuildMembersPager {
         }
     }
 
-    /// Converts the pager to botgo-compatible query parameters.
+    /// Converts the pager to query parameters.
     pub fn query_params(&self) -> HashMap<String, String> {
         let mut query = HashMap::new();
         insert_query_param(&mut query, "limit", &self.limit);
@@ -408,7 +408,7 @@ impl GuildMembersPager {
         query
     }
 
-    /// Botgo-compatible query parameter accessor.
+    /// Query parameter accessor.
     #[allow(non_snake_case)]
     pub fn QueryParams(&self) -> HashMap<String, String> {
         self.query_params()
@@ -441,7 +441,7 @@ impl GuildRoleMembersPager {
         }
     }
 
-    /// Converts the pager to botgo-compatible query parameters.
+    /// Converts the pager to query parameters.
     pub fn query_params(&self) -> HashMap<String, String> {
         let mut query = HashMap::new();
         insert_query_param(&mut query, "limit", &self.limit);
@@ -449,7 +449,7 @@ impl GuildRoleMembersPager {
         query
     }
 
-    /// Botgo-compatible query parameter accessor.
+    /// Query parameter accessor.
     #[allow(non_snake_case)]
     pub fn QueryParams(&self) -> HashMap<String, String> {
         self.query_params()
@@ -497,7 +497,7 @@ impl GuildPager {
         self
     }
 
-    /// Converts the pager to botgo-compatible query parameters.
+    /// Converts the pager to query parameters.
     pub fn query_params(&self) -> HashMap<String, String> {
         let mut query = HashMap::new();
         insert_query_param(&mut query, "limit", &self.limit);
@@ -508,7 +508,7 @@ impl GuildPager {
         query
     }
 
-    /// Botgo-compatible query parameter accessor.
+    /// Query parameter accessor.
     #[allow(non_snake_case)]
     pub fn QueryParams(&self) -> HashMap<String, String> {
         self.query_params()
@@ -808,7 +808,7 @@ mod tests {
     }
 
     #[test]
-    fn botgo_guild_fields_use_official_json_names() {
+    fn guild_fields_use_official_json_names() {
         let guild = Guild::from_data(
             crate::api::BotApi::new(crate::http::HttpClient::new(30, false).unwrap()),
             "guild-1".to_string(),
@@ -845,7 +845,7 @@ mod tests {
     }
 
     #[test]
-    fn botgo_guild_uses_required_zero_value_fields() {
+    fn guild_uses_required_zero_value_fields() {
         let guild: Guild = serde_json::from_value(serde_json::json!({})).unwrap();
 
         assert_eq!(guild.id, "");
@@ -918,7 +918,7 @@ mod tests {
     }
 
     #[test]
-    fn botgo_role_keeps_official_json_shape() {
+    fn role_keeps_official_json_shape() {
         let role = GuildRole {
             id: "role-1".to_string(),
             name: "Admin".to_string(),
@@ -948,7 +948,7 @@ mod tests {
     }
 
     #[test]
-    fn botgo_update_guild_mute_uses_zero_value_omitempty_shape() {
+    fn update_guild_mute_uses_zero_value_omitempty_shape() {
         let empty = serde_json::to_value(UpdateGuildMute::default()).unwrap();
         assert_eq!(empty, serde_json::json!({}));
 
@@ -975,7 +975,7 @@ mod tests {
     }
 
     #[test]
-    fn botgo_pager_query_params_match_official_priority() {
+    fn pager_query_params_match_official_priority() {
         let members = GuildMembersPager::new("user-1", 100);
         assert_eq!(
             members.QueryParams().get("after").map(String::as_str),
@@ -1020,7 +1020,7 @@ mod tests {
     }
 
     #[test]
-    fn botgo_member_uses_required_zero_value_fields() {
+    fn member_uses_required_zero_value_fields() {
         let member: Member = serde_json::from_value(serde_json::json!({})).unwrap();
 
         assert_eq!(member.guild_id, "");

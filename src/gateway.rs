@@ -141,9 +141,9 @@ impl Gateway {
         self
     }
 
-    /// Calculates a botgo-style session start interval from gateway limits.
+    /// Calculates a session start interval from gateway limits.
     ///
-    /// botgo uses `round(2 / max_concurrency)` and guards the interval to at
+    /// Uses `round(2 / max_concurrency)` and guards the interval to at
     /// least one second before starting the next websocket session.
     pub fn session_start_interval(max_concurrency: u32) -> Duration {
         let max_concurrency = u64::from(max_concurrency.max(1));
@@ -219,7 +219,7 @@ impl Gateway {
 
     /// Connects once and returns after the connection ends.
     ///
-    /// This is the primitive used by botgo-style session managers: reconnect
+    /// This is the primitive used by session managers: reconnect
     /// throttling and requeueing are owned by the manager, not by recursive
     /// websocket connection loops.
     pub async fn connect_once(

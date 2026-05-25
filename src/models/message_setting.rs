@@ -29,7 +29,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn botgo_message_setting_uses_required_zero_value_fields() {
+    fn message_setting_uses_required_zero_value_fields() {
         let setting: MessageSetting = serde_json::from_value(serde_json::json!({})).unwrap();
 
         assert!(!setting.disable_create_dm);
@@ -42,7 +42,7 @@ mod tests {
     }
 
     #[test]
-    fn botgo_message_setting_keeps_official_json_shape() {
+    fn message_setting_keeps_official_json_shape() {
         let setting = MessageSetting {
             disable_create_dm: true,
             disable_push_msg: false,

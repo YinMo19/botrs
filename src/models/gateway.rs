@@ -4,11 +4,11 @@ use crate::intents::Intents;
 use crate::models::Snowflake;
 use serde::{Deserialize, Serialize};
 
-/// Botgo-compatible event type alias.
+/// Event type alias.
 pub type EventType = String;
-/// Botgo-compatible websocket opcode alias.
+/// Websocket opcode alias.
 pub type OpCode = u8;
-/// Botgo-compatible websocket opcode alias.
+/// Websocket opcode alias.
 pub type OPCode = OpCode;
 
 pub const WS_DISPATCH_EVENT: OpCode = opcodes::DISPATCH;
@@ -139,7 +139,7 @@ pub struct GatewayEvent {
     pub opcode: u8,
 }
 
-/// Botgo-compatible websocket payload.
+/// Websocket payload.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WSPayload {
     #[serde(flatten)]
@@ -158,7 +158,7 @@ impl PartialEq for WSPayload {
     }
 }
 
-/// Botgo-compatible websocket payload base.
+/// Websocket payload base.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct WSPayloadBase {
     #[serde(rename = "op")]
@@ -233,12 +233,12 @@ pub fn op_means(op: OpCode) -> &'static str {
     }
 }
 
-/// Botgo-compatible function name for opcode descriptions.
-pub fn op_means_botgo(op: OpCode) -> &'static str {
+/// Function name for opcode descriptions.
+pub fn op_meaning(op: OpCode) -> &'static str {
     op_means(op)
 }
 
-pub use op_means_botgo as OPMeans;
+pub use op_meaning as OPMeans;
 
 pub fn event_to_intent(
     events: impl IntoIterator<Item = impl AsRef<str>>,
@@ -333,7 +333,7 @@ impl Default for IdentifyProperties {
     }
 }
 
-/// Botgo-compatible identify payload.
+/// Identify payload.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct WSIdentityData {
     pub token: String,
@@ -387,7 +387,7 @@ pub struct Resume {
     pub seq: u64,
 }
 
-/// Botgo-compatible resume payload.
+/// Resume payload.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct WSResumeData {
     pub token: String,
@@ -415,10 +415,10 @@ impl From<WSResumeData> for Resume {
     }
 }
 
-/// Botgo-compatible hello payload alias.
+/// Hello payload alias.
 pub type WSHelloData = Hello;
 
-/// Botgo-compatible ready user object.
+/// Ready user object.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct WSUser {
     pub id: Snowflake,
@@ -440,7 +440,7 @@ pub struct Ready {
     pub shard: Option<[u32; 2]>,
 }
 
-/// Botgo-compatible ready payload.
+/// Ready payload.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct WSReadyData {
     pub version: u32,
@@ -464,7 +464,7 @@ impl From<Ready> for WSReadyData {
     }
 }
 
-/// Botgo-compatible gateway event payload aliases.
+/// Gateway event payload aliases.
 pub type WSGuildData = crate::models::guild::Guild;
 pub type WSGuildMemberData = crate::models::guild::Member;
 pub type WSChannelData = crate::models::channel::Channel;
@@ -497,7 +497,7 @@ mod tests {
     };
 
     #[test]
-    fn test_event_to_intent_matches_botgo_mapping() {
+    fn test_event_to_intent_matches_expected_mapping() {
         let intent = event_to_intent([
             EventGuildCreate,
             EventChannelDelete,
@@ -518,7 +518,7 @@ mod tests {
     }
 
     #[test]
-    fn test_event_to_intent_botgo_function_name() {
+    fn test_event_to_intent_function_name() {
         assert_eq!(
             EventToIntent([EventAtMessageCreate, EventForumAuditResult]),
             IntentGuildAtMessage | IntentForum
@@ -526,7 +526,7 @@ mod tests {
     }
 
     #[test]
-    fn websocket_payload_keeps_botgo_session_out_of_json() {
+    fn websocket_payload_keeps_session_out_of_json() {
         let mut payload = WSPayload::from(GatewayEvent {
             id: Some("event-id".to_string()),
             event_type: Some(EventMessageCreate.to_string()),

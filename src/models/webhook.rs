@@ -102,7 +102,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn botgo_http_identity_keeps_official_json_shape() {
+    fn http_identity_keeps_official_json_shape() {
         let identity = HttpIdentity::new(1 << 25, [0, 2], "https://example.com/callback");
         let value = serde_json::to_value(&identity).unwrap();
 
@@ -112,7 +112,7 @@ mod tests {
     }
 
     #[test]
-    fn botgo_http_ready_bot_uses_embedded_shape() {
+    fn http_ready_bot_uses_embedded_shape() {
         let ready: HttpReady = serde_json::from_value(serde_json::json!({
             "version": 1,
             "session_id": "session-1",

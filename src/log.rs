@@ -5,7 +5,7 @@
 use std::fmt;
 use std::sync::{LazyLock, RwLock};
 
-/// Logger interface aligned with botgo's logger contract.
+/// Logger interface used by this framework.
 pub trait Logger: Send + Sync {
     fn debug(&self, args: fmt::Arguments<'_>);
     fn info(&self, args: fmt::Arguments<'_>);

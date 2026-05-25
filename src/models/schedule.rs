@@ -68,8 +68,8 @@ impl From<RemindType> for u8 {
 }
 
 impl RemindType {
-    /// Returns the botgo wire value for this reminder type.
-    pub fn to_botgo_string(self) -> String {
+    /// Returns the wire value for this reminder type.
+    pub fn to_wire_string(self) -> String {
         u8::from(self).to_string()
     }
 
@@ -165,7 +165,7 @@ impl Schedule {
             start_timestamp: start_timestamp.into(),
             end_timestamp: end_timestamp.into(),
             jump_channel_id: jump_channel_id.unwrap_or_default(),
-            remind_type: remind_type.to_botgo_string(),
+            remind_type: remind_type.to_wire_string(),
             creator: None,
         }
     }
@@ -240,7 +240,7 @@ impl ScheduleWrapper {
         }
     }
 
-    /// Creates an empty wrapper matching botgo's zero-value body.
+    /// Creates an empty wrapper with zero-value defaults.
     pub fn empty() -> Self {
         Self::default()
     }
@@ -402,7 +402,7 @@ mod tests {
     }
 
     #[test]
-    fn botgo_schedule_uses_required_zero_value_fields() {
+    fn schedule_uses_required_zero_value_fields() {
         let schedule: Schedule = serde_json::from_value(serde_json::json!({})).unwrap();
 
         assert_eq!(schedule.id, "");
@@ -421,7 +421,7 @@ mod tests {
     }
 
     #[test]
-    fn botgo_schedule_keeps_official_json_shape() {
+    fn schedule_keeps_official_json_shape() {
         let schedule = Schedule {
             id: "schedule-1".to_string(),
             name: "meeting".to_string(),
@@ -444,7 +444,7 @@ mod tests {
     }
 
     #[test]
-    fn botgo_schedule_wrapper_allows_empty_zero_value_body() {
+    fn schedule_wrapper_allows_empty_zero_value_body() {
         let wrapper = ScheduleWrapper::empty();
         let value = serde_json::to_value(&wrapper).unwrap();
 

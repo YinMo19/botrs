@@ -1,7 +1,7 @@
 //! Botgo-compatible remote session-manager facade.
 //!
 //! BotRS does not ship a Redis client in the core crate. The types in this
-//! module keep botgo's public extension points available while delegating the
+//! module keep the public extension points available while delegating the
 //! actual websocket scheduling to the local channel manager unless an external
 //! integration builds on top of these hooks.
 
