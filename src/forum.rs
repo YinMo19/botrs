@@ -538,31 +538,41 @@ impl Reply {
 }
 
 /// Forum publish audit result.
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct ForumAuditResult {
     /// Audit task ID
-    pub task_id: Option<String>,
+    #[serde(default)]
+    pub task_id: String,
     /// Guild ID
-    pub guild_id: Option<String>,
+    #[serde(default)]
+    pub guild_id: String,
     /// Channel ID
-    pub channel_id: Option<String>,
+    #[serde(default)]
+    pub channel_id: String,
     /// Author ID
-    pub author_id: Option<String>,
+    #[serde(default)]
+    pub author_id: String,
     /// Thread ID
-    pub thread_id: Option<String>,
+    #[serde(default)]
+    pub thread_id: String,
     /// Post ID
-    pub post_id: Option<String>,
+    #[serde(default)]
+    pub post_id: String,
     /// Reply ID
-    pub reply_id: Option<String>,
+    #[serde(default)]
+    pub reply_id: String,
     /// Publish type
-    #[serde(rename = "type")]
-    pub publish_type: Option<u32>,
+    #[serde(default, rename = "type")]
+    pub publish_type: u32,
     /// Audit result
-    pub result: Option<u32>,
+    #[serde(default)]
+    pub result: u32,
     /// Error message
-    pub err_msg: Option<String>,
+    #[serde(default)]
+    pub err_msg: String,
     /// Creation date and time
-    pub date_time: Option<String>,
+    #[serde(default)]
+    pub date_time: String,
     /// Event ID
     #[serde(skip)]
     pub event_id: Option<String>,
@@ -692,5 +702,40 @@ mod tests {
             value["content"],
             serde_json::json!("{\"paragraphs\":[{\"elems\":[]}]}")
         );
+    }
+
+    #[test]
+    fn forum_audit_result_serializes_zero_value_strings() {
+        // The QQ Bot Open API audit payload defines every field as a bare
+        // string/integer; zero values must serialize as `""`/`0` rather than
+        // being omitted or rendered as `null`.
+        let data = serde_json::json!({
+            "task_id": "task-1",
+            "guild_id": "guild-1",
+            "channel_id": "channel-1",
+            "author_id": "author-1",
+            "thread_id": "thread-1",
+            "post_id": "",
+            "reply_id": "",
+            "type": 1,
+            "result": 2,
+            "err_msg": "",
+            "date_time": "2024-01-02T03:04:05+08:00"
+        });
+        let parsed = ForumAuditResult::new(Some("event-1".into()), &data);
+
+        assert_eq!(parsed.task_id, "task-1");
+        assert_eq!(parsed.publish_type, 1);
+        assert_eq!(parsed.result, 2);
+        assert_eq!(parsed.event_id.as_deref(), Some("event-1"));
+
+        let value = serde_json::to_value(ForumAuditResult::default()).unwrap();
+        assert_eq!(value["task_id"], "");
+        assert_eq!(value["guild_id"], "");
+        assert_eq!(value["type"], 0);
+        assert_eq!(value["result"], 0);
+        assert_eq!(value["date_time"], "");
+        // event_id is internal-only and never appears on the wire.
+        assert!(value.get("event_id").is_none());
     }
 }
