@@ -89,7 +89,7 @@ BotRS provides several feature flags to customize your installation:
 
 ```toml
 [dependencies]
-botrs = { version = "0.2.5", features = ["examples"] }
+botrs = { version = "0.11.0", features = ["examples"] }
 ```
 
 ### Available Features

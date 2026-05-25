@@ -89,7 +89,7 @@ BotRS 提供几个功能标志来自定义您的安装：
 
 ```toml
 [dependencies]
-botrs = { version = "0.2.5", features = ["examples"] }
+botrs = { version = "0.11.0", features = ["examples"] }
 ```
 
 ### 可用功能
