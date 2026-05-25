@@ -1365,6 +1365,121 @@ mod tests {
     }
 
     #[test]
+    fn botgo_keyboard_action_keeps_official_zero_value_shape() {
+        let action = KeyboardButtonAction::default();
+
+        assert_eq!(
+            serde_json::to_value(&action).unwrap(),
+            serde_json::json!({
+                "enter": false,
+                "subscribe_data": {}
+            })
+        );
+    }
+
+    #[test]
+    fn botgo_keyboard_omits_go_zero_values() {
+        let keyboard = Keyboard {
+            id: Some(String::new()),
+            content: Some(KeyboardContent {
+                rows: Some(vec![KeyboardRow {
+                    buttons: Some(vec![KeyboardButton {
+                        id: Some(String::new()),
+                        render_data: Some(KeyboardButtonRenderData {
+                            label: Some(String::new()),
+                            visited_label: Some(String::new()),
+                            style: Some(0),
+                        }),
+                        action: Some(KeyboardButtonAction {
+                            action_type: Some(0),
+                            click_limit: Some(0),
+                            data: Some(String::new()),
+                            at_bot_show_channel_list: Some(false),
+                            permission: Some(KeyboardButtonPermission {
+                                permission_type: Some(0),
+                                specify_role_ids: Some(Vec::new()),
+                                specify_user_ids: Some(Vec::new()),
+                            }),
+                            modal: Some(KeyboardModal {
+                                content: Some(String::new()),
+                                confirm_text: Some(String::new()),
+                                cancel_text: Some(String::new()),
+                            }),
+                            subscribe_data: KeyboardSubscribeData {
+                                template_ids: Some(vec![KeyboardTemplateId {
+                                    template_id: Some(0),
+                                    custom_template_id: Some(String::new()),
+                                }]),
+                            },
+                            ..Default::default()
+                        }),
+                        group_id: Some(String::new()),
+                    }]),
+                }]),
+                style: Some(KeyboardStyle {
+                    font_size: Some(String::new()),
+                }),
+            }),
+        };
+
+        assert_eq!(
+            serde_json::to_value(&keyboard).unwrap(),
+            serde_json::json!({
+                "content": {
+                    "rows": [{
+                        "buttons": [{
+                            "render_data": {},
+                            "action": {
+                                "permission": {},
+                                "enter": false,
+                                "subscribe_data": {
+                                    "template_ids": [{}]
+                                },
+                                "modal": {}
+                            }
+                        }]
+                    }],
+                    "style": {}
+                }
+            })
+        );
+    }
+
+    #[test]
+    fn botgo_keyboard_keeps_non_zero_values() {
+        let action = KeyboardButtonAction {
+            action_type: Some(ActionTypeSubscribe),
+            click_limit: Some(1),
+            data: Some("payload".to_string()),
+            enter: true,
+            at_bot_show_channel_list: Some(true),
+            subscribe_data: KeyboardSubscribeData {
+                template_ids: Some(vec![KeyboardTemplateId {
+                    template_id: Some(1),
+                    custom_template_id: None,
+                }]),
+            },
+            ..Default::default()
+        };
+
+        assert_eq!(
+            serde_json::to_value(&action).unwrap(),
+            serde_json::json!({
+                "type": 4,
+                "click_limit": 1,
+                "data": "payload",
+                "enter": true,
+                "at_bot_show_channel_list": true,
+                "subscribe_data": {
+                    "template_ids": [{
+                        "template_id": 1
+                    }]
+                }
+            })
+        );
+    }
+
+    #[test]
     fn botgo_messages_pager_query_params() {
         let pager = MessagesPager::new(Some(MPTBefore), Some("msg-1"), Some(20));
         let query = pager.QueryParams();
@@ -1630,7 +1745,7 @@ pub struct EmbedField {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct Keyboard {
     /// Keyboard template ID
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub id: Option<String>,
     /// Keyboard content
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -1684,7 +1799,7 @@ pub type Modal = KeyboardModal;
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct KeyboardContent {
     /// Rows of buttons
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub rows: Option<Vec<KeyboardRow>>,
     /// Keyboard style
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -1695,7 +1810,7 @@ pub struct KeyboardContent {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct KeyboardStyle {
     /// Font size
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub font_size: Option<String>,
 }
 
@@ -1703,7 +1818,7 @@ pub struct KeyboardStyle {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct KeyboardRow {
     /// Buttons in this row
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub buttons: Option<Vec<KeyboardButton>>,
 }
 
@@ -1711,7 +1826,7 @@ pub struct KeyboardRow {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct KeyboardButton {
     /// Button ID
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub id: Option<String>,
     /// Button render data
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -1720,7 +1835,7 @@ pub struct KeyboardButton {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub action: Option<KeyboardButtonAction>,
     /// Button group ID
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub group_id: Option<String>,
 }
 
@@ -1728,13 +1843,13 @@ pub struct KeyboardButton {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct KeyboardButtonRenderData {
     /// Button label
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub label: Option<String>,
     /// Button visited label
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub visited_label: Option<String>,
     /// Button style
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub style: Option<u32>,
 }
 
@@ -1742,28 +1857,26 @@ pub struct KeyboardButtonRenderData {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct KeyboardButtonAction {
     /// Action type
-    #[serde(rename = "type", skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "type", skip_serializing_if = "option_is_none_or_default")]
     pub action_type: Option<u32>,
     /// Permission data
     #[serde(skip_serializing_if = "Option::is_none")]
     pub permission: Option<KeyboardButtonPermission>,
     /// Click limit per user
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub click_limit: Option<u32>,
     /// Action data
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub data: Option<String>,
-    /// Reply flag
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub reply: Option<bool>,
     /// Enter flag
-    pub enter: Option<bool>,
+    #[serde(default)]
+    pub enter: bool,
     /// Whether to show channel selection when at-bot action is used
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub at_bot_show_channel_list: Option<bool>,
     /// Subscribe button data
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub subscribe_data: Option<KeyboardSubscribeData>,
+    #[serde(default)]
+    pub subscribe_data: KeyboardSubscribeData,
     /// Secondary confirmation modal
     #[serde(skip_serializing_if = "Option::is_none")]
     pub modal: Option<KeyboardModal>,
@@ -1773,13 +1886,13 @@ pub struct KeyboardButtonAction {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct KeyboardButtonPermission {
     /// Permission type
-    #[serde(rename = "type", skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "type", skip_serializing_if = "option_is_none_or_default")]
     pub permission_type: Option<u32>,
     /// Specify role IDs
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub specify_role_ids: Option<Vec<String>>,
     /// Specify user IDs
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub specify_user_ids: Option<Vec<String>>,
 }
 
@@ -1787,7 +1900,7 @@ pub struct KeyboardButtonPermission {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct KeyboardSubscribeData {
     /// Subscription template IDs
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub template_ids: Option<Vec<KeyboardTemplateId>>,
 }
 
@@ -1795,10 +1908,10 @@ pub struct KeyboardSubscribeData {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct KeyboardTemplateId {
     /// Official template ID
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub template_id: Option<u32>,
     /// Custom template ID
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub custom_template_id: Option<String>,
 }
 
@@ -1806,13 +1919,13 @@ pub struct KeyboardTemplateId {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct KeyboardModal {
     /// Confirmation content
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub content: Option<String>,
     /// Confirm button text
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub confirm_text: Option<String>,
     /// Cancel button text
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub cancel_text: Option<String>,
 }
 
