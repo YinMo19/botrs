@@ -1,536 +1,119 @@
-# Message Models API Reference
+# Messages
 
-This module provides data structures for different types of messages in the QQ Guild Bot API, including guild messages, direct messages, group messages, and C2C (client-to-client) messages.
+Message data structures for the QQ Guild Bot API. The framework distinguishes incoming events (gateway payloads) from outgoing parameter objects.
 
-## Core Message Types
+## Incoming messages
 
 ### `Message`
 
-Represents a message in a guild channel.
+Guild channel messages, including @-mentions.
 
 ```rust
 pub struct Message {
-    pub id: String,
+    pub id: Option<Snowflake>,
     pub content: Option<String>,
-    pub channel_id: String,
-    pub guild_id: String,
+    pub channel_id: Option<Snowflake>,
+    pub guild_id: Option<Snowflake>,
+    pub group_id: Option<Snowflake>,
     pub author: Option<MessageUser>,
     pub member: Option<MessageMember>,
     pub message_reference: Option<MessageReference>,
     pub mentions: Vec<MessageUser>,
     pub attachments: Vec<MessageAttachment>,
+    pub embeds: Vec<Embed>,
+    pub ark: Option<Ark>,
+    pub direct_message: Option<bool>,
     pub seq: Option<u64>,
     pub seq_in_channel: Option<String>,
-    pub timestamp: Option<String>,
+    pub timestamp: Option<Timestamp>,
+    pub edited_timestamp: Option<Timestamp>,
+    pub mention_everyone: Option<bool>,
+    pub src_guild_id: Option<Snowflake>,
+    pub file_info: Option<String>,
+    pub ttl: Option<u32>,
+    pub message_scene: Option<MessageScene>,
     pub event_id: Option<String>,
 }
 ```
 
-#### Methods
+Most string fields use `Option<Snowflake>` because the QQ Open API may omit them on partial payloads. Convenience methods on `Message`:
 
-##### `reply`
+- `reply(api, token, content)` — text reply that sets `msg_id` for passive routing.
+- `is_from_bot()`, `has_content()`, `has_attachments()`, `has_mentions()` — quick predicates.
 
-Replies to the message with text content.
+### `GroupMessage` and `C2CMessage`
 
-```rust
-pub async fn reply(
-    &self,
-    api: &BotApi,
-    token: &Token,
-    content: &str,
-) -> Result<Message>
-```
-
-**Parameters:**
-- `api`: Bot API client instance
-- `token`: Authentication token
-- `content`: Reply text content
-
-**Example:**
-```rust
-async fn handle_message(ctx: Context, message: Message) {
-    if let Some(content) = &message.content {
-        if content == "!ping" {
-            message.reply(&ctx.api, &ctx.token, "Pong!").await?;
-        }
-    }
-}
-```
-
-##### `is_from_bot`
-
-Checks if the message was sent by a bot.
-
-```rust
-pub fn is_from_bot(&self) -> bool
-```
-
-**Returns:** `true` if the message author is a bot, `false` otherwise.
-
-**Example:**
-```rust
-if message.is_from_bot() {
-    // Ignore bot messages
-    return;
-}
-```
-
-##### `has_content`
-
-Checks if the message has text content.
-
-```rust
-pub fn has_content(&self) -> bool
-```
-
-##### `has_attachments`
-
-Checks if the message has file attachments.
-
-```rust
-pub fn has_attachments(&self) -> bool
-```
-
-##### `has_mentions`
-
-Checks if the message mentions other users.
-
-```rust
-pub fn has_mentions(&self) -> bool
-```
-
-### `DirectMessage`
-
-Represents a direct-message session returned by the direct-message OpenAPI.
-Gateway direct-message create events use `Message`.
-
-```rust
-pub struct DirectMessage {
-    pub guild_id: Option<String>,
-    pub channel_id: Option<String>,
-    pub create_time: Option<String>,
-}
-```
-
-#### Alias
-
-```rust
-pub type DirectMessageSession = DirectMessage;
-```
-
-### `GroupMessage`
-
-Represents a message in a QQ group.
+Group messages (group `@bot`) and C2C (private/direct) messages share a similar shape but use OpenID-based identification:
 
 ```rust
 pub struct GroupMessage {
-    pub id: String,
+    pub id: Option<Snowflake>,
     pub content: Option<String>,
     pub message_reference: Option<MessageReference>,
     pub mentions: Vec<GroupMessageUser>,
     pub attachments: Vec<MessageAttachment>,
     pub msg_seq: Option<u64>,
-    pub timestamp: Option<String>,
+    pub timestamp: Option<Timestamp>,
     pub author: Option<GroupMessageUser>,
     pub group_openid: Option<String>,
     pub event_id: Option<String>,
 }
 ```
 
-#### Methods
+`C2CMessage` is structurally identical except its `author`/`mentions` use `C2CMessageUser`.
 
-##### `reply`
+### `DirectMessage`
 
-Replies to the group message.
-
-```rust
-pub async fn reply(
-    &self,
-    api: &BotApi,
-    token: &Token,
-    content: &str,
-) -> Result<GroupMessage>
-```
-
-### `C2CMessage`
-
-Represents a client-to-client message.
+`DirectMessage` is the **session** record returned by the direct-message creation API — not the gateway message. Direct-message gateway events use `Message` with `direct_message: Some(true)`.
 
 ```rust
-pub struct C2CMessage {
-    pub id: String,
-    pub content: Option<String>,
-    pub message_reference: Option<MessageReference>,
-    pub mentions: Vec<C2CMessageUser>,
-    pub attachments: Vec<MessageAttachment>,
-    pub msg_seq: Option<u64>,
-    pub timestamp: Option<String>,
-    pub author: Option<C2CMessageUser>,
-    pub event_id: Option<String>,
+pub struct DirectMessage {
+    pub guild_id: Option<Snowflake>,
+    pub channel_id: Option<Snowflake>,
+    pub create_time: Option<String>,
 }
 ```
 
-#### Methods
+`DirectMessageSession` is a type alias of `DirectMessage`.
 
-##### `reply`
+## Outgoing parameters
 
-Replies to the C2C message.
+Send-side payloads use builder structs to avoid the long `Option<...>` argument lists of older APIs:
 
-```rust
-pub async fn reply(
-    &self,
-    api: &BotApi,
-    token: &Token,
-    content: &str,
-) -> Result<C2CMessage>
-```
+| Struct                  | Used by                                    |
+|-------------------------|--------------------------------------------|
+| `MessageParams`         | `BotApi::post_message_with_params`         |
+| `DirectMessageParams`   | `BotApi::post_direct_message_with_params`  |
+| `GroupMessageParams`    | `BotApi::post_group_message_with_params`   |
+| `C2CMessageParams`      | `BotApi::post_c2c_message_with_params`     |
 
-## User Types
-
-### `MessageUser`
-
-User information in guild messages.
+Each exposes `new_text(content)`, `new_embed(embed)`, `new_markdown(...)`, etc., plus chainable setters such as `with_reply(message_id)`, `with_keyboard(keyboard)`, `with_file_image(bytes)`. Pass them to the matching `post_*_with_params` method.
 
 ```rust
-pub struct MessageUser {
-    pub id: String,
-    pub username: Option<String>,
-    pub bot: Option<bool>,
-    pub avatar: Option<String>,
-}
+let params = MessageParams::new_text("Pong!").with_reply(message_id);
+api.post_message_with_params(&token, &channel_id, params).await?;
 ```
 
-### `DirectMessageUser`
-
-User information in direct messages.
-
-```rust
-pub struct DirectMessageUser {
-    pub id: String,
-    pub username: Option<String>,
-    pub avatar: Option<String>,
-}
-```
-
-### `GroupMessageUser`
-
-User information in group messages.
-
-```rust
-pub struct GroupMessageUser {
-    pub id: Option<String>,
-    pub member_openid: Option<String>,
-    pub union_openid: Option<String>,
-}
-```
-
-### `C2CMessageUser`
-
-User information in C2C messages.
-
-```rust
-pub struct C2CMessageUser {
-    pub user_openid: Option<String>,
-}
-```
-
-## Rich Content Types
-
-### `Embed`
-
-Rich embed content for messages.
-
-```rust
-pub struct Embed {
-    pub title: Option<String>,
-    pub description: Option<String>,
-    pub url: Option<String>,
-    pub timestamp: Option<String>,
-    pub color: Option<u32>,
-    pub footer: Option<EmbedFooter>,
-    pub image: Option<EmbedImage>,
-    pub thumbnail: Option<EmbedThumbnail>,
-    pub video: Option<EmbedVideo>,
-    pub provider: Option<EmbedProvider>,
-    pub author: Option<EmbedAuthor>,
-    pub fields: Vec<EmbedField>,
-}
-```
-
-### `EmbedField`
-
-A field in an embed.
-
-```rust
-pub struct EmbedField {
-    pub name: String,
-    pub value: String,
-    pub inline: Option<bool>,
-}
-```
-
-### `Ark`
-
-ARK template message for rich interactive content.
-
-```rust
-pub struct Ark {
-    pub template_id: Option<u32>,
-    pub kv: Vec<ArkKv>,
-}
-```
-
-### `Keyboard`
-
-Interactive keyboard with buttons.
-
-```rust
-pub struct Keyboard {
-    pub content: Option<KeyboardContent>,
-}
-```
-
-### `KeyboardButton`
-
-A button in an interactive keyboard.
-
-```rust
-pub struct KeyboardButton {
-    pub id: Option<String>,
-    pub render_data: Option<KeyboardButtonRenderData>,
-    pub action: Option<KeyboardButtonAction>,
-}
-```
-
-## Message Parameters
-
-### `MessageParams`
-
-Parameters for sending guild messages.
-
-```rust
-pub struct MessageParams {
-    pub content: Option<String>,
-    pub embed: Option<Embed>,
-    pub ark: Option<Ark>,
-    pub message_reference: Option<Reference>,
-    pub image: Option<String>,
-    pub file_image: Option<String>,
-    pub msg_id: Option<String>,
-    pub event_id: Option<String>,
-    pub markdown: Option<MarkdownPayload>,
-    pub keyboard: Option<Keyboard>,
-}
-```
-
-#### Methods
-
-##### `new_text`
-
-Creates message parameters with text content.
-
-```rust
-pub fn new_text(content: &str) -> Self
-```
-
-##### `with_file_image`
-
-Adds a file image to the message.
-
-```rust
-pub fn with_file_image(mut self, file_info: &str) -> Self
-```
-
-##### `with_reply`
-
-Sets the message as a reply to another message.
-
-```rust
-pub fn with_reply(mut self, message_id: &str) -> Self
-```
-
-**Example:**
-```rust
-let params = MessageParams::new_text("Hello!")
-    .with_file_image("file_info_string")
-    .with_reply("original_message_id");
-```
-
-### `GroupMessageParams`
-
-Parameters for sending group messages.
-
-```rust
-pub struct GroupMessageParams {
-    pub msg_type: Option<u32>,
-    pub content: Option<String>,
-    pub embed: Option<Embed>,
-    pub ark: Option<Ark>,
-    pub message_reference: Option<Reference>,
-    pub media: Option<Media>,
-    pub msg_id: Option<String>,
-    pub msg_seq: Option<u64>,
-    pub event_id: Option<String>,
-    pub markdown: Option<MarkdownPayload>,
-    pub keyboard: Option<Keyboard>,
-}
-```
-
-### `C2CMessageParams`
-
-Parameters for sending C2C messages.
-
-```rust
-pub struct C2CMessageParams {
-    pub msg_type: Option<u32>,
-    pub content: Option<String>,
-    pub embed: Option<Embed>,
-    pub ark: Option<Ark>,
-    pub message_reference: Option<Reference>,
-    pub media: Option<Media>,
-    pub msg_id: Option<String>,
-    pub msg_seq: Option<u64>,
-    pub event_id: Option<String>,
-    pub markdown: Option<MarkdownPayload>,
-    pub keyboard: Option<Keyboard>,
-}
-```
-
-### `DirectMessageParams`
-
-Parameters for sending direct messages.
-
-```rust
-pub struct DirectMessageParams {
-    pub content: Option<String>,
-    pub embed: Option<Embed>,
-    pub ark: Option<Ark>,
-    pub message_reference: Option<Reference>,
-    pub image: Option<String>,
-    pub file_image: Option<String>,
-    pub msg_id: Option<String>,
-    pub event_id: Option<String>,
-    pub markdown: Option<MarkdownPayload>,
-    pub keyboard: Option<Keyboard>,
-}
-```
-
-## Attachments and Media
-
-### `MessageAttachment`
-
-File attachment in a message.
-
-```rust
-pub struct MessageAttachment {
-    pub id: Option<String>,
-    pub filename: Option<String>,
-    pub content_type: Option<String>,
-    pub size: Option<u64>,
-    pub url: Option<String>,
-    pub width: Option<u32>,
-    pub height: Option<u32>,
-}
-```
-
-#### Methods
-
-##### `is_image`
-
-Checks if the attachment is an image.
-
-```rust
-pub fn is_image(&self) -> bool
-```
-
-##### `is_video`
-
-Checks if the attachment is a video.
-
-```rust
-pub fn is_video(&self) -> bool
-```
-
-##### `is_audio`
-
-Checks if the attachment is an audio file.
-
-```rust
-pub fn is_audio(&self) -> bool
-```
-
-### `Media`
-
-Media content for messages.
-
-```rust
-pub struct Media {
-    pub file_info: Option<String>,
-    pub ttl: Option<u32>,
-}
-```
-
-## Common Usage Patterns
-
-### Basic Text Reply
-
-```rust
-async fn handle_message(ctx: Context, message: Message) {
-    if let Some(content) = &message.content {
-        if content.starts_with("!echo ") {
-            let echo_text = &content[6..];
-            message.reply(&ctx.api, &ctx.token, echo_text).await?;
-        }
-    }
-}
-```
-
-### Rich Embed Response
-
-```rust
-use botrs::models::message::{Embed, EmbedField};
-
-let embed = Embed {
-    title: Some("Bot Information".to_string()),
-    description: Some("A QQ Guild bot built with BotRS".to_string()),
-    color: Some(0x00ff00),
-    fields: vec![
-        EmbedField {
-            name: "Version".to_string(),
-            value: "0.2.5".to_string(),
-            inline: Some(true),
-        },
-        EmbedField {
-            name: "Language".to_string(),
-            value: "Rust".to_string(),
-            inline: Some(true),
-        },
-    ],
-    ..Default::default()
-};
-
-let params = MessageParams {
-    embed: Some(embed),
-    ..Default::default()
-};
-```
-
-### File Upload
-
-```rust
-let params = MessageParams::new_text("Here's an image!")
-    .with_file_image("base64_encoded_file_info");
-```
-
-### Message Reference
-
-```rust
-let params = MessageParams::new_text("This is a reply")
-    .with_reply(&original_message.id);
-```
-
-## See Also
-
-- [Client API](../client.md) - Main client for bot operations
-- [Context API](../context.md) - Context object passed to event handlers
-- [Event Handler](../event-handler.md) - Handling different message events
+## Supporting types
+
+| Type                | Purpose                                              |
+|---------------------|------------------------------------------------------|
+| `Embed`             | Embed body (title, description, fields, thumbnail).  |
+| `Ark`               | Ark template payload (`template_id` + `kv` array).   |
+| `MarkdownPayload`   | Markdown send body (template id, content, params).   |
+| `MessageKeyboard`   | Inline keyboard (rows of buttons).                   |
+| `MessageReference`  | `{ message_id, ignore_get_message_error }`.          |
+| `MessageAttachment` | File attachment metadata (URL, filename, size, …).   |
+| `MessageAudit`      | Audit-result payload from the audit gateway events.  |
+| `MessageDelete`     | Delete-event payload with `message` and `op_user`.   |
+| `MessageScene`      | Scene marker (group, c2c, channel) on inbound events.|
+
+## Message author types
+
+See [Users and Members](./users-members.md#message-author-types) for `MessageUser`, `DirectMessageUser`, `GroupMessageUser`, and `C2CMessageUser`.
+
+## See also
+
+- [Messages guide](../../guide/messages.md) — task-oriented usage.
+- [Bot API](../bot-api.md) — every `post_*_with_params` route.
+- [Other types](./other-types.md) — embeds, keyboards, ark, attachments.
