@@ -313,13 +313,13 @@ pub struct Identify {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct IdentifyProperties {
     /// Operating system
-    #[serde(rename = "$os")]
+    #[serde(rename = "$os", default, skip_serializing_if = "String::is_empty")]
     pub os: String,
     /// Browser/library name
-    #[serde(rename = "$browser")]
+    #[serde(rename = "$browser", default, skip_serializing_if = "String::is_empty")]
     pub browser: String,
     /// Device name
-    #[serde(rename = "$device")]
+    #[serde(rename = "$device", default, skip_serializing_if = "String::is_empty")]
     pub device: String,
 }
 
