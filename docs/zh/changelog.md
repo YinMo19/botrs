@@ -10,29 +10,29 @@ BotRS 的所有重要更改都将记录在此文件中。
 ## [0.11.0] - 2026-05-25
 
 ### 更改
-- 继续对齐 botgo 的 user、guild/member/role、mute、manage event、gateway/webhook、interaction search、message audit 和 message setting DTO。
-- 更新相关 DTO 的零值和 `omitempty` JSON wire shape，与 botgo 保持一致。
+- 继续对齐 QQ 机器人开放接口的 user、guild/member/role、mute、manage event、gateway/webhook、interaction search、message audit 和 message setting DTO。
+- 更新相关 DTO 的零值和 `omitempty` JSON wire shape，与协议规范保持一致。
 
 ### 修复
-- 本地 gateway/event 辅助上下文字段不再进入 botgo 纯 payload DTO 的 JSON。
+- 本地 gateway/event 辅助上下文字段不再进入纯 payload DTO 的 JSON。
 
 ## [0.10.0] - 2026-05-25
 
 ### 更改
-- 对齐 botgo 的 channel、schedule、audio、announce 和 API permission DTO 零值 wire shape。
+- 对齐 channel、schedule、audio、announce 和 API permission DTO 的零值 wire shape，与 QQ 机器人开放接口保持一致。
 - `PostAudio`、`post_audio` 和 `Context::post_audio` 现在使用 `AudioControl`；音频事件继续使用 `AudioAction`。
-- `AudioStatus` 现在按 botgo 的数字状态值进行序列化和反序列化。
-- 网关文档改为描述 botgo 风格固定重连节流，不再描述指数 backoff。
+- `AudioStatus` 现在按协议定义的数字状态值进行序列化和反序列化。
+- 网关文档改为描述固定重连节流策略，不再描述指数 backoff。
 
 ### 修复
-- `ListSchedules` 现在总是发送 `since` 查询参数，与 botgo 行为一致。
+- `ListSchedules` 现在总是发送 `since` 查询参数，与协议规定的行为一致。
 
 ## [0.9.0] - 2026-05-25
 
 ### 更改
-- `MessageReaction` 和 `WSMessageReactionData` 对齐为 botgo 的纯消息表情表态 DTO。
+- `MessageReaction` 和 `WSMessageReactionData` 对齐为 QQ 机器人开放接口的纯消息表情表态 DTO。
 - reaction 的 `Emoji`、`ReactionTarget` 和 `MessageReaction` 字段改为必填，不再对缺失协议字段静默填空。
-- 论坛 `ThreadInfo.title` 和 `ThreadInfo.content` 对齐 botgo，保留原始字符串。
+- 论坛 `ThreadInfo.title` 和 `ThreadInfo.content` 对齐 QQ 机器人开放接口，保留原始字符串。
 - GitHub Actions 升级到当前主版本，规避 Node 20 action deprecation 风险。
 
 ### 修复
@@ -41,46 +41,46 @@ BotRS 的所有重要更改都将记录在此文件中。
 ## [0.8.0] - 2026-05-25
 
 ### 更改
-- `DirectMessage` 对齐为 botgo 的私信会话 DTO，`DirectMessageSession` 改为其别名。
-- `direct_message_create` 现在接收普通 `Message`，与 botgo 的 `WSDirectMessageData` 保持一致。
+- `DirectMessage` 对齐为 QQ 机器人开放接口的私信会话 DTO，`DirectMessageSession` 改为其别名。
+- `direct_message_create` 现在接收普通 `Message`,与协议定义的 `WSDirectMessageData` 保持一致。
 - 私信示例和 API 文档改为使用 `DirectMessageParams` 与 `post_dms_with_params`。
 
 ### 修复
-- 补齐 message、guild 和 interaction wire format 的 botgo DTO 对齐。
-- 消息辅助函数的 mention 处理和命令切分行为与 botgo 保持一致。
+- 补齐 message、guild 和 interaction wire format 的 DTO 对齐，与 QQ 机器人开放接口一致。
+- 消息辅助函数的 mention 处理和命令切分行为与协议规定保持一致。
 
 ## [0.7.0] - 2026-05-25
 
 ### 新增
-- 增加 botgo 兼容的 OpenAPI v1 具体实现常量 `HeaderCallbackAppID` 和 `MaxIdleConns`。
+- 增加与 QQ 机器人开放接口对齐的 OpenAPI v1 具体实现常量 `HeaderCallbackAppID` 和 `MaxIdleConns`。
 - 增加 `Session::from_app_id` / `Session::FromAppID`，用于 HTTP callback payload session。
 
 ### 更改
-- OpenAPI 实例现在会保存 botgo 的 app ID 状态，并在请求中发送 `X-Union-Appid`。
-- `PutInteraction` 现在使用 OpenAPI 实例 app ID 设置 `X-Callback-AppID`，与 botgo 对齐。
+- OpenAPI 实例现在会保存 app ID 状态，并在请求中发送 `X-Union-Appid`。
+- `PutInteraction` 现在使用 OpenAPI 实例 app ID 设置 `X-Callback-AppID`，与协议规范对齐。
 - HTTP webhook dispatch payload 现在会带上包含 app ID 的 session。
 
 ### 修复
 - 网关返回不可 resume 错误后，重新入队前会清理过期 session ID 和 sequence。
-- 兼容 botgo 单条消息接口的旧包装响应格式（`{"message": ...}`）。
+- 兼容单条消息接口的旧包装响应格式（`{"message": ...}`）。
 
 ## [0.6.0] - 2026-05-25
 
 ### 新增
-- 对齐 botgo 的 `WSPayload.session`、`C2CFriendData`、`WSC2CFriendData`、消息辅助接口、分页辅助接口和 OpenAPI facade 名称。
+- 对齐 QQ 机器人开放接口的 `WSPayload.session`、`C2CFriendData`、`WSC2CFriendData`、消息辅助接口、分页辅助接口和 OpenAPI facade 名称。
 - 增加 `APIMessage`、`GetEventID`、`GetSendType`、`QueryParams`、OpenAPI 分组别名、`openapi::Register` 和 `DefaultImpl` 兼容入口。
 
 ### 更改
-- WebSocket 事件 payload DTO 和 C2C 好友事件改为更贴近 botgo 的纯数据模型形态。
-- 保留 Rust 风格小写 helper，同时增加 botgo 风格导出名称，便于迁移。
+- WebSocket 事件 payload DTO 和 C2C 好友事件改为更贴近 QQ 机器人开放接口的纯数据模型形态。
+- 保留 Rust 风格小写 helper，同时增加大驼峰风格导出名称，便于迁移。
 
 ## [0.5.0] - 2026-05-25
 
 ### 新增
-- 对齐 botgo 的 OpenAPI facade、版本注册表、请求选项、HTTP filter 和 token 后台刷新辅助接口。
+- 对齐 QQ 机器人开放接口的 OpenAPI facade、版本注册表、请求选项、HTTP filter 和 token 后台刷新辅助接口。
 
 ### 更改
-- OpenAPI 成功状态码处理与 botgo 对齐，仅 `200` 和 `204` 视为成功。
+- OpenAPI 成功状态码处理与 QQ 机器人开放接口对齐，仅 `200` 和 `204` 视为成功。
 - 克隆后的 token source 共享 token 缓存，并移除 unsafe 状态写入。
 - 刷新 lockfile，避免已 yanked 的传递依赖。
 

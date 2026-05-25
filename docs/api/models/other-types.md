@@ -138,8 +138,8 @@ pub struct ThreadInfo {
 #### Fields
 
 - `thread_id`: Unique thread identifier
-- `title`: Thread title string from the botgo DTO
-- `content`: Thread content string from the botgo DTO
+- `title`: Thread title string as returned by the QQ Bot Open API
+- `content`: Thread content string as returned by the QQ Bot Open API
 - `date_time`: Thread creation timestamp
 
 ### `OpenThread`
@@ -304,7 +304,7 @@ pub struct InteractionData {
 
 ### `MessageReaction`
 
-Botgo-compatible gateway DTO for message reaction events.
+Gateway DTO for message reaction events, aligned with the QQ Bot Open API.
 
 ```rust
 pub struct MessageReaction {
@@ -370,7 +370,7 @@ pub enum ReactionTargetType {
 
 ### `ReactionEmoji`
 
-Emoji object used by botgo-compatible reaction APIs.
+Emoji object used by the reaction APIs.
 
 ```rust
 pub struct ReactionEmoji {

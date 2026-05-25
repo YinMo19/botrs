@@ -941,7 +941,7 @@ pub async fn put_reaction(
 
 ### `create_message_reaction`
 
-Adds a reaction using the botgo-compatible emoji DTO.
+Adds a reaction using the QQ Bot Open API emoji DTO.
 
 ```rust
 pub async fn create_message_reaction(
@@ -970,7 +970,7 @@ pub async fn delete_reaction(
 
 ### `delete_own_message_reaction`
 
-Removes the bot's own reaction using the botgo-compatible emoji DTO.
+Removes the bot's own reaction using the QQ Bot Open API emoji DTO.
 
 ```rust
 pub async fn delete_own_message_reaction(
@@ -1001,7 +1001,7 @@ pub async fn get_reaction_users(
 
 ### `get_message_reaction_users`
 
-Gets users who reacted with a specific emoji using botgo-compatible DTOs.
+Gets users who reacted with a specific emoji using the QQ Bot Open API DTOs.
 
 ```rust
 pub async fn get_message_reaction_users(

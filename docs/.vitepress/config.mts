@@ -118,7 +118,7 @@ export default defineConfig({
                                     link: "/guide/migration-v0.2.0",
                                 },
                                 {
-                                    text: "From Python botpy",
+                                    text: "From Python",
                                     link: "/guide/migration-from-python",
                                 },
                             ],
@@ -357,7 +357,7 @@ export default defineConfig({
                                     link: "/zh/guide/migration-v0.2.0",
                                 },
                                 {
-                                    text: "从 Python botpy 迁移",
+                                    text: "从 Python 迁移",
                                     link: "/zh/guide/migration-from-python",
                                 },
                             ],

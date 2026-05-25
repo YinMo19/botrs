@@ -72,7 +72,7 @@ async fn message_create(&self, ctx: Context, message: Message) {
 
 ### `direct_message_create`
 
-当收到私信消息时调用。botgo 将网关私信事件 payload 定义为普通
+当收到私信消息时调用。QQ 机器人开放接口将网关私信事件 payload 定义为普通
 `Message`；`DirectMessage` DTO 只表示 OpenAPI 返回的私信会话。
 
 ```rust
