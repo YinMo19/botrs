@@ -1,4 +1,4 @@
-//! Botgo-compatible OpenAPI extension points.
+//! OpenAPI extension points used to register custom client versions and filters.
 
 #![allow(non_snake_case)]
 
@@ -8,7 +8,7 @@ use std::sync::{Arc, LazyLock, RwLock};
 use reqwest::{Method, StatusCode, header::HeaderMap};
 
 pub use crate::api::{APIVersion, APIVersionString, APIv1};
-pub use crate::botgo::{DefaultOpenAPIVersion, VersionMapping};
+pub use crate::facade::{DefaultOpenAPIVersion, VersionMapping};
 
 pub type OpenAPI = crate::api::BotApi;
 pub type Base = OpenAPI;
@@ -32,11 +32,11 @@ pub type InteractionAPI = OpenAPI;
 pub type MessageSettingAPI = OpenAPI;
 
 pub fn Register(version: APIVersion, api: OpenAPI) {
-    crate::botgo::SetOpenAPIClient(version, api);
+    crate::facade::SetOpenAPIClient(version, api);
 }
 
 pub fn DefaultImpl() -> OpenAPI {
-    crate::botgo::DefaultImpl()
+    crate::facade::DefaultImpl()
 }
 
 pub fn IsSuccessStatus(code: u16) -> bool {
@@ -91,7 +91,7 @@ impl FilterContext {
     }
 }
 
-/// Botgo-compatible HTTP filter callback.
+/// HTTP filter callback used by request and response interception chains.
 pub type HTTPFilter = Arc<dyn Fn(&mut FilterContext) -> crate::Result<()> + Send + Sync + 'static>;
 
 #[derive(Default)]
@@ -165,7 +165,7 @@ mod tests {
     use reqwest::header::HeaderValue;
 
     #[test]
-    fn success_status_matches_botgo() {
+    fn success_status_matches_official_codes() {
         assert!(IsSuccessStatus(200));
         assert!(IsSuccessStatus(204));
         assert!(!IsSuccessStatus(201));
@@ -174,7 +174,7 @@ mod tests {
     }
 
     #[test]
-    fn openapi_registry_facade_matches_botgo_names() {
+    fn openapi_registry_facade_dispatches_by_version() {
         let custom_version = 777;
         let template = crate::api::BotApi::new(
             crate::http::HttpClient::new(11, false).expect("valid test client"),
