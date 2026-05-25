@@ -79,7 +79,7 @@ pub struct SessionStartLimit {
     /// Number of session starts remaining
     pub remaining: u32,
     /// Time after which the limit resets (in milliseconds)
-    pub reset_after: u64,
+    pub reset_after: u32,
     /// Maximum number of concurrent sessions
     pub max_concurrency: u32,
 }
@@ -383,6 +383,31 @@ mod tests {
 
         let auth_error = ApiError::new(401, "Unauthorized");
         assert!(auth_error.is_auth_error());
+    }
+
+    #[test]
+    fn botgo_websocket_ap_keeps_official_json_shape() {
+        let ap: WebsocketAP = serde_json::from_value(serde_json::json!({
+            "url": "wss://api.sgroup.qq.com/websocket",
+            "shards": 2,
+            "session_start_limit": {
+                "total": 10,
+                "remaining": 9,
+                "reset_after": 1000,
+                "max_concurrency": 1
+            }
+        }))
+        .unwrap();
+
+        assert_eq!(ap.url, "wss://api.sgroup.qq.com/websocket");
+        assert_eq!(ap.shards, 2);
+        assert_eq!(ap.session_start_limit.total, 10);
+        assert_eq!(ap.session_start_limit.remaining, 9);
+        assert_eq!(ap.session_start_limit.reset_after, 1000);
+        assert_eq!(ap.session_start_limit.max_concurrency, 1);
+
+        let value = serde_json::to_value(&ap).unwrap();
+        assert_eq!(value["session_start_limit"]["reset_after"], 1000);
     }
 
     #[test]

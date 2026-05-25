@@ -549,7 +549,7 @@ Limits on session starts.
 pub struct SessionStartLimit {
     pub total: u32,
     pub remaining: u32,
-    pub reset_after: u64,
+    pub reset_after: u32,
     pub max_concurrency: u32,
 }
 ```
