@@ -134,6 +134,17 @@ fn is_zero_u32(value: &u32) -> bool {
     *value == 0
 }
 
+fn option_is_none_or_default<T>(value: &Option<T>) -> bool
+where
+    T: Default + PartialEq,
+{
+    value.as_ref().is_none_or(|value| value == &T::default())
+}
+
+fn option_message_type_is_none_or_zero(value: &Option<MessageCreateType>) -> bool {
+    value.as_ref().is_none_or(|value| u32::from(*value) == 0)
+}
+
 fn string_field(value: &serde_json::Value, key: &str) -> Option<String> {
     value.get(key).and_then(|value| {
         value
@@ -245,10 +256,10 @@ pub fn ParseCommand(input: &str) -> CMD {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct MessageScene {
     /// Message source, for example realtime voice or AI search scenes
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub source: Option<String>,
     /// Callback data returned with the message scene
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub callback_data: Option<String>,
 }
 
@@ -1132,6 +1143,228 @@ mod tests {
     }
 
     #[test]
+    fn botgo_message_create_omits_go_zero_values() {
+        let message = MessageToCreate {
+            content: Some(String::new()),
+            msg_type: Some(MessageCreateType::Text),
+            image: Some(String::new()),
+            msg_id: Some(String::new()),
+            event_id: Some(String::new()),
+            timestamp: Some(0),
+            msg_seq: Some(0),
+            subscribe_id: Some(String::new()),
+            feature_id: Some(0),
+            input_notify: Some(InputNotify {
+                input_type: Some(0),
+                input_second: Some(0),
+            }),
+            media: Some(MediaInfo {
+                file_info: Some(String::new()),
+            }),
+            action_button: Some(ActionButton {
+                template_id: Some(0),
+                callback_data: Some(String::new()),
+                feedback: Some(false),
+                tts: Some(false),
+                re_generate: Some(false),
+                stop_generate: Some(false),
+            }),
+            stream: Some(Stream {
+                state: Some(0),
+                id: Some(String::new()),
+                index: Some(0),
+                reset: Some(false),
+            }),
+            ark: Some(Ark {
+                template_id: Some(0),
+                kv: Some(Vec::new()),
+            }),
+            embed: Some(Embed::default()),
+            ..Default::default()
+        };
+
+        let value = serde_json::to_value(&message).unwrap();
+        for key in [
+            "content",
+            "msg_type",
+            "image",
+            "msg_id",
+            "event_id",
+            "timestamp",
+            "msg_seq",
+            "subscribe_id",
+            "feature_id",
+        ] {
+            assert!(value.get(key).is_none(), "{key} should be omitted");
+        }
+        assert_eq!(value["input_notify"], serde_json::json!({}));
+        assert_eq!(value["media"], serde_json::json!({}));
+        assert_eq!(value["action_button"], serde_json::json!({}));
+        assert_eq!(value["stream"], serde_json::json!({}));
+        assert_eq!(value["ark"], serde_json::json!({}));
+        assert_eq!(
+            value["embed"],
+            serde_json::json!({
+                "prompt": "",
+                "thumbnail": {
+                    "url": ""
+                }
+            })
+        );
+    }
+
+    #[test]
+    fn botgo_message_create_keeps_non_zero_omitempty_values() {
+        let message = MessageToCreate {
+            content: Some("hello".to_string()),
+            msg_type: Some(MessageCreateType::Markdown),
+            image: Some("https://example.com/image.png".to_string()),
+            msg_id: Some("msg-1".to_string()),
+            event_id: Some("event-1".to_string()),
+            timestamp: Some(42),
+            msg_seq: Some(1),
+            subscribe_id: Some("sub-1".to_string()),
+            feature_id: Some(7),
+            input_notify: Some(InputNotify {
+                input_type: Some(1),
+                input_second: Some(3),
+            }),
+            media: Some(MediaInfo {
+                file_info: Some("file-info".to_string()),
+            }),
+            action_button: Some(ActionButton {
+                template_id: Some(2),
+                callback_data: Some("callback".to_string()),
+                feedback: Some(true),
+                tts: Some(true),
+                re_generate: Some(true),
+                stop_generate: Some(true),
+            }),
+            stream: Some(Stream {
+                state: Some(1),
+                id: Some("stream-1".to_string()),
+                index: Some(1),
+                reset: Some(true),
+            }),
+            ark: Some(Ark {
+                template_id: Some(23),
+                kv: Some(vec![ArkKv {
+                    key: Some("key".to_string()),
+                    value: Some("value".to_string()),
+                    obj: Some(vec![ArkObj {
+                        obj_kv: Some(vec![ArkObjKv {
+                            key: Some("nested-key".to_string()),
+                            value: Some("nested-value".to_string()),
+                        }]),
+                    }]),
+                }]),
+            }),
+            ..Default::default()
+        };
+
+        assert_eq!(
+            serde_json::to_value(&message).unwrap(),
+            serde_json::json!({
+                "content": "hello",
+                "msg_type": 2,
+                "image": "https://example.com/image.png",
+                "msg_id": "msg-1",
+                "event_id": "event-1",
+                "timestamp": 42,
+                "msg_seq": 1,
+                "subscribe_id": "sub-1",
+                "input_notify": {
+                    "input_type": 1,
+                    "input_second": 3
+                },
+                "media": {
+                    "file_info": "file-info"
+                },
+                "ark": {
+                    "template_id": 23,
+                    "kv": [{
+                        "key": "key",
+                        "value": "value",
+                        "obj": [{
+                            "obj_kv": [{
+                                "key": "nested-key",
+                                "value": "nested-value"
+                            }]
+                        }]
+                    }]
+                },
+                "action_button": {
+                    "template_id": 2,
+                    "callback_data": "callback",
+                    "feedback": true,
+                    "tts": true,
+                    "re_generate": true,
+                    "stop_generate": true
+                },
+                "stream": {
+                    "state": 1,
+                    "id": "stream-1",
+                    "index": 1,
+                    "reset": true
+                },
+                "feature_id": 7
+            })
+        );
+    }
+
+    #[test]
+    fn botgo_rich_media_omits_go_zero_values() {
+        let message = RichMediaMessage {
+            event_id: Some(String::new()),
+            file_type: Some(0),
+            url: Some(String::new()),
+            srv_send_msg: Some(false),
+            content: Some(String::new()),
+            msg_seq: Some(0),
+        };
+
+        assert_eq!(
+            serde_json::to_value(&message).unwrap(),
+            serde_json::json!({})
+        );
+
+        let message = RichMediaMessage {
+            event_id: Some("event-1".to_string()),
+            file_type: Some(1),
+            url: Some("https://example.com/file.png".to_string()),
+            srv_send_msg: Some(true),
+            content: Some("caption".to_string()),
+            msg_seq: Some(1),
+        };
+
+        assert_eq!(
+            serde_json::to_value(&message).unwrap(),
+            serde_json::json!({
+                "event_id": "event-1",
+                "file_type": 1,
+                "url": "https://example.com/file.png",
+                "srv_send_msg": true,
+                "content": "caption",
+                "msg_seq": 1
+            })
+        );
+    }
+
+    #[test]
+    fn botgo_embed_keeps_required_zero_value_fields() {
+        let embed = Embed::default();
+        assert_eq!(
+            serde_json::to_value(&embed).unwrap(),
+            serde_json::json!({
+                "prompt": "",
+                "thumbnail": {
+                    "url": ""
+                }
+            })
+        );
+    }
+
+    #[test]
     fn botgo_messages_pager_query_params() {
         let pager = MessagesPager::new(Some(MPTBefore), Some("msg-1"), Some(20));
         let query = pager.QueryParams();
@@ -1247,14 +1480,14 @@ mod tests {
     fn botgo_embed_keeps_prompt_field() {
         let embed = Embed {
             title: Some("title".to_string()),
-            prompt: Some("summary".to_string()),
+            prompt: "summary".to_string(),
             ..Default::default()
         };
 
         let value = serde_json::to_value(&embed).unwrap();
         assert_eq!(value["prompt"], serde_json::json!("summary"));
         let parsed: Embed = serde_json::from_value(value).unwrap();
-        assert_eq!(parsed.prompt.as_deref(), Some("summary"));
+        assert_eq!(parsed.prompt, "summary");
     }
 
     #[test]
@@ -1300,8 +1533,10 @@ mod tests {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Ark {
     /// Template ID
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub template_id: Option<u32>,
     /// Keyboard data
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub kv: Option<Vec<ArkKv>>,
 }
 
@@ -1317,10 +1552,13 @@ pub struct MessageArk {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ArkKv {
     /// Key
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub key: Option<String>,
     /// Value
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub value: Option<String>,
     /// Object data
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub obj: Option<Vec<ArkObj>>,
 }
 
@@ -1330,6 +1568,7 @@ pub type ArkKV = ArkKv;
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ArkObj {
     /// Object key-value pairs
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub obj_kv: Option<Vec<ArkObjKv>>,
 }
 
@@ -1337,8 +1576,10 @@ pub struct ArkObj {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ArkObjKv {
     /// Key
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub key: Option<String>,
     /// Value
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub value: Option<String>,
 }
 
@@ -1348,106 +1589,41 @@ pub type ArkObjKV = ArkObjKv;
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct Embed {
     /// Title of the embed
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub title: Option<String>,
     /// Description of the embed
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub description: Option<String>,
     /// Message list summary/popup content
-    pub prompt: Option<String>,
-    /// URL of the embed
-    pub url: Option<String>,
-    /// Timestamp of the embed
-    pub timestamp: Option<String>,
-    /// Color of the embed
-    pub color: Option<u32>,
-    /// Footer information
-    pub footer: Option<EmbedFooter>,
-    /// Image information
-    pub image: Option<EmbedImage>,
+    #[serde(default)]
+    pub prompt: String,
     /// Thumbnail information
-    pub thumbnail: Option<EmbedThumbnail>,
-    /// Video information
-    pub video: Option<EmbedVideo>,
-    /// Provider information
-    pub provider: Option<EmbedProvider>,
-    /// Author information
-    pub author: Option<EmbedAuthor>,
+    #[serde(default)]
+    pub thumbnail: EmbedThumbnail,
     /// Fields in the embed
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub fields: Option<Vec<EmbedField>>,
 }
 
-/// Embed footer structure.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct EmbedFooter {
-    /// Footer text
-    pub text: Option<String>,
-    /// Footer icon URL
-    pub icon_url: Option<String>,
-}
-
-/// Embed image structure.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct EmbedImage {
-    /// Image URL
-    pub url: Option<String>,
-    /// Image width
-    pub width: Option<u32>,
-    /// Image height
-    pub height: Option<u32>,
-}
-
 /// Embed thumbnail structure.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct EmbedThumbnail {
     /// Thumbnail URL
-    pub url: Option<String>,
-    /// Thumbnail width
-    pub width: Option<u32>,
-    /// Thumbnail height
-    pub height: Option<u32>,
+    #[serde(default)]
+    pub url: String,
 }
 
 pub type MessageEmbedThumbnail = EmbedThumbnail;
 
-/// Embed video structure.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct EmbedVideo {
-    /// Video URL
-    pub url: Option<String>,
-    /// Video width
-    pub width: Option<u32>,
-    /// Video height
-    pub height: Option<u32>,
-}
-
-/// Embed provider structure.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct EmbedProvider {
-    /// Provider name
-    pub name: Option<String>,
-    /// Provider URL
-    pub url: Option<String>,
-}
-
-/// Embed author structure.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct EmbedAuthor {
-    /// Author name
-    pub name: Option<String>,
-    /// Author URL
-    pub url: Option<String>,
-    /// Author icon URL
-    pub icon_url: Option<String>,
-}
-
 /// Embed field structure.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct EmbedField {
     /// Field name
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub name: Option<String>,
     /// Field value
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub value: Option<String>,
-    /// Whether field is inline
-    pub inline: Option<bool>,
 }
 
 /// Keyboard message structure.
@@ -1818,10 +1994,10 @@ impl From<MessageCreateType> for u32 {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct InputNotify {
     /// Input status type
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub input_type: Option<i32>,
     /// Duration in seconds
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub input_second: Option<i32>,
 }
 
@@ -1829,7 +2005,7 @@ pub struct InputNotify {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct MediaInfo {
     /// Uploaded rich media file info
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub file_info: Option<String>,
 }
 
@@ -1854,16 +2030,16 @@ impl From<MediaInfo> for Media {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct Stream {
     /// Stream state
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub state: Option<i32>,
     /// Stream ID
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub id: Option<String>,
     /// Fragment index
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub index: Option<i32>,
     /// Whether to reset an unfinished stream
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub reset: Option<bool>,
 }
 
@@ -1879,22 +2055,22 @@ pub struct PromptKeyboard {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct ActionButton {
     /// Action bar template ID
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub template_id: Option<i32>,
     /// Callback payload
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub callback_data: Option<String>,
     /// Feedback button
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub feedback: Option<bool>,
     /// TTS button
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub tts: Option<bool>,
     /// Regenerate button
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub re_generate: Option<bool>,
     /// Stop generation button
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub stop_generate: Option<bool>,
 }
 
@@ -1902,10 +2078,10 @@ pub struct ActionButton {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct MessageToCreate {
     /// Message content
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub content: Option<String>,
     /// Message type
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_message_type_is_none_or_zero")]
     pub msg_type: Option<MessageCreateType>,
     /// Message embed
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -1914,10 +2090,10 @@ pub struct MessageToCreate {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub ark: Option<Ark>,
     /// Image URL
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub image: Option<String>,
     /// Message ID to reply to
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub msg_id: Option<String>,
     /// Message reference
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -1929,16 +2105,16 @@ pub struct MessageToCreate {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub keyboard: Option<Keyboard>,
     /// Event ID to reply to
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub event_id: Option<String>,
     /// Deprecated timestamp field kept for botgo parity
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub timestamp: Option<i64>,
     /// Message sequence number
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub msg_seq: Option<u32>,
     /// Subscription ID
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub subscribe_id: Option<String>,
     /// Input status notification
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -1956,7 +2132,7 @@ pub struct MessageToCreate {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub stream: Option<Stream>,
     /// Feature control ID
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub feature_id: Option<u32>,
     /// Base64 encoded file image, supported by the legacy Rust API.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -2006,22 +2182,22 @@ impl MessageToCreate {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct RichMediaMessage {
     /// Deprecated event ID field, kept for API compatibility
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub event_id: Option<String>,
     /// File type, 1=image, 2=video, 3=audio
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub file_type: Option<u64>,
     /// Rich media URL
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub url: Option<String>,
     /// Whether the server should send the message directly
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub srv_send_msg: Option<bool>,
     /// Optional text content
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub content: Option<String>,
     /// Message sequence number
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub msg_seq: Option<i64>,
 }
 
@@ -2274,10 +2450,10 @@ pub struct SettingGuideToCreate {
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct MessageParams {
     /// Message content
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub content: Option<String>,
     /// Message type
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_message_type_is_none_or_zero")]
     pub msg_type: Option<MessageCreateType>,
     /// Message embed
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -2289,16 +2465,16 @@ pub struct MessageParams {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub message_reference: Option<Reference>,
     /// Image URL
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub image: Option<String>,
     /// Base64 encoded file image
     #[serde(skip_serializing_if = "Option::is_none")]
     pub file_image: Option<String>,
     /// Message ID to reply to
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub msg_id: Option<String>,
     /// Event ID
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub event_id: Option<String>,
     /// Markdown payload
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -2307,13 +2483,13 @@ pub struct MessageParams {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub keyboard: Option<Keyboard>,
     /// Deprecated timestamp field kept for botgo parity
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub timestamp: Option<i64>,
     /// Message sequence number
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub msg_seq: Option<u32>,
     /// Subscription ID
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub subscribe_id: Option<String>,
     /// Input status notification
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -2331,7 +2507,7 @@ pub struct MessageParams {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub stream: Option<Stream>,
     /// Feature control ID
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub feature_id: Option<u32>,
 }
 
@@ -2342,7 +2518,7 @@ pub struct GroupMessageParams {
     #[serde(skip_serializing_if = "is_zero_u32")]
     pub msg_type: u32,
     /// Message content
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub content: Option<String>,
     /// Message embed
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -2357,13 +2533,13 @@ pub struct GroupMessageParams {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub media: Option<Media>,
     /// Message ID to reply to
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub msg_id: Option<String>,
     /// Message sequence number
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub msg_seq: Option<u32>,
     /// Event ID
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub event_id: Option<String>,
     /// Markdown payload
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -2372,10 +2548,10 @@ pub struct GroupMessageParams {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub keyboard: Option<KeyboardPayload>,
     /// Deprecated timestamp field kept for botgo parity
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub timestamp: Option<i64>,
     /// Subscription ID
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub subscribe_id: Option<String>,
     /// Input status notification
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -2390,7 +2566,7 @@ pub struct GroupMessageParams {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub stream: Option<Stream>,
     /// Feature control ID
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub feature_id: Option<u32>,
 }
 
@@ -2401,7 +2577,7 @@ pub struct C2CMessageParams {
     #[serde(skip_serializing_if = "is_zero_u32")]
     pub msg_type: u32,
     /// Message content
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub content: Option<String>,
     /// Message embed
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -2416,13 +2592,13 @@ pub struct C2CMessageParams {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub media: Option<Media>,
     /// Message ID to reply to
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub msg_id: Option<String>,
     /// Message sequence number
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub msg_seq: Option<u32>,
     /// Event ID
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub event_id: Option<String>,
     /// Markdown payload
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -2431,10 +2607,10 @@ pub struct C2CMessageParams {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub keyboard: Option<KeyboardPayload>,
     /// Deprecated timestamp field kept for botgo parity
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub timestamp: Option<i64>,
     /// Subscription ID
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub subscribe_id: Option<String>,
     /// Input status notification
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -2449,7 +2625,7 @@ pub struct C2CMessageParams {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub stream: Option<Stream>,
     /// Feature control ID
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub feature_id: Option<u32>,
 }
 
@@ -2457,10 +2633,10 @@ pub struct C2CMessageParams {
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct DirectMessageParams {
     /// Message content
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub content: Option<String>,
     /// Message type
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_message_type_is_none_or_zero")]
     pub msg_type: Option<MessageCreateType>,
     /// Message embed
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -2472,16 +2648,16 @@ pub struct DirectMessageParams {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub message_reference: Option<Reference>,
     /// Image URL
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub image: Option<String>,
     /// Base64 encoded file image
     #[serde(skip_serializing_if = "Option::is_none")]
     pub file_image: Option<String>,
     /// Message ID to reply to
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub msg_id: Option<String>,
     /// Event ID
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub event_id: Option<String>,
     /// Markdown payload
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -2490,13 +2666,13 @@ pub struct DirectMessageParams {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub keyboard: Option<Keyboard>,
     /// Deprecated timestamp field kept for botgo parity
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub timestamp: Option<i64>,
     /// Message sequence number
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub msg_seq: Option<u32>,
     /// Subscription ID
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub subscribe_id: Option<String>,
     /// Input status notification
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -2514,7 +2690,7 @@ pub struct DirectMessageParams {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub stream: Option<Stream>,
     /// Feature control ID
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub feature_id: Option<u32>,
 }
 
