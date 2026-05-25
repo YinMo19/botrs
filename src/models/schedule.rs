@@ -116,28 +116,28 @@ impl std::fmt::Display for RemindType {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct Schedule {
     /// Unique identifier for the schedule
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "String::is_empty")]
     pub id: Snowflake,
     /// Name of the schedule event
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "String::is_empty")]
     pub name: String,
     /// Description of the schedule event
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "String::is_empty")]
     pub description: String,
     /// Start timestamp (Unix timestamp as string)
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "String::is_empty")]
     pub start_timestamp: String,
     /// End timestamp (Unix timestamp as string)
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "String::is_empty")]
     pub end_timestamp: String,
     /// Channel ID to jump to when the event starts
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "String::is_empty")]
     pub jump_channel_id: Snowflake,
     /// Reminder type for the schedule
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "String::is_empty")]
     pub remind_type: String,
     /// Creator of the schedule
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub creator: Option<Member>,
 }
 
@@ -228,7 +228,7 @@ impl Schedule {
 /// Wrapper used by schedule create and update endpoints.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct ScheduleWrapper {
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub schedule: Option<Schedule>,
 }
 
@@ -415,6 +415,9 @@ mod tests {
         assert!(schedule.creator.is_none());
         assert!(!schedule.has_jump_channel());
         assert!(!schedule.has_reminder());
+
+        let value = serde_json::to_value(&schedule).unwrap();
+        assert!(value.as_object().unwrap().is_empty());
     }
 
     #[test]
@@ -445,6 +448,6 @@ mod tests {
         let wrapper = ScheduleWrapper::empty();
         let value = serde_json::to_value(&wrapper).unwrap();
 
-        assert_eq!(value["schedule"], serde_json::Value::Null);
+        assert!(value.as_object().unwrap().is_empty());
     }
 }
