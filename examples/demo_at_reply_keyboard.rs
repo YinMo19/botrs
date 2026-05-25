@@ -97,11 +97,10 @@ impl KeyboardReplyHandler {
                 }),
                 click_limit: Some(10),
                 data: Some("/搜索".to_string()),
-                reply: None,
-                enter: Some(true), // equivalent to at_bot_show_channel_list=True
+                enter: true,
                 at_bot_show_channel_list: None,
-                subscribe_data: None,
                 modal: None,
+                ..Default::default()
             }),
             group_id: None,
         };
