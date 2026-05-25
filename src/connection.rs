@@ -879,13 +879,7 @@ impl ConnectionState {
     ) -> Option<(&'static str, Value)> {
         let event_id = payload.get("id").and_then(|v| v.as_str())?;
         let event_data = payload.get("d")?;
-        let mut data_map = std::collections::HashMap::new();
-        if let Value::Object(obj) = event_data {
-            for (k, v) in obj {
-                data_map.insert(k.clone(), v.clone());
-            }
-        }
-        let event = GroupManageEvent::new(state.api.clone(), Some(event_id.to_string()), &data_map);
+        let event = GroupManageEvent::new(state.api.clone(), Some(event_id.to_string()), event_data);
         Some(("group_add_robot", serde_json::to_value(event).ok()?))
     }
 
@@ -895,13 +889,7 @@ impl ConnectionState {
     ) -> Option<(&'static str, Value)> {
         let event_id = payload.get("id").and_then(|v| v.as_str())?;
         let event_data = payload.get("d")?;
-        let mut data_map = std::collections::HashMap::new();
-        if let Value::Object(obj) = event_data {
-            for (k, v) in obj {
-                data_map.insert(k.clone(), v.clone());
-            }
-        }
-        let event = GroupManageEvent::new(state.api.clone(), Some(event_id.to_string()), &data_map);
+        let event = GroupManageEvent::new(state.api.clone(), Some(event_id.to_string()), event_data);
         Some(("group_del_robot", serde_json::to_value(event).ok()?))
     }
 
@@ -911,13 +899,7 @@ impl ConnectionState {
     ) -> Option<(&'static str, Value)> {
         let event_id = payload.get("id").and_then(|v| v.as_str())?;
         let event_data = payload.get("d")?;
-        let mut data_map = std::collections::HashMap::new();
-        if let Value::Object(obj) = event_data {
-            for (k, v) in obj {
-                data_map.insert(k.clone(), v.clone());
-            }
-        }
-        let event = GroupManageEvent::new(state.api.clone(), Some(event_id.to_string()), &data_map);
+        let event = GroupManageEvent::new(state.api.clone(), Some(event_id.to_string()), event_data);
         Some(("group_msg_reject", serde_json::to_value(event).ok()?))
     }
 
@@ -927,39 +909,21 @@ impl ConnectionState {
     ) -> Option<(&'static str, Value)> {
         let event_id = payload.get("id").and_then(|v| v.as_str())?;
         let event_data = payload.get("d")?;
-        let mut data_map = std::collections::HashMap::new();
-        if let Value::Object(obj) = event_data {
-            for (k, v) in obj {
-                data_map.insert(k.clone(), v.clone());
-            }
-        }
-        let event = GroupManageEvent::new(state.api.clone(), Some(event_id.to_string()), &data_map);
+        let event = GroupManageEvent::new(state.api.clone(), Some(event_id.to_string()), event_data);
         Some(("group_msg_receive", serde_json::to_value(event).ok()?))
     }
 
     fn parse_friend_add(state: &ConnectionState, payload: &Value) -> Option<(&'static str, Value)> {
         let event_id = payload.get("id").and_then(|v| v.as_str())?;
         let event_data = payload.get("d")?;
-        let mut data_map = std::collections::HashMap::new();
-        if let Value::Object(obj) = event_data {
-            for (k, v) in obj {
-                data_map.insert(k.clone(), v.clone());
-            }
-        }
-        let event = C2CManageEvent::new(state.api.clone(), Some(event_id.to_string()), &data_map);
+        let event = C2CManageEvent::new(state.api.clone(), Some(event_id.to_string()), event_data);
         Some(("friend_add", serde_json::to_value(event).ok()?))
     }
 
     fn parse_friend_del(state: &ConnectionState, payload: &Value) -> Option<(&'static str, Value)> {
         let event_id = payload.get("id").and_then(|v| v.as_str())?;
         let event_data = payload.get("d")?;
-        let mut data_map = std::collections::HashMap::new();
-        if let Value::Object(obj) = event_data {
-            for (k, v) in obj {
-                data_map.insert(k.clone(), v.clone());
-            }
-        }
-        let event = C2CManageEvent::new(state.api.clone(), Some(event_id.to_string()), &data_map);
+        let event = C2CManageEvent::new(state.api.clone(), Some(event_id.to_string()), event_data);
         Some(("friend_del", serde_json::to_value(event).ok()?))
     }
 
@@ -969,13 +933,7 @@ impl ConnectionState {
     ) -> Option<(&'static str, Value)> {
         let event_id = payload.get("id").and_then(|v| v.as_str())?;
         let event_data = payload.get("d")?;
-        let mut data_map = std::collections::HashMap::new();
-        if let Value::Object(obj) = event_data {
-            for (k, v) in obj {
-                data_map.insert(k.clone(), v.clone());
-            }
-        }
-        let event = C2CManageEvent::new(state.api.clone(), Some(event_id.to_string()), &data_map);
+        let event = C2CManageEvent::new(state.api.clone(), Some(event_id.to_string()), event_data);
         Some(("c2c_msg_reject", serde_json::to_value(event).ok()?))
     }
 
@@ -985,13 +943,7 @@ impl ConnectionState {
     ) -> Option<(&'static str, Value)> {
         let event_id = payload.get("id").and_then(|v| v.as_str())?;
         let event_data = payload.get("d")?;
-        let mut data_map = std::collections::HashMap::new();
-        if let Value::Object(obj) = event_data {
-            for (k, v) in obj {
-                data_map.insert(k.clone(), v.clone());
-            }
-        }
-        let event = C2CManageEvent::new(state.api.clone(), Some(event_id.to_string()), &data_map);
+        let event = C2CManageEvent::new(state.api.clone(), Some(event_id.to_string()), event_data);
         Some(("c2c_msg_receive", serde_json::to_value(event).ok()?))
     }
 
