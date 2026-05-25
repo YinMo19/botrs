@@ -3,12 +3,9 @@
 //! This module contains structures for managing API permissions and permission demands
 //! in QQ Guild bots.
 
+use crate::models::serde_helpers::is_zero_i32;
 use crate::models::{HasId, Snowflake};
 use serde::{Deserialize, Serialize};
-
-fn is_zero_i32(value: &i32) -> bool {
-    *value == 0
-}
 
 /// API permissions response wrapper as returned by the QQ Bot Open API.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]

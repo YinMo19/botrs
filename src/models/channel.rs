@@ -2,22 +2,9 @@
 //!
 //! This module contains channel types for the QQ Bot Open API.
 
+use crate::models::serde_helpers::{is_default, option_is_none_or_default};
 use crate::models::{HasId, HasName, Snowflake};
 use serde::{Deserialize, Serialize};
-
-fn is_default<T>(value: &T) -> bool
-where
-    T: Default + PartialEq,
-{
-    value == &T::default()
-}
-
-fn option_is_none_or_default<T>(value: &Option<T>) -> bool
-where
-    T: Default + PartialEq,
-{
-    value.as_ref().is_none_or(is_default)
-}
 
 /// Represents a channel in a guild.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]

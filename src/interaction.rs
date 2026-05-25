@@ -4,6 +4,7 @@
 //! including button clicks, command interactions, and other interactive elements.
 
 use crate::api::BotApi;
+use crate::models::serde_helpers::is_default;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
 
@@ -128,13 +129,6 @@ impl<'de> Deserialize<'de> for InteractionDataType {
     {
         Ok(Self::from(u8::deserialize(deserializer)?))
     }
-}
-
-fn is_default<T>(value: &T) -> bool
-where
-    T: Default + PartialEq,
-{
-    value == &T::default()
 }
 
 fn string_field(data: &Value, key: &str) -> String {

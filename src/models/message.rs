@@ -125,21 +125,11 @@
 //!
 //! See the examples in `/examples` directory for comprehensive usage patterns.
 
+use crate::models::serde_helpers::{is_zero_u32, option_is_none_or_default};
 use crate::models::{HasId, Pager, Snowflake, Timestamp};
 use base64::Engine;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-
-fn is_zero_u32(value: &u32) -> bool {
-    *value == 0
-}
-
-fn option_is_none_or_default<T>(value: &Option<T>) -> bool
-where
-    T: Default + PartialEq,
-{
-    value.as_ref().is_none_or(|value| value == &T::default())
-}
 
 fn option_message_type_is_none_or_zero(value: &Option<MessageCreateType>) -> bool {
     value.as_ref().is_none_or(|value| u32::from(*value) == 0)
