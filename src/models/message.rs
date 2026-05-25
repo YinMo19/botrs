@@ -790,74 +790,52 @@ impl Default for C2CMessage {
 }
 
 /// Represents a message audit event.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct MessageAudit {
     /// The audit ID
-    pub audit_id: Option<Snowflake>,
+    #[serde(default)]
+    pub audit_id: Snowflake,
     /// The message ID that was audited
-    pub message_id: Option<Snowflake>,
-    /// The channel ID where the message was posted
-    pub channel_id: Option<Snowflake>,
+    #[serde(default)]
+    pub message_id: Snowflake,
     /// The guild ID where the message was posted
-    pub guild_id: Option<Snowflake>,
+    #[serde(default)]
+    pub guild_id: Snowflake,
+    /// The channel ID where the message was posted
+    #[serde(default)]
+    pub channel_id: Snowflake,
     /// The audit time
-    pub audit_time: Option<Timestamp>,
+    #[serde(default)]
+    pub audit_time: Timestamp,
     /// The create time
-    pub create_time: Option<Timestamp>,
+    #[serde(default)]
+    pub create_time: Timestamp,
     /// Channel-specific sequence number for ordering audited messages
-    pub seq_in_channel: Option<String>,
+    #[serde(default)]
+    pub seq_in_channel: String,
     /// Event ID from the gateway
+    #[serde(skip)]
     pub event_id: Option<String>,
 }
 
 impl MessageAudit {
     /// Creates a new message audit.
     pub fn new() -> Self {
-        Self {
-            audit_id: None,
-            message_id: None,
-            channel_id: None,
-            guild_id: None,
-            audit_time: None,
-            create_time: None,
-            seq_in_channel: None,
-            event_id: None,
-        }
+        Self::default()
     }
 
     /// Creates a new message audit from API data.
     pub fn from_data(_api: crate::api::BotApi, event_id: String, data: serde_json::Value) -> Self {
         Self {
-            audit_id: data
-                .get("audit_id")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            message_id: data
-                .get("message_id")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            audit_time: string_field(&data, "audit_time"),
-            channel_id: data
-                .get("channel_id")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            guild_id: data
-                .get("guild_id")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            create_time: string_field(&data, "create_time"),
-            seq_in_channel: data
-                .get("seq_in_channel")
-                .and_then(|v| v.as_str())
-                .map(String::from),
+            audit_id: string_field(&data, "audit_id").unwrap_or_default(),
+            message_id: string_field(&data, "message_id").unwrap_or_default(),
+            guild_id: string_field(&data, "guild_id").unwrap_or_default(),
+            channel_id: string_field(&data, "channel_id").unwrap_or_default(),
+            audit_time: string_field(&data, "audit_time").unwrap_or_default(),
+            create_time: string_field(&data, "create_time").unwrap_or_default(),
+            seq_in_channel: string_field(&data, "seq_in_channel").unwrap_or_default(),
             event_id: Some(event_id),
         }
-    }
-}
-
-impl Default for MessageAudit {
-    fn default() -> Self {
-        Self::new()
     }
 }
 
@@ -1234,9 +1212,35 @@ mod tests {
             }),
         );
 
-        assert_eq!(audit.seq_in_channel.as_deref(), Some("42"));
+        assert_eq!(audit.seq_in_channel, "42");
+        assert_eq!(audit.audit_time, "");
+        assert_eq!(audit.create_time, "");
+
         let value = serde_json::to_value(&audit).unwrap();
         assert_eq!(value["seq_in_channel"], serde_json::json!("42"));
+        assert!(value.get("event_id").is_none());
+    }
+
+    #[test]
+    fn botgo_message_audit_uses_required_zero_value_fields() {
+        let audit: MessageAudit = serde_json::from_value(serde_json::json!({})).unwrap();
+
+        assert_eq!(audit.audit_id, "");
+        assert_eq!(audit.message_id, "");
+        assert_eq!(audit.guild_id, "");
+        assert_eq!(audit.channel_id, "");
+        assert_eq!(audit.audit_time, "");
+        assert_eq!(audit.create_time, "");
+        assert_eq!(audit.seq_in_channel, "");
+
+        let value = serde_json::to_value(&audit).unwrap();
+        assert_eq!(value["audit_id"], "");
+        assert_eq!(value["message_id"], "");
+        assert_eq!(value["guild_id"], "");
+        assert_eq!(value["channel_id"], "");
+        assert_eq!(value["audit_time"], "");
+        assert_eq!(value["create_time"], "");
+        assert_eq!(value["seq_in_channel"], "");
     }
 
     #[test]
