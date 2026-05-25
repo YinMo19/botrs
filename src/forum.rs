@@ -22,7 +22,7 @@ pub enum Format {
 }
 
 /// Text element structure
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct Text {
     /// Text content
     pub text: Option<String>,
@@ -31,14 +31,12 @@ pub struct Text {
 impl Text {
     /// Create a new Text instance
     pub fn new(data: &Value) -> Self {
-        Self {
-            text: data.get("text").and_then(|v| v.as_str()).map(String::from),
-        }
+        serde_json::from_value(data.clone()).unwrap_or_default()
     }
 }
 
 /// Platform image structure
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct PlatImage {
     /// Image URL
     pub url: Option<String>,
@@ -53,42 +51,27 @@ pub struct PlatImage {
 impl PlatImage {
     /// Create a new PlatImage instance
     pub fn new(data: &Value) -> Self {
-        Self {
-            url: data.get("url").and_then(|v| v.as_str()).map(String::from),
-            width: data.get("width").and_then(|v| v.as_u64()).map(|v| v as u32),
-            height: data
-                .get("height")
-                .and_then(|v| v.as_u64())
-                .map(|v| v as u32),
-            image_id: data
-                .get("image_id")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-        }
+        serde_json::from_value(data.clone()).unwrap_or_default()
     }
 }
 
 /// Image element structure
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct Image {
     /// Platform image data
+    #[serde(default)]
     pub plat_image: PlatImage,
 }
 
 impl Image {
     /// Create a new Image instance
     pub fn new(data: &Value) -> Self {
-        Self {
-            plat_image: PlatImage::new(
-                data.get("plat_image")
-                    .unwrap_or(&Value::Object(serde_json::Map::new())),
-            ),
-        }
+        serde_json::from_value(data.clone()).unwrap_or_default()
     }
 }
 
 /// Video cover structure
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct Cover {
     /// Cover URL
     pub url: Option<String>,
@@ -101,19 +84,12 @@ pub struct Cover {
 impl Cover {
     /// Create a new Cover instance
     pub fn new(data: &Value) -> Self {
-        Self {
-            url: data.get("url").and_then(|v| v.as_str()).map(String::from),
-            width: data.get("width").and_then(|v| v.as_u64()).map(|v| v as u32),
-            height: data
-                .get("height")
-                .and_then(|v| v.as_u64())
-                .map(|v| v as u32),
-        }
+        serde_json::from_value(data.clone()).unwrap_or_default()
     }
 }
 
 /// Platform video structure
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct PlatVideo {
     /// Video URL
     pub url: Option<String>,
@@ -124,52 +100,34 @@ pub struct PlatVideo {
     /// Video ID
     pub video_id: Option<String>,
     /// Video cover
+    #[serde(default)]
     pub cover: Cover,
 }
 
 impl PlatVideo {
     /// Create a new PlatVideo instance
     pub fn new(data: &Value) -> Self {
-        Self {
-            url: data.get("url").and_then(|v| v.as_str()).map(String::from),
-            width: data.get("width").and_then(|v| v.as_u64()).map(|v| v as u32),
-            height: data
-                .get("height")
-                .and_then(|v| v.as_u64())
-                .map(|v| v as u32),
-            video_id: data
-                .get("video_id")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            cover: Cover::new(
-                data.get("cover")
-                    .unwrap_or(&Value::Object(serde_json::Map::new())),
-            ),
-        }
+        serde_json::from_value(data.clone()).unwrap_or_default()
     }
 }
 
 /// Video element structure
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct Video {
     /// Platform video data
+    #[serde(default)]
     pub plat_video: PlatVideo,
 }
 
 impl Video {
     /// Create a new Video instance
     pub fn new(data: &Value) -> Self {
-        Self {
-            plat_video: PlatVideo::new(
-                data.get("plat_video")
-                    .unwrap_or(&Value::Object(serde_json::Map::new())),
-            ),
-        }
+        serde_json::from_value(data.clone()).unwrap_or_default()
     }
 }
 
 /// URL element structure
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct Url {
     /// URL
     pub url: Option<String>,
@@ -180,77 +138,74 @@ pub struct Url {
 impl Url {
     /// Create a new Url instance
     pub fn new(data: &Value) -> Self {
-        Self {
-            url: data.get("url").and_then(|v| v.as_str()).map(String::from),
-            desc: data.get("desc").and_then(|v| v.as_str()).map(String::from),
-        }
+        serde_json::from_value(data.clone()).unwrap_or_default()
     }
 }
 
 /// Element structure for forum content
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct Elem {
     /// Element type (1: text, 2: image, 3: video, 4: url)
+    #[serde(rename = "type", default)]
     pub element_type: Option<u8>,
     /// Text content (if type is 1)
+    #[serde(default)]
     pub text: Option<Text>,
     /// Image content (if type is 2)
+    #[serde(default)]
     pub image: Option<Image>,
     /// Video content (if type is 3)
+    #[serde(default)]
     pub video: Option<Video>,
     /// URL content (if type is 4)
+    #[serde(default)]
     pub url: Option<Url>,
 }
 
 impl Elem {
     /// Create a new Elem instance
     pub fn new(data: &Value) -> Self {
-        let element_type = data.get("type").and_then(|v| v.as_u64()).map(|v| v as u8);
-
-        let mut elem = Self {
-            element_type,
-            text: None,
-            image: None,
-            video: None,
-            url: None,
-        };
-
-        match element_type {
+        // Forum payloads only populate the variant matching the element type;
+        // discard payloads that disagree with the discriminator to keep wire
+        // shape stable.
+        let mut elem: Self = serde_json::from_value(data.clone()).unwrap_or_default();
+        match elem.element_type {
             Some(1) => {
-                elem.text = Some(Text::new(
-                    data.get("text")
-                        .unwrap_or(&Value::Object(serde_json::Map::new())),
-                ));
+                elem.image = None;
+                elem.video = None;
+                elem.url = None;
             }
             Some(2) => {
-                elem.image = Some(Image::new(
-                    data.get("image")
-                        .unwrap_or(&Value::Object(serde_json::Map::new())),
-                ));
+                elem.text = None;
+                elem.video = None;
+                elem.url = None;
             }
             Some(3) => {
-                elem.video = Some(Video::new(
-                    data.get("video")
-                        .unwrap_or(&Value::Object(serde_json::Map::new())),
-                ));
+                elem.text = None;
+                elem.image = None;
+                elem.url = None;
             }
             Some(4) => {
-                elem.url = Some(Url::new(
-                    data.get("url")
-                        .unwrap_or(&Value::Object(serde_json::Map::new())),
-                ));
+                elem.text = None;
+                elem.image = None;
+                elem.video = None;
             }
-            _ => {}
+            _ => {
+                elem.text = None;
+                elem.image = None;
+                elem.video = None;
+                elem.url = None;
+            }
         }
-
         elem
     }
 }
 
 /// Paragraph structure
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct Paragraph {
     /// Elements in the paragraph
+    #[serde(default)]
     pub elems: Vec<Elem>,
     /// Paragraph properties
     pub props: Option<Value>,
@@ -259,56 +214,37 @@ pub struct Paragraph {
 impl Paragraph {
     /// Create a new Paragraph instance
     pub fn new(data: &Value) -> Self {
-        let elems = data
-            .get("elems")
-            .and_then(|v| v.as_array())
-            .map(|arr| arr.iter().map(Elem::new).collect())
-            .unwrap_or_default();
-
-        Self {
-            elems,
-            props: data.get("props").cloned(),
-        }
+        serde_json::from_value(data.clone()).unwrap_or_default()
     }
 }
 
 /// Title structure
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct Title {
     /// Paragraphs in the title
+    #[serde(default)]
     pub paragraphs: Vec<Paragraph>,
 }
 
 impl Title {
     /// Create a new Title instance
     pub fn new(data: &Value) -> Self {
-        let paragraphs = data
-            .get("paragraphs")
-            .and_then(|v| v.as_array())
-            .map(|arr| arr.iter().map(Paragraph::new).collect())
-            .unwrap_or_default();
-
-        Self { paragraphs }
+        serde_json::from_value(data.clone()).unwrap_or_default()
     }
 }
 
 /// Content structure
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct Content {
     /// Paragraphs in the content
+    #[serde(default)]
     pub paragraphs: Vec<Paragraph>,
 }
 
 impl Content {
     /// Create a new Content instance
     pub fn new(data: &Value) -> Self {
-        let paragraphs = data
-            .get("paragraphs")
-            .and_then(|v| v.as_array())
-            .map(|arr| arr.iter().map(Paragraph::new).collect())
-            .unwrap_or_default();
-
-        Self { paragraphs }
+        serde_json::from_value(data.clone()).unwrap_or_default()
     }
 }
 

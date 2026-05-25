@@ -51,3 +51,34 @@ pub(crate) fn is_empty_vec<T>(value: &[T]) -> bool {
 pub(crate) fn is_false(value: &bool) -> bool {
     !*value
 }
+
+/// Deserialize an `Option<String>` from either a JSON string or number.
+///
+/// The QQ Bot Open API mixes string IDs and numeric IDs in some payloads
+/// (timestamps, application IDs). This helper accepts either form so wire
+/// structs can stay strongly typed.
+pub(crate) fn deserialize_string_or_number<'de, D>(
+    deserializer: D,
+) -> std::result::Result<Option<String>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    use serde::Deserialize;
+
+    #[derive(Deserialize)]
+    #[serde(untagged)]
+    enum StringOrNumber {
+        Str(String),
+        I64(i64),
+        U64(u64),
+        F64(f64),
+    }
+
+    let value = Option::<StringOrNumber>::deserialize(deserializer)?;
+    Ok(value.map(|v| match v {
+        StringOrNumber::Str(s) => s,
+        StringOrNumber::I64(n) => n.to_string(),
+        StringOrNumber::U64(n) => n.to_string(),
+        StringOrNumber::F64(n) => n.to_string(),
+    }))
+}
