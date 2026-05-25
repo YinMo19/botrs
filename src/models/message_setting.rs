@@ -1,27 +1,24 @@
 //! Message setting data models for the QQ Guild Bot API.
 
 use crate::models::Snowflake;
+use crate::models::serde_helpers::{is_false, is_zero_i32};
 use serde::{Deserialize, Serialize};
 
 /// Guild message frequency settings.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct MessageSetting {
     /// Whether creating direct messages is disabled.
-    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[serde(default, skip_serializing_if = "is_false")]
     pub disable_create_dm: bool,
     /// Whether pushing messages is disabled.
-    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    #[serde(default, skip_serializing_if = "is_false")]
     pub disable_push_msg: bool,
     /// Channel IDs covered by the setting.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub channel_ids: Vec<Snowflake>,
     /// Maximum number of pushed messages per channel.
-    #[serde(default, skip_serializing_if = "is_zero")]
+    #[serde(default, skip_serializing_if = "is_zero_i32")]
     pub channel_push_max_num: i32,
-}
-
-fn is_zero(value: &i32) -> bool {
-    *value == 0
 }
 
 #[cfg(test)]

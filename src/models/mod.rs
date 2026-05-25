@@ -14,6 +14,7 @@ pub mod message_setting;
 pub mod permission;
 pub mod robot;
 pub mod schedule;
+pub(crate) mod serde_helpers;
 pub mod user;
 pub mod webhook;
 

@@ -2,6 +2,7 @@
 //!
 //! This module contains guild types for the QQ Bot Open API.
 
+use crate::models::serde_helpers::{is_empty_vec, is_zero_u32};
 use crate::models::{HasId, HasName, Pager, Snowflake, Timestamp, channel::Channel};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -159,14 +160,6 @@ pub type RoleId = Snowflake;
 pub type RoleID = RoleId;
 /// Default role color used when creating or updating roles.
 pub const DEFAULT_ROLE_COLOR: u32 = 4_278_245_297;
-
-fn is_zero_u32(value: &u32) -> bool {
-    *value == 0
-}
-
-fn is_empty_vec<T>(value: &[T]) -> bool {
-    value.is_empty()
-}
 
 /// Role update info body.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
