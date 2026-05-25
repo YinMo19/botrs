@@ -392,6 +392,18 @@ pub struct Thread {
     pub event_id: Option<String>,
 }
 
+#[derive(Debug, Default, Deserialize)]
+struct ThreadWire {
+    #[serde(default)]
+    thread_info: ThreadInfo,
+    #[serde(default)]
+    channel_id: Option<String>,
+    #[serde(default)]
+    guild_id: Option<String>,
+    #[serde(default)]
+    author_id: Option<String>,
+}
+
 impl Thread {
     /// Create a new Thread instance
     ///
@@ -401,25 +413,14 @@ impl Thread {
     /// * `event_id` - Optional event ID
     /// * `data` - Thread data from the gateway
     pub fn new(api: BotApi, event_id: Option<String>, data: &Value) -> Self {
+        let wire: ThreadWire = serde_json::from_value(data.clone()).unwrap_or_default();
         Self {
             api,
+            thread_info: wire.thread_info,
+            channel_id: wire.channel_id,
+            guild_id: wire.guild_id,
+            author_id: wire.author_id,
             event_id,
-            author_id: data
-                .get("author_id")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            channel_id: data
-                .get("channel_id")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            guild_id: data
-                .get("guild_id")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            thread_info: ThreadInfo::new(
-                data.get("thread_info")
-                    .unwrap_or(&Value::Object(serde_json::Map::new())),
-            ),
         }
     }
 
@@ -457,28 +458,29 @@ pub struct Post {
     pub event_id: Option<String>,
 }
 
+#[derive(Debug, Default, Deserialize)]
+struct PostWire {
+    #[serde(default)]
+    guild_id: Option<String>,
+    #[serde(default)]
+    channel_id: Option<String>,
+    #[serde(default)]
+    author_id: Option<String>,
+    #[serde(default)]
+    post_info: PostInfo,
+}
+
 impl Post {
     /// Create a new Post instance.
     pub fn new(api: BotApi, event_id: Option<String>, data: &Value) -> Self {
+        let wire: PostWire = serde_json::from_value(data.clone()).unwrap_or_default();
         Self {
             api,
+            guild_id: wire.guild_id,
+            channel_id: wire.channel_id,
+            author_id: wire.author_id,
+            post_info: wire.post_info,
             event_id,
-            guild_id: data
-                .get("guild_id")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            channel_id: data
-                .get("channel_id")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            author_id: data
-                .get("author_id")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            post_info: PostInfo::new(
-                data.get("post_info")
-                    .unwrap_or(&Value::Object(serde_json::Map::new())),
-            ),
         }
     }
 
@@ -506,28 +508,29 @@ pub struct Reply {
     pub event_id: Option<String>,
 }
 
+#[derive(Debug, Default, Deserialize)]
+struct ReplyWire {
+    #[serde(default)]
+    guild_id: Option<String>,
+    #[serde(default)]
+    channel_id: Option<String>,
+    #[serde(default)]
+    author_id: Option<String>,
+    #[serde(default)]
+    reply_info: ReplyInfo,
+}
+
 impl Reply {
     /// Create a new Reply instance.
     pub fn new(api: BotApi, event_id: Option<String>, data: &Value) -> Self {
+        let wire: ReplyWire = serde_json::from_value(data.clone()).unwrap_or_default();
         Self {
             api,
+            guild_id: wire.guild_id,
+            channel_id: wire.channel_id,
+            author_id: wire.author_id,
+            reply_info: wire.reply_info,
             event_id,
-            guild_id: data
-                .get("guild_id")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            channel_id: data
-                .get("channel_id")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            author_id: data
-                .get("author_id")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            reply_info: ReplyInfo::new(
-                data.get("reply_info")
-                    .unwrap_or(&Value::Object(serde_json::Map::new())),
-            ),
         }
     }
 
@@ -609,6 +612,22 @@ pub struct OpenThread {
     pub event_id: Option<String>,
 }
 
+#[derive(Debug, Default, Deserialize)]
+struct OpenThreadWire {
+    #[serde(default)]
+    guild_id: Option<String>,
+    #[serde(default)]
+    channel_id: Option<String>,
+    #[serde(default)]
+    author_id: Option<String>,
+    #[serde(default)]
+    thread_info: Option<ThreadInfo>,
+    #[serde(default)]
+    post_info: Option<PostInfo>,
+    #[serde(default)]
+    reply_info: Option<ReplyInfo>,
+}
+
 impl OpenThread {
     /// Create a new OpenThread instance
     ///
@@ -617,24 +636,16 @@ impl OpenThread {
     /// * `api` - The Bot API client
     /// * `data` - Open forum event data from the gateway
     pub fn new(api: BotApi, data: &Value) -> Self {
+        let wire: OpenThreadWire = serde_json::from_value(data.clone()).unwrap_or_default();
         Self {
             api,
             event_id: None,
-            guild_id: data
-                .get("guild_id")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            channel_id: data
-                .get("channel_id")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            author_id: data
-                .get("author_id")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            thread_info: data.get("thread_info").map(ThreadInfo::new),
-            post_info: data.get("post_info").map(PostInfo::new),
-            reply_info: data.get("reply_info").map(ReplyInfo::new),
+            guild_id: wire.guild_id,
+            channel_id: wire.channel_id,
+            author_id: wire.author_id,
+            thread_info: wire.thread_info,
+            post_info: wire.post_info,
+            reply_info: wire.reply_info,
         }
     }
 

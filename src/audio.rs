@@ -58,13 +58,53 @@ pub const AudioStatusResume: AudioStatus = AudioStatus::Resume;
 pub const AudioStatusStop: AudioStatus = AudioStatus::Stop;
 
 /// Public audio channel type
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[repr(u8)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum PublicAudioType {
     /// Voice channel
-    Voice = 2,
+    #[default]
+    Voice,
     /// Live channel
-    Live = 5,
+    Live,
+    /// Unknown channel type
+    Unknown(u8),
+}
+
+impl From<u8> for PublicAudioType {
+    fn from(value: u8) -> Self {
+        match value {
+            2 => Self::Voice,
+            5 => Self::Live,
+            other => Self::Unknown(other),
+        }
+    }
+}
+
+impl From<PublicAudioType> for u8 {
+    fn from(value: PublicAudioType) -> Self {
+        match value {
+            PublicAudioType::Voice => 2,
+            PublicAudioType::Live => 5,
+            PublicAudioType::Unknown(other) => other,
+        }
+    }
+}
+
+impl Serialize for PublicAudioType {
+    fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_u8(u8::from(*self))
+    }
+}
+
+impl<'de> Deserialize<'de> for PublicAudioType {
+    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        Ok(Self::from(u8::deserialize(deserializer)?))
+    }
 }
 
 /// Audio control structure for managing audio playback
@@ -154,6 +194,18 @@ pub struct PublicAudio {
     pub user_id: Option<String>,
 }
 
+#[derive(Debug, Default, Deserialize)]
+struct PublicAudioWire {
+    #[serde(default)]
+    guild_id: Option<String>,
+    #[serde(default)]
+    channel_id: Option<String>,
+    #[serde(default)]
+    channel_type: Option<PublicAudioType>,
+    #[serde(default)]
+    user_id: Option<String>,
+}
+
 impl PublicAudio {
     /// Create a new PublicAudio instance
     ///
@@ -162,28 +214,13 @@ impl PublicAudio {
     /// * `api` - The Bot API client
     /// * `data` - Audio live data from the gateway
     pub fn new(api: BotApi, data: serde_json::Value) -> Self {
+        let wire: PublicAudioWire = serde_json::from_value(data).unwrap_or_default();
         Self {
             api,
-            guild_id: data
-                .get("guild_id")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            channel_id: data
-                .get("channel_id")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            channel_type: data
-                .get("channel_type")
-                .and_then(|v| v.as_u64())
-                .and_then(|v| match v {
-                    2 => Some(PublicAudioType::Voice),
-                    5 => Some(PublicAudioType::Live),
-                    _ => None,
-                }),
-            user_id: data
-                .get("user_id")
-                .and_then(|v| v.as_str())
-                .map(String::from),
+            guild_id: wire.guild_id,
+            channel_id: wire.channel_id,
+            channel_type: wire.channel_type,
+            user_id: wire.user_id,
         }
     }
 
@@ -248,8 +285,8 @@ mod tests {
 
     #[test]
     fn test_public_audio_type() {
-        assert_eq!(PublicAudioType::Voice as u8, 2);
-        assert_eq!(PublicAudioType::Live as u8, 5);
+        assert_eq!(u8::from(PublicAudioType::Voice), 2);
+        assert_eq!(u8::from(PublicAudioType::Live), 5);
     }
 
     #[test]
