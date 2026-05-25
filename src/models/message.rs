@@ -135,15 +135,6 @@ fn option_message_type_is_none_or_zero(value: &Option<MessageCreateType>) -> boo
     value.as_ref().is_none_or(|value| u32::from(*value) == 0)
 }
 
-fn string_field(value: &serde_json::Value, key: &str) -> Option<String> {
-    value.get(key).and_then(|value| {
-        value
-            .as_str()
-            .map(str::to_string)
-            .or_else(|| value.is_number().then(|| value.to_string()))
-    })
-}
-
 fn is_at_mention_space(c: char) -> bool {
     matches!(c, ' ' | '\u{00a0}')
 }
@@ -368,91 +359,9 @@ impl Message {
 
     /// Creates a new message from API data.
     pub fn from_data(_api: crate::api::BotApi, event_id: String, data: serde_json::Value) -> Self {
-        Self {
-            id: data.get("id").and_then(|v| v.as_str()).map(String::from),
-            content: data
-                .get("content")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            channel_id: data
-                .get("channel_id")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            guild_id: data
-                .get("guild_id")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            group_id: data
-                .get("group_id")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            author: data
-                .get("author")
-                .map(|v| MessageUser::from_data(v.clone())),
-            member: data.get("member").map(|v| MessageMember {
-                nick: v.get("nick").and_then(|n| n.as_str()).map(String::from),
-                roles: v.get("roles").and_then(|r| r.as_array()).map(|arr| {
-                    arr.iter()
-                        .filter_map(|v| v.as_str())
-                        .map(String::from)
-                        .collect()
-                }),
-                joined_at: string_field(v, "joined_at"),
-            }),
-            message_reference: data
-                .get("message_reference")
-                .map(|v| MessageReference::from_data(v.clone())),
-            mentions: data
-                .get("mentions")
-                .and_then(|v| v.as_array())
-                .map(|arr| {
-                    arr.iter()
-                        .map(|v| MessageUser::from_data(v.clone()))
-                        .collect()
-                })
-                .unwrap_or_default(),
-            attachments: data
-                .get("attachments")
-                .and_then(|v| v.as_array())
-                .map(|arr| {
-                    arr.iter()
-                        .map(|v| MessageAttachment::from_data(v.clone()))
-                        .collect()
-                })
-                .unwrap_or_default(),
-            embeds: data
-                .get("embeds")
-                .cloned()
-                .and_then(|v| serde_json::from_value(v).ok())
-                .unwrap_or_default(),
-            ark: data
-                .get("ark")
-                .cloned()
-                .and_then(|v| serde_json::from_value(v).ok()),
-            direct_message: data.get("direct_message").and_then(|v| v.as_bool()),
-            seq: data.get("seq").and_then(|v| v.as_u64()),
-            seq_in_channel: data
-                .get("seq_in_channel")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            timestamp: string_field(&data, "timestamp"),
-            edited_timestamp: string_field(&data, "edited_timestamp"),
-            mention_everyone: data.get("mention_everyone").and_then(|v| v.as_bool()),
-            src_guild_id: data
-                .get("src_guild_id")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            file_info: data
-                .get("file_info")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            ttl: data.get("ttl").and_then(|v| v.as_u64()).map(|v| v as u32),
-            message_scene: data
-                .get("message_scene")
-                .cloned()
-                .and_then(|v| serde_json::from_value(v).ok()),
-            event_id: Some(event_id),
-        }
+        let mut message: Self = serde_json::from_value(data).unwrap_or_default();
+        message.event_id = Some(event_id);
+        message
     }
 
     /// Reply to this message
@@ -603,44 +512,9 @@ impl GroupMessage {
 
     /// Creates a new group message from API data.
     pub fn from_data(_api: crate::api::BotApi, event_id: String, data: serde_json::Value) -> Self {
-        Self {
-            id: data.get("id").and_then(|v| v.as_str()).map(String::from),
-            content: data
-                .get("content")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            message_reference: data
-                .get("message_reference")
-                .map(|v| MessageReference::from_data(v.clone())),
-            mentions: data
-                .get("mentions")
-                .and_then(|v| v.as_array())
-                .map(|arr| {
-                    arr.iter()
-                        .map(|v| GroupMessageUser::from_data(v.clone()))
-                        .collect()
-                })
-                .unwrap_or_default(),
-            attachments: data
-                .get("attachments")
-                .and_then(|v| v.as_array())
-                .map(|arr| {
-                    arr.iter()
-                        .map(|v| MessageAttachment::from_data(v.clone()))
-                        .collect()
-                })
-                .unwrap_or_default(),
-            msg_seq: data.get("msg_seq").and_then(|v| v.as_u64()),
-            timestamp: string_field(&data, "timestamp"),
-            author: data
-                .get("author")
-                .map(|v| GroupMessageUser::from_data(v.clone())),
-            group_openid: data
-                .get("group_openid")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            event_id: Some(event_id),
-        }
+        let mut message: Self = serde_json::from_value(data).unwrap_or_default();
+        message.event_id = Some(event_id);
+        message
     }
 
     /// Reply to this group message
@@ -718,41 +592,9 @@ impl C2CMessage {
 
     /// Creates a new C2C message from API data.
     pub fn from_data(_api: crate::api::BotApi, event_id: String, data: serde_json::Value) -> Self {
-        Self {
-            id: data.get("id").and_then(|v| v.as_str()).map(String::from),
-            content: data
-                .get("content")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            message_reference: data
-                .get("message_reference")
-                .map(|v| MessageReference::from_data(v.clone())),
-            mentions: data
-                .get("mentions")
-                .and_then(|v| v.as_array())
-                .map(|arr| {
-                    arr.iter()
-                        .map(|v| C2CMessageUser::from_data(v.clone()))
-                        .collect()
-                })
-                .unwrap_or_default(),
-            attachments: data
-                .get("attachments")
-                .and_then(|v| v.as_array())
-                .map(|arr| {
-                    arr.iter()
-                        .map(|v| MessageAttachment::from_data(v.clone()))
-                        .collect()
-                })
-                .unwrap_or_default(),
-            msg_seq: data.get("msg_seq").and_then(|v| v.as_u64()),
-            timestamp: string_field(&data, "timestamp"),
-            author: data
-                .get("author")
-                .map(|v| C2CMessageUser::from_data(v.clone())),
-            message_scene: data.get("message_scene").cloned(),
-            event_id: Some(event_id),
-        }
+        let mut message: Self = serde_json::from_value(data).unwrap_or_default();
+        message.event_id = Some(event_id);
+        message
     }
 
     /// Reply to this C2C message
@@ -827,22 +669,15 @@ impl MessageAudit {
 
     /// Creates a new message audit from API data.
     pub fn from_data(_api: crate::api::BotApi, event_id: String, data: serde_json::Value) -> Self {
-        Self {
-            audit_id: string_field(&data, "audit_id").unwrap_or_default(),
-            message_id: string_field(&data, "message_id").unwrap_or_default(),
-            guild_id: string_field(&data, "guild_id").unwrap_or_default(),
-            channel_id: string_field(&data, "channel_id").unwrap_or_default(),
-            audit_time: string_field(&data, "audit_time").unwrap_or_default(),
-            create_time: string_field(&data, "create_time").unwrap_or_default(),
-            seq_in_channel: string_field(&data, "seq_in_channel").unwrap_or_default(),
-            event_id: Some(event_id),
-        }
+        let mut audit: Self = serde_json::from_value(data).unwrap_or_default();
+        audit.event_id = Some(event_id);
+        audit
     }
 }
 
 /// User information in a regular message.
 /// Represents a user mentioned in a message.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct MessageUser {
     /// The user's ID
     pub id: Option<Snowflake>,
@@ -857,24 +692,13 @@ pub struct MessageUser {
 impl MessageUser {
     /// Creates a new message user from API data.
     pub fn from_data(data: serde_json::Value) -> Self {
-        Self {
-            id: data.get("id").and_then(|v| v.as_str()).map(String::from),
-            username: data
-                .get("username")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            bot: data.get("bot").and_then(|v| v.as_bool()),
-            avatar: data
-                .get("avatar")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-        }
+        serde_json::from_value(data).unwrap_or_default()
     }
 }
 
 /// User information in a direct message.
 /// Represents a user in a direct message.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct DirectMessageUser {
     /// The user's ID
     pub id: Option<Snowflake>,
@@ -887,23 +711,13 @@ pub struct DirectMessageUser {
 impl DirectMessageUser {
     /// Creates a new direct message user from API data.
     pub fn from_data(data: serde_json::Value) -> Self {
-        Self {
-            id: data.get("id").and_then(|v| v.as_str()).map(String::from),
-            username: data
-                .get("username")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            avatar: data
-                .get("avatar")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-        }
+        serde_json::from_value(data).unwrap_or_default()
     }
 }
 
 /// User information in a group message.
 /// Represents a user in a group message.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct GroupMessageUser {
     /// The user's ID
     pub id: Option<String>,
@@ -916,23 +730,13 @@ pub struct GroupMessageUser {
 impl GroupMessageUser {
     /// Creates a new group message user from API data.
     pub fn from_data(data: serde_json::Value) -> Self {
-        Self {
-            id: data.get("id").and_then(|v| v.as_str()).map(String::from),
-            member_openid: data
-                .get("member_openid")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            union_openid: data
-                .get("union_openid")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-        }
+        serde_json::from_value(data).unwrap_or_default()
     }
 }
 
 /// User information in a C2C message.
 /// Represents a user in a C2C message
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct C2CMessageUser {
     /// The user's ID
     pub id: Option<String>,
@@ -945,22 +749,12 @@ pub struct C2CMessageUser {
 impl C2CMessageUser {
     /// Creates a new C2C message user from API data.
     pub fn from_data(data: serde_json::Value) -> Self {
-        Self {
-            id: data.get("id").and_then(|v| v.as_str()).map(String::from),
-            union_openid: data
-                .get("union_openid")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            user_openid: data
-                .get("user_openid")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-        }
+        serde_json::from_value(data).unwrap_or_default()
     }
 }
 
 /// Member information in a message.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct MessageMember {
     /// The member's nickname
     pub nick: Option<String>,
@@ -971,7 +765,7 @@ pub struct MessageMember {
 }
 
 /// Member information in a direct message.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct DirectMessageMember {
     /// When the member joined the guild
     pub joined_at: Option<Timestamp>,
@@ -980,14 +774,12 @@ pub struct DirectMessageMember {
 impl DirectMessageMember {
     /// Creates a new direct message member from API data.
     pub fn from_data(data: serde_json::Value) -> Self {
-        Self {
-            joined_at: string_field(&data, "joined_at"),
-        }
+        serde_json::from_value(data).unwrap_or_default()
     }
 }
 
 /// Reference to another message.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct MessageReference {
     /// The ID of the referenced message
     pub message_id: Option<Snowflake>,
@@ -998,20 +790,12 @@ pub struct MessageReference {
 impl MessageReference {
     /// Creates a new message reference from API data.
     pub fn from_data(data: serde_json::Value) -> Self {
-        Self {
-            message_id: data
-                .get("message_id")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            ignore_get_message_error: data
-                .get("ignore_get_message_error")
-                .and_then(|v| v.as_bool()),
-        }
+        serde_json::from_value(data).unwrap_or_default()
     }
 }
 
 /// Attachment in a message.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct MessageAttachment {
     /// The attachment's ID
     pub id: Option<Snowflake>,
@@ -1032,24 +816,7 @@ pub struct MessageAttachment {
 impl MessageAttachment {
     /// Creates a new message attachment from API data.
     pub fn from_data(data: serde_json::Value) -> Self {
-        Self {
-            id: data.get("id").and_then(|v| v.as_str()).map(String::from),
-            filename: data
-                .get("filename")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            content_type: data
-                .get("content_type")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            size: data.get("size").and_then(|v| v.as_u64()),
-            url: data.get("url").and_then(|v| v.as_str()).map(String::from),
-            width: data.get("width").and_then(|v| v.as_u64()).map(|w| w as u32),
-            height: data
-                .get("height")
-                .and_then(|v| v.as_u64())
-                .map(|h| h as u32),
-        }
+        serde_json::from_value(data).unwrap_or_default()
     }
 
     /// Returns true if this attachment is an image.
