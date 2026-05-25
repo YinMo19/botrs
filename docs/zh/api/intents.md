@@ -1,597 +1,88 @@
-# Intent 权限 API 参考
+# Intents
 
-`Intents` 结构体控制机器人从网关接收哪些事件。Intent 系统是一个权限系统，允许您控制机器人通过网关连接接收的事件类型，有助于减少带宽和处理开销。
-
-## 概述
+`Intents` 是一个 32 位标志集，告诉 QQ 网关你的机器人希望接收哪些事件类别。只订阅自己需要的事件可以减少网关流量，也避免框架为不会处理的事件做无用功。
 
 ```rust
-pub struct Intents {
-    pub bits: u32,
-}
+pub struct Intents { pub bits: u32 }
 ```
 
-Intent 是一个位标志系统，每个位代表一组相关的事件。通过组合不同的 Intent，您可以精确控制机器人需要处理的事件类型。
+`Intents` 实现了 `Copy`，支持位运算 (`|`、`&`、`^`、`!`)，并直接以原始 `u32` 序列化进网关 `Identify` 载荷。
 
-## 创建 Intent
+## 构造
 
-### `new`
+- `Intents::new()` —— 空集合（`bits == 0`）。
+- `Intents::none()` —— `new()` 的别名，便于按需逐个开启。
+- `Intents::default()` —— `all()` 去掉特权 intent (`GUILD_MESSAGES` 和 `FORUMS`)，多数机器人都从这里开始。
+- `Intents::all()` —— 框架已知的全部位。仅当机器人拥有所有特权时使用。
+- `Intents::from_bits(bits)` —— 把配置或外部传入的整数包成 `Intents`。
 
-创建一个空的 Intent 集合。
+## 标志位一览
 
-```rust
-pub const fn new() -> Self
-```
+每行包含 Rust 常量、底层位、`with_*` 构建器以及简短说明。
 
-#### 示例
+| 常量                                    | 位        | 构建器                                | 含义                                                    |
+|-----------------------------------------|-----------|--------------------------------------|---------------------------------------------------------|
+| `Intents::GUILDS`                       | `1 << 0`  | `with_guilds`                        | 频道创建/更新/删除以及子频道 CRUD。                     |
+| `Intents::GUILD_MEMBERS`                | `1 << 1`  | `with_guild_members`                 | 成员加入/更新/退出。                                    |
+| `Intents::GUILD_MESSAGES`（特权）       | `1 << 9`  | `with_guild_messages`                | 全部频道消息——需要特权审批。                            |
+| `Intents::GUILD_MESSAGE_REACTIONS`      | `1 << 10` | `with_guild_message_reactions`       | 频道消息表情回应增/删。                                 |
+| `Intents::DIRECT_MESSAGE`               | `1 << 12` | `with_direct_message`                | 私信创建/删除事件。                                     |
+| `Intents::OPEN_FORUM_EVENT`             | `1 << 18` | `with_open_forum_event`              | 公域论坛活动事件。                                      |
+| `Intents::AUDIO_OR_LIVE_CHANNEL_MEMBER` | `1 << 19` | `with_audio_or_live_channel_member`  | 语音/直播子频道的成员变化。                             |
+| `Intents::ENTER_AIO`                    | `1 << 23` | `with_enter_aio`                     | 用户进入 AIO 聊天面板。                                 |
+| `Intents::PUBLIC_MESSAGES`              | `1 << 25` | `with_public_messages`               | 群 `@bot` 消息、C2C 消息、好友事件。                    |
+| `Intents::INTERACTION`                  | `1 << 26` | `with_interaction`                   | 互动（按钮/应用）回调。                                 |
+| `Intents::MESSAGE_AUDIT`                | `1 << 27` | `with_message_audit`                 | 消息审核通过/拒绝。                                     |
+| `Intents::FORUMS`（特权）               | `1 << 28` | `with_forums`                        | 全部论坛事件——需要特权审批。                            |
+| `Intents::AUDIO_ACTION`                 | `1 << 29` | `with_audio_action`                  | 音频开始/结束/上麦/下麦事件。                           |
+| `Intents::PUBLIC_GUILD_MESSAGES`        | `1 << 30` | `with_public_guild_messages`         | `@bot` 消息及公域消息删除事件。                         |
 
-```rust
-use botrs::Intents;
+Go 风格别名 `IntentGuilds`、`IntentGuildMembers`、`IntentGuildMessages`、`IntentGroupMessages`、`IntentInteraction`…… 仍然保留，方便从官方 Go SDK 迁移过来的用户使用，对应的位完全一致。
 
-let intents = Intents::new();
-```
+## 查询
 
-### `none`
+对每个标志都有匹配的无参谓词：`intents.guilds()`、`intents.public_guild_messages()` 等。两个常用的辅助方法：
 
-创建一个没有启用任何 Intent 的集合。
+- `intents.contains(bits)` —— 通用位归属判断。
+- `intents.has_privileged()` —— 当 `GUILD_MESSAGES` 或 `FORUMS` 被启用时返回 `true`。
 
-```rust
-pub const fn none() -> Self
-```
+## 修改
 
-#### 示例
+- `with_intent(bits)` / `without_intent(bits)` —— 通用链式 setter。
+- `bits()` —— 返回原始 `u32`。
+- `Display` 实现会输出 `Intents(GUILDS | DIRECT_MESSAGE | …)`，便于日志记录。
 
-```rust
-let intents = Intents::none();
-```
-
-### `all`
-
-创建一个启用所有可用 Intent 的集合。
-
-```rust
-pub const fn all() -> Self
-```
-
-#### 示例
-
-```rust
-let intents = Intents::all();
-```
-
-### `default`
-
-创建一个包含常用 Intent 的默认集合。
+## 示例
 
 ```rust
-impl Default for Intents
-```
-
-默认 Intent 包括：
-- 频道事件
-- 公开频道消息
-- 私信消息
-
-#### 示例
-
-```rust
-let intents = Intents::default();
-```
-
-## 可用的 Intent 类型
-
-### 频道相关
-
-#### `GUILDS`
-
-接收频道创建、更新、删除事件。
-
-```rust
-pub const GUILDS: u32 = 1 << 0;
-```
-
-#### `GUILD_MEMBERS`
-
-接收频道成员加入、离开、更新事件。
-
-```rust
-pub const GUILD_MEMBERS: u32 = 1 << 1;
-```
-
-#### `GUILD_MESSAGES`
-
-接收频道内的消息事件（需要机器人被 @ 提及）。
-
-```rust
-pub const GUILD_MESSAGES: u32 = 1 << 9;
-```
-
-#### `GUILD_MESSAGE_REACTIONS`
-
-接收频道消息的表情回应事件。
-
-```rust
-pub const GUILD_MESSAGE_REACTIONS: u32 = 1 << 10;
-```
-
-### 消息相关
-
-#### `DIRECT_MESSAGE`
-
-接收私信消息事件。
-
-```rust
-pub const DIRECT_MESSAGE: u32 = 1 << 12;
-```
-
-#### `GROUP_AND_C2C_EVENT`
-
-接收群组和用户对用户事件。
-
-```rust
-pub const GROUP_AND_C2C_EVENT: u32 = 1 << 25;
-```
-
-#### `INTERACTION`
-
-接收交互事件（按钮点击、选择菜单等）。
-
-```rust
-pub const INTERACTION: u32 = 1 << 26;
-```
-
-#### `MESSAGE_AUDIT`
-
-接收消息审核事件。
-
-```rust
-pub const MESSAGE_AUDIT: u32 = 1 << 27;
-```
-
-### 论坛相关
-
-#### `FORUMS_EVENT`
-
-接收论坛相关事件。
-
-```rust
-pub const FORUMS_EVENT: u32 = 1 << 28;
-```
-
-#### `AUDIO_OR_LIVE_CHANNEL_MEMBER`
-
-接收音频或直播频道成员事件。
-
-```rust
-pub const AUDIO_OR_LIVE_CHANNEL_MEMBER: u32 = 1 << 29;
-```
-
-### 特殊权限
-
-#### `PUBLIC_GUILD_MESSAGES`
-
-接收公开频道消息（不需要 @ 提及）。
-
-```rust
-pub const PUBLIC_GUILD_MESSAGES: u32 = 1 << 30;
-```
-
-## Intent 构建方法
-
-### `with_guilds`
-
-启用频道事件。
-
-```rust
-pub const fn with_guilds(self) -> Self
-```
-
-#### 示例
-
-```rust
-let intents = Intents::new().with_guilds();
-```
-
-### `with_guild_members`
-
-启用频道成员事件。
-
-```rust
-pub const fn with_guild_members(self) -> Self
-```
-
-### `with_guild_messages`
-
-启用频道消息事件（@ 提及）。
-
-```rust
-pub const fn with_guild_messages(self) -> Self
-```
-
-### `with_public_guild_messages`
-
-启用公开频道消息事件。
-
-```rust
-pub const fn with_public_guild_messages(self) -> Self
-```
-
-### `with_guild_message_reactions`
-
-启用消息表情回应事件。
-
-```rust
-pub const fn with_guild_message_reactions(self) -> Self
-```
-
-### `with_direct_message`
-
-启用私信事件。
-
-```rust
-pub const fn with_direct_message(self) -> Self
-```
-
-### `with_group_and_c2c_event`
-
-启用群组和C2C事件。
-
-```rust
-pub const fn with_group_and_c2c_event(self) -> Self
-```
-
-### `with_interaction`
-
-启用交互事件。
-
-```rust
-pub const fn with_interaction(self) -> Self
-```
-
-### `with_message_audit`
-
-启用消息审核事件。
-
-```rust
-pub const fn with_message_audit(self) -> Self
-```
-
-### `with_forums_event`
-
-启用论坛事件。
-
-```rust
-pub const fn with_forums_event(self) -> Self
-```
-
-### `with_audio_or_live_channel_member`
-
-启用音频/直播频道成员事件。
-
-```rust
-pub const fn with_audio_or_live_channel_member(self) -> Self
-```
-
-## Intent 检查方法
-
-### `contains`
-
-检查是否包含指定的 Intent。
-
-```rust
-pub const fn contains(self, other: Self) -> bool
-```
-
-#### 示例
-
-```rust
-let intents = Intents::default().with_guilds();
-assert!(intents.contains(Intents::new().with_guilds()));
-```
-
-### `is_empty`
-
-检查是否为空（没有启用任何 Intent）。
-
-```rust
-pub const fn is_empty(self) -> bool
-```
-
-### `is_all`
-
-检查是否启用了所有 Intent。
-
-```rust
-pub const fn is_all(self) -> bool
-```
-
-## 位运算操作
-
-### `insert`
-
-添加指定的 Intent。
-
-```rust
-pub fn insert(&mut self, other: Self)
-```
-
-### `remove`
-
-移除指定的 Intent。
-
-```rust
-pub fn remove(&mut self, other: Self)
-```
-
-### `toggle`
-
-切换指定的 Intent。
-
-```rust
-pub fn toggle(&mut self, other: Self)
-```
-
-## 使用示例
-
-### 基础消息机器人
-
-```rust
-use botrs::{Client, Intents, Token};
-
-// 只接收 @ 提及的消息
-let intents = Intents::default()
-    .with_guild_messages();
-
-let client = Client::new(token, intents, handler, false)?;
-```
-
-### 全功能机器人
-
-```rust
-// 接收所有消息和事件
-let intents = Intents::default()
+// 1. 推荐默认值，不开启特权事件。
+let default_intents = Intents::default();
+
+// 2. 通过 builder 自定义订阅。
+let custom = Intents::none()
     .with_guilds()
-    .with_guild_members()
-    .with_guild_messages()
     .with_public_guild_messages()
-    .with_direct_message()
-    .with_interaction();
-```
-
-### 私信机器人
-
-```rust
-// 只处理私信
-let intents = Intents::new()
-    .with_direct_message();
-```
-
-### 群组机器人
-
-```rust
-// 处理群组和C2C消息
-let intents = Intents::new()
-    .with_group_and_c2c_event();
-```
-
-### 论坛机器人
-
-```rust
-// 处理论坛事件
-let intents = Intents::default()
-    .with_forums_event()
-    .with_guild_messages();
-```
-
-### 管理机器人
-
-```rust
-// 处理频道管理事件
-let intents = Intents::default()
-    .with_guilds()
-    .with_guild_members()
-    .with_message_audit();
-```
-
-### 音频机器人
-
-```rust
-// 处理音频频道事件
-let intents = Intents::default()
-    .with_audio_or_live_channel_member()
-    .with_guild_messages();
-```
-
-## 条件组合
-
-### 动态 Intent
-
-```rust
-fn build_intents(enable_public_messages: bool, enable_dm: bool) -> Intents {
-    let mut intents = Intents::default()
-        .with_guilds()
-        .with_guild_messages();
-    
-    if enable_public_messages {
-        intents = intents.with_public_guild_messages();
-    }
-    
-    if enable_dm {
-        intents = intents.with_direct_message();
-    }
-    
-    intents
-}
-```
-
-### 环境相关 Intent
-
-```rust
-fn production_intents() -> Intents {
-    Intents::default()
-        .with_guild_messages()
-        .with_direct_message()
-        .with_interaction()
-}
-
-fn development_intents() -> Intents {
-    Intents::all() // 开发环境接收所有事件
-}
-
-fn get_intents() -> Intents {
-    if cfg!(debug_assertions) {
-        development_intents()
-    } else {
-        production_intents()
-    }
-}
-```
-
-## 位运算示例
-
-### 手动位操作
-
-```rust
-use botrs::Intents;
-
-// 使用位运算直接构建
-let intents = Intents { 
-    bits: Intents::GUILDS | Intents::GUILD_MESSAGES | Intents::DIRECT_MESSAGE 
-};
-
-// 检查特定位
-if intents.bits & Intents::GUILDS != 0 {
-    println!("启用了频道事件");
-}
-
-// 添加新 Intent
-let mut intents = Intents::default();
-intents.bits |= Intents::INTERACTION;
-
-// 移除 Intent
-intents.bits &= !Intents::INTERACTION;
-```
-
-### 集合操作
-
-```rust
-let base_intents = Intents::default();
-let extra_intents = Intents::new()
-    .with_interaction()
-    .with_forums_event();
-
-// 合并 Intent
-let combined = Intents { 
-    bits: base_intents.bits | extra_intents.bits 
-};
-
-// 交集
-let intersection = Intents { 
-    bits: base_intents.bits & extra_intents.bits 
-};
-
-// 差集
-let difference = Intents { 
-    bits: base_intents.bits & !extra_intents.bits 
-};
-```
-
-## 调试和诊断
-
-### Intent 显示
-
-```rust
-impl std::fmt::Display for Intents {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let mut parts = Vec::new();
-        
-        if self.bits & Self::GUILDS != 0 {
-            parts.push("GUILDS");
-        }
-        if self.bits & Self::GUILD_MEMBERS != 0 {
-            parts.push("GUILD_MEMBERS");
-        }
-        if self.bits & Self::GUILD_MESSAGES != 0 {
-            parts.push("GUILD_MESSAGES");
-        }
-        if self.bits & Self::PUBLIC_GUILD_MESSAGES != 0 {
-            parts.push("PUBLIC_GUILD_MESSAGES");
-        }
-        if self.bits & Self::DIRECT_MESSAGE != 0 {
-            parts.push("DIRECT_MESSAGE");
-        }
-        
-        write!(f, "{}", parts.join(" | "))
-    }
-}
-
-// 使用
-let intents = Intents::default().with_guilds();
-println!("启用的 Intent: {}", intents);
-```
-
-### Intent 验证
-
-```rust
-fn validate_intents(intents: Intents) -> Result<(), String> {
-    if intents.is_empty() {
-        return Err("至少需要启用一个 Intent".to_string());
-    }
-    
-    // 检查权限组合
-    if intents.contains(Intents::new().with_public_guild_messages()) && 
-       !intents.contains(Intents::new().with_guilds()) {
-        return Err("PUBLIC_GUILD_MESSAGES 需要同时启用 GUILDS".to_string());
-    }
-    
-    Ok(())
-}
-```
-
-## 性能考虑
-
-### Intent 对性能的影响
-
-```rust
-// 高效：只启用必需的事件
-let efficient_intents = Intents::new()
-    .with_guild_messages()  // 只接收 @ 消息
-    .with_direct_message(); // 和私信
-
-// 低效：接收所有事件
-let inefficient_intents = Intents::all(); // 会接收大量不需要的事件
-```
-
-### 带宽优化
-
-```rust
-// 针对聊天机器人优化
-let chat_bot_intents = Intents::default()
-    .with_guild_messages()
     .with_direct_message();
 
-// 针对管理机器人优化
-let admin_bot_intents = Intents::default()
-    .with_guilds()
-    .with_guild_members()
-    .with_message_audit();
+// 3. 直接位组合（也可以用 Go 风格的别名）。
+let public = Intents::from_bits(IntentGuilds | IntentGuildAtMessage | IntentDirectMessages);
 
-// 针对音乐机器人优化
-let music_bot_intents = Intents::default()
-    .with_guild_messages()
-    .with_audio_or_live_channel_member();
+// 4. 运行时摘除某个标志。
+let trimmed = Intents::all().without_intent(Intents::FORUMS);
 ```
 
-## 最佳实践
+## 特权 intent
 
-1. **只启用必需的 Intent**：减少不必要的事件处理开销
-2. **使用链式调用**：提高代码可读性
-3. **环境区分**：开发和生产环境使用不同的 Intent 配置
-4. **文档记录**：清楚记录为什么需要特定的 Intent
-5. **定期审查**：随着功能变化调整 Intent 配置
+`GUILD_MESSAGES` 和 `FORUMS` 需要 QQ 开放平台手动审批通过。未获得审批的机器人在 identify 阶段会被网关断开。`Intents::default()` 默认不开启它们，方便所有机器人共用同一份代码路径。
 
-## 另请参阅
+```rust
+if intents.has_privileged() && !your_bot_is_approved {
+    return Err("特权 intent 未获审批".into());
+}
+```
 
-- [`Client`](./client.md) - 配置客户端时使用 Intent
-- [`EventHandler`](./event-handler.md) - 不同 Intent 对应的事件处理方法
-- [Intent 系统指南](/zh/guide/intents.md) - Intent 系统详细说明
-- [性能优化指南](/zh/guide/performance.md) - Intent 对性能的影响
+## 参见
+
+- [Bot API](./bot-api.md) —— 可能产出这些事件的全部接口。
+- [事件处理器](./event-handler.md) —— 接收这些 intent 选中的事件。
+- [网关指南](../guide/gateway.md) —— 框架如何使用所选 intent 建立会话。
