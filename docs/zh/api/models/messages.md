@@ -1,536 +1,119 @@
-# 消息模型 API 参考
+# 消息
 
-该模块为 QQ 频道机器人 API 中不同类型的消息提供数据结构，包括频道消息、私信、群聊消息和 C2C（客户端到客户端）消息。
+QQ 频道机器人 API 中的消息数据结构。框架将网关事件载荷（入站消息）与发送参数对象（出站请求体）分开建模。
 
-## 核心消息类型
+## 入站消息
 
 ### `Message`
 
-表示频道中的消息。
+频道（包含 @ 提及）消息。
 
 ```rust
 pub struct Message {
-    pub id: String,
+    pub id: Option<Snowflake>,
     pub content: Option<String>,
-    pub channel_id: String,
-    pub guild_id: String,
+    pub channel_id: Option<Snowflake>,
+    pub guild_id: Option<Snowflake>,
+    pub group_id: Option<Snowflake>,
     pub author: Option<MessageUser>,
     pub member: Option<MessageMember>,
     pub message_reference: Option<MessageReference>,
     pub mentions: Vec<MessageUser>,
     pub attachments: Vec<MessageAttachment>,
+    pub embeds: Vec<Embed>,
+    pub ark: Option<Ark>,
+    pub direct_message: Option<bool>,
     pub seq: Option<u64>,
     pub seq_in_channel: Option<String>,
-    pub timestamp: Option<String>,
+    pub timestamp: Option<Timestamp>,
+    pub edited_timestamp: Option<Timestamp>,
+    pub mention_everyone: Option<bool>,
+    pub src_guild_id: Option<Snowflake>,
+    pub file_info: Option<String>,
+    pub ttl: Option<u32>,
+    pub message_scene: Option<MessageScene>,
     pub event_id: Option<String>,
 }
 ```
 
-#### 方法
+字符串字段大量使用 `Option<Snowflake>`，因为 QQ 接口可能在部分载荷中省略它们。`Message` 提供的便捷方法：
 
-##### `reply`
+- `reply(api, token, content)` —— 文本回复，会自动设置 `msg_id` 走被动消息路径。
+- `is_from_bot()`、`has_content()`、`has_attachments()`、`has_mentions()` —— 常用判断。
 
-回复消息，发送文本内容。
+### `GroupMessage` 与 `C2CMessage`
 
-```rust
-pub async fn reply(
-    &self,
-    api: &BotApi,
-    token: &Token,
-    content: &str,
-) -> Result<Message>
-```
-
-**参数：**
-- `api`: 机器人 API 客户端实例
-- `token`: 认证令牌
-- `content`: 回复文本内容
-
-**示例：**
-```rust
-async fn handle_message(ctx: Context, message: Message) {
-    if let Some(content) = &message.content {
-        if content == "!ping" {
-            message.reply(&ctx.api, &ctx.token, "Pong!").await?;
-        }
-    }
-}
-```
-
-##### `is_from_bot`
-
-检查消息是否由机器人发送。
-
-```rust
-pub fn is_from_bot(&self) -> bool
-```
-
-**返回值：** 如果消息作者是机器人则返回 `true`，否则返回 `false`。
-
-**示例：**
-```rust
-if message.is_from_bot() {
-    // 忽略机器人消息
-    return;
-}
-```
-
-##### `has_content`
-
-检查消息是否包含文本内容。
-
-```rust
-pub fn has_content(&self) -> bool
-```
-
-##### `has_attachments`
-
-检查消息是否包含文件附件。
-
-```rust
-pub fn has_attachments(&self) -> bool
-```
-
-##### `has_mentions`
-
-检查消息是否提及其他用户。
-
-```rust
-pub fn has_mentions(&self) -> bool
-```
-
-### `DirectMessage`
-
-表示 direct-message OpenAPI 返回的私信会话。网关私信创建事件使用
-`Message`。
-
-```rust
-pub struct DirectMessage {
-    pub guild_id: Option<String>,
-    pub channel_id: Option<String>,
-    pub create_time: Option<String>,
-}
-```
-
-#### 别名
-
-```rust
-pub type DirectMessageSession = DirectMessage;
-```
-
-### `GroupMessage`
-
-表示 QQ 群中的消息。
+群消息（群 `@bot`）和 C2C（私聊）消息结构相似，都使用 OpenID 标识用户：
 
 ```rust
 pub struct GroupMessage {
-    pub id: String,
+    pub id: Option<Snowflake>,
     pub content: Option<String>,
     pub message_reference: Option<MessageReference>,
     pub mentions: Vec<GroupMessageUser>,
     pub attachments: Vec<MessageAttachment>,
     pub msg_seq: Option<u64>,
-    pub timestamp: Option<String>,
+    pub timestamp: Option<Timestamp>,
     pub author: Option<GroupMessageUser>,
     pub group_openid: Option<String>,
     pub event_id: Option<String>,
 }
 ```
 
-#### 方法
+`C2CMessage` 形状相同，只是 `author`/`mentions` 的类型变成 `C2CMessageUser`。
 
-##### `reply`
+### `DirectMessage`
 
-回复群消息。
-
-```rust
-pub async fn reply(
-    &self,
-    api: &BotApi,
-    token: &Token,
-    content: &str,
-) -> Result<GroupMessage>
-```
-
-### `C2CMessage`
-
-表示客户端到客户端的消息。
+`DirectMessage` 是私信**会话**对象（由创建私信会话的接口返回），并不是网关上的消息事件。私信网关事件仍然使用 `Message`，并把 `direct_message` 置为 `Some(true)`。
 
 ```rust
-pub struct C2CMessage {
-    pub id: String,
-    pub content: Option<String>,
-    pub message_reference: Option<MessageReference>,
-    pub mentions: Vec<C2CMessageUser>,
-    pub attachments: Vec<MessageAttachment>,
-    pub msg_seq: Option<u64>,
-    pub timestamp: Option<String>,
-    pub author: Option<C2CMessageUser>,
-    pub event_id: Option<String>,
+pub struct DirectMessage {
+    pub guild_id: Option<Snowflake>,
+    pub channel_id: Option<Snowflake>,
+    pub create_time: Option<String>,
 }
 ```
 
-#### 方法
+`DirectMessageSession` 是 `DirectMessage` 的别名。
 
-##### `reply`
+## 出站参数对象
 
-回复 C2C 消息。
+发送侧使用构建器结构体，避免老接口里一长串 `Option<...>` 参数：
 
-```rust
-pub async fn reply(
-    &self,
-    api: &BotApi,
-    token: &Token,
-    content: &str,
-) -> Result<C2CMessage>
-```
+| 结构体                  | 对应接口                                   |
+|-------------------------|--------------------------------------------|
+| `MessageParams`         | `BotApi::post_message_with_params`         |
+| `DirectMessageParams`   | `BotApi::post_direct_message_with_params`  |
+| `GroupMessageParams`    | `BotApi::post_group_message_with_params`   |
+| `C2CMessageParams`      | `BotApi::post_c2c_message_with_params`     |
 
-## 用户类型
-
-### `MessageUser`
-
-频道消息中的用户信息。
+每个结构体都暴露 `new_text(content)`、`new_embed(embed)`、`new_markdown(...)` 等构造器，以及链式 setter，例如 `with_reply(message_id)`、`with_keyboard(keyboard)`、`with_file_image(bytes)`。把构建好的参数交给对应的 `post_*_with_params` 方法即可。
 
 ```rust
-pub struct MessageUser {
-    pub id: String,
-    pub username: Option<String>,
-    pub bot: Option<bool>,
-    pub avatar: Option<String>,
-}
+let params = MessageParams::new_text("Pong!").with_reply(message_id);
+api.post_message_with_params(&token, &channel_id, params).await?;
 ```
 
-### `DirectMessageUser`
-
-私信中的用户信息。
-
-```rust
-pub struct DirectMessageUser {
-    pub id: String,
-    pub username: Option<String>,
-    pub avatar: Option<String>,
-}
-```
-
-### `GroupMessageUser`
-
-群消息中的用户信息。
-
-```rust
-pub struct GroupMessageUser {
-    pub id: Option<String>,
-    pub member_openid: Option<String>,
-    pub union_openid: Option<String>,
-}
-```
-
-### `C2CMessageUser`
-
-C2C 消息中的用户信息。
-
-```rust
-pub struct C2CMessageUser {
-    pub user_openid: Option<String>,
-}
-```
-
-## 富内容类型
-
-### `Embed`
-
-消息的富嵌入内容。
-
-```rust
-pub struct Embed {
-    pub title: Option<String>,
-    pub description: Option<String>,
-    pub url: Option<String>,
-    pub timestamp: Option<String>,
-    pub color: Option<u32>,
-    pub footer: Option<EmbedFooter>,
-    pub image: Option<EmbedImage>,
-    pub thumbnail: Option<EmbedThumbnail>,
-    pub video: Option<EmbedVideo>,
-    pub provider: Option<EmbedProvider>,
-    pub author: Option<EmbedAuthor>,
-    pub fields: Vec<EmbedField>,
-}
-```
-
-### `EmbedField`
-
-嵌入内容中的字段。
-
-```rust
-pub struct EmbedField {
-    pub name: String,
-    pub value: String,
-    pub inline: Option<bool>,
-}
-```
-
-### `Ark`
-
-用于富交互内容的 ARK 模板消息。
-
-```rust
-pub struct Ark {
-    pub template_id: Option<u32>,
-    pub kv: Vec<ArkKv>,
-}
-```
-
-### `Keyboard`
-
-交互式键盘按钮。
-
-```rust
-pub struct Keyboard {
-    pub content: Option<KeyboardContent>,
-}
-```
-
-### `KeyboardButton`
-
-交互式键盘中的按钮。
-
-```rust
-pub struct KeyboardButton {
-    pub id: Option<String>,
-    pub render_data: Option<KeyboardButtonRenderData>,
-    pub action: Option<KeyboardButtonAction>,
-}
-```
-
-## 消息参数
-
-### `MessageParams`
-
-发送频道消息的参数。
-
-```rust
-pub struct MessageParams {
-    pub content: Option<String>,
-    pub embed: Option<Embed>,
-    pub ark: Option<Ark>,
-    pub message_reference: Option<Reference>,
-    pub image: Option<String>,
-    pub file_image: Option<String>,
-    pub msg_id: Option<String>,
-    pub event_id: Option<String>,
-    pub markdown: Option<MarkdownPayload>,
-    pub keyboard: Option<Keyboard>,
-}
-```
-
-#### 方法
-
-##### `new_text`
-
-创建包含文本内容的消息参数。
-
-```rust
-pub fn new_text(content: &str) -> Self
-```
-
-##### `with_file_image`
-
-为消息添加文件图片。
-
-```rust
-pub fn with_file_image(mut self, file_info: &str) -> Self
-```
-
-##### `with_reply`
-
-将消息设置为对另一条消息的回复。
-
-```rust
-pub fn with_reply(mut self, message_id: &str) -> Self
-```
-
-**示例：**
-```rust
-let params = MessageParams::new_text("你好！")
-    .with_file_image("file_info_string")
-    .with_reply("original_message_id");
-```
-
-### `GroupMessageParams`
-
-发送群消息的参数。
-
-```rust
-pub struct GroupMessageParams {
-    pub msg_type: Option<u32>,
-    pub content: Option<String>,
-    pub embed: Option<Embed>,
-    pub ark: Option<Ark>,
-    pub message_reference: Option<Reference>,
-    pub media: Option<Media>,
-    pub msg_id: Option<String>,
-    pub msg_seq: Option<u64>,
-    pub event_id: Option<String>,
-    pub markdown: Option<MarkdownPayload>,
-    pub keyboard: Option<Keyboard>,
-}
-```
-
-### `C2CMessageParams`
-
-发送 C2C 消息的参数。
-
-```rust
-pub struct C2CMessageParams {
-    pub msg_type: Option<u32>,
-    pub content: Option<String>,
-    pub embed: Option<Embed>,
-    pub ark: Option<Ark>,
-    pub message_reference: Option<Reference>,
-    pub media: Option<Media>,
-    pub msg_id: Option<String>,
-    pub msg_seq: Option<u64>,
-    pub event_id: Option<String>,
-    pub markdown: Option<MarkdownPayload>,
-    pub keyboard: Option<Keyboard>,
-}
-```
-
-### `DirectMessageParams`
-
-发送私信的参数。
-
-```rust
-pub struct DirectMessageParams {
-    pub content: Option<String>,
-    pub embed: Option<Embed>,
-    pub ark: Option<Ark>,
-    pub message_reference: Option<Reference>,
-    pub image: Option<String>,
-    pub file_image: Option<String>,
-    pub msg_id: Option<String>,
-    pub event_id: Option<String>,
-    pub markdown: Option<MarkdownPayload>,
-    pub keyboard: Option<Keyboard>,
-}
-```
-
-## 附件和媒体
-
-### `MessageAttachment`
-
-消息中的文件附件。
-
-```rust
-pub struct MessageAttachment {
-    pub id: Option<String>,
-    pub filename: Option<String>,
-    pub content_type: Option<String>,
-    pub size: Option<u64>,
-    pub url: Option<String>,
-    pub width: Option<u32>,
-    pub height: Option<u32>,
-}
-```
-
-#### 方法
-
-##### `is_image`
-
-检查附件是否为图片。
-
-```rust
-pub fn is_image(&self) -> bool
-```
-
-##### `is_video`
-
-检查附件是否为视频。
-
-```rust
-pub fn is_video(&self) -> bool
-```
-
-##### `is_audio`
-
-检查附件是否为音频文件。
-
-```rust
-pub fn is_audio(&self) -> bool
-```
-
-### `Media`
-
-消息的媒体内容。
-
-```rust
-pub struct Media {
-    pub file_info: Option<String>,
-    pub ttl: Option<u32>,
-}
-```
-
-## 常见使用模式
-
-### 基础文本回复
-
-```rust
-async fn handle_message(ctx: Context, message: Message) {
-    if let Some(content) = &message.content {
-        if content.starts_with("!echo ") {
-            let echo_text = &content[6..];
-            message.reply(&ctx.api, &ctx.token, echo_text).await?;
-        }
-    }
-}
-```
-
-### 富嵌入响应
-
-```rust
-use botrs::models::message::{Embed, EmbedField};
-
-let embed = Embed {
-    title: Some("机器人信息".to_string()),
-    description: Some("使用 BotRS 构建的 QQ 频道机器人".to_string()),
-    color: Some(0x00ff00),
-    fields: vec![
-        EmbedField {
-            name: "版本".to_string(),
-            value: "0.2.5".to_string(),
-            inline: Some(true),
-        },
-        EmbedField {
-            name: "语言".to_string(),
-            value: "Rust".to_string(),
-            inline: Some(true),
-        },
-    ],
-    ..Default::default()
-};
-
-let params = MessageParams {
-    embed: Some(embed),
-    ..Default::default()
-};
-```
-
-### 文件上传
-
-```rust
-let params = MessageParams::new_text("这是一张图片！")
-    .with_file_image("base64_encoded_file_info");
-```
-
-### 消息引用
-
-```rust
-let params = MessageParams::new_text("这是一条回复")
-    .with_reply(&original_message.id);
-```
-
-## 相关文档
-
-- [客户端 API](../client.md) - 机器人操作的主要客户端
-- [上下文 API](../context.md) - 传递给事件处理器的上下文对象
-- [事件处理器](../event-handler.md) - 处理不同消息事件
+## 配套类型
+
+| 类型                | 用途                                                 |
+|---------------------|------------------------------------------------------|
+| `Embed`             | 嵌入式消息（标题、描述、字段、缩略图）。             |
+| `Ark`               | Ark 模板消息（`template_id` + `kv` 数组）。          |
+| `MarkdownPayload`   | Markdown 发送体（模板 id、内容、参数等）。           |
+| `MessageKeyboard`   | 行内键盘（按钮组合）。                               |
+| `MessageReference`  | `{ message_id, ignore_get_message_error }`。         |
+| `MessageAttachment` | 附件元信息（URL、文件名、大小……）。                  |
+| `MessageAudit`      | 审核网关事件的载荷。                                 |
+| `MessageDelete`     | 撤回事件载荷，包含 `message` 与 `op_user`。          |
+| `MessageScene`      | 入站事件中的场景标记（群聊、C2C、频道）。            |
+
+## 消息作者类型
+
+参见 [用户与成员 - 消息作者类型](./users-members.md#消息作者类型) 了解 `MessageUser`、`DirectMessageUser`、`GroupMessageUser`、`C2CMessageUser` 的结构。
+
+## 参见
+
+- [消息指南](../../guide/messages.md) —— 任务导向的使用说明。
+- [Bot API](../bot-api.md) —— 全部 `post_*_with_params` 路由。
+- [其他类型](./other-types.md) —— 嵌入、键盘、Ark、附件等附属结构。

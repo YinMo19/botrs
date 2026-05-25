@@ -1,518 +1,93 @@
-# 用户与成员模型 API 参考
+# 用户与成员
 
-该模块为 QQ 频道机器人 API 中的用户信息、频道成员和相关实体提供数据结构。
+QQ 频道机器人 API 中的用户和成员数据结构。所有结构体都实现了 `Serialize` + `Deserialize`，并通过 `#[serde(default)]` 容忍缺失字段，便于反序列化部分载荷。
 
-## 核心类型
+## `User`
 
-### `User`
-
-表示系统中的 QQ 用户。
+频道接口返回的标准用户对象。
 
 ```rust
 pub struct User {
-    pub id: String,
+    pub id: Snowflake,
     pub username: String,
-    pub avatar: String,
+    pub avatar: String,           // 头像哈希，未设置时为空
     pub bot: bool,
-    pub union_openid: String,
+    pub union_openid: String,     // 跨应用标识
     pub union_user_account: String,
 }
 ```
 
-#### 字段
+`Snowflake` 是 `String` 的类型别名。`User::avatar_url()` 用哈希拼出 CDN 地址，`User::mention()` 返回 `<@!id>` 的 mention 串。
 
-- `id`: 唯一用户标识符
-- `username`: 用户的显示名称
-- `avatar`: 头像图片 URL
-- `bot`: 该用户是否为机器人账户
-- `union_openid`: 用户的跨平台标识符
-- `union_user_account`: 联合账户标识符
+## `Member`
 
-#### 示例
-
-```rust
-async fn handle_user_info(user: User) {
-    println!("用户: {}", user.username);
-    
-    if user.bot {
-        println!("这是一个机器人账户");
-    }
-    
-    if !user.avatar.is_empty() {
-        println!("头像 URL: {}", user.avatar);
-    }
-}
-```
-
-### `Member`
-
-表示频道成员，包含用户信息以及频道特定数据。
+频道作用域下的 `User` 包装。
 
 ```rust
 pub struct Member {
-    pub guild_id: String,
-    pub user: Option<User>,
-    pub nick: String,
-    pub roles: Vec<String>,
-    pub joined_at: String,
-    pub op_user_id: String,
-}
-```
-
-#### 字段
-
-- `guild_id`: 频道 ID
-- `user`: 该成员的用户信息
-- `nick`: 成员在频道中的昵称
-- `roles`: 分配给成员的身份组 ID 列表
-- `joined_at`: 成员加入频道的时间戳
-- `op_user_id`: 操作人用户 ID
-
-#### 方法
-
-##### `display_name`
-
-获取成员的显示名称（昵称或用户名）。
-
-```rust
-pub fn display_name(&self) -> &str
-```
-
-**返回值：** 成员的昵称（如果有），否则返回用户名，如果都没有则返回 "未知"。
-
-**示例：**
-```rust
-let display_name = member.display_name();
-println!("成员显示名称: {}", display_name);
-```
-
-##### `is_bot`
-
-检查成员是否为机器人。
-
-```rust
-pub fn is_bot(&self) -> bool
-```
-
-**示例：**
-```rust
-if member.is_bot() {
-    println!("这个成员是机器人");
-}
-```
-
-##### `has_role`
-
-检查成员是否拥有特定身份组。
-
-```rust
-pub fn has_role(&self, role_id: &str) -> bool
-```
-
-**参数：**
-- `role_id`: 要检查的身份组 ID
-
-**示例：**
-```rust
-if member.has_role("admin_role_id") {
-    println!("成员拥有管理员身份组");
-}
-```
-
-### `MessageUser`
-
-消息中的用户信息的简化版本。
-
-```rust
-pub struct MessageUser {
-    pub id: String,
-    pub username: Option<String>,
-    pub bot: Option<bool>,
-    pub avatar: Option<String>,
-}
-```
-
-#### 字段
-
-- `id`: 用户唯一标识符
-- `username`: 用户显示名称
-- `bot`: 是否为机器人账户
-- `avatar`: 头像 URL
-
-#### 方法
-
-##### `from_data`
-
-从 JSON 数据创建 MessageUser 实例。
-
-```rust
-pub fn from_data(data: serde_json::Value) -> Self
-```
-
-**示例：**
-```rust
-let user = MessageUser::from_data(json_data);
-```
-
-### `MessageMember`
-
-消息中的成员信息。
-
-```rust
-pub struct MessageMember {
+    #[serde(flatten)]
+    pub user: User,
     pub nick: Option<String>,
-    pub roles: Option<Vec<String>>,
-    pub joined_at: Option<chrono::DateTime<chrono::Utc>>,
+    pub roles: Vec<Snowflake>,
+    pub joined_at: Timestamp,
+    pub deaf: bool,
+    pub mute: bool,
 }
 ```
 
-#### 字段
+`Timestamp` 是 RFC 3339 字符串。`display_name()` 优先返回 `nick`，否则返回 `user.username`；`has_role(&id)`/`has_any_role(&ids)`/`has_all_roles(&ids)` 用于角色判断。
 
-- `nick`: 成员昵称
-- `roles`: 身份组列表
-- `joined_at`: 加入时间
+> 注：成员相关网关事件使用另一份 `Member` —— 见 [`models::guild::Member`](./guilds-channels.md)，它把 `guild_id` 和 `op_user_id` 单独保留为字段。
 
-## 群聊和 C2C 用户类型
+## `BotInfo`
 
-### `GroupMessageUser`
-
-群消息中的用户信息。
+`/users/@me` 返回的机器人自身信息。
 
 ```rust
-pub struct GroupMessageUser {
-    pub id: Option<String>,
-    pub member_openid: Option<String>,
-    pub union_openid: Option<String>,
-}
-```
-
-#### 字段
-
-- `id`: 用户 ID（可选）
-- `member_openid`: 成员 OpenID
-- `union_openid`: 联合 OpenID
-
-### `C2CMessageUser`
-
-C2C 消息中的用户信息。
-
-```rust
-pub struct C2CMessageUser {
-    pub user_openid: Option<String>,
-}
-```
-
-#### 字段
-
-- `user_openid`: 用户 OpenID
-
-### `DirectMessageUser`
-
-私信中的用户信息。
-
-```rust
-pub struct DirectMessageUser {
-    pub id: String,
-    pub username: Option<String>,
+pub struct BotInfo {
+    pub id: Snowflake,
+    pub username: String,
     pub avatar: Option<String>,
+    pub bot: bool,
 }
 ```
 
-#### 字段
+`Ready::user` 在 `EventHandler::ready` 回调中暴露这个对象。
 
-- `id`: 用户 ID
-- `username`: 用户名
-- `avatar`: 头像 URL
+## 消息作者类型
 
-### `DirectMessageMember`
+不同会话场景下的作者结构略有差异，所有字段均为 `Option`，因为接口可能省略。
 
-私信中的成员信息。
+| 类型                 | 出现位置                    | 关键字段                                  |
+|----------------------|-----------------------------|-------------------------------------------|
+| `MessageUser`        | 频道消息（`Message`）       | `id`、`username`、`avatar`、`bot`         |
+| `DirectMessageUser`  | 私信                        | `id`、`username`、`avatar`                |
+| `GroupMessageUser`   | 群 `@bot` 消息              | `id`、`member_openid`、`union_openid`     |
+| `C2CMessageUser`     | C2C（私聊）消息             | `id`、`user_openid`                       |
+
+群聊和 C2C 不暴露真实的频道用户 ID，使用 `*_openid` 标识用户。
+
+## 成员相关操作
+
+常用方法挂在 `BotApi` / `Context` 上：
+
+- `get_guild_member(guild_id, user_id)` —— 获取单个成员。
+- `get_guild_members(guild_id, limit, after)` —— 分页列表，下页传上页最后一个 `user.id` 作 `after`。
+- `add_guild_role_member` / `remove_guild_role_member` —— 角色赋予和移除。
+- `kick_member` —— 接受拉黑天数和原因。
+- `mute_member`、`mute_all`、`cancel_mute_all`、`on_microphone`、`off_microphone` —— 语音控制。
+
+每个方法都返回 `Result<T>`，QQ 接口错误会被映射为 `BotError`。
 
 ```rust
-pub struct DirectMessageMember {
-    pub nick: Option<String>,
-    pub roles: Option<Vec<String>>,
-    pub joined_at: Option<chrono::DateTime<chrono::Utc>>,
+let member = ctx.api.get_guild_member(&ctx.token, guild_id, user_id).await?;
+if member.has_role(&moderator_role_id) {
+    // 执行管理操作
 }
 ```
 
-## 用户管理操作
+## 参见
 
-### 获取用户信息
-
-```rust
-async fn get_user_details(ctx: Context, user_id: &str) -> Result<()> {
-    // 获取用户基本信息
-    let user = ctx.get_current_user().await?;
-    println!("当前用户: {}", user.username);
-    
-    // 在特定频道中获取用户信息
-    let guild_id = "guild_id_here";
-    let member = ctx.get_guild_member(guild_id, user_id).await?;
-    
-    if let Some(user) = &member.user {
-        println!("频道成员: {}", user.username);
-        
-        if !member.nick.is_empty() {
-            println!("昵称: {}", member.nick);
-        }
-        
-        println!("身份组: {:?}", member.roles);
-    }
-    
-    Ok(())
-}
-```
-
-### 成员管理
-
-```rust
-async fn manage_member(ctx: Context, guild_id: &str, user_id: &str) -> Result<()> {
-    // 获取成员信息
-    let member = ctx.get_guild_member(guild_id, user_id).await?;
-    println!("成员显示名称: {}", member.display_name());
-    
-    // 检查成员权限
-    if member.has_role("moderator_role_id") {
-        println!("成员拥有版主权限");
-    }
-    
-    // 为成员添加身份组
-    let role_id = "new_role_id";
-    ctx.add_guild_role_member(guild_id, role_id, user_id, None).await?;
-    println!("已为成员添加身份组");
-    
-    // 从成员移除身份组
-    ctx.remove_guild_role_member(guild_id, role_id, user_id, None).await?;
-    println!("已从成员移除身份组");
-    
-    Ok(())
-}
-```
-
-### 批量用户操作
-
-```rust
-async fn bulk_user_operations(ctx: Context, guild_id: &str) -> Result<()> {
-    // 获取所有成员
-    let members = ctx.get_guild_members(guild_id, Some(1000), None).await?;
-    
-    let mut bot_count = 0;
-    let mut human_count = 0;
-    let mut admin_count = 0;
-    
-    for member in &members {
-        if member.is_bot() {
-            bot_count += 1;
-        } else {
-            human_count += 1;
-        }
-        
-        if member.has_role("admin_role_id") {
-            admin_count += 1;
-        }
-    }
-    
-    println!("频道统计:");
-    println!("  机器人: {}", bot_count);
-    println!("  人类用户: {}", human_count);
-    println!("  管理员: {}", admin_count);
-    println!("  总成员: {}", members.len());
-    
-    // 找到最近加入的成员
-    let mut recent_members: Vec<_> = members.iter()
-        .filter(|m| !m.joined_at.is_empty())
-        .collect();
-    
-    recent_members.sort_by(|a, b| {
-        b.joined_at.cmp(&a.joined_at)
-    });
-    
-    println!("最近加入的 5 个成员:");
-    for member in recent_members.iter().take(5) {
-        println!("  - {}", member.display_name());
-        if !member.joined_at.is_empty() {
-            println!("    加入时间: {}", member.joined_at);
-        }
-    }
-    
-    Ok(())
-}
-```
-
-### 用户权限检查
-
-```rust
-async fn check_user_permissions(ctx: Context, guild_id: &str, user_id: &str) -> Result<()> {
-    let member = ctx.get_guild_member(guild_id, user_id).await?;
-    
-    // 检查特定身份组
-    let admin_roles = ["admin", "moderator", "owner"];
-    let is_admin = admin_roles.iter().any(|role| member.has_role(role));
-    
-    if is_admin {
-        println!("用户 {} 拥有管理权限", member.display_name());
-    } else {
-        println!("用户 {} 是普通成员", member.display_name());
-    }
-    
-    // 获取用户在特定子频道的权限
-    let channel_id = "channel_id_here";
-    let permissions = ctx.get_channel_user_permissions(channel_id, user_id).await?;
-    println!("用户在子频道中的权限: {}", permissions.permissions);
-    
-    Ok(())
-}
-```
-
-## 消息中的用户处理
-
-### 处理用户提及
-
-```rust
-use botrs::{Context, EventHandler, Message};
-
-struct UserMentionHandler;
-
-#[async_trait::async_trait]
-impl EventHandler for UserMentionHandler {
-    async fn message_create(&self, ctx: Context, message: Message) {
-        if message.has_mentions() {
-            println!("消息包含 {} 个用户提及", message.mentions.len());
-            
-            for mentioned_user in &message.mentions {
-                println!("提及用户: {}", 
-                    mentioned_user.username);
-                
-                if mentioned_user.bot {
-                    println!("  这是一个机器人");
-                }
-            }
-            
-            // 回复提及消息
-            let response = format!(
-                "检测到 {} 个用户提及", 
-                message.mentions.len()
-            );
-            
-            if let Err(e) = message.reply(&ctx.api, &ctx.token, &response).await {
-                eprintln!("回复失败: {}", e);
-            }
-        }
-    }
-}
-```
-
-### 用户信息展示
-
-```rust
-async fn display_user_card(ctx: Context, user: User, member: Option<Member>) -> String {
-    let mut card = format!("用户信息卡片\n");
-    card.push_str(&format!("ID: {}\n", user.id));
-    card.push_str(&format!("用户名: {}\n", 
-        user.username));
-    
-    if user.bot {
-        card.push_str("类型: 机器人\n");
-    } else {
-        card.push_str("类型: 用户\n");
-    }
-    
-    if !user.avatar.is_empty() {
-        card.push_str(&format!("头像: {}\n", user.avatar));
-    }
-    
-    if let Some(member) = member {
-        if !member.nick.is_empty() {
-            card.push_str(&format!("昵称: {}\n", member.nick));
-        }
-        
-        if !member.roles.is_empty() {
-            card.push_str(&format!("身份组数量: {}\n", member.roles.len()));
-        }
-        
-        if !member.joined_at.is_empty() {
-            card.push_str(&format!("加入时间: {}\n", member.joined_at));
-        }
-    }
-    
-    card
-}
-```
-
-## 常见使用模式
-
-### 用户验证
-
-```rust
-async fn verify_user_access(ctx: Context, guild_id: &str, user_id: &str, required_role: &str) -> Result<bool> {
-    let member = ctx.get_guild_member(guild_id, user_id).await?;
-    
-    // 检查用户是否为机器人
-    if member.is_bot() {
-        return Ok(false);
-    }
-    
-    // 检查用户是否拥有所需身份组
-    if !member.has_role(required_role) {
-        return Ok(false);
-    }
-    
-    Ok(true)
-}
-```
-
-### 用户活动分析
-
-```rust
-async fn analyze_user_activity(ctx: Context, guild_id: &str) -> Result<()> {
-    let members = ctx.get_guild_members(guild_id, Some(1000), None).await?;
-    
-    // 按加入时间分组
-    let now = chrono::Utc::now();
-    let mut new_members = 0;
-    let mut recent_members = 0;
-    let mut old_members = 0;
-    
-    for member in &members {
-        if let Ok(joined) = chrono::DateTime::parse_from_rfc3339(&member.joined_at) {
-            let days_ago = (now - joined.with_timezone(&chrono::Utc)).num_days();
-
-            if days_ago <= 7 {
-                new_members += 1;
-            } else if days_ago <= 30 {
-                recent_members += 1;
-            } else {
-                old_members += 1;
-            }
-        }
-    }
-    
-    println!("成员活动分析:");
-    println!("  新成员 (7天内): {}", new_members);
-    println!("  近期成员 (30天内): {}", recent_members);
-    println!("  老成员 (30天以上): {}", old_members);
-    
-    // 身份组分布
-    let mut role_distribution = std::collections::HashMap::new();
-    for member in &members {
-        for role_id in &member.roles {
-            *role_distribution.entry(role_id.clone()).or_insert(0) += 1;
-        }
-    }
-    
-    println!("身份组分布:");
-    for (role_id, count) in role_distribution {
-        println!("  {}: {} 人", role_id, count);
-    }
-    
-    Ok(())
-}
-```
-
-## 相关文档
-
-- [客户端 API](../client.md) - 用户和成员操作的主要客户端
-- [上下文 API](../context.md) - API 访问的上下文对象
-- [消息](./messages.md) - 消息中的用户信息处理
-- [频道与子频道](./guilds-channels.md) - 频道成员管理
+- [消息](./messages.md) —— 消息结构以及消息作者类型在场景中的使用。
+- [频道与子频道](./guilds-channels.md) —— 频道侧的 `Member` 变体和角色数据。
+- [Client API](../client.md) —— `Context` 暴露的用户作用域辅助方法。
