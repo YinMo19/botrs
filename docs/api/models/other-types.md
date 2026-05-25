@@ -237,16 +237,19 @@ Represents user interactions with bot components.
 
 ```rust
 pub struct Interaction {
-    pub id: String,
-    pub application_id: String,
-    pub interaction_type: InteractionType,
-    pub data: Option<InteractionData>,
+    pub id: Option<String>,
+    pub application_id: Option<String>,
+    pub interaction_type: Option<InteractionType>,
+    pub data: InteractionData,
     pub guild_id: Option<String>,
     pub channel_id: Option<String>,
-    pub user: Option<User>,
-    pub member: Option<Member>,
-    pub token: String,
-    pub version: u32,
+    pub group_openid: Option<String>,
+    pub chat_type: Option<u64>,
+    pub scene: Option<String>,
+    pub user_openid: Option<String>,
+    pub timestamp: Option<String>,
+    pub group_member_openid: Option<String>,
+    pub version: Option<u64>,
 }
 ```
 
@@ -258,9 +261,6 @@ pub struct Interaction {
 - `data`: Interaction-specific data
 - `guild_id`: Guild where interaction occurred
 - `channel_id`: Channel where interaction occurred
-- `user`: User who triggered the interaction
-- `member`: Member information if in guild
-- `token`: Interaction token for responses
 - `version`: API version
 
 ### `InteractionType`
@@ -271,7 +271,8 @@ Types of user interactions.
 pub enum InteractionType {
     Ping = 1,
     ApplicationCommand = 2,
-    MessageComponent = 3,
+    HttpProxy = 10,
+    InlineKeyboard = 11,
 }
 ```
 
@@ -279,7 +280,8 @@ pub enum InteractionType {
 
 - `Ping`: Ping interaction for verification
 - `ApplicationCommand`: Slash command execution
-- `MessageComponent`: Button or select menu interaction
+- `HttpProxy`: HTTP proxy interaction
+- `InlineKeyboard`: Inline keyboard interaction
 
 ### `InteractionData`
 
@@ -287,8 +289,9 @@ Data payload for interactions.
 
 ```rust
 pub struct InteractionData {
-    pub data_type: InteractionDataType,
-    pub resolved: Option<serde_json::Value>,
+    pub name: String,
+    pub data_type: Option<InteractionDataType>,
+    pub resolved: Resolved,
 }
 ```
 

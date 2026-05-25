@@ -54,7 +54,7 @@ pub async fn SimulateSearch(
             name: "search",
             data_type: crate::interaction::InteractionDataTypeChatSearch,
             resolved: serde_json::to_value(crate::interaction::SearchInputResolved {
-                keyword: Some(keyword.to_string()),
+                keyword: keyword.to_string(),
             })?,
         },
         version: 1,
