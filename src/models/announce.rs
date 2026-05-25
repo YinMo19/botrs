@@ -93,7 +93,7 @@ pub struct Announce {
     #[serde(default)]
     pub announces_type: u32,
     /// List of recommended channels for recommended channel announcements
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub recommend_channels: Vec<RecommendChannel>,
 }
 
@@ -256,6 +256,13 @@ mod tests {
         assert_eq!(announce.message_id, "");
         assert_eq!(announce.announces_type, 0);
         assert!(announce.recommend_channels.is_empty());
+
+        let value = serde_json::to_value(&announce).unwrap();
+        assert_eq!(value["guild_id"], "");
+        assert_eq!(value["channel_id"], "");
+        assert_eq!(value["message_id"], "");
+        assert_eq!(value["announces_type"], 0);
+        assert!(value.get("recommend_channels").is_none());
     }
 
     #[test]
