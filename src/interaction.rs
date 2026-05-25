@@ -4,7 +4,7 @@
 //! including button clicks, command interactions, and other interactive elements.
 
 use crate::api::BotApi;
-use crate::models::serde_helpers::is_default;
+use crate::models::serde_helpers::{deserialize_string_or_number, is_default};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
 
@@ -131,13 +131,6 @@ impl<'de> Deserialize<'de> for InteractionDataType {
     }
 }
 
-fn string_field(data: &Value, key: &str) -> String {
-    data.get(key)
-        .and_then(Value::as_str)
-        .unwrap_or_default()
-        .to_string()
-}
-
 /// Resolved interaction data.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct Resolved {
@@ -176,21 +169,7 @@ pub struct Resolved {
 impl Resolved {
     /// Create a new Resolved instance from JSON data
     pub fn new(data: &Value) -> Self {
-        Self {
-            keyword: string_field(data, "keyword"),
-            user_id: string_field(data, "user_id"),
-            request: string_field(data, "request"),
-            message_id: string_field(data, "message_id"),
-            member_nick: string_field(data, "member_nick"),
-            button_data: string_field(data, "button_data"),
-            button_id: string_field(data, "button_id"),
-            feature_id: string_field(data, "feature_id"),
-            feedback_opt: string_field(data, "feedback_opt"),
-            checked: data
-                .get("checked")
-                .and_then(Value::as_i64)
-                .map_or(0, |value| value as i32),
-        }
+        serde_json::from_value(data.clone()).unwrap_or_default()
     }
 }
 
@@ -211,17 +190,7 @@ pub struct InteractionData {
 impl InteractionData {
     /// Create a new InteractionData instance from JSON data
     pub fn new(data: &Value) -> Self {
-        Self {
-            name: string_field(data, "name"),
-            data_type: data
-                .get("type")
-                .and_then(Value::as_u64)
-                .map(|value| InteractionDataType::from(value as u8)),
-            resolved: Resolved::new(
-                data.get("resolved")
-                    .unwrap_or(&Value::Object(serde_json::Map::new())),
-            ),
-        }
+        serde_json::from_value(data.clone()).unwrap_or_default()
     }
 }
 
@@ -334,51 +303,23 @@ impl Interaction {
     /// * `event_id` - Optional event ID
     /// * `data` - Interaction payload data from the gateway
     pub fn new(api: BotApi, event_id: Option<String>, data: &Value) -> Self {
+        let wire: InteractionWire = serde_json::from_value(data.clone()).unwrap_or_default();
         Self {
             api,
             event_id,
-            id: data.get("id").and_then(|v| v.as_str()).map(String::from),
-            application_id: data.get("application_id").and_then(|v| {
-                v.as_str()
-                    .map(String::from)
-                    .or_else(|| v.as_u64().map(|value| value.to_string()))
-            }),
-            interaction_type: data
-                .get("type")
-                .and_then(|v| v.as_u64())
-                .map(|v| InteractionType::from(v as u8)),
-            scene: data.get("scene").and_then(|v| v.as_str()).map(String::from),
-            chat_type: data.get("chat_type").and_then(|v| v.as_u64()),
-            data: InteractionData::new(
-                data.get("data")
-                    .unwrap_or(&Value::Object(serde_json::Map::new())),
-            ),
-            guild_id: data
-                .get("guild_id")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            channel_id: data
-                .get("channel_id")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            user_openid: data
-                .get("user_openid")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            group_openid: data
-                .get("group_openid")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            group_member_openid: data
-                .get("group_member_openid")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            timestamp: data.get("timestamp").and_then(|v| {
-                v.as_str()
-                    .map(String::from)
-                    .or_else(|| v.as_u64().map(|value| value.to_string()))
-            }),
-            version: data.get("version").and_then(|v| v.as_u64()),
+            id: wire.id,
+            application_id: wire.application_id,
+            interaction_type: wire.interaction_type,
+            scene: wire.scene,
+            chat_type: wire.chat_type,
+            data: wire.data,
+            guild_id: wire.guild_id,
+            channel_id: wire.channel_id,
+            user_openid: wire.user_openid,
+            group_openid: wire.group_openid,
+            group_member_openid: wire.group_member_openid,
+            timestamp: wire.timestamp,
+            version: wire.version,
         }
     }
 
@@ -423,6 +364,36 @@ impl std::fmt::Display for Interaction {
             self.id, self.interaction_type, self.scene, self.chat_type, self.event_id
         )
     }
+}
+
+#[derive(Debug, Default, Deserialize)]
+struct InteractionWire {
+    #[serde(default)]
+    id: Option<String>,
+    #[serde(default, deserialize_with = "deserialize_string_or_number")]
+    application_id: Option<String>,
+    #[serde(rename = "type", default)]
+    interaction_type: Option<InteractionType>,
+    #[serde(default)]
+    scene: Option<String>,
+    #[serde(default)]
+    chat_type: Option<u64>,
+    #[serde(default)]
+    data: InteractionData,
+    #[serde(default)]
+    guild_id: Option<String>,
+    #[serde(default)]
+    channel_id: Option<String>,
+    #[serde(default)]
+    user_openid: Option<String>,
+    #[serde(default)]
+    group_openid: Option<String>,
+    #[serde(default)]
+    group_member_openid: Option<String>,
+    #[serde(default, deserialize_with = "deserialize_string_or_number")]
+    timestamp: Option<String>,
+    #[serde(default)]
+    version: Option<u64>,
 }
 
 #[cfg(test)]
