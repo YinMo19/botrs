@@ -4,12 +4,12 @@
 
 pub mod api;
 pub mod audio;
-pub mod botgo;
 pub mod client;
 pub mod connection;
 pub mod constant;
 pub mod error;
 pub mod event;
+pub mod facade;
 pub mod forum;
 pub mod gateway;
 pub mod http;
@@ -33,7 +33,7 @@ pub mod websocket;
 // Re-export main types for convenience
 pub use api::BotApi;
 pub use audio::{Audio, AudioControl, AudioStatus, PublicAudio, PublicAudioType};
-pub use botgo::{
+pub use facade::{
     DefaultImpl, NewOpenAPI, NewSandboxOpenAPI, RegisterDispatchEventHandler, SelectOpenAPIVersion,
     SetLogger, SetOpenAPIClient, SetSessionManager, SetWebsocketClient,
 };

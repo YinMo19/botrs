@@ -1,4 +1,9 @@
-//! Top-level botgo-compatible facade functions.
+//! Top-level facade providing Go-style entry points for the QQ Bot Open API.
+//!
+//! These functions mirror the public surface of the official Go SDK so that
+//! consumers used to that style can continue using the same names. The
+//! framework itself is independent — these are simply convenience wrappers
+//! around [`crate::api::BotApi`] and friends.
 
 #![allow(non_snake_case, non_upper_case_globals)]
 
