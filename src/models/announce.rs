@@ -248,7 +248,7 @@ mod tests {
     }
 
     #[test]
-    fn botgo_announce_uses_required_zero_value_fields() {
+    fn announce_uses_required_zero_value_fields() {
         let announce: Announce = serde_json::from_value(serde_json::json!({})).unwrap();
 
         assert_eq!(announce.guild_id, "");
@@ -266,7 +266,7 @@ mod tests {
     }
 
     #[test]
-    fn botgo_announce_keeps_official_json_shape() {
+    fn announce_keeps_official_json_shape() {
         let announce = Announce {
             guild_id: "guild-1".to_string(),
             channel_id: "channel-1".to_string(),

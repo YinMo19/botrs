@@ -1,6 +1,6 @@
 //! Channel-related data models for the QQ Guild Bot API.
 //!
-//! This module contains channel types that correspond to the Python botpy implementation.
+//! This module contains channel types for the QQ Bot Open API.
 
 use crate::models::{HasId, HasName, Snowflake};
 use serde::{Deserialize, Serialize};
@@ -214,7 +214,7 @@ impl ChannelValueObject {
     }
 }
 
-/// Channel type enumeration based on Python botpy implementation.
+/// Channel type enumeration for the QQ Bot Open API.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
 #[serde(from = "u32", into = "u32")]
 #[repr(u32)]
@@ -275,7 +275,7 @@ impl ChannelType {
         Some(Self::from(value as u32))
     }
 
-    /// Create ChannelType from the raw botgo integer value.
+    /// Create ChannelType from the raw integer value.
     pub fn from_u32(value: u32) -> Self {
         Self::from(value)
     }
@@ -666,7 +666,7 @@ mod tests {
     }
 
     #[test]
-    fn botgo_channel_uses_zero_values_for_missing_fields() {
+    fn channel_uses_zero_values_for_missing_fields() {
         let channel: Channel = serde_json::from_value(serde_json::json!({})).unwrap();
 
         assert_eq!(channel.id, "");
@@ -689,7 +689,7 @@ mod tests {
     }
 
     #[test]
-    fn botgo_channel_decodes_large_type_values() {
+    fn channel_decodes_large_type_values() {
         let channel: Channel = serde_json::from_value(serde_json::json!({
             "id": "channel-1",
             "guild_id": "guild-1",
@@ -714,7 +714,7 @@ mod tests {
     }
 
     #[test]
-    fn botgo_channel_permissions_are_separate_dtos() {
+    fn channel_permissions_are_separate_dtos() {
         let user_permissions: ChannelPermissions = serde_json::from_value(serde_json::json!({
             "channel_id": "channel-1",
             "user_id": "user-1",
@@ -735,7 +735,7 @@ mod tests {
     }
 
     #[test]
-    fn botgo_channel_value_object_omits_go_zero_values() {
+    fn channel_value_object_omits_go_zero_values() {
         let value = ChannelValueObject {
             name: Some(String::new()),
             channel_type: Some(ChannelType::Text),
@@ -755,7 +755,7 @@ mod tests {
     }
 
     #[test]
-    fn botgo_channel_value_object_keeps_non_zero_values() {
+    fn channel_value_object_keeps_non_zero_values() {
         let value = ChannelValueObject {
             name: Some("name".to_string()),
             channel_type: Some(ChannelType::Voice),
@@ -791,7 +791,7 @@ mod tests {
     }
 
     #[test]
-    fn botgo_channel_permissions_omit_empty_fields() {
+    fn channel_permissions_omit_empty_fields() {
         let user_permissions = ChannelPermissions::default();
         let role_permissions = ChannelRolesPermissions::default();
         let update_permissions = UpdateChannelPermissions {

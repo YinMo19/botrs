@@ -103,7 +103,7 @@ impl Token {
         &self.secret
     }
 
-    /// Botgo-compatible app ID accessor.
+    /// App ID accessor.
     #[allow(non_snake_case)]
     pub fn GetAppID(&self) -> &str {
         self.app_id()
@@ -476,7 +476,7 @@ mod tests {
     }
 
     #[test]
-    fn refresh_millis_matches_botgo_bounds() {
+    fn refresh_millis_matches_expected_bounds() {
         assert_eq!(get_refresh_millis(8), 8_000);
         assert_eq!(get_refresh_millis(9), 0);
 
@@ -532,7 +532,7 @@ mod tests {
     }
 
     #[test]
-    fn test_botgo_token_source_alias() {
+    fn test_token_source_alias() {
         let credentials = QQBotCredentials {
             app_id: "123456".to_string(),
             app_secret: "secret123".to_string(),

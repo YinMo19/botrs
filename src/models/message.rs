@@ -1,6 +1,6 @@
 //! Message-related data models for the QQ Guild Bot API.
 //!
-//! This module contains message types that correspond to the Python botpy implementation.
+//! This module contains message types for the QQ Bot Open API.
 //!
 //! # Migration Guide: New Message Parameter API
 //!
@@ -154,11 +154,11 @@ fn string_field(value: &serde_json::Value, key: &str) -> Option<String> {
     })
 }
 
-fn is_botgo_space(c: char) -> bool {
+fn is_at_mention_space(c: char) -> bool {
     matches!(c, ' ' | '\u{00a0}')
 }
 
-fn remove_botgo_at_mentions(input: &str) -> String {
+fn remove_at_mentions(input: &str) -> String {
     let mut output = String::with_capacity(input.len());
     let mut rest = input;
 
@@ -228,8 +228,8 @@ pub fn Emoji(id: impl std::fmt::Display) -> String {
 
 #[allow(non_snake_case)]
 pub fn ETLInput(input: &str) -> String {
-    remove_botgo_at_mentions(input)
-        .trim_matches(is_botgo_space)
+    remove_at_mentions(input)
+        .trim_matches(is_at_mention_space)
         .to_string()
 }
 
@@ -237,11 +237,11 @@ pub fn parse_command(input: &str) -> CMD {
     let cleaned = ETLInput(input);
     match cleaned.split_once(' ') {
         Some((cmd, content)) => CMD {
-            cmd: cmd.trim_matches(is_botgo_space).to_string(),
+            cmd: cmd.trim_matches(is_at_mention_space).to_string(),
             content: content.to_string(),
         },
         None => CMD {
-            cmd: cleaned.trim_matches(is_botgo_space).to_string(),
+            cmd: cleaned.trim_matches(is_at_mention_space).to_string(),
             content: String::new(),
         },
     }
@@ -532,7 +532,7 @@ pub struct DirectMessage {
     pub create_time: Option<String>,
 }
 
-/// Backward-compatible alias for the botgo direct-message session DTO.
+/// Backward-compatible alias for the direct-message session DTO.
 pub type DirectMessageSession = DirectMessage;
 
 /// Payload for creating a direct message session.
@@ -1089,7 +1089,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_botgo_message_helpers() {
+    fn test_message_helpers() {
         assert_eq!(MentionUser("123"), "<@123>");
         assert_eq!(MentionAllUser(), "@everyone");
         assert_eq!(MentionChannel("456"), "<#456>");
@@ -1116,7 +1116,7 @@ mod tests {
     }
 
     #[test]
-    fn botgo_api_message_helpers_match_send_type_contract() {
+    fn api_message_helpers_match_send_type_contract() {
         let message = MessageToCreate {
             event_id: Some("event-1".to_string()),
             ..Default::default()
@@ -1143,7 +1143,7 @@ mod tests {
     }
 
     #[test]
-    fn botgo_message_create_omits_go_zero_values() {
+    fn message_create_omits_go_zero_values() {
         let message = MessageToCreate {
             content: Some(String::new()),
             msg_type: Some(MessageCreateType::Text),
@@ -1214,7 +1214,7 @@ mod tests {
     }
 
     #[test]
-    fn botgo_message_create_keeps_non_zero_omitempty_values() {
+    fn message_create_keeps_non_zero_omitempty_values() {
         let message = MessageToCreate {
             content: Some("hello".to_string()),
             msg_type: Some(MessageCreateType::Markdown),
@@ -1313,7 +1313,7 @@ mod tests {
     }
 
     #[test]
-    fn botgo_rich_media_omits_go_zero_values() {
+    fn rich_media_omits_go_zero_values() {
         let message = RichMediaMessage {
             event_id: Some(String::new()),
             file_type: Some(0),
@@ -1351,7 +1351,7 @@ mod tests {
     }
 
     #[test]
-    fn botgo_embed_keeps_required_zero_value_fields() {
+    fn embed_keeps_required_zero_value_fields() {
         let embed = Embed::default();
         assert_eq!(
             serde_json::to_value(&embed).unwrap(),
@@ -1365,7 +1365,7 @@ mod tests {
     }
 
     #[test]
-    fn botgo_keyboard_action_keeps_official_zero_value_shape() {
+    fn keyboard_action_keeps_official_zero_value_shape() {
         let action = KeyboardButtonAction::default();
 
         assert_eq!(
@@ -1378,7 +1378,7 @@ mod tests {
     }
 
     #[test]
-    fn botgo_keyboard_omits_go_zero_values() {
+    fn keyboard_omits_go_zero_values() {
         let keyboard = Keyboard {
             id: Some(String::new()),
             content: Some(KeyboardContent {
@@ -1446,7 +1446,7 @@ mod tests {
     }
 
     #[test]
-    fn botgo_keyboard_keeps_non_zero_values() {
+    fn keyboard_keeps_non_zero_values() {
         let action = KeyboardButtonAction {
             action_type: Some(ActionTypeSubscribe),
             click_limit: Some(1),
@@ -1480,7 +1480,7 @@ mod tests {
     }
 
     #[test]
-    fn botgo_messages_pager_query_params() {
+    fn messages_pager_query_params() {
         let pager = MessagesPager::new(Some(MPTBefore), Some("msg-1"), Some(20));
         let query = pager.QueryParams();
 
@@ -1499,7 +1499,7 @@ mod tests {
     }
 
     #[test]
-    fn botgo_direct_message_is_session_dto() {
+    fn direct_message_is_session_dto() {
         let session = DirectMessage::from_data(serde_json::json!({
             "guild_id": "guild-1",
             "channel_id": "channel-1",
@@ -1532,7 +1532,7 @@ mod tests {
     }
 
     #[test]
-    fn botgo_message_reference_keeps_ignore_error_flag() {
+    fn message_reference_keeps_ignore_error_flag() {
         let reference = MessageReference::from_data(serde_json::json!({
             "message_id": "message-1",
             "ignore_get_message_error": true
@@ -1547,7 +1547,7 @@ mod tests {
     }
 
     #[test]
-    fn botgo_message_audit_keeps_channel_sequence() {
+    fn message_audit_keeps_channel_sequence() {
         let audit = MessageAudit::from_data(
             crate::api::BotApi::new(crate::http::HttpClient::new(30, false).unwrap()),
             "event-1".to_string(),
@@ -1570,7 +1570,7 @@ mod tests {
     }
 
     #[test]
-    fn botgo_message_audit_uses_required_zero_value_fields() {
+    fn message_audit_uses_required_zero_value_fields() {
         let audit: MessageAudit = serde_json::from_value(serde_json::json!({})).unwrap();
 
         assert_eq!(audit.audit_id, "");
@@ -1592,7 +1592,7 @@ mod tests {
     }
 
     #[test]
-    fn botgo_embed_keeps_prompt_field() {
+    fn embed_keeps_prompt_field() {
         let embed = Embed {
             title: Some("title".to_string()),
             prompt: "summary".to_string(),
@@ -1655,7 +1655,7 @@ pub struct Ark {
     pub kv: Option<Vec<ArkKv>>,
 }
 
-/// Botgo-compatible Ark message wrapper.
+/// Ark message wrapper.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct MessageArk {
     /// Ark payload
@@ -2000,7 +2000,7 @@ pub struct Reference {
     pub ignore_get_message_error: Option<bool>,
 }
 
-/// Message send type used to select botgo-compatible routes.
+/// Message send type used to select API routes.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(from = "u8", into = "u8")]
 #[repr(u8)]
@@ -2187,7 +2187,7 @@ pub struct ActionButton {
     pub stop_generate: Option<bool>,
 }
 
-/// Botgo-compatible channel/direct message create payload.
+/// Channel/direct message create payload.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct MessageToCreate {
     /// Message content
@@ -2220,7 +2220,7 @@ pub struct MessageToCreate {
     /// Event ID to reply to
     #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub event_id: Option<String>,
-    /// Deprecated timestamp field kept for botgo parity
+    /// Deprecated timestamp field kept for backwards compatibility
     #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub timestamp: Option<i64>,
     /// Message sequence number
@@ -2278,20 +2278,20 @@ impl MessageToCreate {
         SendType::Text
     }
 
-    /// Botgo-compatible event ID accessor.
+    /// Event ID accessor.
     #[allow(non_snake_case)]
     pub fn GetEventID(&self) -> &str {
         self.event_id.as_deref().unwrap_or("")
     }
 
-    /// Botgo-compatible send type accessor.
+    /// Send type accessor.
     #[allow(non_snake_case)]
     pub const fn GetSendType(&self) -> SendType {
         self.send_type()
     }
 }
 
-/// Botgo-compatible rich media upload/direct-send payload.
+/// Rich media upload/direct-send payload.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct RichMediaMessage {
     /// Deprecated event ID field, kept for API compatibility
@@ -2329,21 +2329,21 @@ impl RichMediaMessage {
         SendType::RichMedia
     }
 
-    /// Botgo-compatible event ID accessor. Botgo intentionally returns
+    /// Event ID accessor. Botgo intentionally returns
     /// an empty value for rich media payloads.
     #[allow(non_snake_case)]
     pub const fn GetEventID(&self) -> &str {
         ""
     }
 
-    /// Botgo-compatible send type accessor.
+    /// Send type accessor.
     #[allow(non_snake_case)]
     pub const fn GetSendType(&self) -> SendType {
         self.send_type()
     }
 }
 
-/// Botgo-compatible message interface.
+/// Message interface.
 pub trait APIMessage: Serialize {
     /// Returns the event ID used for passive replies.
     #[allow(non_snake_case)]
@@ -2364,7 +2364,7 @@ pub enum ApiMessage {
 }
 
 impl ApiMessage {
-    /// Returns the send type for botgo-compatible route selection.
+    /// Returns the send type for route selection.
     pub const fn send_type(&self) -> SendType {
         match self {
             Self::Message(message) => message.send_type(),
@@ -2372,7 +2372,7 @@ impl ApiMessage {
         }
     }
 
-    /// Botgo-compatible event ID accessor.
+    /// Event ID accessor.
     #[allow(non_snake_case)]
     pub fn GetEventID(&self) -> &str {
         match self {
@@ -2381,7 +2381,7 @@ impl ApiMessage {
         }
     }
 
-    /// Botgo-compatible send type accessor.
+    /// Send type accessor.
     #[allow(non_snake_case)]
     pub const fn GetSendType(&self) -> SendType {
         self.send_type()
@@ -2516,7 +2516,7 @@ impl MessagesPager {
         }
     }
 
-    /// Converts the pager to botgo-compatible query parameters.
+    /// Converts the pager to query parameters.
     pub fn query_params(&self) -> std::collections::HashMap<String, String> {
         let mut query = std::collections::HashMap::new();
         if let Some(limit) = &self.limit {
@@ -2528,7 +2528,7 @@ impl MessagesPager {
         query
     }
 
-    /// Botgo-compatible query parameter accessor.
+    /// Query parameter accessor.
     #[allow(non_snake_case)]
     pub fn QueryParams(&self) -> std::collections::HashMap<String, String> {
         self.query_params()
@@ -2595,7 +2595,7 @@ pub struct MessageParams {
     /// Keyboard payload
     #[serde(skip_serializing_if = "Option::is_none")]
     pub keyboard: Option<Keyboard>,
-    /// Deprecated timestamp field kept for botgo parity
+    /// Deprecated timestamp field kept for backwards compatibility
     #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub timestamp: Option<i64>,
     /// Message sequence number
@@ -2660,7 +2660,7 @@ pub struct GroupMessageParams {
     /// Keyboard payload
     #[serde(skip_serializing_if = "Option::is_none")]
     pub keyboard: Option<KeyboardPayload>,
-    /// Deprecated timestamp field kept for botgo parity
+    /// Deprecated timestamp field kept for backwards compatibility
     #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub timestamp: Option<i64>,
     /// Subscription ID
@@ -2719,7 +2719,7 @@ pub struct C2CMessageParams {
     /// Keyboard payload
     #[serde(skip_serializing_if = "Option::is_none")]
     pub keyboard: Option<KeyboardPayload>,
-    /// Deprecated timestamp field kept for botgo parity
+    /// Deprecated timestamp field kept for backwards compatibility
     #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub timestamp: Option<i64>,
     /// Subscription ID
@@ -2778,7 +2778,7 @@ pub struct DirectMessageParams {
     /// Keyboard payload
     #[serde(skip_serializing_if = "Option::is_none")]
     pub keyboard: Option<Keyboard>,
-    /// Deprecated timestamp field kept for botgo parity
+    /// Deprecated timestamp field kept for backwards compatibility
     #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub timestamp: Option<i64>,
     /// Message sequence number
@@ -2828,7 +2828,7 @@ impl MessageParams {
         self
     }
 
-    /// Converts this payload into the botgo-compatible message create body.
+    /// Converts this payload into the message create body.
     pub fn into_message_to_create(self) -> MessageToCreate {
         self.into()
     }
@@ -2850,7 +2850,7 @@ impl GroupMessageParams {
         self
     }
 
-    /// Converts this payload into the botgo-compatible message create body.
+    /// Converts this payload into the message create body.
     pub fn into_message_to_create(self) -> MessageToCreate {
         self.into()
     }
@@ -2872,7 +2872,7 @@ impl C2CMessageParams {
         self
     }
 
-    /// Converts this payload into the botgo-compatible message create body.
+    /// Converts this payload into the message create body.
     pub fn into_message_to_create(self) -> MessageToCreate {
         self.into()
     }
@@ -2899,7 +2899,7 @@ impl DirectMessageParams {
         self
     }
 
-    /// Converts this payload into the botgo-compatible message create body.
+    /// Converts this payload into the message create body.
     pub fn into_message_to_create(self) -> MessageToCreate {
         self.into()
     }

@@ -57,7 +57,7 @@
 //!  - **Type Safety**: Structured parameters prevent parameter ordering mistakes
 //!  - **Builder Patterns**: Convenient methods like `.with_reply()` and `.with_file_image()`
 //!  - **Extensibility**: Easy to add new fields without breaking existing code
-//!  - **Compatibility**: Based on official Python botpy API structure
+//!  - **Compatibility**: Based on the official QQ Bot Open API message structure
 //!
 //! ## **Migration Examples**
 //!
@@ -163,10 +163,10 @@ use tracing::debug;
 pub type APIVersion = u32;
 #[allow(non_upper_case_globals)]
 pub const APIv1: APIVersion = 1;
-/// Botgo-compatible OpenAPI v1 idle connection default.
+/// Default idle connection count for the OpenAPI v1 client.
 #[allow(non_upper_case_globals)]
 pub const MaxIdleConns: usize = 3000;
-/// Botgo-compatible interaction callback app ID header.
+/// HTTP header carrying the bot app id for interaction callbacks.
 #[allow(non_upper_case_globals)]
 pub const HeaderCallbackAppID: &str = "X-Callback-AppID";
 
@@ -180,9 +180,9 @@ pub fn APIVersionString(version: APIVersion) -> String {
 pub struct BotApi {
     /// The HTTP client used for making requests
     http: HttpClient,
-    /// Bot application ID stored on the OpenAPI instance like botgo's openAPI.appID.
+    /// Bot application ID stored on the OpenAPI instance.
     app_id: String,
-    /// Optional token stored for botgo-style OpenAPI calls.
+    /// Optional token stored for OpenAPI calls.
     token: Option<Token>,
 }
 
@@ -210,7 +210,7 @@ impl BotApi {
         }
     }
 
-    /// Creates a Bot API client that carries its token like botgo's OpenAPI.
+    /// Creates a Bot API client that carries its own token.
     pub fn with_token(http: HttpClient, token: Token) -> Self {
         let app_id = token.app_id().to_string();
         Self {
@@ -220,7 +220,7 @@ impl BotApi {
         }
     }
 
-    /// Creates a new instance from this client as a botgo OpenAPI template.
+    /// Creates a new instance from this client as an OpenAPI template.
     pub fn setup_from_template(
         &self,
         bot_app_id: impl Into<String>,
@@ -238,7 +238,7 @@ impl BotApi {
         })
     }
 
-    /// Creates a configured API client and token, mirroring botgo's setup step.
+    /// Creates a configured API client and token in one step.
     pub fn setup(
         bot_app_id: impl Into<String>,
         secret: impl Into<String>,
@@ -253,7 +253,7 @@ impl BotApi {
         ))
     }
 
-    /// Botgo-compatible setup constructor.
+    /// Setup constructor.
     #[allow(non_snake_case)]
     pub fn Setup(
         bot_app_id: impl Into<String>,
@@ -268,7 +268,7 @@ impl BotApi {
         APIv1
     }
 
-    /// Botgo-compatible OpenAPI version method.
+    /// OpenAPI version method.
     #[allow(non_snake_case)]
     pub const fn Version(&self) -> APIVersion {
         self.version()
@@ -283,7 +283,7 @@ impl BotApi {
         })
     }
 
-    /// Botgo-compatible timeout configuration method.
+    /// Timeout configuration method.
     #[allow(non_snake_case)]
     pub fn WithTimeout(&self, duration: Duration) -> Result<Self> {
         self.with_timeout(duration)
@@ -298,13 +298,13 @@ impl BotApi {
         }
     }
 
-    /// Botgo-compatible debug configuration method.
+    /// Debug configuration method.
     #[allow(non_snake_case)]
     pub fn SetDebug(&self, debug: bool) -> Self {
         self.set_debug(debug)
     }
 
-    /// Returns the token stored for botgo-style OpenAPI calls.
+    /// Returns the token stored for OpenAPI calls.
     pub fn token(&self) -> Option<&Token> {
         self.token.as_ref()
     }
@@ -314,7 +314,7 @@ impl BotApi {
         &self.app_id
     }
 
-    /// Botgo-compatible app ID accessor for the v1 OpenAPI implementation.
+    /// App ID accessor for the v1 OpenAPI implementation.
     #[allow(non_snake_case)]
     pub fn GetAppID(&self) -> &str {
         self.get_app_id()
@@ -366,7 +366,7 @@ impl BotApi {
         self.http.transport(token, method, url, body).await
     }
 
-    /// Botgo-compatible transport passthrough.
+    /// Transport passthrough.
     #[allow(non_snake_case)]
     pub async fn Transport<B>(&self, method: Method, url: &str, body: Option<&B>) -> Result<Vec<u8>>
     where
@@ -381,13 +381,13 @@ impl BotApi {
         self.http.trace_id()
     }
 
-    /// Botgo-compatible trace ID accessor.
+    /// Trace ID accessor.
     #[allow(non_snake_case)]
     pub fn TraceID(&self) -> String {
         self.trace_id()
     }
 
-    /// Botgo-compatible websocket gateway address API.
+    /// Websocket gateway address API.
     #[allow(non_snake_case)]
     pub async fn WS(
         &self,
@@ -397,33 +397,33 @@ impl BotApi {
         self.get_gateway(self.token_required()?).await
     }
 
-    /// Botgo-compatible current bot user API.
+    /// Current bot user API.
     #[allow(non_snake_case)]
     pub async fn Me(&self) -> Result<User> {
         Ok(self.get_bot_info(self.token_required()?).await?.into())
     }
 
-    /// Botgo-compatible current bot guild list API.
+    /// Current bot guild list API.
     #[allow(non_snake_case)]
     pub async fn MeGuilds(&self, pager: &GuildPager) -> Result<Vec<Guild>> {
         self.get_guilds_with_pager(self.token_required()?, pager)
             .await
     }
 
-    /// Botgo-compatible guild lookup API.
+    /// Guild lookup API.
     #[allow(non_snake_case)]
     pub async fn Guild(&self, guild_id: &str) -> Result<Guild> {
         self.get_guild(self.token_required()?, guild_id).await
     }
 
-    /// Botgo-compatible guild member lookup API.
+    /// Guild member lookup API.
     #[allow(non_snake_case)]
     pub async fn GuildMember(&self, guild_id: &str, user_id: &str) -> Result<Member> {
         self.get_guild_member(self.token_required()?, guild_id, user_id)
             .await
     }
 
-    /// Botgo-compatible guild member list API.
+    /// Guild member list API.
     #[allow(non_snake_case)]
     pub async fn GuildMembers(
         &self,
@@ -434,7 +434,7 @@ impl BotApi {
             .await
     }
 
-    /// Botgo-compatible guild role member list API.
+    /// Guild role member list API.
     #[allow(non_snake_case)]
     pub async fn GuildRoleMembers(
         &self,
@@ -448,7 +448,7 @@ impl BotApi {
         Ok((members.data, members.next))
     }
 
-    /// Botgo-compatible guild member delete API.
+    /// Guild member delete API.
     #[allow(non_snake_case)]
     pub async fn DeleteGuildMember(
         &self,
@@ -464,7 +464,7 @@ impl BotApi {
             .await
     }
 
-    /// Botgo-compatible guild mute API.
+    /// Guild mute API.
     #[allow(non_snake_case)]
     pub async fn GuildMute(&self, guild_id: &str, mute: &UpdateGuildMute) -> Result<()> {
         let token = self.token_required()?;
@@ -475,26 +475,26 @@ impl BotApi {
         Ok(())
     }
 
-    /// Botgo-compatible channel lookup API.
+    /// Channel lookup API.
     #[allow(non_snake_case)]
     pub async fn Channel(&self, channel_id: &str) -> Result<Channel> {
         self.get_channel(self.token_required()?, channel_id).await
     }
 
-    /// Botgo-compatible channel list API.
+    /// Channel list API.
     #[allow(non_snake_case)]
     pub async fn Channels(&self, guild_id: &str) -> Result<Vec<Channel>> {
         self.get_channels(self.token_required()?, guild_id).await
     }
 
-    /// Botgo-compatible channel creation API.
+    /// Channel creation API.
     #[allow(non_snake_case)]
     pub async fn PostChannel(&self, guild_id: &str, value: &ChannelValueObject) -> Result<Channel> {
         self.post_channel(self.token_required()?, guild_id, value)
             .await
     }
 
-    /// Botgo-compatible channel update API.
+    /// Channel update API.
     #[allow(non_snake_case)]
     pub async fn PatchChannel(
         &self,
@@ -505,7 +505,7 @@ impl BotApi {
             .await
     }
 
-    /// Botgo-compatible channel delete API.
+    /// Channel delete API.
     #[allow(non_snake_case)]
     pub async fn DeleteChannel(&self, channel_id: &str) -> Result<()> {
         self.delete_channel(self.token_required()?, channel_id)
@@ -513,7 +513,7 @@ impl BotApi {
         Ok(())
     }
 
-    /// Botgo-compatible private channel creation API.
+    /// Private channel creation API.
     #[allow(non_snake_case)]
     pub async fn CreatePrivateChannel(
         &self,
@@ -525,14 +525,14 @@ impl BotApi {
             .await
     }
 
-    /// Botgo-compatible voice channel member list API.
+    /// Voice channel member list API.
     #[allow(non_snake_case)]
     pub async fn ListVoiceChannelMembers(&self, channel_id: &str) -> Result<Vec<Member>> {
         self.list_voice_channel_members(self.token_required()?, channel_id)
             .await
     }
 
-    /// Botgo-compatible channel permissions API.
+    /// Channel permissions API.
     #[allow(non_snake_case)]
     pub async fn ChannelPermissions(
         &self,
@@ -543,7 +543,7 @@ impl BotApi {
             .await
     }
 
-    /// Botgo-compatible channel permissions update API.
+    /// Channel permissions update API.
     #[allow(non_snake_case)]
     pub async fn PutChannelPermissions(
         &self,
@@ -555,7 +555,7 @@ impl BotApi {
             .await
     }
 
-    /// Botgo-compatible channel role permissions API.
+    /// Channel role permissions API.
     #[allow(non_snake_case)]
     pub async fn ChannelRolesPermissions(
         &self,
@@ -566,7 +566,7 @@ impl BotApi {
             .await
     }
 
-    /// Botgo-compatible channel role permissions update API.
+    /// Channel role permissions update API.
     #[allow(non_snake_case)]
     pub async fn PutChannelRolesPermissions(
         &self,
@@ -578,14 +578,14 @@ impl BotApi {
             .await
     }
 
-    /// Botgo-compatible single message fetch API.
+    /// Single message fetch API.
     #[allow(non_snake_case)]
     pub async fn Message(&self, channel_id: &str, message_id: &str) -> Result<Message> {
         self.Message_with_options(channel_id, message_id, Self::no_options())
             .await
     }
 
-    /// Botgo-compatible single message fetch API with request options.
+    /// Single message fetch API with request options.
     #[allow(non_snake_case)]
     pub async fn Message_with_options<I, O>(
         &self,
@@ -618,14 +618,14 @@ impl BotApi {
         Ok(serde_json::from_value(response)?)
     }
 
-    /// Botgo-compatible message list API.
+    /// Message list API.
     #[allow(non_snake_case)]
     pub async fn Messages(&self, channel_id: &str, pager: &MessagesPager) -> Result<Vec<Message>> {
         self.Messages_with_options(channel_id, pager, Self::no_options())
             .await
     }
 
-    /// Botgo-compatible message list API with request options.
+    /// Message list API with request options.
     #[allow(non_snake_case)]
     pub async fn Messages_with_options<I, O>(
         &self,
@@ -663,14 +663,14 @@ impl BotApi {
         Ok(serde_json::from_value(response)?)
     }
 
-    /// Botgo-compatible channel message send API.
+    /// Channel message send API.
     #[allow(non_snake_case)]
     pub async fn PostMessage(&self, channel_id: &str, msg: &MessageToCreate) -> Result<Message> {
         self.PostMessage_with_options(channel_id, msg, Self::no_options())
             .await
     }
 
-    /// Botgo-compatible channel message send API with request options.
+    /// Channel message send API with request options.
     #[allow(non_snake_case)]
     pub async fn PostMessage_with_options<I, O>(
         &self,
@@ -703,7 +703,7 @@ impl BotApi {
         Ok(serde_json::from_value(response)?)
     }
 
-    /// Botgo-compatible channel message edit API.
+    /// Channel message edit API.
     #[allow(non_snake_case)]
     pub async fn PatchMessage(
         &self,
@@ -715,7 +715,7 @@ impl BotApi {
             .await
     }
 
-    /// Botgo-compatible channel message edit API with request options.
+    /// Channel message edit API with request options.
     #[allow(non_snake_case)]
     pub async fn PatchMessage_with_options<I, O>(
         &self,
@@ -749,14 +749,14 @@ impl BotApi {
         Ok(serde_json::from_value(response)?)
     }
 
-    /// Botgo-compatible channel message retract API.
+    /// Channel message retract API.
     #[allow(non_snake_case)]
     pub async fn RetractMessage(&self, channel_id: &str, message_id: &str) -> Result<()> {
         self.RetractMessage_with_options(channel_id, message_id, Self::no_options())
             .await
     }
 
-    /// Botgo-compatible channel message retract API with request options.
+    /// Channel message retract API with request options.
     #[allow(non_snake_case)]
     pub async fn RetractMessage_with_options<I, O>(
         &self,
@@ -796,7 +796,7 @@ impl BotApi {
         Ok(())
     }
 
-    /// Botgo-compatible setting guide API.
+    /// Setting guide API.
     #[allow(non_snake_case)]
     pub async fn PostSettingGuide(
         &self,
@@ -807,7 +807,7 @@ impl BotApi {
             .await
     }
 
-    /// Botgo-compatible setting guide API with request options.
+    /// Setting guide API with request options.
     #[allow(non_snake_case)]
     pub async fn PostSettingGuide_with_options<I, O>(
         &self,
@@ -848,7 +848,7 @@ impl BotApi {
         Ok(serde_json::from_value(response)?)
     }
 
-    /// Botgo-compatible group message send API.
+    /// Group message send API.
     #[allow(non_snake_case)]
     pub async fn PostGroupMessage(
         &self,
@@ -859,7 +859,7 @@ impl BotApi {
             .await
     }
 
-    /// Botgo-compatible group message send API with request options.
+    /// Group message send API with request options.
     #[allow(non_snake_case)]
     pub async fn PostGroupMessage_with_options<I, O>(
         &self,
@@ -896,7 +896,7 @@ impl BotApi {
         Ok(serde_json::from_value(response)?)
     }
 
-    /// Botgo-compatible C2C message send API.
+    /// C2C message send API.
     #[allow(non_snake_case)]
     pub async fn PostC2CMessage(
         &self,
@@ -907,7 +907,7 @@ impl BotApi {
             .await
     }
 
-    /// Botgo-compatible C2C message send API with request options.
+    /// C2C message send API with request options.
     #[allow(non_snake_case)]
     pub async fn PostC2CMessage_with_options<I, O>(
         &self,
@@ -944,14 +944,14 @@ impl BotApi {
         Ok(serde_json::from_value(response)?)
     }
 
-    /// Botgo-compatible C2C message retract API.
+    /// C2C message retract API.
     #[allow(non_snake_case)]
     pub async fn RetractC2CMessage(&self, user_id: &str, message_id: &str) -> Result<()> {
         self.RetractC2CMessage_with_options(user_id, message_id, Self::no_options())
             .await
     }
 
-    /// Botgo-compatible C2C message retract API with request options.
+    /// C2C message retract API with request options.
     #[allow(non_snake_case)]
     pub async fn RetractC2CMessage_with_options<I, O>(
         &self,
@@ -991,14 +991,14 @@ impl BotApi {
         Ok(())
     }
 
-    /// Botgo-compatible group message retract API.
+    /// Group message retract API.
     #[allow(non_snake_case)]
     pub async fn RetractGroupMessage(&self, group_id: &str, message_id: &str) -> Result<()> {
         self.RetractGroupMessage_with_options(group_id, message_id, Self::no_options())
             .await
     }
 
-    /// Botgo-compatible group message retract API with request options.
+    /// Group message retract API with request options.
     #[allow(non_snake_case)]
     pub async fn RetractGroupMessage_with_options<I, O>(
         &self,
@@ -1038,7 +1038,7 @@ impl BotApi {
         Ok(())
     }
 
-    /// Botgo-compatible direct-message session creation API.
+    /// Direct-message session creation API.
     #[allow(non_snake_case)]
     pub async fn CreateDirectMessage(
         &self,
@@ -1048,7 +1048,7 @@ impl BotApi {
             .await
     }
 
-    /// Botgo-compatible direct-message session creation API with request options.
+    /// Direct-message session creation API with request options.
     #[allow(non_snake_case)]
     pub async fn CreateDirectMessage_with_options<I, O>(
         &self,
@@ -1077,7 +1077,7 @@ impl BotApi {
         Ok(serde_json::from_value(response)?)
     }
 
-    /// Botgo-compatible direct-message send API.
+    /// Direct-message send API.
     #[allow(non_snake_case)]
     pub async fn PostDirectMessage(
         &self,
@@ -1088,7 +1088,7 @@ impl BotApi {
             .await
     }
 
-    /// Botgo-compatible direct-message send API with request options.
+    /// Direct-message send API with request options.
     #[allow(non_snake_case)]
     pub async fn PostDirectMessage_with_options<I, O>(
         &self,
@@ -1124,14 +1124,14 @@ impl BotApi {
         Ok(serde_json::from_value(response)?)
     }
 
-    /// Botgo-compatible direct-message retract API.
+    /// Direct-message retract API.
     #[allow(non_snake_case)]
     pub async fn RetractDMMessage(&self, guild_id: &str, message_id: &str) -> Result<()> {
         self.RetractDMMessage_with_options(guild_id, message_id, Self::no_options())
             .await
     }
 
-    /// Botgo-compatible direct-message retract API with request options.
+    /// Direct-message retract API with request options.
     #[allow(non_snake_case)]
     pub async fn RetractDMMessage_with_options<I, O>(
         &self,
@@ -1171,7 +1171,7 @@ impl BotApi {
         Ok(())
     }
 
-    /// Botgo-compatible DM setting guide API.
+    /// DM setting guide API.
     #[allow(non_snake_case)]
     pub async fn PostDMSettingGuide(
         &self,
@@ -1182,7 +1182,7 @@ impl BotApi {
             .await
     }
 
-    /// Botgo-compatible DM setting guide API with request options.
+    /// DM setting guide API with request options.
     #[allow(non_snake_case)]
     pub async fn PostDMSettingGuide_with_options<I, O>(
         &self,
@@ -1224,7 +1224,7 @@ impl BotApi {
         Ok(serde_json::from_value(response)?)
     }
 
-    /// Botgo-compatible audio control API.
+    /// Audio control API.
     #[allow(non_snake_case)]
     pub async fn PostAudio(
         &self,
@@ -1235,33 +1235,33 @@ impl BotApi {
             .await
     }
 
-    /// Botgo-compatible microphone enable API.
+    /// Microphone enable API.
     #[allow(non_snake_case)]
     pub async fn PutMic(&self, channel_id: &str) -> Result<()> {
         self.on_microphone(self.token_required()?, channel_id).await
     }
 
-    /// Botgo-compatible microphone disable API.
+    /// Microphone disable API.
     #[allow(non_snake_case)]
     pub async fn DeleteMic(&self, channel_id: &str) -> Result<()> {
         self.off_microphone(self.token_required()?, channel_id)
             .await
     }
 
-    /// Botgo-compatible role list API.
+    /// Role list API.
     #[allow(non_snake_case)]
     pub async fn Roles(&self, guild_id: &str) -> Result<GuildRoles> {
         self.get_guild_roles(self.token_required()?, guild_id).await
     }
 
-    /// Botgo-compatible role creation API.
+    /// Role creation API.
     #[allow(non_snake_case)]
     pub async fn PostRole(&self, guild_id: &str, role: &GuildRole) -> Result<UpdateResult> {
         self.create_guild_role_with_update(self.token_required()?, guild_id, role.clone())
             .await
     }
 
-    /// Botgo-compatible role update API.
+    /// Role update API.
     #[allow(non_snake_case)]
     pub async fn PatchRole(
         &self,
@@ -1273,14 +1273,14 @@ impl BotApi {
             .await
     }
 
-    /// Botgo-compatible role delete API.
+    /// Role delete API.
     #[allow(non_snake_case)]
     pub async fn DeleteRole(&self, guild_id: &str, role_id: &str) -> Result<()> {
         self.delete_guild_role(self.token_required()?, guild_id, role_id)
             .await
     }
 
-    /// Botgo-compatible member role add API.
+    /// Member role add API.
     #[allow(non_snake_case)]
     pub async fn MemberAddRole(
         &self,
@@ -1293,7 +1293,7 @@ impl BotApi {
             .await
     }
 
-    /// Botgo-compatible member role delete API.
+    /// Member role delete API.
     #[allow(non_snake_case)]
     pub async fn MemberDeleteRole(
         &self,
@@ -1306,7 +1306,7 @@ impl BotApi {
             .await
     }
 
-    /// Botgo-compatible single member mute API.
+    /// Single member mute API.
     #[allow(non_snake_case)]
     pub async fn MemberMute(
         &self,
@@ -1322,7 +1322,7 @@ impl BotApi {
         Ok(())
     }
 
-    /// Botgo-compatible batch member mute API.
+    /// Batch member mute API.
     #[allow(non_snake_case)]
     pub async fn MultiMemberMute(
         &self,
@@ -1333,7 +1333,7 @@ impl BotApi {
             .await
     }
 
-    /// Botgo-compatible channel announce creation API.
+    /// Channel announce creation API.
     #[allow(non_snake_case)]
     pub async fn CreateChannelAnnounces(
         &self,
@@ -1344,21 +1344,21 @@ impl BotApi {
             .await
     }
 
-    /// Botgo-compatible channel announce delete API.
+    /// Channel announce delete API.
     #[allow(non_snake_case)]
     pub async fn DeleteChannelAnnounces(&self, channel_id: &str, message_id: &str) -> Result<()> {
         self.delete_channel_announce(self.token_required()?, channel_id, message_id)
             .await
     }
 
-    /// Botgo-compatible channel announces clean API.
+    /// Channel announces clean API.
     #[allow(non_snake_case)]
     pub async fn CleanChannelAnnounces(&self, channel_id: &str) -> Result<()> {
         self.clean_channel_announces(self.token_required()?, channel_id)
             .await
     }
 
-    /// Botgo-compatible guild announce creation API.
+    /// Guild announce creation API.
     #[allow(non_snake_case)]
     pub async fn CreateGuildAnnounces(
         &self,
@@ -1384,21 +1384,21 @@ impl BotApi {
         }
     }
 
-    /// Botgo-compatible guild announce delete API.
+    /// Guild announce delete API.
     #[allow(non_snake_case)]
     pub async fn DeleteGuildAnnounces(&self, guild_id: &str, message_id: &str) -> Result<()> {
         self.delete_guild_announce(self.token_required()?, guild_id, message_id)
             .await
     }
 
-    /// Botgo-compatible guild announces clean API.
+    /// Guild announces clean API.
     #[allow(non_snake_case)]
     pub async fn CleanGuildAnnounces(&self, guild_id: &str) -> Result<()> {
         self.clean_guild_announces(self.token_required()?, guild_id)
             .await
     }
 
-    /// Botgo-compatible schedule list API.
+    /// Schedule list API.
     #[allow(non_snake_case)]
     pub async fn ListSchedules(&self, channel_id: &str, since: u64) -> Result<Vec<Schedule>> {
         let since = since.to_string();
@@ -1406,21 +1406,21 @@ impl BotApi {
             .await
     }
 
-    /// Botgo-compatible schedule lookup API.
+    /// Schedule lookup API.
     #[allow(non_snake_case)]
     pub async fn GetSchedule(&self, channel_id: &str, schedule_id: &str) -> Result<Schedule> {
         self.get_schedule(self.token_required()?, channel_id, schedule_id)
             .await
     }
 
-    /// Botgo-compatible schedule creation API.
+    /// Schedule creation API.
     #[allow(non_snake_case)]
     pub async fn CreateSchedule(&self, channel_id: &str, schedule: &Schedule) -> Result<Schedule> {
         self.create_schedule_with_model(self.token_required()?, channel_id, schedule)
             .await
     }
 
-    /// Botgo-compatible schedule modification API.
+    /// Schedule modification API.
     #[allow(non_snake_case)]
     pub async fn ModifySchedule(
         &self,
@@ -1432,7 +1432,7 @@ impl BotApi {
             .await
     }
 
-    /// Botgo-compatible schedule delete API.
+    /// Schedule delete API.
     #[allow(non_snake_case)]
     pub async fn DeleteSchedule(&self, channel_id: &str, schedule_id: &str) -> Result<()> {
         self.delete_schedule(self.token_required()?, channel_id, schedule_id)
@@ -1440,14 +1440,14 @@ impl BotApi {
         Ok(())
     }
 
-    /// Botgo-compatible API permissions list API.
+    /// API permissions list API.
     #[allow(non_snake_case)]
     pub async fn GetAPIPermissions(&self, guild_id: &str) -> Result<APIPermissions> {
         self.get_api_permissions(self.token_required()?, guild_id)
             .await
     }
 
-    /// Botgo-compatible API permission demand API.
+    /// API permission demand API.
     #[allow(non_snake_case)]
     pub async fn RequireAPIPermissions(
         &self,
@@ -1458,33 +1458,33 @@ impl BotApi {
             .await
     }
 
-    /// Botgo-compatible pins add API.
+    /// Pins add API.
     #[allow(non_snake_case)]
     pub async fn AddPins(&self, channel_id: &str, message_id: &str) -> Result<PinsMessage> {
         self.put_pin(self.token_required()?, channel_id, message_id)
             .await
     }
 
-    /// Botgo-compatible pins delete API.
+    /// Pins delete API.
     #[allow(non_snake_case)]
     pub async fn DeletePins(&self, channel_id: &str, message_id: &str) -> Result<()> {
         self.delete_pin(self.token_required()?, channel_id, message_id)
             .await
     }
 
-    /// Botgo-compatible pins clean API.
+    /// Pins clean API.
     #[allow(non_snake_case)]
     pub async fn CleanPins(&self, channel_id: &str) -> Result<()> {
         self.clean_pins(self.token_required()?, channel_id).await
     }
 
-    /// Botgo-compatible pins list API.
+    /// Pins list API.
     #[allow(non_snake_case)]
     pub async fn GetPins(&self, channel_id: &str) -> Result<PinsMessage> {
         self.get_pins(self.token_required()?, channel_id).await
     }
 
-    /// Botgo-compatible message reaction add API.
+    /// Message reaction add API.
     #[allow(non_snake_case)]
     pub async fn CreateMessageReaction(
         &self,
@@ -1496,7 +1496,7 @@ impl BotApi {
             .await
     }
 
-    /// Botgo-compatible message reaction delete API.
+    /// Message reaction delete API.
     #[allow(non_snake_case)]
     pub async fn DeleteOwnMessageReaction(
         &self,
@@ -1508,7 +1508,7 @@ impl BotApi {
             .await
     }
 
-    /// Botgo-compatible message reaction users API.
+    /// Message reaction users API.
     #[allow(non_snake_case)]
     pub async fn GetMessageReactionUsers(
         &self,
@@ -1527,39 +1527,39 @@ impl BotApi {
         .await
     }
 
-    /// Botgo-compatible interaction update API.
+    /// Interaction update API.
     #[allow(non_snake_case)]
     pub async fn PutInteraction(&self, interaction_id: &str, body: &str) -> Result<()> {
         self.put_interaction(self.token_required()?, interaction_id, body)
             .await
     }
 
-    /// Botgo-compatible HTTP webhook session creation API.
+    /// HTTP webhook session creation API.
     #[allow(non_snake_case)]
     pub async fn CreateSession(&self, identity: HttpIdentity) -> Result<HttpReady> {
         self.create_session(self.token_required()?, &identity).await
     }
 
-    /// Botgo-compatible HTTP webhook session check API.
+    /// HTTP webhook session check API.
     #[allow(non_snake_case)]
     pub async fn CheckSessions(&self) -> Result<Vec<HttpSession>> {
         self.check_sessions(self.token_required()?).await
     }
 
-    /// Botgo-compatible HTTP webhook session list API.
+    /// HTTP webhook session list API.
     #[allow(non_snake_case)]
     pub async fn SessionList(&self) -> Result<Vec<HttpSession>> {
         self.session_list(self.token_required()?).await
     }
 
-    /// Botgo-compatible HTTP webhook session remove API.
+    /// HTTP webhook session remove API.
     #[allow(non_snake_case)]
     pub async fn RemoveSession(&self, session_id: &str) -> Result<()> {
         self.remove_session(self.token_required()?, session_id)
             .await
     }
 
-    /// Botgo-compatible message setting API.
+    /// Message setting API.
     #[allow(non_snake_case)]
     pub async fn GetMessageSetting(&self, guild_id: &str) -> Result<MessageSetting> {
         self.get_message_setting(self.token_required()?, guild_id)
@@ -1669,7 +1669,7 @@ impl BotApi {
         self.get_guilds_with_pager(token, &pager).await
     }
 
-    /// Gets the current user's guilds with a botgo-compatible pager.
+    /// Gets the current user's guilds with a structured pager.
     pub async fn get_guilds_with_pager(
         &self,
         token: &Token,
@@ -1875,7 +1875,7 @@ impl BotApi {
         Ok(())
     }
 
-    /// Adds a member to a guild role with a botgo-compatible body.
+    /// Adds a member to a guild role with a structured body.
     pub async fn member_add_role(
         &self,
         token: &Token,
@@ -1926,7 +1926,7 @@ impl BotApi {
         Ok(())
     }
 
-    /// Deletes a member from a guild role with a botgo-compatible body.
+    /// Deletes a member from a guild role with a structured body.
     pub async fn member_delete_role(
         &self,
         token: &Token,
@@ -1991,7 +1991,7 @@ impl BotApi {
             .await
     }
 
-    /// Gets guild members using a botgo-style pager.
+    /// Gets guild members using a pager.
     pub async fn get_guild_members_with_pager(
         &self,
         token: &Token,
@@ -2022,7 +2022,7 @@ impl BotApi {
             .await
     }
 
-    /// Gets guild role members using a botgo-style pager.
+    /// Gets guild role members using a pager.
     pub async fn get_guild_role_members_with_pager(
         &self,
         token: &Token,
@@ -2071,7 +2071,7 @@ impl BotApi {
             .await
     }
 
-    /// Removes a member from a guild with botgo-style delete options.
+    /// Removes a member from a guild with structured delete options.
     pub async fn delete_member_with_options(
         &self,
         token: &Token,
@@ -2189,7 +2189,7 @@ impl BotApi {
         self.post_channel(token, guild_id, &value).await
     }
 
-    /// Creates a private channel following botgo's CreatePrivateChannel behavior.
+    /// Creates a private channel.
     ///
     /// If `user_ids` is empty, the channel is visible to admins and members.
     /// If `user_ids` is not empty, the channel is created as admin-only and the
@@ -2317,7 +2317,7 @@ impl BotApi {
         Self::parse_message_response(response)
     }
 
-    /// Gets channel messages using botgo-compatible pagination.
+    /// Gets channel messages using paginated requests.
     pub async fn get_messages(
         &self,
         token: &Token,
@@ -2355,20 +2355,20 @@ impl BotApi {
         self.get_messages(token, channel_id, &pager).await
     }
 
-    /// Sends a channel message using the botgo-compatible message create payload.
+    /// Sends a channel message using the structured message create payload.
     pub async fn post_message_to_create(
         &self,
         token: &Token,
         channel_id: &str,
         msg: &MessageToCreate,
     ) -> Result<Message> {
-        debug!("Sending botgo-style message to channel {}", channel_id);
+        debug!("Sending message to channel {}", channel_id);
         let path = format!("/channels/{channel_id}/messages");
         let response = self.http.post(token, &path, None::<&()>, Some(msg)).await?;
         Ok(serde_json::from_value(response)?)
     }
 
-    /// Botgo-compatible alias for sending a channel message.
+    /// Pascal-case alias for sending a channel message.
     pub async fn post_message_api(
         &self,
         token: &Token,
@@ -2378,7 +2378,7 @@ impl BotApi {
         self.post_message_to_create(token, channel_id, msg).await
     }
 
-    /// Edits a channel message using the botgo-compatible message create payload.
+    /// Edits a channel message using the structured message create payload.
     pub async fn patch_message_to_create(
         &self,
         token: &Token,
@@ -2395,7 +2395,7 @@ impl BotApi {
         Ok(serde_json::from_value(response)?)
     }
 
-    /// Botgo-compatible alias for editing a channel message.
+    /// Pascal-case alias for editing a channel message.
     pub async fn patch_message_api(
         &self,
         token: &Token,
@@ -2595,14 +2595,14 @@ impl BotApi {
         Ok(serde_json::from_value(response)?)
     }
 
-    /// Sends a group message using the botgo-compatible API message envelope.
+    /// Sends a group message using the structured API message envelope.
     pub async fn post_group_api_message(
         &self,
         token: &Token,
         group_openid: &str,
         msg: &ApiMessage,
     ) -> Result<Message> {
-        debug!("Sending botgo-style group message to {}", group_openid);
+        debug!("Sending group message to {}", group_openid);
         self.post_group_api_payload(token, group_openid, msg.send_type(), msg)
             .await
     }
@@ -2618,7 +2618,7 @@ impl BotApi {
             .await
     }
 
-    /// Uploads or directly sends group rich media using botgo routing.
+    /// Uploads or directly sends group rich media.
     pub async fn post_group_rich_media_message(
         &self,
         token: &Token,
@@ -2751,14 +2751,14 @@ impl BotApi {
         Ok(serde_json::from_value(response)?)
     }
 
-    /// Sends a C2C message using the botgo-compatible API message envelope.
+    /// Sends a C2C message using the structured API message envelope.
     pub async fn post_c2c_api_message(
         &self,
         token: &Token,
         openid: &str,
         msg: &ApiMessage,
     ) -> Result<Message> {
-        debug!("Sending botgo-style C2C message to {}", openid);
+        debug!("Sending C2C message to {}", openid);
         self.post_c2c_api_payload(token, openid, msg.send_type(), msg)
             .await
     }
@@ -2774,7 +2774,7 @@ impl BotApi {
             .await
     }
 
-    /// Uploads or directly sends C2C rich media using botgo routing.
+    /// Uploads or directly sends C2C rich media.
     pub async fn post_c2c_rich_media_message(
         &self,
         token: &Token,
@@ -2907,14 +2907,14 @@ impl BotApi {
         Ok(serde_json::from_value(response)?)
     }
 
-    /// Sends a direct message using the botgo-compatible message create payload.
+    /// Sends a direct message using the structured message create payload.
     pub async fn post_direct_message(
         &self,
         token: &Token,
         guild_id: &str,
         msg: &MessageToCreate,
     ) -> Result<Message> {
-        debug!("Sending botgo-style direct message to guild {}", guild_id);
+        debug!("Sending direct message to guild {}", guild_id);
         let path = format!("/dms/{guild_id}/messages");
         let response = self.http.post(token, &path, None::<&()>, Some(msg)).await?;
         Ok(serde_json::from_value(response)?)
@@ -2983,7 +2983,7 @@ impl BotApi {
         self.post_dms_with_params(token, guild_id, params).await
     }
 
-    /// Creates a direct message session using a botgo-compatible payload.
+    /// Creates a direct message session using a structured payload.
     pub async fn create_direct_message(
         &self,
         token: &Token,
@@ -3426,7 +3426,7 @@ impl BotApi {
         self.multi_member_mute(token, guild_id, &body).await
     }
 
-    /// Mutes multiple guild members with a botgo-style request body.
+    /// Mutes multiple guild members with a structured request body.
     pub async fn multi_member_mute(
         &self,
         token: &Token,
@@ -3600,7 +3600,7 @@ impl BotApi {
         Ok(())
     }
 
-    /// Adds a reaction to a message using a botgo-compatible emoji object.
+    /// Adds a reaction to a message using a structured emoji object.
     pub async fn create_message_reaction(
         &self,
         token: &Token,
@@ -3644,7 +3644,7 @@ impl BotApi {
         Ok(())
     }
 
-    /// Deletes own reaction from a message using a botgo-compatible emoji object.
+    /// Deletes own reaction from a message using a structured emoji object.
     pub async fn delete_own_message_reaction(
         &self,
         token: &Token,
@@ -4089,7 +4089,7 @@ impl BotApi {
         Ok(self.get_api_permissions(token, guild_id).await?.api_list)
     }
 
-    /// Creates an API permission demand request with a botgo-compatible body.
+    /// Creates an API permission demand request with a structured body.
     pub async fn require_api_permissions(
         &self,
         token: &Token,
@@ -4179,7 +4179,7 @@ impl BotApi {
         Ok(serde_json::from_value(response)?)
     }
 
-    /// Gets message reaction users using botgo-compatible emoji and pager objects.
+    /// Gets message reaction users using structured emoji and pager objects.
     pub async fn get_message_reaction_users(
         &self,
         token: &Token,
@@ -4509,7 +4509,7 @@ mod tests {
     }
 
     #[test]
-    fn test_botgo_base_helpers() {
+    fn test_base_helpers() {
         let (api, token) = BotApi::Setup("app-id", "secret", true).unwrap();
         assert_eq!(api.Version(), APIv1);
         assert_eq!(APIVersionString(api.version()), "v1");
@@ -4529,7 +4529,7 @@ mod tests {
     }
 
     #[test]
-    fn botgo_options_build_custom_urls() {
+    fn options_build_custom_urls() {
         let api = BotApi::new(HttpClient::new(30, false).unwrap());
         let options = Options::from_options([crate::WithURL("https://example.com/custom")]);
         assert_eq!(
@@ -4545,14 +4545,14 @@ mod tests {
     }
 
     #[test]
-    fn botgo_hide_tip_option_sets_flag() {
+    fn hide_tip_option_sets_flag() {
         let options = Options::from_options([crate::WithHideTip()]);
         assert!(options.hide_tip);
         assert!(options.url.is_none());
     }
 
     #[test]
-    fn botgo_message_response_accepts_legacy_wrapper() {
+    fn message_response_accepts_legacy_wrapper() {
         let message = BotApi::parse_message_response(serde_json::json!({
             "message": {
                 "id": "msg-1",
@@ -4568,7 +4568,7 @@ mod tests {
     }
 
     #[test]
-    fn botgo_message_response_keeps_direct_shape() {
+    fn message_response_keeps_direct_shape() {
         let message = BotApi::parse_message_response(serde_json::json!({
             "id": "msg-2",
             "content": "direct"

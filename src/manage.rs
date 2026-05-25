@@ -76,7 +76,7 @@ impl std::fmt::Display for GroupManageEvent {
     }
 }
 
-/// C2C friend event payload matching botgo's DTO.
+/// C2C friend event payload.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct C2CFriendData {
     /// User OpenID
@@ -351,7 +351,7 @@ mod tests {
     }
 
     #[test]
-    fn botgo_enter_aio_uses_zero_value_omitempty_shape() {
+    fn enter_aio_uses_zero_value_omitempty_shape() {
         let event = EnterAioEvent::new(
             Some("event-1".to_string()),
             &serde_json::json!({
@@ -378,7 +378,7 @@ mod tests {
     }
 
     #[test]
-    fn botgo_subscribe_message_status_uses_required_zero_value_fields() {
+    fn subscribe_message_status_uses_required_zero_value_fields() {
         let event = SubscribeMessageStatusData::new(
             Some("event-1".to_string()),
             &serde_json::json!({

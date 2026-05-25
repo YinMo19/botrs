@@ -216,7 +216,7 @@ mod tests {
     }
 
     #[test]
-    fn audio_status_uses_botgo_numeric_json() {
+    fn audio_status_uses_numeric_json() {
         assert_eq!(
             serde_json::to_value(AudioStatus::Start).unwrap(),
             serde_json::json!(0)
@@ -233,7 +233,7 @@ mod tests {
     }
 
     #[test]
-    fn audio_control_uses_botgo_json_shape() {
+    fn audio_control_uses_json_shape() {
         let control = AudioControl {
             audio_url: "https://example.com/audio.mp3".to_string(),
             text: "now playing".to_string(),
@@ -253,7 +253,7 @@ mod tests {
     }
 
     #[test]
-    fn audio_event_helper_hides_empty_botgo_zero_values() {
+    fn audio_event_helper_hides_empty_zero_values() {
         let http = crate::http::HttpClient::new(30, false).unwrap();
         let api = BotApi::new(http);
         let audio = Audio::new(api, None, AudioAction::default());

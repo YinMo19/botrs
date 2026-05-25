@@ -164,7 +164,7 @@ pub static ErrPagerIsNil: std::sync::LazyLock<Err> = std::sync::LazyLock::new(er
 /// The main error type for BotRS operations.
 #[derive(Debug, thiserror::Error)]
 pub enum BotError {
-    /// Botgo-compatible SDK errors.
+    /// SDK errors.
     #[error("{0}")]
     Sdk(#[from] Err),
 
@@ -377,7 +377,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_botgo_err_helpers() {
+    fn test_err_helpers() {
         let err = New(CodeNeedReConnect, "need reconnect");
         assert_eq!(err.Code(), CodeNeedReConnect);
         assert_eq!(err.Text(), "need reconnect");

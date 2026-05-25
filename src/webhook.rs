@@ -132,7 +132,7 @@ mod tests {
     }
 
     #[test]
-    fn ack_payloads_match_botgo_shape() {
+    fn ack_payloads_match_expected_shape() {
         assert_eq!(GenHeartbeatACK(7), r#"{"op":11,"d":7}"#);
         assert_eq!(GenDispatchACK(true), r#"{"op":12,"d":0}"#);
         assert_eq!(GenDispatchACK(false), r#"{"op":12,"d":1}"#);

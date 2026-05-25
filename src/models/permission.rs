@@ -10,7 +10,7 @@ fn is_zero_i32(value: &i32) -> bool {
     *value == 0
 }
 
-/// Botgo-compatible API permissions response wrapper.
+/// API permissions response wrapper as returned by the QQ Bot Open API.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct APIPermissions {
     /// API permission list.
@@ -151,7 +151,7 @@ pub struct APIPermissionDemand {
     pub desc: String,
 }
 
-/// Botgo-compatible body for creating an API permission demand.
+/// Body for creating an API permission demand.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct APIPermissionDemandToCreate {
     /// The channel ID where the permission request will be sent
@@ -166,7 +166,7 @@ pub struct APIPermissionDemandToCreate {
 }
 
 impl APIPermissionDemandToCreate {
-    /// Creates a new botgo-compatible permission demand creation body.
+    /// Creates a new permission demand creation body.
     pub fn new(
         channel_id: impl Into<String>,
         api_identify: APIPermissionDemandIdentify,
@@ -294,7 +294,7 @@ mod tests {
     }
 
     #[test]
-    fn botgo_api_permission_uses_required_zero_value_fields() {
+    fn api_permission_uses_required_zero_value_fields() {
         let permission: APIPermission = serde_json::from_value(serde_json::json!({})).unwrap();
 
         assert_eq!(permission.path, "");
@@ -307,14 +307,14 @@ mod tests {
     }
 
     #[test]
-    fn botgo_api_permissions_omits_empty_list() {
+    fn api_permissions_omits_empty_list() {
         let permissions = APIPermissions::default();
         let value = serde_json::to_value(&permissions).unwrap();
         assert!(value.as_object().unwrap().is_empty());
     }
 
     #[test]
-    fn botgo_api_permissions_keep_official_json_shape() {
+    fn api_permissions_keep_official_json_shape() {
         let permissions = APIPermissions {
             api_list: vec![APIPermission::new(
                 "/guilds/{guild_id}/members/{user_id}",
@@ -388,7 +388,7 @@ mod tests {
     }
 
     #[test]
-    fn botgo_api_permission_demand_uses_zero_values() {
+    fn api_permission_demand_uses_zero_values() {
         let demand: APIPermissionDemand = serde_json::from_value(serde_json::json!({})).unwrap();
 
         assert_eq!(demand.guild_id, "");
@@ -404,8 +404,9 @@ mod tests {
     }
 
     #[test]
-    fn botgo_api_permission_demand_to_create_keeps_required_fields_when_zero() {
-        // ChannelID and Desc do NOT have omitempty in botgo, so they must always be present.
+    fn api_permission_demand_to_create_keeps_required_fields_when_zero() {
+        // ChannelID and Desc do NOT have omitempty in the QQ Bot Open API,
+        // so they must always be present in the JSON body.
         let demand = APIPermissionDemandToCreate::default();
         let value = serde_json::to_value(&demand).unwrap();
 
@@ -415,7 +416,7 @@ mod tests {
     }
 
     #[test]
-    fn botgo_api_permission_demand_to_create_keeps_official_json_shape() {
+    fn api_permission_demand_to_create_keeps_official_json_shape() {
         let demand = APIPermissionDemandToCreate::new(
             "channel-1",
             APIPermissionDemandIdentify::post_messages(),

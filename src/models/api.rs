@@ -84,7 +84,7 @@ pub struct SessionStartLimit {
     pub max_concurrency: u32,
 }
 
-/// Botgo-compatible shard configuration.
+/// Shard configuration.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct ShardConfig {
     pub shard_id: u32,
@@ -386,7 +386,7 @@ mod tests {
     }
 
     #[test]
-    fn botgo_websocket_ap_keeps_official_json_shape() {
+    fn websocket_ap_keeps_official_json_shape() {
         let ap: WebsocketAP = serde_json::from_value(serde_json::json!({
             "url": "wss://api.sgroup.qq.com/websocket",
             "shards": 2,
@@ -411,7 +411,7 @@ mod tests {
     }
 
     #[test]
-    fn botgo_audio_action_uses_required_zero_value_fields() {
+    fn audio_action_uses_required_zero_value_fields() {
         let action: AudioAction = serde_json::from_value(serde_json::json!({})).unwrap();
 
         assert_eq!(action.guild_id, "");
@@ -421,7 +421,7 @@ mod tests {
     }
 
     #[test]
-    fn botgo_audio_action_keeps_official_json_shape() {
+    fn audio_action_keeps_official_json_shape() {
         let action = AudioAction {
             guild_id: "guild-1".to_string(),
             channel_id: "channel-1".to_string(),
@@ -437,7 +437,7 @@ mod tests {
     }
 
     #[test]
-    fn botgo_audio_action_from_value_tolerates_missing_fields() {
+    fn audio_action_from_value_tolerates_missing_fields() {
         let action = AudioAction::from_value(&serde_json::json!({
             "guild_id": "guild-1",
             "channel_id": 123,
@@ -450,7 +450,7 @@ mod tests {
     }
 
     #[test]
-    fn botgo_pins_message_uses_required_zero_value_fields() {
+    fn pins_message_uses_required_zero_value_fields() {
         let pins: PinsMessage = serde_json::from_value(serde_json::json!({})).unwrap();
 
         assert!(pins.guild_id.is_empty());
@@ -459,7 +459,7 @@ mod tests {
     }
 
     #[test]
-    fn botgo_pins_message_keeps_official_json_shape() {
+    fn pins_message_keeps_official_json_shape() {
         let pins = PinsMessage {
             guild_id: "guild-1".to_string(),
             channel_id: "channel-1".to_string(),

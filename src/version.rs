@@ -14,7 +14,7 @@ pub fn String() -> String {
 #[cfg(test)]
 mod tests {
     #[test]
-    fn test_botgo_version_string() {
+    fn test_version_string() {
         assert_eq!(super::String(), format!("BotRS/v{}", crate::VERSION));
     }
 }

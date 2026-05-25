@@ -105,7 +105,7 @@ impl ReactionTarget {
     }
 }
 
-/// Botgo-compatible message reaction DTO.
+/// Message reaction DTO.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct MessageReaction {
     /// User ID who made the reaction.
@@ -172,7 +172,7 @@ impl Reaction {
         Ok(Self::from_message_reaction(api, event_id, message_reaction))
     }
 
-    /// Creates a new Reaction instance from the botgo-compatible DTO.
+    /// Creates a new Reaction instance from the structured DTO.
     pub fn from_message_reaction(
         api: BotApi,
         event_id: Option<String>,
@@ -284,7 +284,7 @@ impl MessageReactionPager {
         query
     }
 
-    /// Botgo-compatible query parameter accessor.
+    /// Query parameter accessor.
     #[allow(non_snake_case)]
     pub fn QueryParams(&self) -> std::collections::HashMap<String, String> {
         self.query_params()
@@ -363,7 +363,7 @@ mod tests {
     }
 
     #[test]
-    fn botgo_message_reaction_keeps_official_dto_shape() {
+    fn message_reaction_keeps_official_dto_shape() {
         let reaction = MessageReaction::new(
             "user-1",
             "channel-1",
@@ -384,7 +384,7 @@ mod tests {
     }
 
     #[test]
-    fn botgo_reaction_pager_query_params() {
+    fn reaction_pager_query_params() {
         let pager = MessageReactionPager::new(Some("cursor-1"), Some(20));
         let query = pager.QueryParams();
 

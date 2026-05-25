@@ -506,7 +506,7 @@ mod tests {
     }
 
     #[test]
-    fn parse_data_reads_c2c_friend_dto_like_botgo() {
+    fn parse_data_reads_c2c_friend_dto() {
         let body = br#"{"op":0,"t":"FRIEND_ADD","d":{"openid":"u1","timestamp":123,"nick":"n","avatar":"a"}}"#;
         let data: WSC2CFriendData = ParseData(body).unwrap();
 

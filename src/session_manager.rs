@@ -35,7 +35,7 @@ pub type SessionManagerFactory = dyn Fn() -> BoxedSessionManager + Send + Sync;
 static DEFAULT_SESSION_MANAGER: LazyLock<RwLock<Box<SessionManagerFactory>>> =
     LazyLock::new(|| RwLock::new(Box::new(|| Box::new(ChanManager::new()))));
 
-/// Botgo-compatible websocket session descriptor.
+/// Websocket session descriptor.
 #[derive(Debug, Clone)]
 pub struct Session {
     pub id: String,
@@ -94,7 +94,7 @@ impl Session {
     }
 }
 
-/// Session manager interface aligned with botgo's SessionManager.
+/// Session manager interface for the QQ Bot Open API gateway.
 #[async_trait::async_trait]
 pub trait SessionManager: Send + Sync {
     async fn start(
@@ -117,7 +117,7 @@ pub trait SessionManager: Send + Sync {
     }
 }
 
-/// Local, channel-backed session manager matching botgo's default manager.
+/// Local, channel-backed default session manager.
 #[derive(Clone)]
 pub struct ChanManager {
     session_sender: Option<mpsc::UnboundedSender<Session>>,
@@ -329,7 +329,7 @@ mod tests {
     }
 
     #[test]
-    fn calc_interval_matches_botgo() {
+    fn calc_interval_matches_expected() {
         assert_eq!(CalcInterval(0), Duration::from_secs(2));
         assert_eq!(CalcInterval(1), Duration::from_secs(2));
         assert_eq!(CalcInterval(2), Duration::from_secs(1));
@@ -338,7 +338,7 @@ mod tests {
     }
 
     #[test]
-    fn check_session_limit_matches_botgo() {
+    fn check_session_limit_matches_expected() {
         assert!(CheckSessionLimit(&ap_info(2, 2, 1)).is_ok());
 
         let err = CheckSessionLimit(&ap_info(3, 2, 1)).unwrap_err();
@@ -346,7 +346,7 @@ mod tests {
     }
 
     #[test]
-    fn resume_and_identify_error_sets_match_botgo() {
+    fn resume_and_identify_error_sets_match_expected() {
         let resume = New(CodeConnCloseCantResume, "invalid session");
         let identify = New(CodeConnCloseCantIdentify, "bot banned");
         let reconnect = New(CodeNeedReConnect, "need reconnect");
@@ -371,7 +371,7 @@ mod tests {
     }
 
     #[test]
-    fn app_id_session_matches_botgo_webhook_shape() {
+    fn app_id_session_matches_webhook_shape() {
         let session = Session::from_app_id("app-id-1");
 
         assert_eq!(session.app_id.as_deref(), Some("app-id-1"));

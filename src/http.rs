@@ -31,7 +31,7 @@ pub struct HttpClient {
     last_trace_id: Arc<RwLock<Option<String>>>,
     /// Whether verbose HTTP debug logging is enabled.
     debug: bool,
-    /// OpenAPI instance app ID used by botgo's X-Union-Appid header.
+    /// OpenAPI instance app ID used by the X-Union-Appid header.
     union_app_id: Option<String>,
 }
 
@@ -116,7 +116,7 @@ impl HttpClient {
         })
     }
 
-    /// Returns a client that sends botgo's X-Union-Appid header for OpenAPI calls.
+    /// Returns a client that sends the X-Union-Appid header for OpenAPI calls.
     pub fn with_union_app_id(&self, app_id: impl Into<String>) -> Self {
         Self {
             union_app_id: Some(app_id.into()),
@@ -732,7 +732,7 @@ impl HttpClient {
         self.debug
     }
 
-    /// Returns the app ID configured for botgo's X-Union-Appid header.
+    /// Returns the app ID configured for the X-Union-Appid header.
     pub fn union_app_id(&self) -> Option<&str> {
         self.union_app_id.as_deref()
     }
@@ -818,7 +818,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn authorized_headers_include_botgo_union_app_id() {
+    async fn authorized_headers_include_union_app_id() {
         let client = HttpClient::new(30, false)
             .unwrap()
             .with_union_app_id("openapi-app");

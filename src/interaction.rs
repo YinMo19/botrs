@@ -493,7 +493,7 @@ mod tests {
     }
 
     #[test]
-    fn interaction_types_serialize_as_botgo_numeric_wire_values() {
+    fn interaction_types_serialize_as_numeric_wire_values() {
         assert_eq!(
             serde_json::to_value(InteractionType::ApplicationCommand).unwrap(),
             serde_json::json!(2)
@@ -513,7 +513,7 @@ mod tests {
     }
 
     #[test]
-    fn interaction_payload_uses_botgo_type_fields() {
+    fn interaction_payload_uses_expected_type_fields() {
         let interaction = Interaction::new(
             BotApi::new(crate::http::HttpClient::new(30, false).unwrap()),
             Some("event-1".to_string()),
@@ -540,7 +540,7 @@ mod tests {
     }
 
     #[test]
-    fn botgo_resolved_uses_required_zero_value_fields() {
+    fn resolved_uses_required_zero_value_fields() {
         let resolved: Resolved = serde_json::from_value(serde_json::json!({
             "button_id": "btn-1",
             "checked": 1
@@ -565,7 +565,7 @@ mod tests {
     }
 
     #[test]
-    fn botgo_search_dtos_keep_official_json_shape() {
+    fn search_dtos_keep_official_json_shape() {
         let resolved = SearchInputResolved {
             keyword: "botrs".to_string(),
         };

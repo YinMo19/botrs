@@ -41,10 +41,10 @@ use std::{collections::HashMap, str::FromStr, time::Duration as StdDuration};
 /// A snowflake ID used throughout the QQ Guild API.
 pub type Snowflake = String;
 
-/// Botgo-compatible timestamp string used by the API.
+/// Timestamp string used by the API.
 pub type Timestamp = String;
 
-/// Botgo-compatible duration wrapper parsed from duration strings.
+/// Duration wrapper parsed from duration strings.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize)]
 pub struct Duration(pub StdDuration);
 
@@ -95,7 +95,7 @@ fn parse_duration(value: &str) -> Result<StdDuration, String> {
     }
 }
 
-/// Botgo-compatible pager trait.
+/// Pager trait.
 pub trait Pager {
     fn query_params(&self) -> HashMap<String, String>;
 
@@ -228,7 +228,7 @@ mod tests {
     }
 
     #[test]
-    fn test_botgo_duration_deserialization() {
+    fn test_duration_deserialization() {
         let duration: Duration = serde_json::from_str("\"1500ms\"").unwrap();
         assert_eq!(duration.as_std(), std::time::Duration::from_millis(1500));
 
