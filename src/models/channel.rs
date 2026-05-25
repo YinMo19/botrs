@@ -5,6 +5,20 @@
 use crate::models::{HasId, HasName, Snowflake};
 use serde::{Deserialize, Serialize};
 
+fn is_default<T>(value: &T) -> bool
+where
+    T: Default + PartialEq,
+{
+    value == &T::default()
+}
+
+fn option_is_none_or_default<T>(value: &Option<T>) -> bool
+where
+    T: Default + PartialEq,
+{
+    value.as_ref().is_none_or(is_default)
+}
+
 /// Represents a channel in a guild.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct Channel {
@@ -15,40 +29,40 @@ pub struct Channel {
     #[serde(default)]
     pub guild_id: Snowflake,
     /// The channel's name
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "String::is_empty")]
     pub name: String,
     /// The type of channel
-    #[serde(default, rename = "type")]
+    #[serde(default, rename = "type", skip_serializing_if = "is_default")]
     pub channel_type: ChannelType,
     /// The subtype of channel
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "is_default")]
     pub sub_type: ChannelSubType,
     /// The position of this channel in the channel list
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "is_default")]
     pub position: i64,
     /// The ID of the parent category
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "String::is_empty")]
     pub parent_id: Snowflake,
     /// The ID of the channel owner
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "String::is_empty")]
     pub owner_id: Snowflake,
     /// The private type of the channel
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "is_default")]
     pub private_type: PrivateType,
     /// User IDs included when creating a private channel
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub private_user_ids: Vec<String>,
     /// The speak permission setting
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "is_default")]
     pub speak_permission: SpeakPermission,
     /// The application ID for application channels
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "String::is_empty")]
     pub application_id: Snowflake,
     /// The permissions string
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "String::is_empty")]
     pub permissions: String,
     /// The operator user ID
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "String::is_empty")]
     pub op_user_id: Snowflake,
 }
 
@@ -147,40 +161,40 @@ impl HasName for Channel {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct ChannelValueObject {
     /// Channel name
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub name: Option<String>,
     /// Channel type
-    #[serde(rename = "type", skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "type", skip_serializing_if = "option_is_none_or_default")]
     pub channel_type: Option<ChannelType>,
     /// Sort position
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub position: Option<i64>,
     /// Parent channel ID
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub parent_id: Option<Snowflake>,
     /// Owner ID
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub owner_id: Option<Snowflake>,
     /// Channel subtype
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub sub_type: Option<ChannelSubType>,
     /// Channel visibility type
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub private_type: Option<PrivateType>,
     /// Private channel member IDs
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub private_user_ids: Option<Vec<String>>,
     /// Speak permission
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub speak_permission: Option<SpeakPermission>,
     /// Application ID for application channels
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub application_id: Option<Snowflake>,
     /// Channel permissions
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub permissions: Option<String>,
     /// Operator user ID
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub op_user_id: Option<Snowflake>,
 }
 
@@ -481,13 +495,13 @@ impl From<SpeakPermission> for u32 {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct ChannelPermissions {
     /// The channel ID
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "String::is_empty")]
     pub channel_id: Snowflake,
     /// The user ID
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "String::is_empty")]
     pub user_id: Snowflake,
     /// The permissions string
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "String::is_empty")]
     pub permissions: String,
 }
 
@@ -507,13 +521,13 @@ impl ChannelPermissions {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct ChannelRolesPermissions {
     /// The channel ID
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "String::is_empty")]
     pub channel_id: Snowflake,
     /// The role ID
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "String::is_empty")]
     pub role_id: Snowflake,
     /// The permissions string
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "String::is_empty")]
     pub permissions: String,
 }
 
@@ -528,10 +542,10 @@ impl ChannelRolesPermissions {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct UpdateChannelPermissions {
     /// Permissions to add
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub add: Option<String>,
     /// Permissions to remove
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub remove: Option<String>,
 }
 
@@ -663,6 +677,15 @@ mod tests {
         assert_eq!(channel.private_type, PrivateType::Public);
         assert_eq!(channel.speak_permission, SpeakPermission::Invalid);
         assert!(channel.private_user_ids.is_empty());
+
+        let value = serde_json::to_value(&channel).unwrap();
+        assert_eq!(value["id"], serde_json::json!(""));
+        assert_eq!(value["guild_id"], serde_json::json!(""));
+        assert!(value.get("name").is_none());
+        assert!(value.get("type").is_none());
+        assert!(value.get("sub_type").is_none());
+        assert!(value.get("position").is_none());
+        assert!(value.get("private_user_ids").is_none());
     }
 
     #[test]
@@ -709,5 +732,84 @@ mod tests {
         assert_eq!(user_permissions.permissions, "1024");
         assert_eq!(role_permissions.role_id, "role-1");
         assert_eq!(role_permissions.permissions, "2048");
+    }
+
+    #[test]
+    fn botgo_channel_value_object_omits_go_zero_values() {
+        let value = ChannelValueObject {
+            name: Some(String::new()),
+            channel_type: Some(ChannelType::Text),
+            position: Some(0),
+            parent_id: Some(String::new()),
+            owner_id: Some(String::new()),
+            sub_type: Some(ChannelSubType::Chat),
+            private_type: Some(PrivateType::Public),
+            private_user_ids: Some(Vec::new()),
+            speak_permission: Some(SpeakPermission::Invalid),
+            application_id: Some(String::new()),
+            permissions: Some(String::new()),
+            op_user_id: Some(String::new()),
+        };
+
+        assert_eq!(serde_json::to_value(&value).unwrap(), serde_json::json!({}));
+    }
+
+    #[test]
+    fn botgo_channel_value_object_keeps_non_zero_values() {
+        let value = ChannelValueObject {
+            name: Some("name".to_string()),
+            channel_type: Some(ChannelType::Voice),
+            position: Some(1),
+            parent_id: Some("parent".to_string()),
+            owner_id: Some("owner".to_string()),
+            sub_type: Some(ChannelSubType::Notice),
+            private_type: Some(PrivateType::AdminAndMember),
+            private_user_ids: Some(vec!["user".to_string()]),
+            speak_permission: Some(SpeakPermission::Public),
+            application_id: Some("app".to_string()),
+            permissions: Some("1".to_string()),
+            op_user_id: Some("op".to_string()),
+        };
+
+        assert_eq!(
+            serde_json::to_value(&value).unwrap(),
+            serde_json::json!({
+                "name": "name",
+                "type": 2,
+                "position": 1,
+                "parent_id": "parent",
+                "owner_id": "owner",
+                "sub_type": 1,
+                "private_type": 2,
+                "private_user_ids": ["user"],
+                "speak_permission": 1,
+                "application_id": "app",
+                "permissions": "1",
+                "op_user_id": "op"
+            })
+        );
+    }
+
+    #[test]
+    fn botgo_channel_permissions_omit_empty_fields() {
+        let user_permissions = ChannelPermissions::default();
+        let role_permissions = ChannelRolesPermissions::default();
+        let update_permissions = UpdateChannelPermissions {
+            add: Some(String::new()),
+            remove: Some(String::new()),
+        };
+
+        assert_eq!(
+            serde_json::to_value(&user_permissions).unwrap(),
+            serde_json::json!({})
+        );
+        assert_eq!(
+            serde_json::to_value(&role_permissions).unwrap(),
+            serde_json::json!({})
+        );
+        assert_eq!(
+            serde_json::to_value(&update_permissions).unwrap(),
+            serde_json::json!({})
+        );
     }
 }
