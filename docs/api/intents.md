@@ -1,662 +1,88 @@
-# Intents API Reference
+# Intents
 
-The `Intents` struct controls which gateway events your bot receives from QQ Guild. This system allows you to optimize performance and bandwidth by only subscribing to the events your bot actually needs.
-
-## Overview
+`Intents` is a 32-bit flag set that tells the QQ gateway which event categories your bot wants to receive. Subscribing only to what you need keeps gateway traffic small and avoids dispatcher work for events you'd discard.
 
 ```rust
-use botrs::Intents;
-
-// Default intents for most bots
-let intents = Intents::default();
-
-// Custom intent combinations
-let intents = Intents::GUILD_MESSAGES | Intents::GUILDS;
-
-// Builder pattern
-let intents = Intents::new()
-    .with_guilds()
-    .with_public_guild_messages()
-    .with_direct_message();
+pub struct Intents { pub bits: u32 }
 ```
 
-Intents act as a subscription system for gateway events. By selecting only the intents you need, you can reduce bandwidth usage and improve bot performance.
+`Intents` is `Copy`, supports the bitwise operators (`|`, `&`, `^`, `!`), and serializes to its raw `u32` for the gateway `Identify` payload.
 
-## Intent Types
+## Constructors
 
-### Public Intents
+- `Intents::new()` — empty (`bits == 0`).
+- `Intents::none()` — alias for `new()`, used when you want to opt in field-by-field.
+- `Intents::default()` — `all()` with the privileged intents (`GUILD_MESSAGES` and `FORUMS`) cleared. The right starting point for most bots.
+- `Intents::all()` — every flag the framework knows about. Use only if your bot has every privilege approved.
+- `Intents::from_bits(bits)` — wrap a raw integer received from configuration.
 
-These intents are available to all bots without special approval:
+## Flag catalogue
 
-#### `GUILDS`
+Each row lists the public Rust constant, the underlying bit, the `with_*` builder, and a short description.
 
-Guild creation, update, and deletion events.
+| Constant                                | Bit       | Builder                              | What it covers                                          |
+|-----------------------------------------|-----------|--------------------------------------|---------------------------------------------------------|
+| `Intents::GUILDS`                       | `1 << 0`  | `with_guilds`                        | Guild create / update / delete + channel CRUD.          |
+| `Intents::GUILD_MEMBERS`                | `1 << 1`  | `with_guild_members`                 | Member add / update / remove.                           |
+| `Intents::GUILD_MESSAGES` (privileged)  | `1 << 9`  | `with_guild_messages`                | All guild messages — needs special approval.            |
+| `Intents::GUILD_MESSAGE_REACTIONS`      | `1 << 10` | `with_guild_message_reactions`       | Reactions added / removed in guild messages.            |
+| `Intents::DIRECT_MESSAGE`               | `1 << 12` | `with_direct_message`                | Direct-message create / delete events.                  |
+| `Intents::OPEN_FORUM_EVENT`             | `1 << 18` | `with_open_forum_event`              | Open-forum activity (public forums).                    |
+| `Intents::AUDIO_OR_LIVE_CHANNEL_MEMBER` | `1 << 19` | `with_audio_or_live_channel_member`  | Voice / live channel member changes.                    |
+| `Intents::ENTER_AIO`                    | `1 << 23` | `with_enter_aio`                     | User entering AIO (chat panel).                         |
+| `Intents::PUBLIC_MESSAGES`              | `1 << 25` | `with_public_messages`               | Group `@bot` messages, C2C messages, friend events.     |
+| `Intents::INTERACTION`                  | `1 << 26` | `with_interaction`                   | Interaction (button / app) callbacks.                   |
+| `Intents::MESSAGE_AUDIT`                | `1 << 27` | `with_message_audit`                 | Message audit pass / reject.                            |
+| `Intents::FORUMS` (privileged)          | `1 << 28` | `with_forums`                        | All forum events — needs special approval.              |
+| `Intents::AUDIO_ACTION`                 | `1 << 29` | `with_audio_action`                  | Audio start / finish / on-mic / off-mic.                |
+| `Intents::PUBLIC_GUILD_MESSAGES`        | `1 << 30` | `with_public_guild_messages`         | `@bot` mentions and public message-delete events.       |
 
-```rust
-const GUILDS: u32 = 1 << 0;
-```
+The Go-style aliases `IntentGuilds`, `IntentGuildMembers`, `IntentGuildMessages`, `IntentGroupMessages`, `IntentInteraction`, … are kept for users porting from the official Go SDK; they map to the same bits.
 
-**Events enabled:**
-- `guild_create`
-- `guild_update` 
-- `guild_delete`
+## Inspection
 
-#### `GUILD_MEMBERS`
+For each flag there's a matching predicate (no parameters): `intents.guilds()`, `intents.public_guild_messages()`, etc. Two helpers cover common groupings:
 
-Guild member join, update, and leave events.
+- `intents.contains(bits)` — generic membership check against a raw bit.
+- `intents.has_privileged()` — `true` when `GUILD_MESSAGES` or `FORUMS` are enabled.
 
-```rust
-const GUILD_MEMBERS: u32 = 1 << 1;
-```
+## Mutation
 
-**Events enabled:**
-- `guild_member_add`
-- `guild_member_update`
-- `guild_member_remove`
+- `with_intent(bits)` / `without_intent(bits)` — generic chainable setters.
+- `bits()` — return the raw `u32`.
+- `Display` impl prints `Intents(GUILDS | DIRECT_MESSAGE | …)` for logging.
 
-#### `GUILD_MESSAGE_REACTIONS`
-
-Message reaction add and remove events.
-
-```rust
-const GUILD_MESSAGE_REACTIONS: u32 = 1 << 10;
-```
-
-**Events enabled:**
-- Reaction add/remove events
-- Emoji interaction events
-
-#### `DIRECT_MESSAGE`
-
-Private message events between users and the bot.
+## Examples
 
 ```rust
-const DIRECT_MESSAGE: u32 = 1 << 12;
-```
-
-**Events enabled:**
-- `direct_message_create`
-- Private message events
-
-#### `INTERACTION`
-
-Interactive component events like button clicks and slash commands.
-
-```rust
-const INTERACTION: u32 = 1 << 26;
-```
-
-**Events enabled:**
-- Button interactions
-- Select menu interactions
-- Slash command interactions
-
-#### `MESSAGE_AUDIT`
-
-Message audit and moderation events.
-
-```rust
-const MESSAGE_AUDIT: u32 = 1 << 27;
-```
-
-**Events enabled:**
-- `message_audit_pass`
-- `message_audit_reject`
-
-#### `AUDIO_ACTION`
-
-Voice channel and audio events.
-
-```rust
-const AUDIO_ACTION: u32 = 1 << 29;
-```
-
-**Events enabled:**
-- Voice channel updates
-- Audio state changes
-
-#### `PUBLIC_GUILD_MESSAGES`
-
-Public guild messages including @mentions and replies to the bot.
-
-```rust
-const PUBLIC_GUILD_MESSAGES: u32 = 1 << 30;
-```
-
-**Events enabled:**
-- `message_create` (when bot is mentioned)
-- Reply messages to bot
-- Public channel messages involving bot
-
-#### `AUDIO_OR_LIVE_CHANNEL_MEMBER`
-
-Voice and live channel member events.
-
-```rust
-const AUDIO_OR_LIVE_CHANNEL_MEMBER: u32 = 1 << 19;
-```
-
-**Events enabled:**
-- `audio_or_live_channel_member_enter`
-- `audio_or_live_channel_member_exit`
-
-#### `OPEN_FORUM_EVENT`
-
-Public forum thread and post events.
-
-```rust
-const OPEN_FORUM_EVENT: u32 = 1 << 18;
-```
-
-**Events enabled:**
-- `open_forum_thread_create`
-- `open_forum_thread_update`
-- `open_forum_thread_delete`
-- `open_forum_post_create`
-- `open_forum_post_delete`
-- `open_forum_reply_create`
-- `open_forum_reply_delete`
-
-#### `PUBLIC_MESSAGES`
-
-Group and C2C message events.
-
-```rust
-const PUBLIC_MESSAGES: u32 = 1 << 25;
-```
-
-**Events enabled:**
-- `group_message_create`
-- `c2c_message_create`
-
-### Privileged Intents
-
-These intents require special approval from QQ and may have additional restrictions:
-
-#### `GUILD_MESSAGES`
-
-All guild message events (privileged).
-
-```rust
-const GUILD_MESSAGES: u32 = 1 << 9;
-```
-
-**Requirements:**
-- Special approval from QQ
-- Additional verification for large bots
-
-**Events enabled:**
-- All `message_create` events in guilds
-- `message_delete` events
-
-#### `FORUMS`
-
-Forum thread and post events (privileged).
-
-```rust
-const FORUMS: u32 = 1 << 28;
-```
-
-**Requirements:**
-- Special approval from QQ
-- May require additional permissions
-
-**Events enabled:**
-- All forum-related events
-- Private forum access
-
-## Constructor Methods
-
-### `new`
-
-Creates an empty intent set.
-
-```rust
-pub const fn new() -> Self
-```
-
-#### Example
-
-```rust
-let intents = Intents::new(); // No intents enabled
-```
-
-### `none`
-
-Creates an intent set with no intents enabled (alias for `new`).
-
-```rust
-pub const fn none() -> Self
-```
-
-### `all`
-
-Creates an intent set with all available intents enabled.
-
-```rust
-pub const fn all() -> Self
-```
-
-#### Example
-
-```rust
-let intents = Intents::all(); // All intents enabled
-```
-
-### `default`
-
-Creates the default intent set for most bots (excludes privileged intents).
-
-```rust
-pub const fn default() -> Self
-```
-
-The default intents include all public intents but exclude `GUILD_MESSAGES` and `FORUMS` which require special approval.
-
-#### Example
-
-```rust
-let intents = Intents::default(); // Safe for most bots
-```
-
-### `from_bits`
-
-Creates intents from raw bit flags.
-
-```rust
-pub const fn from_bits(bits: u32) -> Self
-```
-
-#### Parameters
-
-- `bits`: Raw intent bit flags
-
-#### Example
-
-```rust
-let intents = Intents::from_bits(0b1011); // Custom bit combination
-```
-
-## Intent Management
-
-### `contains`
-
-Checks if a specific intent is enabled.
-
-```rust
-pub const fn contains(self, intent: u32) -> bool
-```
-
-#### Parameters
-
-- `intent`: The intent flag to check
-
-#### Returns
-
-`true` if the intent is enabled, `false` otherwise.
-
-#### Example
-
-```rust
-let intents = Intents::GUILDS | Intents::PUBLIC_GUILD_MESSAGES;
-assert!(intents.contains(Intents::GUILDS));
-assert!(!intents.contains(Intents::DIRECT_MESSAGE));
-```
-
-### `with_intent`
-
-Enables a specific intent.
-
-```rust
-pub const fn with_intent(self, intent: u32) -> Self
-```
-
-#### Parameters
-
-- `intent`: The intent flag to enable
-
-#### Returns
-
-New `Intents` instance with the intent enabled.
-
-#### Example
-
-```rust
-let intents = Intents::new().with_intent(Intents::GUILDS);
-```
-
-### `without_intent`
-
-Disables a specific intent.
-
-```rust
-pub const fn without_intent(self, intent: u32) -> Self
-```
-
-#### Parameters
-
-- `intent`: The intent flag to disable
-
-#### Returns
-
-New `Intents` instance with the intent disabled.
-
-#### Example
-
-```rust
-let intents = Intents::all().without_intent(Intents::GUILD_MESSAGES);
-```
-
-## Builder Methods
-
-### Guild Intents
-
-```rust
-pub const fn with_guilds(self) -> Self
-pub const fn with_guild_members(self) -> Self
-pub const fn with_guild_messages(self) -> Self
-pub const fn with_guild_message_reactions(self) -> Self
-```
-
-### Message Intents
-
-```rust
-pub const fn with_direct_message(self) -> Self
-pub const fn with_public_guild_messages(self) -> Self
-pub const fn with_public_messages(self) -> Self
-```
-
-### Feature Intents
-
-```rust
-pub const fn with_interaction(self) -> Self
-pub const fn with_message_audit(self) -> Self
-pub const fn with_forums(self) -> Self
-pub const fn with_audio_action(self) -> Self
-pub const fn with_audio_or_live_channel_member(self) -> Self
-pub const fn with_open_forum_event(self) -> Self
-```
-
-#### Example
-
-```rust
-let intents = Intents::new()
-    .with_guilds()
-    .with_public_guild_messages()
-    .with_direct_message()
-    .with_interaction();
-```
-
-## Query Methods
-
-### Guild Queries
-
-```rust
-pub const fn guilds(self) -> bool
-pub const fn guild_members(self) -> bool
-pub const fn guild_messages(self) -> bool
-pub const fn guild_message_reactions(self) -> bool
-```
-
-### Message Queries
-
-```rust
-pub const fn direct_message(self) -> bool
-pub const fn public_guild_messages(self) -> bool
-pub const fn public_messages(self) -> bool
-```
-
-### Feature Queries
-
-```rust
-pub const fn interaction(self) -> bool
-pub const fn message_audit(self) -> bool
-pub const fn forums(self) -> bool
-pub const fn audio_action(self) -> bool
-pub const fn audio_or_live_channel_member(self) -> bool
-pub const fn open_forum_event(self) -> bool
-```
-
-#### Example
-
-```rust
-let intents = Intents::default();
-
-if intents.guilds() {
-    println!("Guild events enabled");
-}
-
-if intents.direct_message() {
-    println!("Direct message events enabled");
-}
-```
-
-## Utility Methods
-
-### `has_privileged`
-
-Checks if any privileged intents are enabled.
-
-```rust
-pub const fn has_privileged(self) -> bool
-```
-
-#### Returns
-
-`true` if `GUILD_MESSAGES` or `FORUMS` intents are enabled.
-
-#### Example
-
-```rust
-let intents = Intents::default();
-assert!(!intents.has_privileged()); // Default excludes privileged
-
-let privileged = Intents::new().with_guild_messages();
-assert!(privileged.has_privileged());
-```
-
-### `bits`
-
-Gets the raw intent bit flags.
-
-```rust
-pub const fn bits(self) -> u32
-```
-
-#### Returns
-
-The raw intent bits as a 32-bit unsigned integer.
-
-#### Example
-
-```rust
-let intents = Intents::GUILDS | Intents::PUBLIC_GUILD_MESSAGES;
-let bits = intents.bits();
-println!("Intent bits: {:#032b}", bits);
-```
-
-## Bitwise Operations
-
-Intents support standard bitwise operations for combining and manipulating intent sets:
-
-### Bitwise OR (`|`)
-
-Combines intents from multiple sets.
-
-```rust
-let intents = Intents::GUILDS | Intents::PUBLIC_GUILD_MESSAGES | Intents::DIRECT_MESSAGE;
-```
-
-### Bitwise AND (`&`)
-
-Finds common intents between sets.
-
-```rust
-let common = intents1 & intents2;
-```
-
-### Bitwise XOR (`^`)
-
-Finds intents that differ between sets.
-
-```rust
-let different = intents1 ^ intents2;
-```
-
-### Bitwise NOT (`!`)
-
-Inverts all intent flags.
-
-```rust
-let inverted = !intents;
-```
-
-### Assignment Operators
-
-```rust
-let mut intents = Intents::new();
-intents |= Intents::GUILDS;        // Add intent
-intents &= !Intents::DIRECT_MESSAGE; // Remove intent
-```
-
-## Common Usage Patterns
-
-### Basic Bot
-
-```rust
-// Simple bot that responds to mentions
-let intents = Intents::PUBLIC_GUILD_MESSAGES | Intents::GUILDS;
-```
-
-### Moderation Bot
-
-```rust
-// Bot with moderation capabilities
-let intents = Intents::default()
-    .with_guild_members()
-    .with_message_audit();
-```
-
-### Voice Bot
-
-```rust
-// Bot that manages voice channels
-let intents = Intents::new()
-    .with_guilds()
-    .with_audio_action()
-    .with_audio_or_live_channel_member();
-```
-
-### Forum Bot
-
-```rust
-// Bot that manages forum content
-let intents = Intents::new()
-    .with_guilds()
-    .with_open_forum_event()
-    .with_forums(); // Requires approval
-```
-
-### Comprehensive Bot
-
-```rust
-// Bot with full capabilities (requires privileged intents)
-let intents = Intents::all();
-```
-
-## Privileged Intent Approval
-
-To use privileged intents (`GUILD_MESSAGES`, `FORUMS`), you need:
-
-1. **Application Review**: Submit your bot for review in the QQ Developer Portal
-2. **Use Case Justification**: Explain why your bot needs access to these events
-3. **Privacy Compliance**: Ensure your bot complies with data protection requirements
-4. **Scale Verification**: For large bots (100+ guilds), additional verification may be required
-
-### Requesting Approval
-
-1. Visit the QQ Developer Portal
-2. Navigate to your bot's settings
-3. Request privileged intent access
-4. Provide detailed justification
-5. Wait for approval (can take several days)
-
-## Error Handling
-
-### Missing Intents
-
-If your bot doesn't receive expected events, verify your intents:
-
-```rust
-let intents = Intents::default();
-
-// Check if required intents are enabled
-if !intents.guild_members() {
-    println!("Warning: Guild member events not enabled");
-}
-
-if !intents.public_guild_messages() {
-    println!("Warning: Public guild messages not enabled");
-}
-```
-
-### Privileged Intent Errors
-
-```rust
-impl EventHandler for MyBot {
-    async fn error(&self, error: BotError) {
-        match error {
-            BotError::Forbidden(msg) if msg.contains("intent") => {
-                eprintln!("Missing required intents or privileged intent not approved");
-            }
-            _ => {}
-        }
-    }
-}
-```
-
-## Best Practices
-
-### Intent Selection
-
-1. **Minimal Principle**: Only enable intents you actually use
-2. **Performance**: Fewer intents = better performance and lower bandwidth
-3. **Privacy**: Avoid privileged intents unless absolutely necessary
-4. **Documentation**: Document why each intent is needed
-
-### Production Considerations
-
-1. **Testing**: Test with minimal intents in development
-2. **Monitoring**: Monitor for missing events that might indicate intent issues
-3. **Approval Process**: Plan for privileged intent approval timeline
-4. **Fallback**: Design graceful degradation when intents are missing
-
-### Code Organization
-
-```rust
-// Define intents as constants for reuse
-const BOT_INTENTS: Intents = Intents::new()
+// 1. Sensible defaults — no privileged events.
+let default_intents = Intents::default();
+
+// 2. Custom subscription via builder.
+let custom = Intents::none()
     .with_guilds()
     .with_public_guild_messages()
     .with_direct_message();
 
-// Validate intents at startup
-fn validate_intents(intents: Intents) -> Result<(), String> {
-    if !intents.guilds() {
-        return Err("Guild events are required".to_string());
-    }
-    
-    if intents.has_privileged() {
-        println!("Warning: Using privileged intents");
-    }
-    
-    Ok(())
+// 3. Bitwise composition (matches the Go-style aliases too).
+let public = Intents::from_bits(IntentGuilds | IntentGuildAtMessage | IntentDirectMessages);
+
+// 4. Drop a flag at runtime.
+let trimmed = Intents::all().without_intent(Intents::FORUMS);
+```
+
+## Privileged intents
+
+`GUILD_MESSAGES` and `FORUMS` require manual approval in the QQ Developer Portal. Bots without that approval will be disconnected by the gateway when they identify with these bits set. `Intents::default()` deliberately omits them so the same code path works for all bots.
+
+```rust
+if intents.has_privileged() && !your_bot_is_approved {
+    return Err("privileged intents requested without approval".into());
 }
 ```
 
-## See Also
+## See also
 
-- [Intents Guide](/guide/intents) - Comprehensive guide to intent usage
-- [`Client`](./client.md) - Bot client configuration
-- [`EventHandler`](./event-handler.md) - Event handling with intents
-- [Gateway Guide](/guide/gateway) - Gateway connection and intents
+- [Bot API](./bot-api.md) — every endpoint that produces events you might subscribe to.
+- [Event handler](./event-handler.md) — receives the events selected by these intents.
+- [Gateway guide](../guide/gateway.md) — how the framework opens a session with the chosen intents.
