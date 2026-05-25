@@ -1,136 +1,34 @@
 # Introduction
 
-BotRS is an asynchronous runtime framework for building QQ Guild bots in Rust. It provides the essential building blocks needed for creating robust, high-performance bot applications that can handle real-time messaging, guild management, and event processing.
+BotRS is an asynchronous framework for building QQ Guild bots in Rust. It wraps the QQ Guild Bot API and the gateway WebSocket protocol behind a small set of types: `Client`, `EventHandler`, `Context`, `BotApi`, `Token`, and `Intents`. Almost everything you do with the framework starts from one of those.
 
-## What is BotRS?
+## Architecture at a glance
 
-BotRS is designed around the principles of type safety, performance, and ease of use. It serves as a comprehensive wrapper around the QQ Guild Bot API, providing:
+The `Client` owns the gateway connection and the HTTP client. You construct it with a `Token`, an `Intents` bitset, an implementation of `EventHandler`, and a `bool` that picks the sandbox or production base URL. After `client.start().await`, the gateway dispatches events into your handler.
 
-- **Type-Safe API Bindings**: Complete Rust type definitions for all API endpoints
-- **Async Runtime Integration**: Built on Tokio for handling concurrent operations
-- **Event-Driven Architecture**: Clean abstractions for responding to guild events
-- **Rich Message Support**: Send text, embeds, files, and interactive content
-- **WebSocket Gateway**: Real-time event processing with automatic connection management
+The `EventHandler` trait is a single trait with a default `async fn` per event (`message_create`, `at_message_create`, `guild_create`, `forum_thread_create`, and so on). You implement only the ones you care about.
 
-## Core Architecture
+Each handler call receives a `Context`, which holds an `Arc<BotApi>` and the `Token` the client was started with. `BotApi` is the typed HTTP layer; you can also construct one yourself if you need to call the REST API outside of an event handler.
 
-At its core, BotRS consists of several key components:
+`Intents` is a bitflag set that tells the gateway which event categories to deliver. Subscribing only to what you need keeps payload volume down.
 
-### Client
-The `Client` is the main entry point for your bot application. It manages the WebSocket connection to QQ's servers, handles authentication, and dispatches events to your event handler.
+## Message sending
 
-### Event Handler
-The `EventHandler` trait defines how your bot responds to various events such as messages, member joins, channel updates, and more. You implement this trait to define your bot's behavior.
-
-### API Client
-The `BotApi` provides direct access to QQ Guild's REST API endpoints, allowing you to send messages, manage channels, handle permissions, and perform other administrative tasks.
-
-### Gateway
-The WebSocket gateway manages the real-time connection to QQ's servers, handling heartbeats, reconnection logic, and event dispatching automatically.
-
-## Key Features
-
-### Type Safety
-Rust's type system prevents entire classes of runtime errors common in dynamically typed languages:
+Every send method takes a typed `*Params` builder rather than a long list of `Option` arguments:
 
 ```rust
-// Compile-time validation of message parameters
-let params = MessageParams::new_text("Hello, world!")
+let params = MessageParams::new_text("hello")
     .with_reply(message_id)
     .with_markdown(true);
-
-// Type-safe event handling
-async fn message_create(&self, ctx: Context, message: Message) {
-    // message.content is Option<String> - explicit null handling
-    if let Some(content) = &message.content {
-        // Handle message content safely
-    }
-}
+ctx.api.post_message_with_params(&ctx.token, "channel_id", params).await?;
 ```
 
-### High Performance
-Built on Tokio's async runtime, BotRS can handle thousands of concurrent operations:
+The same shape applies to `GroupMessageParams`, `C2CMessageParams`, `DirectMessageParams`, etc. See the messages guide for the full set.
 
-- **Non-blocking I/O**: All network operations are asynchronous
-- **Connection Pooling**: HTTP clients reuse connections efficiently
-- **Memory Efficiency**: Zero-copy deserialization where possible
-- **Concurrent Event Processing**: Handle multiple events simultaneously
+## Where to go next
 
-### Structured Parameters
-BotRS v0.2.0 introduced a new structured parameter system that eliminates the confusion of multiple `None` parameters:
-
-```rust
-// Old API (deprecated)
-api.post_message(
-    token, "channel_id", Some("Hello!"),
-    None, None, None, None, None, None, None, None, None
-).await?;
-
-// New API (recommended)
-let params = MessageParams::new_text("Hello!")
-    .with_reply("message_id")
-    .with_embed(embed);
-api.post_message_with_params(token, "channel_id", params).await?;
-```
-
-## Comparison with Other Solutions
-
-### vs Python QQ Bot SDKs
-BotRS offers a familiar high-level API for developers coming from Python QQ Bot SDKs while adding:
-
-- **Compile-time Safety**: Catch errors before deployment
-- **Better Performance**: Native code execution and efficient memory usage
-- **Structured Concurrency**: Built-in async/await support
-- **Zero-cost Abstractions**: High-level APIs with minimal runtime overhead
-
-### vs Other Rust Discord Libraries
-While there are excellent Discord libraries for Rust, BotRS is specifically designed for QQ Guild's unique API and features:
-
-- **QQ Guild Specific**: Native support for QQ's message types and features
-- **Official API Coverage**: Complete implementation of QQ Guild Bot API
-- **Chinese Ecosystem**: Built with Chinese developers and use cases in mind
-- **Active Maintenance**: Regular updates following QQ's API changes
-
-## Getting Started
-
-Ready to build your first bot? Here's what you'll need:
-
-1. **Rust Installation**: BotRS requires Rust 1.70 or later
-2. **QQ Guild Bot Credentials**: App ID and Secret from QQ Guild Developer Portal
-3. **Basic Async Knowledge**: Familiarity with Rust's async/await syntax
-
-The fastest way to get started is with our [Quick Start Guide](/guide/quick-start), which will have you running a basic bot in under 5 minutes.
-
-## Community and Ecosystem
-
-BotRS is part of a growing ecosystem of Rust tools for building chat bots and automation:
-
-- **Active Development**: Regular updates and new features
-- **Community Driven**: Open source with contributions welcome
-- **Production Ready**: Used in production by multiple organizations
-- **Comprehensive Documentation**: Detailed guides and API reference
-
-## Design Philosophy
-
-BotRS follows several key design principles:
-
-### Ergonomics First
-The API should be intuitive and easy to use, even for developers new to Rust or bot development.
-
-### Safety Without Sacrifice
-Type safety and memory safety should not come at the cost of performance or expressiveness.
-
-### Async by Default
-All I/O operations are asynchronous to maximize throughput and responsiveness.
-
-### Backward Compatibility
-API changes follow semantic versioning, with clear migration paths for breaking changes.
-
-## Next Steps
-
-- **[Installation](/guide/installation)** - Add BotRS to your project
-- **[Quick Start](/guide/quick-start)** - Build your first bot
-- **[Configuration](/guide/configuration)** - Set up credentials and options
-- **[Examples](/examples/getting-started)** - Explore working code samples
-
-The journey to building powerful QQ Guild bots starts here. Let's get building!
+- [Installation](/guide/installation) — adding `botrs` to your `Cargo.toml`.
+- [Quick start](/guide/quick-start) — a minimal working bot.
+- [Client and event handler](/guide/client-handler) — the event-loop API.
+- [Messages](/guide/messages) — the `*MessageParams` builders.
+- [API client](/guide/api-client) — using `BotApi` and `Context`.
