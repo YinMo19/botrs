@@ -95,7 +95,7 @@ api.post_message_with_params(token, "channel_id", params).await?;
 
 ```toml
 [dependencies]
-botrs = "0.10.0"
+botrs = "0.11.0"
 tokio = { version = "1.0", features = ["full"] }
 tracing = "0.1"
 tracing-subscriber = "0.3"
@@ -635,7 +635,12 @@ BotRS 的设计灵感来自 Python 的 [botpy](https://github.com/tencent-connec
 
 ## 版本历史
 
-### v0.10.0 (最新)
+### v0.11.0 (最新)
+- 🧩 继续对齐 botgo DTO：user、guild/member/role、mute、manage event、gateway/webhook、interaction search、message audit、message setting
+- 🔧 统一 botgo 零值与 `omitempty` wire shape，移除多余 JSON 字段输出
+- ✅ 增加对应 JSON 形状回归测试，并保持 CI / clippy 绿色
+
+### v0.10.0
 - 🎧 对齐 botgo 的音频 DTO：`PostAudio` / `post_audio` 使用 `AudioControl`，`AudioStatus` 按数字 JSON 编码
 - 📣 对齐 botgo 的公告 DTO：公告和推荐子频道字段改为零值结构
 - 🔐 对齐 botgo 的 API 权限 DTO，并精简示例中的兼容分支

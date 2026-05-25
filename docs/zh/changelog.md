@@ -7,6 +7,15 @@ BotRS 的所有重要更改都将记录在此文件中。
 
 ## [未发布]
 
+## [0.11.0] - 2026-05-25
+
+### 更改
+- 继续对齐 botgo 的 user、guild/member/role、mute、manage event、gateway/webhook、interaction search、message audit 和 message setting DTO。
+- 更新相关 DTO 的零值和 `omitempty` JSON wire shape，与 botgo 保持一致。
+
+### 修复
+- 本地 gateway/event 辅助上下文字段不再进入 botgo 纯 payload DTO 的 JSON。
+
 ## [0.10.0] - 2026-05-25
 
 ### 更改

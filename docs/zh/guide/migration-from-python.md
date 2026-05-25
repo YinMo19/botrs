@@ -48,7 +48,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-botrs = "0.10.0"
+botrs = "0.11.0"
 tokio = { version = "1.0", features = ["full"] }
 tracing = "0.1"
 tracing-subscriber = "0.3"
