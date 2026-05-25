@@ -7,17 +7,21 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct MessageSetting {
     /// Whether creating direct messages is disabled.
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub disable_create_dm: bool,
     /// Whether pushing messages is disabled.
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub disable_push_msg: bool,
     /// Channel IDs covered by the setting.
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub channel_ids: Vec<Snowflake>,
     /// Maximum number of pushed messages per channel.
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "is_zero")]
     pub channel_push_max_num: i32,
+}
+
+fn is_zero(value: &i32) -> bool {
+    *value == 0
 }
 
 #[cfg(test)]
@@ -32,6 +36,9 @@ mod tests {
         assert!(!setting.disable_push_msg);
         assert!(setting.channel_ids.is_empty());
         assert_eq!(setting.channel_push_max_num, 0);
+
+        let value = serde_json::to_value(&setting).unwrap();
+        assert!(value.as_object().unwrap().is_empty());
     }
 
     #[test]
@@ -45,7 +52,7 @@ mod tests {
         let value = serde_json::to_value(&setting).unwrap();
 
         assert_eq!(value["disable_create_dm"], true);
-        assert_eq!(value["disable_push_msg"], false);
+        assert!(value.get("disable_push_msg").is_none());
         assert_eq!(value["channel_ids"][0], "channel-1");
         assert_eq!(value["channel_push_max_num"], 10);
     }
