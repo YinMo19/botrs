@@ -171,12 +171,14 @@ impl std::fmt::Display for C2CManageEvent {
 }
 
 /// Event emitted when a user enters AIO.
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct EnterAioEvent {
     /// User OpenID
-    pub user_openid: Option<String>,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub user_openid: String,
     /// Source from which the user entered AIO
-    pub from_source: Option<String>,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub from_source: String,
     /// Event ID
     #[serde(skip)]
     pub event_id: Option<String>,
@@ -187,27 +189,21 @@ pub type EnterAIO = EnterAioEvent;
 impl EnterAioEvent {
     /// Creates a new EnterAioEvent from gateway data.
     pub fn new(event_id: Option<String>, data: &serde_json::Value) -> Self {
-        Self {
-            user_openid: data
-                .get("user_openid")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            from_source: data
-                .get("from_source")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            event_id,
-        }
+        let mut event = serde_json::from_value::<Self>(data.clone()).unwrap_or_default();
+        event.event_id = event_id;
+        event
     }
 }
 
 /// Subscribe message status event data.
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct SubscribeMessageStatusData {
     /// Group OpenID, present for group subscription messages
-    pub group_openid: Option<String>,
+    #[serde(default)]
+    pub group_openid: String,
     /// User OpenID, present for C2C subscription messages
-    pub openid: Option<String>,
+    #[serde(default)]
+    pub openid: String,
     /// Template authorization results
     #[serde(default)]
     pub result: Vec<SubscribeMsgTemplateResult>,
@@ -226,18 +222,23 @@ impl SubscribeMessageStatusData {
 }
 
 /// Subscribe template authorization result.
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct SubscribeMsgTemplateResult {
     /// Official template ID
-    pub template_id: Option<i32>,
+    #[serde(default)]
+    pub template_id: i32,
     /// Custom template ID
-    pub custom_template_id: Option<String>,
+    #[serde(default)]
+    pub custom_template_id: String,
     /// Authorization operation, 1 allow and 2 reject
-    pub op: Option<u32>,
+    #[serde(default)]
+    pub op: u32,
     /// Subscription ID
-    pub subscribe_id: Option<String>,
+    #[serde(default)]
+    pub subscribe_id: String,
     /// Status update timestamp
-    pub update_ts: Option<u64>,
+    #[serde(default)]
+    pub update_ts: u64,
 }
 
 /// Management event type enumeration
@@ -347,5 +348,74 @@ mod tests {
     fn test_is_c2c_event() {
         assert!(ManageEventType::FriendAdd.is_c2c_event());
         assert!(!ManageEventType::GroupAddRobot.is_c2c_event());
+    }
+
+    #[test]
+    fn botgo_enter_aio_uses_zero_value_omitempty_shape() {
+        let event = EnterAioEvent::new(
+            Some("event-1".to_string()),
+            &serde_json::json!({
+                "user_openid": "user-1",
+                "from_source": "profile"
+            }),
+        );
+
+        assert_eq!(event.user_openid, "user-1");
+        assert_eq!(event.from_source, "profile");
+        assert_eq!(event.event_id.as_deref(), Some("event-1"));
+
+        let value = serde_json::to_value(&event).unwrap();
+        assert_eq!(
+            value,
+            serde_json::json!({
+                "user_openid": "user-1",
+                "from_source": "profile"
+            })
+        );
+
+        let empty = serde_json::to_value(EnterAioEvent::default()).unwrap();
+        assert_eq!(empty, serde_json::json!({}));
+    }
+
+    #[test]
+    fn botgo_subscribe_message_status_uses_required_zero_value_fields() {
+        let event = SubscribeMessageStatusData::new(
+            Some("event-1".to_string()),
+            &serde_json::json!({
+                "group_openid": "group-1",
+                "openid": "user-1",
+                "result": [{
+                    "template_id": 1,
+                    "custom_template_id": "custom-1",
+                    "op": 2,
+                    "subscribe_id": "sub-1",
+                    "update_ts": 1710000000
+                }]
+            }),
+        );
+
+        assert_eq!(event.group_openid, "group-1");
+        assert_eq!(event.openid, "user-1");
+        assert_eq!(event.event_id.as_deref(), Some("event-1"));
+        assert_eq!(event.result[0].template_id, 1);
+        assert_eq!(event.result[0].custom_template_id, "custom-1");
+        assert_eq!(event.result[0].op, 2);
+        assert_eq!(event.result[0].subscribe_id, "sub-1");
+        assert_eq!(event.result[0].update_ts, 1_710_000_000);
+
+        let value = serde_json::to_value(&event).unwrap();
+        assert_eq!(value["group_openid"], "group-1");
+        assert_eq!(value["openid"], "user-1");
+        assert_eq!(value["result"][0]["template_id"], 1);
+        assert_eq!(value["result"][0]["custom_template_id"], "custom-1");
+        assert_eq!(value["result"][0]["op"], 2);
+        assert_eq!(value["result"][0]["subscribe_id"], "sub-1");
+        assert_eq!(value["result"][0]["update_ts"], 1_710_000_000_u64);
+        assert!(value.get("event_id").is_none());
+
+        let empty = serde_json::to_value(SubscribeMessageStatusData::default()).unwrap();
+        assert_eq!(empty["group_openid"], "");
+        assert_eq!(empty["openid"], "");
+        assert_eq!(empty["result"], serde_json::json!([]));
     }
 }
