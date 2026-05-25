@@ -1,10 +1,10 @@
-# Migration from Python botpy
+# Migration from Python
 
-This guide helps developers migrate from the official Python `botpy` library to BotRS. While both libraries implement the QQ Guild Bot API, BotRS provides Rust's type safety, performance benefits, and memory safety guarantees.
+This guide helps developers migrate to BotRS from a Python QQ Bot SDK. Both kinds of libraries implement the QQ Guild Bot API, but BotRS adds Rust's type safety, performance benefits, and memory safety guarantees.
 
 ## Overview
 
-BotRS maintains API compatibility with Python botpy's design patterns while adding Rust-specific improvements. This makes migration straightforward for developers familiar with the Python ecosystem.
+BotRS exposes a high-level API that follows the same overall design patterns familiar to Python QQ Bot SDK users, while layering on Rust-specific improvements. This makes the move straightforward for developers coming from the Python ecosystem.
 
 ### Key Differences
 
@@ -16,7 +16,7 @@ BotRS maintains API compatibility with Python botpy's design patterns while addi
 
 ## Project Structure Migration
 
-### Python botpy Project
+### A Typical Python Project
 ```
 my_bot/
 ├── main.py
@@ -57,7 +57,7 @@ serde = { version = "1.0", features = ["derive"] }
 
 ## Configuration Migration
 
-### Python botpy Configuration
+### Typical Python Configuration
 ```python
 # config.py
 import yaml
@@ -66,7 +66,7 @@ class Config:
     def __init__(self):
         with open('config.yaml') as f:
             data = yaml.safe_load(f)
-        
+
         self.app_id = data['bot']['app_id']
         self.secret = data['bot']['secret']
         self.sandbox = data.get('sandbox', False)
@@ -101,21 +101,18 @@ impl Config {
 
 ## Client Setup Migration
 
-### Python botpy Client
+### Typical Python Client
 ```python
-import botpy
-from botpy import logging
-from botpy.ext.cog_yaml import read
-
-class MyClient(botpy.Client):
+# Pseudocode based on a typical Python QQ Bot SDK
+class MyClient(Client):
     async def on_ready(self):
-        _log.info(f"robot 「{self.robot.name}」 on_ready!")
+        log.info(f"robot 「{self.robot.name}」 on_ready!")
 
     async def on_at_message_create(self, message):
         await message.reply(content=f"机器人{self.robot.name}收到你的@消息了: {message.content}")
 
 if __name__ == "__main__":
-    intents = botpy.Intents(public_guild_messages=True)
+    intents = Intents(public_guild_messages=True)
     client = MyClient(intents=intents)
     client.run(appid="APP_ID", secret="SECRET")
 ```
@@ -138,7 +135,7 @@ impl EventHandler for MyBot {
         if let Some(content) = &message.content {
             let reply = format!("机器人收到你的@消息了: {}", content);
             let params = botrs::MessageParams::new_text(&reply);
-            
+
             if let Some(channel_id) = &message.channel_id {
                 ctx.api.post_message_with_params(&ctx.token, channel_id, params).await.ok();
             }
@@ -149,35 +146,35 @@ impl EventHandler for MyBot {
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     tracing_subscriber::init();
-    
+
     let config = Config::load()?;
     let token = Token::new(config.bot.app_id, config.bot.secret);
     let intents = Intents::default().with_public_guild_messages();
-    
+
     let mut client = Client::new(token, intents, MyBot, false)?;
     client.start().await?;
-    
+
     Ok(())
 }
 ```
 
 ## Event Handler Migration
 
-### Python botpy Event Handlers
+### Typical Python Event Handlers
 ```python
-class MyClient(botpy.Client):
+class MyClient(Client):
     async def on_at_message_create(self, message):
         """Handle @ mentions"""
         await self.handle_at_message(message)
-    
+
     async def on_guild_member_add(self, member):
         """Handle new member joins"""
         await self.welcome_member(member)
-    
+
     async def on_message_reaction_add(self, reaction):
         """Handle reaction additions"""
         await self.handle_reaction(reaction)
-    
+
     async def handle_at_message(self, message):
         if message.content.strip() == "hello":
             await message.reply(content="Hello! How can I help you?")
@@ -196,11 +193,11 @@ impl EventHandler for MyBot {
     async fn message_create(&self, ctx: Context, message: Message) {
         self.handle_at_message(ctx, message).await;
     }
-    
+
     async fn guild_member_add(&self, ctx: Context, member: GuildMember) {
         self.welcome_member(ctx, member).await;
     }
-    
+
     async fn message_reaction_add(&self, ctx: Context, reaction: MessageReaction) {
         self.handle_reaction(ctx, reaction).await;
     }
@@ -212,13 +209,13 @@ impl MyBot {
             Some(content) => content.trim(),
             None => return,
         };
-        
+
         let response = match content {
             "hello" => "Hello! How can I help you?",
             "ping" => "Pong!",
             _ => return,
         };
-        
+
         if let Some(channel_id) = &message.channel_id {
             let params = botrs::MessageParams::new_text(response);
             ctx.api.post_message_with_params(&ctx.token, channel_id, params).await.ok();
@@ -229,25 +226,25 @@ impl MyBot {
 
 ## Message Sending Migration
 
-### Python botpy Message Sending
+### Typical Python Message Sending
 ```python
 # Simple text message
 await message.reply(content="Hello, world!")
 
 # Embed message
-embed = botpy.Embed(title="My Embed", description="This is an embed")
+embed = Embed(title="My Embed", description="This is an embed")
 await message.reply(embed=embed)
 
 # File upload
 with open("image.png", "rb") as f:
-    await message.reply(file=botpy.File(f, "image.png"))
+    await message.reply(file=File(f, "image.png"))
 
 # Markdown message
-markdown = botpy.MessageMarkdown(content="# Hello\n\nThis is **bold**")
+markdown = MessageMarkdown(content="# Hello\n\nThis is **bold**")
 await message.reply(markdown=markdown)
 
 # Keyboard message
-keyboard = botpy.MessageKeyboard(content=buttons_data)
+keyboard = MessageKeyboard(content=buttons_data)
 await message.reply(keyboard=keyboard)
 ```
 
@@ -299,23 +296,21 @@ ctx.api.post_message_with_params(&ctx.token, &channel_id, params).await?;
 
 ## Intent System Migration
 
-### Python botpy Intents
+### Typical Python Intents
 ```python
-import botpy
-
 # Basic intents
-intents = botpy.Intents.default()
+intents = Intents.default()
 intents.public_guild_messages = True
 
 # Multiple intents
-intents = botpy.Intents(
+intents = Intents(
     public_guild_messages=True,
     direct_message=True,
     guild_messages=True
 )
 
 # All intents
-intents = botpy.Intents.all()
+intents = Intents.all()
 ```
 
 ### BotRS Intents
@@ -340,11 +335,8 @@ let intents = Intents::from_bits(0b1010).unwrap_or_default();
 
 ## Error Handling Migration
 
-### Python botpy Error Handling
+### Typical Python Error Handling
 ```python
-import botpy
-from botpy.errors import *
-
 try:
     await message.reply(content="Hello!")
 except ServerError as e:
@@ -384,16 +376,15 @@ async fn send_message(&self, ctx: &Context, channel_id: &str, content: &str) -> 
 
 ## Async/Await Migration
 
-### Python botpy Async
+### Typical Python Async
 ```python
 import asyncio
-import botpy
 
-class MyClient(botpy.Client):
+class MyClient(Client):
     async def on_at_message_create(self, message):
         # Simple async operation
         await message.reply(content="Hello!")
-        
+
         # Multiple async operations
         tasks = [
             self.send_notification(message.author.id),
@@ -401,7 +392,7 @@ class MyClient(botpy.Client):
             self.update_stats()
         ]
         await asyncio.gather(*tasks)
-    
+
     async def send_notification(self, user_id):
         await asyncio.sleep(1)  # Simulate work
         print(f"Notification sent to {user_id}")
@@ -418,18 +409,18 @@ impl MyBot {
         if let Some(channel_id) = &message.channel_id {
             ctx.api.post_message_with_params(&ctx.token, channel_id, params).await.ok();
         }
-        
+
         // Multiple async operations
         let user_id = message.author.as_ref().map(|a| &a.id);
         let content = message.content.as_deref();
-        
+
         tokio::join!(
             self.send_notification(user_id),
             self.log_message(content),
             self.update_stats()
         );
     }
-    
+
     async fn send_notification(&self, user_id: Option<&String>) {
         sleep(Duration::from_secs(1)).await; // Simulate work
         if let Some(id) = user_id {
@@ -441,7 +432,7 @@ impl MyBot {
 
 ## Data Models Migration
 
-### Python botpy Models
+### Typical Python Models
 ```python
 # Accessing message data
 user_id = message.author.id
@@ -478,12 +469,12 @@ let content = message.content.as_deref().unwrap_or("No content");
 
 ## Command System Migration
 
-### Python botpy Commands
+### Typical Python Commands
 ```python
-class MyClient(botpy.Client):
+class MyClient(Client):
     async def on_at_message_create(self, message):
         content = message.content.strip()
-        
+
         if content.startswith("!hello"):
             await self.handle_hello(message)
         elif content.startswith("!help"):
@@ -491,10 +482,10 @@ class MyClient(botpy.Client):
         elif content.startswith("!echo "):
             text = content[6:]  # Remove "!echo "
             await message.reply(content=f"Echo: {text}")
-    
+
     async def handle_hello(self, message):
         await message.reply(content="Hello there!")
-    
+
     async def handle_help(self, message):
         help_text = """
         Available commands:
@@ -513,7 +504,7 @@ impl MyBot {
             Some(content) => content.trim(),
             None => return,
         };
-        
+
         if content.starts_with("!hello") {
             self.handle_hello(&ctx, &message).await;
         } else if content.starts_with("!help") {
@@ -523,26 +514,26 @@ impl MyBot {
             self.handle_echo(&ctx, &message, text).await;
         }
     }
-    
+
     async fn handle_hello(&self, ctx: &Context, message: &Message) {
         if let Some(channel_id) = &message.channel_id {
             let params = MessageParams::new_text("Hello there!");
             ctx.api.post_message_with_params(&ctx.token, channel_id, params).await.ok();
         }
     }
-    
+
     async fn handle_help(&self, ctx: &Context, message: &Message) {
         let help_text = r#"Available commands:
 !hello - Say hello
 !help - Show this help
 !echo <text> - Echo your text"#;
-        
+
         if let Some(channel_id) = &message.channel_id {
             let params = MessageParams::new_text(help_text);
             ctx.api.post_message_with_params(&ctx.token, channel_id, params).await.ok();
         }
     }
-    
+
     async fn handle_echo(&self, ctx: &Context, message: &Message, text: &str) {
         let response = format!("Echo: {}", text);
         if let Some(channel_id) = &message.channel_id {
@@ -555,7 +546,7 @@ impl MyBot {
 
 ## Database Integration Migration
 
-### Python botpy with SQLAlchemy
+### Typical Python with SQLAlchemy
 ```python
 from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
@@ -569,14 +560,14 @@ class User(Base):
     user_id = Column(String, unique=True)
     username = Column(String)
 
-class MyClient(botpy.Client):
+class MyClient(Client):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.engine = create_engine('sqlite:///bot.db')
         Base.metadata.create_all(self.engine)
         Session = sessionmaker(bind=self.engine)
         self.session = Session()
-    
+
     async def on_at_message_create(self, message):
         # Store user info
         user = self.session.query(User).filter_by(user_id=message.author.id).first()
@@ -605,7 +596,7 @@ struct MyBot {
 impl MyBot {
     async fn new() -> Result<Self, sqlx::Error> {
         let pool = SqlitePool::connect("sqlite:bot.db").await?;
-        
+
         // Create tables
         sqlx::query(
             r#"
@@ -618,10 +609,10 @@ impl MyBot {
         )
         .execute(&pool)
         .await?;
-        
+
         Ok(Self { db_pool: pool })
     }
-    
+
     async fn store_user(&self, user_id: &str, username: Option<&str>) -> Result<(), sqlx::Error> {
         sqlx::query(
             "INSERT OR REPLACE INTO users (user_id, username) VALUES (?, ?)"
@@ -630,7 +621,7 @@ impl MyBot {
         .bind(username)
         .execute(&self.db_pool)
         .await?;
-        
+
         Ok(())
     }
 }
@@ -650,23 +641,22 @@ impl EventHandler for MyBot {
 
 ## Testing Migration
 
-### Python botpy Testing
+### Typical Python Testing
 ```python
 import unittest
 from unittest.mock import AsyncMock, patch
-import botpy
 
 class TestMyBot(unittest.IsolatedAsyncioTestCase):
     async def test_hello_command(self):
         client = MyClient()
-        
+
         # Mock message
         message = AsyncMock()
         message.content = "!hello"
         message.reply = AsyncMock()
-        
+
         await client.on_at_message_create(message)
-        
+
         message.reply.assert_called_once_with(content="Hello there!")
 ```
 
@@ -676,11 +666,11 @@ class TestMyBot(unittest.IsolatedAsyncioTestCase):
 mod tests {
     use super::*;
     use botrs::{Context, Message, Author};
-    
+
     #[tokio::test]
     async fn test_hello_command() {
         let bot = MyBot::new().await.unwrap();
-        
+
         // Create mock message
         let message = Message {
             id: Some("123".to_string()),
@@ -693,11 +683,11 @@ mod tests {
             }),
             ..Default::default()
         };
-        
+
         // Test would require mocking the API calls
         // In practice, you'd use dependency injection or traits for testing
     }
-    
+
     #[test]
     fn test_message_parsing() {
         let content = "!echo Hello World";
@@ -780,4 +770,4 @@ let content = message.content
     .to_lowercase();
 ```
 
-This migration guide provides a comprehensive path from Python botpy to BotRS, leveraging Rust's strengths while maintaining familiar patterns where possible.
+This migration guide provides a comprehensive path from Python to BotRS, leveraging Rust's strengths while keeping familiar patterns where possible.

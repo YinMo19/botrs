@@ -75,8 +75,8 @@ api.post_message_with_params(token, "channel_id", params).await?;
 
 ## Comparison with Other Solutions
 
-### vs Python botpy
-BotRS maintains API compatibility with the official Python botpy library while adding:
+### vs Python QQ Bot SDKs
+BotRS offers a familiar high-level API for developers coming from Python QQ Bot SDKs while adding:
 
 - **Compile-time Safety**: Catch errors before deployment
 - **Better Performance**: Native code execution and efficient memory usage

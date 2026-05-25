@@ -1,10 +1,10 @@
-# 从 Python botpy 迁移
+# 从 Python 迁移
 
-本指南帮助开发者从官方 Python `botpy` 库迁移到 BotRS。虽然两个库都实现了 QQ 频道机器人 API，但 BotRS 提供了 Rust 的类型安全、性能优势和内存安全保证。
+本指南帮助开发者从 Python QQ 机器人 SDK 迁移到 BotRS。两类库都实现了 QQ 频道机器人 API，但 BotRS 提供了 Rust 的类型安全、性能优势和内存安全保证。
 
 ## 概述
 
-BotRS 保持与 Python botpy 设计模式的 API 兼容性，同时添加了 Rust 特有的改进。这使得熟悉 Python 生态系统的开发者能够直接迁移。
+BotRS 提供与 Python QQ 机器人 SDK 相似的高层 API 设计模式，并在此基础上叠加了 Rust 特有的改进。这使得熟悉 Python 生态系统的开发者能够直接迁移。
 
 ### 主要差异
 
@@ -16,7 +16,7 @@ BotRS 保持与 Python botpy 设计模式的 API 兼容性，同时添加了 Rus
 
 ## 项目结构迁移
 
-### Python botpy 项目
+### 典型 Python 项目
 ```
 my_bot/
 ├── main.py
@@ -57,7 +57,7 @@ serde = { version = "1.0", features = ["derive"] }
 
 ## 配置迁移
 
-### Python botpy 配置
+### 典型 Python 配置
 ```python
 # config.py
 import yaml
@@ -66,7 +66,7 @@ class Config:
     def __init__(self):
         with open('config.yaml') as f:
             data = yaml.safe_load(f)
-        
+
         self.app_id = data['bot']['app_id']
         self.secret = data['bot']['secret']
         self.sandbox = data.get('sandbox', False)
@@ -101,21 +101,18 @@ impl Config {
 
 ## 客户端设置迁移
 
-### Python botpy 客户端
+### 典型 Python 客户端
 ```python
-import botpy
-from botpy import logging
-from botpy.ext.cog_yaml import read
-
-class MyClient(botpy.Client):
+# 基于典型 Python QQ 机器人 SDK 的伪代码
+class MyClient(Client):
     async def on_ready(self):
-        _log.info(f"robot 「{self.robot.name}」 on_ready!")
+        log.info(f"robot 「{self.robot.name}」 on_ready!")
 
     async def on_at_message_create(self, message):
         await message.reply(content=f"机器人{self.robot.name}收到你的@消息了: {message.content}")
 
 if __name__ == "__main__":
-    intents = botpy.Intents(public_guild_messages=True)
+    intents = Intents(public_guild_messages=True)
     client = MyClient(intents=intents)
     client.run(appid="APP_ID", secret="SECRET")
 ```
@@ -138,7 +135,7 @@ impl EventHandler for MyBot {
         if let Some(content) = &message.content {
             let reply = format!("机器人收到你的@消息了: {}", content);
             let params = botrs::MessageParams::new_text(&reply);
-            
+
             if let Some(channel_id) = &message.channel_id {
                 ctx.api.post_message_with_params(&ctx.token, channel_id, params).await.ok();
             }
@@ -149,35 +146,35 @@ impl EventHandler for MyBot {
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     tracing_subscriber::init();
-    
+
     let config = Config::load()?;
     let token = Token::new(config.bot.app_id, config.bot.secret);
     let intents = Intents::default().with_public_guild_messages();
-    
+
     let mut client = Client::new(token, intents, MyBot, false)?;
     client.start().await?;
-    
+
     Ok(())
 }
 ```
 
 ## 事件处理器迁移
 
-### Python botpy 事件处理器
+### 典型 Python 事件处理器
 ```python
-class MyClient(botpy.Client):
+class MyClient(Client):
     async def on_at_message_create(self, message):
         """处理 @ 提及"""
         await self.handle_at_message(message)
-    
+
     async def on_guild_member_add(self, member):
         """处理新成员加入"""
         await self.welcome_member(member)
-    
+
     async def on_message_reaction_add(self, reaction):
         """处理表情回应添加"""
         await self.handle_reaction(reaction)
-    
+
     async def handle_at_message(self, message):
         if message.content.strip() == "hello":
             await message.reply(content="你好！有什么可以帮助你的吗？")
@@ -196,11 +193,11 @@ impl EventHandler for MyBot {
     async fn message_create(&self, ctx: Context, message: Message) {
         self.handle_at_message(ctx, message).await;
     }
-    
+
     async fn guild_member_add(&self, ctx: Context, member: GuildMember) {
         self.welcome_member(ctx, member).await;
     }
-    
+
     async fn message_reaction_add(&self, ctx: Context, reaction: MessageReaction) {
         self.handle_reaction(ctx, reaction).await;
     }
@@ -212,13 +209,13 @@ impl MyBot {
             Some(content) => content.trim(),
             None => return,
         };
-        
+
         let response = match content {
             "hello" => "你好！有什么可以帮助你的吗？",
             "ping" => "Pong!",
             _ => return,
         };
-        
+
         if let Some(channel_id) = &message.channel_id {
             let params = botrs::MessageParams::new_text(response);
             ctx.api.post_message_with_params(&ctx.token, channel_id, params).await.ok();
@@ -229,25 +226,25 @@ impl MyBot {
 
 ## 消息发送迁移
 
-### Python botpy 消息发送
+### 典型 Python 消息发送
 ```python
 # 简单文本消息
 await message.reply(content="你好，世界！")
 
 # 嵌入消息
-embed = botpy.Embed(title="我的嵌入", description="这是一个嵌入消息")
+embed = Embed(title="我的嵌入", description="这是一个嵌入消息")
 await message.reply(embed=embed)
 
 # 文件上传
 with open("image.png", "rb") as f:
-    await message.reply(file=botpy.File(f, "image.png"))
+    await message.reply(file=File(f, "image.png"))
 
 # Markdown 消息
-markdown = botpy.MessageMarkdown(content="# 你好\n\n这是**粗体**文本")
+markdown = MessageMarkdown(content="# 你好\n\n这是**粗体**文本")
 await message.reply(markdown=markdown)
 
 # 键盘消息
-keyboard = botpy.MessageKeyboard(content=buttons_data)
+keyboard = MessageKeyboard(content=buttons_data)
 await message.reply(keyboard=keyboard)
 ```
 
@@ -299,23 +296,21 @@ ctx.api.post_message_with_params(&ctx.token, &channel_id, params).await?;
 
 ## Intent 系统迁移
 
-### Python botpy Intents
+### 典型 Python Intents
 ```python
-import botpy
-
 # 基本 intents
-intents = botpy.Intents.default()
+intents = Intents.default()
 intents.public_guild_messages = True
 
 # 多个 intents
-intents = botpy.Intents(
+intents = Intents(
     public_guild_messages=True,
     direct_message=True,
     guild_messages=True
 )
 
 # 所有 intents
-intents = botpy.Intents.all()
+intents = Intents.all()
 ```
 
 ### BotRS Intents
@@ -340,11 +335,8 @@ let intents = Intents::from_bits(0b1010).unwrap_or_default();
 
 ## 错误处理迁移
 
-### Python botpy 错误处理
+### 典型 Python 错误处理
 ```python
-import botpy
-from botpy.errors import *
-
 try:
     await message.reply(content="你好！")
 except ServerError as e:
@@ -384,16 +376,15 @@ async fn send_message(&self, ctx: &Context, channel_id: &str, content: &str) -> 
 
 ## 异步/等待迁移
 
-### Python botpy 异步
+### 典型 Python 异步
 ```python
 import asyncio
-import botpy
 
-class MyClient(botpy.Client):
+class MyClient(Client):
     async def on_at_message_create(self, message):
         # 简单异步操作
         await message.reply(content="你好！")
-        
+
         # 多个异步操作
         tasks = [
             self.send_notification(message.author.id),
@@ -401,7 +392,7 @@ class MyClient(botpy.Client):
             self.update_stats()
         ]
         await asyncio.gather(*tasks)
-    
+
     async def send_notification(self, user_id):
         await asyncio.sleep(1)  # 模拟工作
         print(f"通知已发送给 {user_id}")
@@ -418,18 +409,18 @@ impl MyBot {
         if let Some(channel_id) = &message.channel_id {
             ctx.api.post_message_with_params(&ctx.token, channel_id, params).await.ok();
         }
-        
+
         // 多个异步操作
         let user_id = message.author.as_ref().map(|a| &a.id);
         let content = message.content.as_deref();
-        
+
         tokio::join!(
             self.send_notification(user_id),
             self.log_message(content),
             self.update_stats()
         );
     }
-    
+
     async fn send_notification(&self, user_id: Option<&String>) {
         sleep(Duration::from_secs(1)).await; // 模拟工作
         if let Some(id) = user_id {
@@ -441,7 +432,7 @@ impl MyBot {
 
 ## 数据模型迁移
 
-### Python botpy 模型
+### 典型 Python 模型
 ```python
 # 访问消息数据
 user_id = message.author.id
@@ -478,12 +469,12 @@ let content = message.content.as_deref().unwrap_or("无内容");
 
 ## 命令系统迁移
 
-### Python botpy 命令
+### 典型 Python 命令
 ```python
-class MyClient(botpy.Client):
+class MyClient(Client):
     async def on_at_message_create(self, message):
         content = message.content.strip()
-        
+
         if content.startswith("!hello"):
             await self.handle_hello(message)
         elif content.startswith("!help"):
@@ -491,10 +482,10 @@ class MyClient(botpy.Client):
         elif content.startswith("!echo "):
             text = content[6:]  # 移除 "!echo "
             await message.reply(content=f"回声: {text}")
-    
+
     async def handle_hello(self, message):
         await message.reply(content="你好！")
-    
+
     async def handle_help(self, message):
         help_text = """
         可用命令:
@@ -513,7 +504,7 @@ impl MyBot {
             Some(content) => content.trim(),
             None => return,
         };
-        
+
         if content.starts_with("!hello") {
             self.handle_hello(&ctx, &message).await;
         } else if content.starts_with("!help") {
@@ -523,26 +514,26 @@ impl MyBot {
             self.handle_echo(&ctx, &message, text).await;
         }
     }
-    
+
     async fn handle_hello(&self, ctx: &Context, message: &Message) {
         if let Some(channel_id) = &message.channel_id {
             let params = MessageParams::new_text("你好！");
             ctx.api.post_message_with_params(&ctx.token, channel_id, params).await.ok();
         }
     }
-    
+
     async fn handle_help(&self, ctx: &Context, message: &Message) {
         let help_text = r#"可用命令:
 !hello - 打招呼
 !help - 显示此帮助
 !echo <文本> - 回声你的文本"#;
-        
+
         if let Some(channel_id) = &message.channel_id {
             let params = MessageParams::new_text(help_text);
             ctx.api.post_message_with_params(&ctx.token, channel_id, params).await.ok();
         }
     }
-    
+
     async fn handle_echo(&self, ctx: &Context, message: &Message, text: &str) {
         let response = format!("回声: {}", text);
         if let Some(channel_id) = &message.channel_id {
@@ -555,7 +546,7 @@ impl MyBot {
 
 ## 数据库集成迁移
 
-### Python botpy 与 SQLAlchemy
+### 典型 Python 与 SQLAlchemy
 ```python
 from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
@@ -569,14 +560,14 @@ class User(Base):
     user_id = Column(String, unique=True)
     username = Column(String)
 
-class MyClient(botpy.Client):
+class MyClient(Client):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.engine = create_engine('sqlite:///bot.db')
         Base.metadata.create_all(self.engine)
         Session = sessionmaker(bind=self.engine)
         self.session = Session()
-    
+
     async def on_at_message_create(self, message):
         # 存储用户信息
         user = self.session.query(User).filter_by(user_id=message.author.id).first()
@@ -605,7 +596,7 @@ struct MyBot {
 impl MyBot {
     async fn new() -> Result<Self, sqlx::Error> {
         let pool = SqlitePool::connect("sqlite:bot.db").await?;
-        
+
         // 创建表
         sqlx::query(
             r#"
@@ -618,10 +609,10 @@ impl MyBot {
         )
         .execute(&pool)
         .await?;
-        
+
         Ok(Self { db_pool: pool })
     }
-    
+
     async fn store_user(&self, user_id: &str, username: Option<&str>) -> Result<(), sqlx::Error> {
         sqlx::query(
             "INSERT OR REPLACE INTO users (user_id, username) VALUES (?, ?)"
@@ -630,7 +621,7 @@ impl MyBot {
         .bind(username)
         .execute(&self.db_pool)
         .await?;
-        
+
         Ok(())
     }
 }
@@ -650,23 +641,22 @@ impl EventHandler for MyBot {
 
 ## 测试迁移
 
-### Python botpy 测试
+### 典型 Python 测试
 ```python
 import unittest
 from unittest.mock import AsyncMock, patch
-import botpy
 
 class TestMyBot(unittest.IsolatedAsyncioTestCase):
     async def test_hello_command(self):
         client = MyClient()
-        
+
         # 模拟消息
         message = AsyncMock()
         message.content = "!hello"
         message.reply = AsyncMock()
-        
+
         await client.on_at_message_create(message)
-        
+
         message.reply.assert_called_once_with(content="你好！")
 ```
 
@@ -676,11 +666,11 @@ class TestMyBot(unittest.IsolatedAsyncioTestCase):
 mod tests {
     use super::*;
     use botrs::{Context, Message, Author};
-    
+
     #[tokio::test]
     async fn test_hello_command() {
         let bot = MyBot::new().await.unwrap();
-        
+
         // 创建模拟消息
         let message = Message {
             id: Some("123".to_string()),
@@ -693,11 +683,11 @@ mod tests {
             }),
             ..Default::default()
         };
-        
+
         // 测试需要模拟 API 调用
         // 实际上，你会使用依赖注入或特征进行测试
     }
-    
+
     #[test]
     fn test_message_parsing() {
         let content = "!echo Hello World";
@@ -780,4 +770,4 @@ let content = message.content
     .to_lowercase();
 ```
 
-本迁移指南提供了从 Python botpy 到 BotRS 的全面路径，充分利用 Rust 的优势，同时在可能的情况下保持熟悉的模式。
+本迁移指南提供了从 Python 到 BotRS 的完整迁移路径，充分利用 Rust 的优势，同时尽可能保持熟悉的开发模式。

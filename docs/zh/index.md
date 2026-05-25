@@ -125,9 +125,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 ## 架构亮点
 
-### 与 Python botpy 的兼容性
+### 对 Python 开发者友好的 API
 
-BotRS 保持与官方 Python botpy 库的 API 兼容性，使熟悉 Python 生态系统的开发者能够直接迁移。结构化参数系统镜像了 botpy 的方法，同时添加了 Rust 的类型安全优势。
+BotRS 提供了一套对 Python QQ 机器人 SDK 用户而言相当熟悉的高层 API，便于他们直接迁移。结构化参数系统延续了那种易用风格,同时叠加了 Rust 的类型安全优势。
 
 ### 性能特性
 

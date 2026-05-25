@@ -126,9 +126,9 @@ Ready to build your first QQ Guild bot with BotRS? Follow our comprehensive guid
 
 ## Architecture Highlights
 
-### Compatibility with Python botpy
+### Familiar API for Python Developers
 
-BotRS maintains API compatibility with the official Python botpy library, making migration straightforward for developers familiar with the Python ecosystem. The structured parameter system mirrors botpy's approach while adding Rust's type safety benefits.
+BotRS exposes a high-level API that will feel familiar to developers coming from Python QQ Bot SDKs, making migration straightforward. The structured parameter system mirrors that ergonomic style while adding Rust's type safety benefits.
 
 ### Performance Characteristics
 

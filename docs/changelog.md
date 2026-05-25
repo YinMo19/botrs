@@ -10,29 +10,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.11.0] - 2026-05-25
 
 ### Changed
-- Aligned user, guild/member/role, mute, manage-event, gateway/webhook, interaction-search, message-audit, and message-setting DTOs with botgo.
-- Matched botgo zero-value and `omitempty` JSON wire shapes for the updated DTOs.
+- Aligned user, guild/member/role, mute, manage-event, gateway/webhook, interaction-search, message-audit, and message-setting DTOs with the QQ Bot Open API.
+- Matched the documented zero-value and `omitempty` JSON wire shapes for the updated DTOs.
 
 ### Fixed
-- Kept local gateway/event helper context out of DTO JSON where botgo uses pure payload shapes.
+- Kept local gateway/event helper context out of DTO JSON where the protocol uses pure payload shapes.
 
 ## [0.10.0] - 2026-05-25
 
 ### Changed
-- Aligned channel, schedule, audio, announce, and API permission DTOs with botgo zero-value wire shapes.
+- Aligned channel, schedule, audio, announce, and API permission DTOs with the documented zero-value wire shapes.
 - `PostAudio`, `post_audio`, and `Context::post_audio` now use `AudioControl`; audio events retain `AudioAction`.
-- `AudioStatus` now serializes and deserializes as botgo's numeric status values.
-- Updated gateway documentation to describe botgo-style fixed reconnect throttling instead of exponential backoff.
+- `AudioStatus` now serializes and deserializes as the protocol's numeric status values.
+- Updated gateway documentation to describe fixed reconnect throttling instead of exponential backoff.
 
 ### Fixed
-- `ListSchedules` now always sends the `since` query value, matching botgo behavior.
+- `ListSchedules` now always sends the `since` query value, matching the documented API behavior.
 
 ## [0.9.0] - 2026-05-25
 
 ### Changed
-- Aligned `MessageReaction` and `WSMessageReactionData` with botgo's pure message reaction DTO.
+- Aligned `MessageReaction` and `WSMessageReactionData` with the QQ Bot Open API's pure message reaction DTO.
 - Made reaction `Emoji`, `ReactionTarget`, and `MessageReaction` fields required instead of silently defaulting missing protocol data.
-- Aligned forum `ThreadInfo.title` and `ThreadInfo.content` with botgo by keeping raw strings.
+- Aligned forum `ThreadInfo.title` and `ThreadInfo.content` with the QQ Bot Open API by keeping raw strings.
 - Updated GitHub Actions to current major versions to avoid Node 20 action deprecation.
 
 ### Fixed
@@ -41,46 +41,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.8.0] - 2026-05-25
 
 ### Changed
-- Aligned `DirectMessage` with botgo's direct-message session DTO and made `DirectMessageSession` an alias of it.
-- `direct_message_create` now receives a regular `Message`, matching botgo's `WSDirectMessageData`.
+- Aligned `DirectMessage` with the QQ Bot Open API's direct-message session DTO and made `DirectMessageSession` an alias of it.
+- `direct_message_create` now receives a regular `Message`, matching the documented `WSDirectMessageData`.
 - Updated direct-message examples and API docs to use `DirectMessageParams` with `post_dms_with_params`.
 
 ### Fixed
-- Completed botgo DTO parity for message, guild, and interaction wire formats.
-- Matched botgo message helper parsing behavior for mentions and command splitting.
+- Completed DTO parity with the QQ Bot Open API for message, guild, and interaction wire formats.
+- Matched the documented message helper parsing behavior for mentions and command splitting.
 
 ## [0.7.0] - 2026-05-25
 
 ### Added
-- Botgo-compatible OpenAPI v1 concrete constants `HeaderCallbackAppID` and `MaxIdleConns`.
+- OpenAPI v1 concrete constants `HeaderCallbackAppID` and `MaxIdleConns` aligned with the QQ Bot Open API.
 - `Session::from_app_id` / `Session::FromAppID` helper for HTTP callback payload sessions.
 
 ### Changed
-- OpenAPI instances now preserve botgo's app ID state and send `X-Union-Appid` on requests.
-- `PutInteraction` now uses the OpenAPI app ID for `X-Callback-AppID`, matching botgo.
+- OpenAPI instances now preserve the configured app ID state and send `X-Union-Appid` on requests.
+- `PutInteraction` now uses the OpenAPI app ID for `X-Callback-AppID`, matching the QQ Bot Open API.
 - HTTP webhook dispatch payloads now include a session with the configured app ID.
 
 ### Fixed
 - Clear stale session ID and sequence before requeueing sessions after non-resumable gateway close errors.
-- Accept botgo's legacy wrapped single-message response shape (`{"message": ...}`).
+- Accept the legacy wrapped single-message response shape (`{"message": ...}`) returned by some endpoints.
 
 ## [0.6.0] - 2026-05-25
 
 ### Added
-- Botgo-compatible `WSPayload.session`, `C2CFriendData`, `WSC2CFriendData`, message helper, pager helper, and OpenAPI facade names.
+- `WSPayload.session`, `C2CFriendData`, `WSC2CFriendData`, message helper, pager helper, and OpenAPI facade names aligned with the QQ Bot Open API.
 - `APIMessage`, `GetEventID`, `GetSendType`, `QueryParams`, OpenAPI group aliases, `openapi::Register`, and `DefaultImpl` compatibility entry points.
 
 ### Changed
-- Aligned websocket event payload DTOs and C2C friend events with botgo's pure data-model shape.
-- Kept Rust-style lowercase helpers while adding botgo-style exported names for smoother migration.
+- Aligned websocket event payload DTOs and C2C friend events with the QQ Bot Open API's pure data-model shape.
+- Kept Rust-style lowercase helpers while adding upper-camel-case exported names for smoother migration.
 
 ## [0.5.0] - 2026-05-25
 
 ### Added
-- Botgo-compatible OpenAPI facade, version registry, request options, HTTP filters, and token refresh helpers.
+- OpenAPI facade, version registry, request options, HTTP filters, and token refresh helpers aligned with the QQ Bot Open API.
 
 ### Changed
-- Aligned OpenAPI success status handling with botgo (`200` and `204` only).
+- Aligned OpenAPI success status handling with the QQ Bot Open API (`200` and `204` only).
 - Shared token caches across cloned token sources without unsafe mutation.
 - Refreshed the lockfile to avoid yanked transitive dependencies.
 

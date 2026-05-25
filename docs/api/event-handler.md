@@ -108,7 +108,7 @@ async fn message_create(&self, ctx: Context, message: Message) {
 
 ### `direct_message_create`
 
-Called when a direct message is created. Botgo exposes the gateway payload as a
+Called when a direct message is created. The QQ Bot Open API exposes the gateway payload as a
 regular `Message`; the `DirectMessage` DTO is reserved for direct-message
 sessions returned by the OpenAPI.
 

@@ -95,7 +95,7 @@ used by the official SDKs:
 ```rust
 // Reconnection is automatic with a fixed session-manager interval
 // - Interval is calculated from gateway session_start_limit.max_concurrency
-// - Formula matches botgo: round(2 / max_concurrency), minimum 1 second
+// - Formula: round(2 / max_concurrency), minimum 1 second
 // - Successful reconnects do not inherit any previous backoff state
 // - Maximum attempts: unlimited until explicitly stopped
 ```
@@ -316,7 +316,7 @@ The Gateway is designed for efficient memory usage:
 ### Network Efficiency
 
 - Compression support for WebSocket messages
-- Botgo-style fixed reconnect throttling
+- Fixed reconnect throttling
 - Heartbeat optimization (30-second fixed interval)
 - Event filtering based on intents
 

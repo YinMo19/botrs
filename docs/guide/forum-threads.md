@@ -246,7 +246,7 @@ impl ForumBot {
             println!("Title: {}", title);
         }
 
-        // The botgo DTO keeps title/content as JSON strings. Parse them only
+        // The QQ Bot Open API keeps title/content as JSON strings. Parse them only
         // when structured rich-content processing is needed.
         if let Some(content) = &thread.thread_info.content {
             if let Ok(content_data) = serde_json::from_str::<serde_json::Value>(content) {
