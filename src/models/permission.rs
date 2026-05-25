@@ -6,11 +6,15 @@
 use crate::models::{HasId, Snowflake};
 use serde::{Deserialize, Serialize};
 
+fn is_zero_i32(value: &i32) -> bool {
+    *value == 0
+}
+
 /// Botgo-compatible API permissions response wrapper.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct APIPermissions {
     /// API permission list.
-    #[serde(default, rename = "apis")]
+    #[serde(default, rename = "apis", skip_serializing_if = "Vec::is_empty")]
     pub api_list: Vec<APIPermission>,
 }
 
@@ -18,17 +22,17 @@ pub struct APIPermissions {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct APIPermission {
     /// The API path/endpoint
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "String::is_empty")]
     pub path: String,
     /// The HTTP method for this API
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "String::is_empty")]
     pub method: String,
     /// Description of what this API does
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "String::is_empty")]
     pub desc: String,
     /// Authorization status for this API
     /// 0: Unauthorized, 1: Authorized
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "is_zero_i32")]
     pub auth_status: i32,
 }
 
@@ -79,10 +83,10 @@ impl APIPermission {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct APIPermissionDemandIdentify {
     /// The API path/endpoint
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "String::is_empty")]
     pub path: String,
     /// The HTTP method for this API
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "String::is_empty")]
     pub method: String,
 }
 
@@ -131,19 +135,19 @@ impl std::fmt::Display for APIPermissionDemandIdentify {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct APIPermissionDemand {
     /// The guild ID where permission is requested
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "String::is_empty")]
     pub guild_id: Snowflake,
     /// The channel ID where the permission request will be sent
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "String::is_empty")]
     pub channel_id: Snowflake,
     /// The API identifier for which permission is requested
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub api_identify: Option<APIPermissionDemandIdentify>,
     /// The title of the permission request
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "String::is_empty")]
     pub title: String,
     /// Description explaining why the permission is needed
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "String::is_empty")]
     pub desc: String,
 }
 
@@ -297,6 +301,16 @@ mod tests {
         assert_eq!(permission.method, "");
         assert_eq!(permission.desc, "");
         assert_eq!(permission.auth_status, 0);
+
+        let value = serde_json::to_value(&permission).unwrap();
+        assert!(value.as_object().unwrap().is_empty());
+    }
+
+    #[test]
+    fn botgo_api_permissions_omits_empty_list() {
+        let permissions = APIPermissions::default();
+        let value = serde_json::to_value(&permissions).unwrap();
+        assert!(value.as_object().unwrap().is_empty());
     }
 
     #[test]
@@ -384,6 +398,20 @@ mod tests {
         assert_eq!(demand.desc, "");
         assert_eq!(demand.api_path(), "");
         assert_eq!(demand.api_method(), "");
+
+        let value = serde_json::to_value(&demand).unwrap();
+        assert!(value.as_object().unwrap().is_empty());
+    }
+
+    #[test]
+    fn botgo_api_permission_demand_to_create_keeps_required_fields_when_zero() {
+        // ChannelID and Desc do NOT have omitempty in botgo, so they must always be present.
+        let demand = APIPermissionDemandToCreate::default();
+        let value = serde_json::to_value(&demand).unwrap();
+
+        assert_eq!(value["channel_id"], "");
+        assert_eq!(value["desc"], "");
+        assert!(value.get("api_identify").is_none());
     }
 
     #[test]
