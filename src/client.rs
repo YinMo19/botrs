@@ -1793,6 +1793,19 @@ impl<H: EventHandler + 'static> Client<H> {
 
         let event_type = event.event_type.as_deref().map(str::to_ascii_uppercase);
 
+        // Some payloads carry a fallback event ID inside `data.id`; pick the gateway
+        // envelope id first and fall back to the inline value.
+        fn payload_event_id(
+            envelope_id: &Option<String>,
+            data: &serde_json::Value,
+        ) -> Option<String> {
+            envelope_id.clone().or_else(|| {
+                data.get("id")
+                    .and_then(|v| v.as_str())
+                    .map(|s| s.to_string())
+            })
+        }
+
         match event_type.as_deref() {
             Some("READY") => {
                 if let Some(data) = event.data {
@@ -1852,22 +1865,14 @@ impl<H: EventHandler + 'static> Client<H> {
             }
             Some("SUBSCRIBE_MESSAGE_STATUS") => {
                 if let Some(data) = event.data {
-                    let event_id = event.id.clone().or_else(|| {
-                        data.get("id")
-                            .and_then(|v| v.as_str())
-                            .map(|s| s.to_string())
-                    });
+                    let event_id = payload_event_id(&event.id, &data);
                     let status = SubscribeMessageStatusData::new(event_id, &data);
                     self.handler.subscribe_message_status(ctx, status).await;
                 }
             }
             Some("ENTER_AIO") => {
                 if let Some(data) = event.data {
-                    let event_id = event.id.clone().or_else(|| {
-                        data.get("id")
-                            .and_then(|v| v.as_str())
-                            .map(|s| s.to_string())
-                    });
+                    let event_id = payload_event_id(&event.id, &data);
                     let aio = EnterAioEvent::new(event_id, &data);
                     self.handler.enter_aio(ctx, aio).await;
                 }
@@ -2067,141 +2072,61 @@ impl<H: EventHandler + 'static> Client<H> {
             }
             Some("FRIEND_ADD") => {
                 if let Some(data) = event.data {
-                    let event_id = event.id.clone().or_else(|| {
-                        data.get("id")
-                            .and_then(|v| v.as_str())
-                            .map(|s| s.to_string())
-                    });
-                    let mut data_map = std::collections::HashMap::new();
-                    if let serde_json::Value::Object(obj) = &data {
-                        for (k, v) in obj {
-                            data_map.insert(k.clone(), v.clone());
-                        }
-                    }
-                    let event = C2CManageEvent::new(ctx.api.as_ref().clone(), event_id, &data_map);
+                    let event_id = payload_event_id(&event.id, &data);
+                    let event = C2CManageEvent::new(ctx.api.as_ref().clone(), event_id, &data);
                     self.handler.friend_add(ctx, event).await;
                 }
             }
             Some("FRIEND_DEL") => {
                 if let Some(data) = event.data {
-                    let event_id = event.id.clone().or_else(|| {
-                        data.get("id")
-                            .and_then(|v| v.as_str())
-                            .map(|s| s.to_string())
-                    });
-                    let mut data_map = std::collections::HashMap::new();
-                    if let serde_json::Value::Object(obj) = &data {
-                        for (k, v) in obj {
-                            data_map.insert(k.clone(), v.clone());
-                        }
-                    }
-                    let event = C2CManageEvent::new(ctx.api.as_ref().clone(), event_id, &data_map);
+                    let event_id = payload_event_id(&event.id, &data);
+                    let event = C2CManageEvent::new(ctx.api.as_ref().clone(), event_id, &data);
                     self.handler.friend_del(ctx, event).await;
                 }
             }
             Some("C2C_MSG_REJECT") => {
                 if let Some(data) = event.data {
-                    let event_id = event.id.clone().or_else(|| {
-                        data.get("id")
-                            .and_then(|v| v.as_str())
-                            .map(|s| s.to_string())
-                    });
-                    let mut data_map = std::collections::HashMap::new();
-                    if let serde_json::Value::Object(obj) = &data {
-                        for (k, v) in obj {
-                            data_map.insert(k.clone(), v.clone());
-                        }
-                    }
-                    let event = C2CManageEvent::new(ctx.api.as_ref().clone(), event_id, &data_map);
+                    let event_id = payload_event_id(&event.id, &data);
+                    let event = C2CManageEvent::new(ctx.api.as_ref().clone(), event_id, &data);
                     self.handler.c2c_msg_reject(ctx, event).await;
                 }
             }
             Some("C2C_MSG_RECEIVE") => {
                 if let Some(data) = event.data {
-                    let event_id = event.id.clone().or_else(|| {
-                        data.get("id")
-                            .and_then(|v| v.as_str())
-                            .map(|s| s.to_string())
-                    });
-                    let mut data_map = std::collections::HashMap::new();
-                    if let serde_json::Value::Object(obj) = &data {
-                        for (k, v) in obj {
-                            data_map.insert(k.clone(), v.clone());
-                        }
-                    }
-                    let event = C2CManageEvent::new(ctx.api.as_ref().clone(), event_id, &data_map);
+                    let event_id = payload_event_id(&event.id, &data);
+                    let event = C2CManageEvent::new(ctx.api.as_ref().clone(), event_id, &data);
                     self.handler.c2c_msg_receive(ctx, event).await;
                 }
             }
             Some("GROUP_ADD_ROBOT") => {
                 if let Some(data) = event.data {
-                    let event_id = event.id.clone().or_else(|| {
-                        data.get("id")
-                            .and_then(|v| v.as_str())
-                            .map(|s| s.to_string())
-                    });
-                    let mut data_map = std::collections::HashMap::new();
-                    if let serde_json::Value::Object(obj) = &data {
-                        for (k, v) in obj {
-                            data_map.insert(k.clone(), v.clone());
-                        }
-                    }
+                    let event_id = payload_event_id(&event.id, &data);
                     let event =
-                        GroupManageEvent::new(ctx.api.as_ref().clone(), event_id, &data_map);
+                        GroupManageEvent::new(ctx.api.as_ref().clone(), event_id, &data);
                     self.handler.group_add_robot(ctx, event).await;
                 }
             }
             Some("GROUP_DEL_ROBOT") => {
                 if let Some(data) = event.data {
-                    let event_id = event.id.clone().or_else(|| {
-                        data.get("id")
-                            .and_then(|v| v.as_str())
-                            .map(|s| s.to_string())
-                    });
-                    let mut data_map = std::collections::HashMap::new();
-                    if let serde_json::Value::Object(obj) = &data {
-                        for (k, v) in obj {
-                            data_map.insert(k.clone(), v.clone());
-                        }
-                    }
+                    let event_id = payload_event_id(&event.id, &data);
                     let event =
-                        GroupManageEvent::new(ctx.api.as_ref().clone(), event_id, &data_map);
+                        GroupManageEvent::new(ctx.api.as_ref().clone(), event_id, &data);
                     self.handler.group_del_robot(ctx, event).await;
                 }
             }
             Some("GROUP_MSG_REJECT") => {
                 if let Some(data) = event.data {
-                    let event_id = event.id.clone().or_else(|| {
-                        data.get("id")
-                            .and_then(|v| v.as_str())
-                            .map(|s| s.to_string())
-                    });
-                    let mut data_map = std::collections::HashMap::new();
-                    if let serde_json::Value::Object(obj) = &data {
-                        for (k, v) in obj {
-                            data_map.insert(k.clone(), v.clone());
-                        }
-                    }
+                    let event_id = payload_event_id(&event.id, &data);
                     let event =
-                        GroupManageEvent::new(ctx.api.as_ref().clone(), event_id, &data_map);
+                        GroupManageEvent::new(ctx.api.as_ref().clone(), event_id, &data);
                     self.handler.group_msg_reject(ctx, event).await;
                 }
             }
             Some("GROUP_MSG_RECEIVE") => {
                 if let Some(data) = event.data {
-                    let event_id = event.id.clone().or_else(|| {
-                        data.get("id")
-                            .and_then(|v| v.as_str())
-                            .map(|s| s.to_string())
-                    });
-                    let mut data_map = std::collections::HashMap::new();
-                    if let serde_json::Value::Object(obj) = &data {
-                        for (k, v) in obj {
-                            data_map.insert(k.clone(), v.clone());
-                        }
-                    }
+                    let event_id = payload_event_id(&event.id, &data);
                     let event =
-                        GroupManageEvent::new(ctx.api.as_ref().clone(), event_id, &data_map);
+                        GroupManageEvent::new(ctx.api.as_ref().clone(), event_id, &data);
                     self.handler.group_msg_receive(ctx, event).await;
                 }
             }

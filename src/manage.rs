@@ -5,7 +5,6 @@
 
 use crate::api::BotApi;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use std::str::FromStr;
 
 /// Group management event structure
@@ -32,23 +31,14 @@ impl GroupManageEvent {
     /// * `api` - The Bot API client
     /// * `event_id` - Optional event ID
     /// * `data` - Management event data from the gateway
-    pub fn new(
-        api: BotApi,
-        event_id: Option<String>,
-        data: &HashMap<String, serde_json::Value>,
-    ) -> Self {
+    pub fn new(api: BotApi, event_id: Option<String>, data: &serde_json::Value) -> Self {
+        let wire: GroupManageWire = serde_json::from_value(data.clone()).unwrap_or_default();
         Self {
             api,
             event_id,
-            timestamp: data.get("timestamp").and_then(|v| v.as_u64()),
-            group_openid: data
-                .get("group_openid")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            op_member_openid: data
-                .get("op_member_openid")
-                .and_then(|v| v.as_str())
-                .map(String::from),
+            timestamp: wire.timestamp,
+            group_openid: wire.group_openid,
+            op_member_openid: wire.op_member_openid,
         }
     }
 
@@ -64,6 +54,16 @@ impl GroupManageEvent {
             datetime.format("%Y-%m-%d %H:%M:%S").to_string()
         })
     }
+}
+
+#[derive(Debug, Default, Deserialize)]
+struct GroupManageWire {
+    #[serde(default)]
+    timestamp: Option<u64>,
+    #[serde(default)]
+    group_openid: Option<String>,
+    #[serde(default)]
+    op_member_openid: Option<String>,
 }
 
 impl std::fmt::Display for GroupManageEvent {
@@ -125,24 +125,15 @@ impl C2CManageEvent {
     /// * `api` - The Bot API client
     /// * `event_id` - Optional event ID
     /// * `data` - Management event data from the gateway
-    pub fn new(
-        api: BotApi,
-        event_id: Option<String>,
-        data: &HashMap<String, serde_json::Value>,
-    ) -> Self {
+    pub fn new(api: BotApi, event_id: Option<String>, data: &serde_json::Value) -> Self {
+        let wire: C2CManageWire = serde_json::from_value(data.clone()).unwrap_or_default();
         Self {
             api,
             event_id,
-            timestamp: data.get("timestamp").and_then(|v| v.as_u64()),
-            openid: data
-                .get("openid")
-                .and_then(|v| v.as_str())
-                .map(String::from),
-            nick: data.get("nick").and_then(|v| v.as_str()).map(String::from),
-            avatar: data
-                .get("avatar")
-                .and_then(|v| v.as_str())
-                .map(String::from),
+            timestamp: wire.timestamp,
+            openid: wire.openid,
+            nick: wire.nick,
+            avatar: wire.avatar,
         }
     }
 
@@ -158,6 +149,18 @@ impl C2CManageEvent {
             datetime.format("%Y-%m-%d %H:%M:%S").to_string()
         })
     }
+}
+
+#[derive(Debug, Default, Deserialize)]
+struct C2CManageWire {
+    #[serde(default)]
+    timestamp: Option<u64>,
+    #[serde(default)]
+    openid: Option<String>,
+    #[serde(default)]
+    nick: Option<String>,
+    #[serde(default)]
+    avatar: Option<String>,
 }
 
 impl std::fmt::Display for C2CManageEvent {
