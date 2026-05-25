@@ -1,905 +1,168 @@
-# 机器人 API 参考
+# BotApi
 
-`BotApi` 是用于与 QQ 频道 REST API 交互的核心客户端。它提供了完整的 API 端点访问，支持消息发送、频道管理、成员操作等所有功能。
+`BotApi` 是 QQ 频道开放接口的同步风格门面：它持有 HTTP 客户端，构造请求，使用 `Token` 完成签名，并把响应解析成模型类型返回。所有方法都是 `async` 的，返回 `Result<T, BotError>`。
 
-## 概述
+## 构造
 
 ```rust
-pub struct BotApi {
-    http_client: HttpClient,
-}
+use botrs::{BotApi, http::HttpClient, Token};
+
+let http = HttpClient::new(/* 超时秒 */ 30, /* 是否沙箱 */ false)?;
+let api = BotApi::new(http);
+let token = Token::new("app_id", "secret");
+
+let me = api.get_bot_info(&token).await?;
 ```
 
-`BotApi` 封装了所有 QQ 频道机器人 API 端点，提供类型安全的接口和自动的错误处理。所有方法都是异步的，支持高并发操作。
+`BotApi` 实现了 `Clone`，开销很小（内部 HTTP 客户端是引用计数的）。当 bot 通过 `Client` 驱动时，同一个 `BotApi` 实例会通过 `Context::api` 暴露给事件处理器。
 
-## 构造函数
+## 方法目录
 
-### `new`
+每个方法的签名都是 `&self, token: &Token, …`，返回 `Result<…>`。下面按业务域归类列出全部 100+ 路由。具体的参数与响应结构请查阅 [消息模型](./models/messages.md)、[频道与子频道](./models/guilds-channels.md)、[其他类型](./models/other-types.md)。
 
-创建新的 BotApi 实例。
+### 机器人身份
+
+- `get_bot_info` —— `/users/@me`，返回 `BotInfo`。
+- `get_gateway` —— 网关地址 + 推荐分片数。
+
+### Guild
+
+- `get_guild` / `get_guilds` / `get_guilds_with_pager`
+- 成员：`get_guild_member`、`get_guild_members`、`get_guild_members_with_pager`
+- 角色成员：`get_guild_role_members`、`get_guild_role_members_with_pager`
+- 禁言：`mute_all`、`cancel_mute_all`、`mute_member`、`mute_multi_member`、`multi_member_mute`、`cancel_mute_multi_member`
+
+### 子频道
+
+- `get_channel`、`get_channels`
+- `create_channel`、`create_private_channel`、`update_channel` / `patch_channel`、`delete_channel`
+- 权限：`get_channel_user_permissions`、`get_channel_role_permissions`、`update_channel_user_permissions`、`update_channel_role_permissions`、`put_channel_permissions`、`put_channel_roles_permissions`
+
+### 角色
+
+- `get_guild_roles`
+- `create_guild_role`、`create_guild_role_with_update`、`update_guild_role`、`update_guild_role_with_update`、`delete_guild_role`
+- 赋予 / 移除：`create_guild_role_member`、`delete_guild_role_member`、`member_add_role`、`member_delete_role`、`delete_member`、`delete_member_with_options`
+
+### 频道消息
+
+- `get_message`、`get_messages`、`get_messages_with_params`
+- 发送：`post_message_with_params`（推荐）；旧接口：`post_message`、`post_message_to_create`、`post_message_api`。
+- 编辑：`patch_message_with_params`（推荐）；旧接口：`patch_message`、`patch_message_to_create`、`patch_message_api`。
+- 撤回：`recall_message`。
+
+### 私信
+
+- 创建会话：`create_dms`（别名 `create_direct_message`）。
+- 发送：`post_dms_with_params`；旧接口：`post_dms`、`post_direct_message`。
+- 撤回：`retract_dm_message`。
+- 设置引导：`post_dm_setting_guide`、`post_dm_setting_guide_message`。
+
+### 群 / C2C 消息
+
+- 发送：`post_group_message_with_params`、`post_c2c_message_with_params`（`post_c` 是 C2C 别名）；旧接口：`post_group_message`、`post_group_message_to_create`、`post_group_api_message`、`post_group_rich_media_message`。
+- 撤回：`retract_group_message`、`retract_c`。
+- 文件上传：`post_group_file`、`post_c2c_file`。
+
+### 表情回应
+
+- `put_reaction`、`delete_reaction`、`delete_own_message_reaction`
+- `create_message_reaction`、`get_reaction_users`、`get_message_reaction_users`
+
+### 精华消息
+
+- `put_pin`、`delete_pin`、`get_pins`、`clean_pins`
+
+### 公告
+
+- 频道：`create_guild_announce`、`delete_guild_announce`、`clean_guild_announces`、`create_guild_recommend_announce`、`create_recommend_announce`
+- 子频道：`create_channel_announce`、`delete_channel_announce`、`clean_channel_announces`
+- 简写：`create_announce`、`delete_announce`
+
+### 日程
+
+- `get_schedules`、`get_schedule`、`create_schedule`、`create_schedule_with_model`、`update_schedule`、`update_schedule_with_model`、`delete_schedule`
+
+### API 权限
+
+- `get_permissions`（别名 `get_api_permissions`）、`post_permission_demand`、`require_api_permissions`
+
+### 音频 / 语音
+
+- `post_audio`（使用 `AudioControl`）、`update_audio`
+- `on_microphone`、`off_microphone`、`list_voice_channel_members`
+
+### 设置引导
+
+- `post_setting_guide`、`post_setting_guide_message`
+
+### 互动
+
+- `put_interaction` —— 应答按钮 / 互动事件。
+
+### Webhook 会话
+
+- `create_session`、`check_sessions`、`session_list`、`remove_session`、`transport`
+
+### 消息推送配置
+
+- `get_message_setting` —— 频道推送和私信开关。
+
+### 生命周期
+
+- `close` —— 等待请求结束并关闭底层客户端。
+- `http` —— 借出底层 `HttpClient`，便于做高级定制。
+
+## 完整示例
+
+**回应 @ 提及，并附带按钮键盘。** 一次构建键盘，挂到 `MessageParams` 上，再交给 `_with_params` 系列方法。
 
 ```rust
-pub fn new() -> Self
+let keyboard = MessageKeyboard::new()
+    .with_row(MessageKeyboardRow::new()
+        .with_button(MessageKeyboardButton::primary("ok", "OK"))
+        .with_button(MessageKeyboardButton::secondary("cancel", "Cancel")));
+
+let params = MessageParams::new_text("Choose:")
+    .with_reply(message.id.as_deref().unwrap_or(""))
+    .with_keyboard(keyboard);
+
+api.post_message_with_params(&token, &channel_id, params).await?;
 ```
 
-#### 返回值
-
-返回新的 `BotApi` 实例，使用默认的 HTTP 客户端配置。
-
-#### 示例
+**分页拉取成员列表。** 用 pager 辅助方法，避免手动维护 `after` 游标。
 
 ```rust
-use botrs::BotApi;
-
-let api = BotApi::new();
-```
-
-### `with_http_client`
-
-使用自定义 HTTP 客户端创建 BotApi 实例。
-
-```rust
-pub fn with_http_client(http_client: HttpClient) -> Self
-```
-
-#### 参数
-
-- `http_client`: 自定义的 HTTP 客户端
-
-#### 示例
-
-```rust
-use botrs::{BotApi, HttpClient};
-use std::time::Duration;
-
-let http_client = HttpClient::builder()
-    .timeout(Duration::from_secs(30))
-    .build()?;
-
-let api = BotApi::with_http_client(http_client);
-```
-
-## 消息 API
-
-### `post_message`
-
-发送消息到指定频道（旧版 API）。
-
-```rust
-pub async fn post_message(
-    &self,
-    token: &Token,
-    channel_id: &str,
-    content: Option<&str>,
-    embed: Option<&Embed>,
-) -> Result<Message, BotError>
-```
-
-#### 参数
-
-- `token`: 身份验证令牌
-- `channel_id`: 目标频道 ID
-- `content`: 消息文本内容（可选）
-- `embed`: 嵌入内容（可选）
-
-#### 返回值
-
-返回发送成功的消息对象或错误。
-
-#### 示例
-
-```rust
-let message = api.post_message(
-    &token,
-    "channel_123",
-    Some("你好，世界！"),
-    None
+let pager = ctx.api.get_guild_members_with_pager(
+    &ctx.token, &guild_id, GuildMembersPager::default(),
 ).await?;
-```
-
-### `post_message_with_params`
-
-使用结构化参数发送消息（推荐）。
-
-```rust
-pub async fn post_message_with_params(
-    &self,
-    token: &Token,
-    channel_id: &str,
-    params: MessageParams,
-) -> Result<Message, BotError>
-```
-
-#### 参数
-
-- `token`: 身份验证令牌
-- `channel_id`: 目标频道 ID
-- `params`: 消息参数结构体
-
-#### 示例
-
-```rust
-use botrs::{MessageParams, Embed};
-
-// 发送文本消息
-let params = MessageParams::new_text("Hello, World!");
-let message = api.post_message_with_params(&token, "channel_123", params).await?;
-
-// 发送嵌入消息
-let embed = Embed::new()
-    .title("标题")
-    .description("描述")
-    .color(0x3498db);
-let params = MessageParams::new_embed(embed);
-let message = api.post_message_with_params(&token, "channel_123", params).await?;
-
-// 发送回复消息
-let params = MessageParams::new_text("这是回复")
-    .with_reply("original_message_id");
-let message = api.post_message_with_params(&token, "channel_123", params).await?;
-```
-
-### `post_message_with_file`
-
-发送带文件的消息。
-
-```rust
-pub async fn post_message_with_file(
-    &self,
-    token: &Token,
-    channel_id: &str,
-    filename: &str,
-    file_data: &[u8],
-    file_type: &str,
-) -> Result<Message, BotError>
-```
-
-#### 参数
-
-- `token`: 身份验证令牌
-- `channel_id`: 目标频道 ID
-- `filename`: 文件名
-- `file_data`: 文件数据
-- `file_type`: 文件类型（如 "image", "video", "audio"）
-
-#### 示例
-
-```rust
-let file_data = std::fs::read("image.png")?;
-let message = api.post_message_with_file(
-    &token,
-    "channel_123",
-    "image.png",
-    &file_data,
-    "image"
-).await?;
-```
-
-### `get_message`
-
-获取指定消息。
-
-```rust
-pub async fn get_message(
-    &self,
-    token: &Token,
-    channel_id: &str,
-    message_id: &str,
-) -> Result<Message, BotError>
-```
-
-### `delete_message`
-
-删除指定消息。
-
-```rust
-pub async fn delete_message(
-    &self,
-    token: &Token,
-    channel_id: &str,
-    message_id: &str,
-    hidetip: Option<bool>,
-) -> Result<(), BotError>
-```
-
-## 频道管理 API
-
-### `get_guild`
-
-获取频道信息。
-
-```rust
-pub async fn get_guild(
-    &self,
-    token: &Token,
-    guild_id: &str,
-) -> Result<Guild, BotError>
-```
-
-#### 示例
-
-```rust
-let guild = api.get_guild(&token, "guild_123").await?;
-println!("频道名称: {}", guild.name);
-```
-
-### `get_guild_channels`
-
-获取频道的子频道列表。
-
-```rust
-pub async fn get_guild_channels(
-    &self,
-    token: &Token,
-    guild_id: &str,
-) -> Result<Vec<Channel>, BotError>
-```
-
-#### 示例
-
-```rust
-let channels = api.get_guild_channels(&token, "guild_123").await?;
-for channel in channels {
-    println!("子频道: {} ({})", 
-             channel.name.unwrap_or_default(), 
-             channel.id);
+for member in pager.items {
+    /* ... */
 }
 ```
 
-### `get_channel`
-
-获取指定子频道信息。
+**安全地更新子频道权限。** `validate()` 会在请求发出前检查权限串能不能被解析为整数。
 
 ```rust
-pub async fn get_channel(
-    &self,
-    token: &Token,
-    channel_id: &str,
-) -> Result<Channel, BotError>
-```
-
-### `create_guild_channel`
-
-创建新的子频道。
-
-```rust
-pub async fn create_guild_channel(
-    &self,
-    token: &Token,
-    guild_id: &str,
-    channel_data: &serde_json::Value,
-) -> Result<Channel, BotError>
-```
-
-#### 示例
-
-```rust
-use serde_json::json;
-
-let channel_data = json!({
-    "name": "新子频道",
-    "type": 0,  // 文本频道
-    "sub_type": 0,  // 聊天频道
-    "position": 1
-});
-
-let channel = api.create_guild_channel(&token, "guild_123", &channel_data).await?;
-```
-
-### `modify_guild_channel`
-
-修改子频道信息。
-
-```rust
-pub async fn modify_guild_channel(
-    &self,
-    token: &Token,
-    channel_id: &str,
-    channel_data: &serde_json::Value,
-) -> Result<Channel, BotError>
-```
-
-### `delete_guild_channel`
-
-删除子频道。
-
-```rust
-pub async fn delete_guild_channel(
-    &self,
-    token: &Token,
-    channel_id: &str,
-) -> Result<(), BotError>
-```
-
-## 成员管理 API
-
-### `get_guild_members`
-
-获取频道成员列表。
-
-```rust
-pub async fn get_guild_members(
-    &self,
-    token: &Token,
-    guild_id: &str,
-    after: Option<&str>,
-    limit: Option<u32>,
-) -> Result<Vec<Member>, BotError>
-```
-
-#### 参数
-
-- `after`: 分页参数，获取此 ID 之后的成员
-- `limit`: 返回成员数量限制（最大 400）
-
-#### 示例
-
-```rust
-// 获取前100个成员
-let members = api.get_guild_members(&token, "guild_123", None, Some(100)).await?;
-
-// 分页获取
-let first_batch = api.get_guild_members(&token, "guild_123", None, Some(400)).await?;
-if let Some(last_member) = first_batch.last() {
-    let second_batch = api.get_guild_members(
-        &token, 
-        "guild_123", 
-        Some(&last_member.user.id), 
-        Some(400)
-    ).await?;
-}
-```
-
-### `get_guild_member`
-
-获取指定成员信息。
-
-```rust
-pub async fn get_guild_member(
-    &self,
-    token: &Token,
-    guild_id: &str,
-    user_id: &str,
-) -> Result<Member, BotError>
-```
-
-### `add_guild_member_role`
-
-为成员添加身份组。
-
-```rust
-pub async fn add_guild_member_role(
-    &self,
-    token: &Token,
-    guild_id: &str,
-    user_id: &str,
-    role_id: &str,
-) -> Result<(), BotError>
-```
-
-### `remove_guild_member_role`
-
-移除成员的身份组。
-
-```rust
-pub async fn remove_guild_member_role(
-    &self,
-    token: &Token,
-    guild_id: &str,
-    user_id: &str,
-    role_id: &str,
-) -> Result<(), BotError>
-```
-
-### `create_guild_member_mute`
-
-禁言频道成员。
-
-```rust
-pub async fn create_guild_member_mute(
-    &self,
-    token: &Token,
-    guild_id: &str,
-    user_id: &str,
-    mute_data: &serde_json::Value,
-) -> Result<(), BotError>
-```
-
-#### 示例
-
-```rust
-use serde_json::json;
-
-// 禁言10分钟
-let mute_data = json!({
-    "mute_end_timestamp": (chrono::Utc::now() + chrono::Duration::minutes(10)).timestamp().to_string(),
-    "mute_seconds": 600
-});
-
-api.create_guild_member_mute(&token, "guild_123", "user_456", &mute_data).await?;
-```
-
-## 私信 API
-
-### `create_dms`
-
-创建私信会话。
-
-```rust
-pub async fn create_dms(
-    &self,
-    token: &Token,
-    guild_id: &str,
-    user_id: &str,
-) -> Result<DirectMessageSession>
-```
-
-### `post_dms_with_params`
-
-发送私信消息。
-
-```rust
-pub async fn post_dms_with_params(
-    &self,
-    token: &Token,
-    guild_id: &str,
-    params: DirectMessageParams,
-) -> Result<MessageResponse>
-```
-
-#### 示例
-
-```rust
-// 创建私信会话
-let session = api.create_dms(&token, "guild_123", "user_456").await?;
-
-// 发送私信
-let params = DirectMessageParams::new_text("这是一条私信");
-let message = api.post_dms_with_params(&token, "guild_123", params).await?;
-```
-
-### `get_direct_messages`
-
-获取私信历史。
-
-```rust
-pub async fn get_direct_messages(
-    &self,
-    token: &Token,
-    guild_id: &str,
-    channel_id: &str,
-    limit: Option<u32>,
-) -> Result<Vec<DirectMessage>, BotError>
-```
-
-## 群组消息 API
-
-### `post_group_message_with_params`
-
-发送群组消息。
-
-```rust
-pub async fn post_group_message_with_params(
-    &self,
-    token: &Token,
-    group_id: &str,
-    params: MessageParams,
-) -> Result<GroupMessage, BotError>
-```
-
-### `post_c2c_message_with_params`
-
-发送 C2C（用户对用户）消息。
-
-```rust
-pub async fn post_c2c_message_with_params(
-    &self,
-    token: &Token,
-    user_id: &str,
-    params: MessageParams,
-) -> Result<C2CMessage, BotError>
-```
-
-## 公告 API
-
-### `create_guild_announce`
-
-创建频道公告。
-
-```rust
-pub async fn create_guild_announce(
-    &self,
-    token: &Token,
-    guild_id: &str,
-    announce_data: &serde_json::Value,
-) -> Result<Announce, BotError>
-```
-
-#### 示例
-
-```rust
-use serde_json::json;
-
-let announce_data = json!({
-    "message": "重要通知：系统维护将在今晚进行",
-    "channel_id": "channel_123"
-});
-
-let announce = api.create_guild_announce(&token, "guild_123", &announce_data).await?;
-```
-
-### `delete_guild_announce`
-
-删除频道公告。
-
-```rust
-pub async fn delete_guild_announce(
-    &self,
-    token: &Token,
-    guild_id: &str,
-    announce_id: &str,
-) -> Result<(), BotError>
-```
-
-## 表情回应 API
-
-### `create_message_reaction`
-
-为消息添加表情回应。
-
-```rust
-pub async fn create_message_reaction(
-    &self,
-    token: &Token,
-    channel_id: &str,
-    message_id: &str,
-    emoji: &ReactionEmoji,
-) -> Result<(), BotError>
-```
-
-#### 示例
-
-```rust
-// 添加点赞表情
-let emoji = ReactionEmoji::new("4", 1);
-api.create_message_reaction(&token, "channel_123", "message_456", &emoji).await?;
-```
-
-### `delete_own_message_reaction`
-
-删除消息的表情回应。
-
-```rust
-pub async fn delete_own_message_reaction(
-    &self,
-    token: &Token,
-    channel_id: &str,
-    message_id: &str,
-    emoji: &ReactionEmoji,
-) -> Result<(), BotError>
-```
-
-### `get_message_reaction_users`
-
-获取对消息添加特定表情的用户列表。
-
-```rust
-pub async fn get_message_reaction_users(
-    &self,
-    token: &Token,
-    channel_id: &str,
-    message_id: &str,
-    emoji: &ReactionEmoji,
-    pager: &MessageReactionPager,
-) -> Result<ReactionUsers, BotError>
-```
-
-## 身份组 API
-
-### `get_guild_roles`
-
-获取频道身份组列表。
-
-```rust
-pub async fn get_guild_roles(
-    &self,
-    token: &Token,
-    guild_id: &str,
-) -> Result<GuildRoles, BotError>
-```
-
-### `create_guild_role`
-
-创建频道身份组。
-
-```rust
-pub async fn create_guild_role(
-    &self,
-    token: &Token,
-    guild_id: &str,
-    role_data: &serde_json::Value,
-) -> Result<GuildRole, BotError>
-```
-
-### `modify_guild_role`
-
-修改频道身份组。
-
-```rust
-pub async fn modify_guild_role(
-    &self,
-    token: &Token,
-    guild_id: &str,
-    role_id: &str,
-    role_data: &serde_json::Value,
-) -> Result<GuildRole, BotError>
-```
-
-### `delete_guild_role`
-
-删除频道身份组。
-
-```rust
-pub async fn delete_guild_role(
-    &self,
-    token: &Token,
-    guild_id: &str,
-    role_id: &str,
-) -> Result<(), BotError>
-```
-
-## 音频 API
-
-### `get_channel_audio_members`
-
-获取音频频道成员列表。
-
-```rust
-pub async fn get_channel_audio_members(
-    &self,
-    token: &Token,
-    channel_id: &str,
-) -> Result<Vec<Member>, BotError>
-```
-
-### `post_audio`
-
-控制音频播放。
-
-```rust
-pub async fn post_audio(
-    &self,
-    token: &Token,
-    channel_id: &str,
-    audio_control: &AudioControl,
-) -> Result<AudioControl, BotError>
-```
-
-## 日程 API
-
-### `get_guild_schedules`
-
-获取频道日程列表。
-
-```rust
-pub async fn get_guild_schedules(
-    &self,
-    token: &Token,
-    guild_id: &str,
-    since: Option<u64>,
-) -> Result<Vec<Schedule>, BotError>
-```
-
-### `get_guild_schedule`
-
-获取指定日程信息。
-
-```rust
-pub async fn get_guild_schedule(
-    &self,
-    token: &Token,
-    guild_id: &str,
-    schedule_id: &str,
-) -> Result<Schedule, BotError>
-```
-
-### `create_guild_schedule`
-
-创建频道日程。
-
-```rust
-pub async fn create_guild_schedule(
-    &self,
-    token: &Token,
-    guild_id: &str,
-    schedule_data: &serde_json::Value,
-) -> Result<Schedule, BotError>
-```
-
-### `modify_guild_schedule`
-
-修改频道日程。
-
-```rust
-pub async fn modify_guild_schedule(
-    &self,
-    token: &Token,
-    guild_id: &str,
-    schedule_id: &str,
-    schedule_data: &serde_json::Value,
-) -> Result<Schedule, BotError>
-```
-
-### `delete_guild_schedule`
-
-删除频道日程。
-
-```rust
-pub async fn delete_guild_schedule(
-    &self,
-    token: &Token,
-    guild_id: &str,
-    schedule_id: &str,
-) -> Result<(), BotError>
-```
-
-## 论坛 API
-
-### `get_threads`
-
-获取论坛帖子列表。
-
-```rust
-pub async fn get_threads(
-    &self,
-    token: &Token,
-    channel_id: &str,
-) -> Result<Vec<Thread>, BotError>
-```
-
-### `get_thread`
-
-获取指定论坛帖子信息。
-
-```rust
-pub async fn get_thread(
-    &self,
-    token: &Token,
-    channel_id: &str,
-    thread_id: &str,
-) -> Result<ThreadInfo, BotError>
-```
-
-### `create_thread`
-
-创建论坛帖子。
-
-```rust
-pub async fn create_thread(
-    &self,
-    token: &Token,
-    channel_id: &str,
-    thread_data: &serde_json::Value,
-) -> Result<OpenThread, BotError>
-```
-
-### `delete_thread`
-
-删除论坛帖子。
-
-```rust
-pub async fn delete_thread(
-    &self,
-    token: &Token,
-    channel_id: &str,
-    thread_id: &str,
-) -> Result<(), BotError>
-```
-
-## 权限 API
-
-### `get_guild_api_permission`
-
-获取频道 API 权限。
-
-```rust
-pub async fn get_guild_api_permission(
-    &self,
-    token: &Token,
-    guild_id: &str,
-) -> Result<ApiPermission, BotError>
-```
-
-### `post_guild_api_permission_demand`
-
-申请频道 API 权限。
-
-```rust
-pub async fn post_guild_api_permission_demand(
-    &self,
-    token: &Token,
-    guild_id: &str,
-    permission_data: &serde_json::Value,
-) -> Result<ApiPermissionDemand, BotError>
+let body = UpdateChannelPermissions::new(Some("1024"), Some("0"));
+body.validate()?;
+api.update_channel_user_permissions(&token, &channel_id, &user_id, &body).await?;
 ```
 
 ## 错误处理
 
-所有 API 方法都返回 `Result<T, BotError>`，其中 `BotError` 包含详细的错误信息：
+所有方法都返回 `Result<T, BotError>`，可以按变体匹配：
 
-```rust
-use botrs::BotError;
+- `BotError::Http` —— 传输层错误（超时、DNS 等）。
+- `BotError::Api { code, message, .. }` —— 非 2xx 响应及其 QQ 错误码。
+- `BotError::Auth` —— Token 签名或刷新失败。
+- `BotError::InvalidData` —— 本地校验失败（例如非法的权限字符串）。
 
-match api.get_guild(&token, "invalid_guild_id").await {
-    Ok(guild) => println!("获取频道成功: {}", guild.id),
-    Err(BotError::NotFound) => eprintln!("频道不存在"),
-    Err(BotError::Forbidden) => eprintln!("权限不足"),
-    Err(BotError::RateLimited(retry_after)) => {
-        eprintln!("速率限制，{}秒后重试", retry_after);
-    }
-    Err(BotError::Authentication(_)) => eprintln!("身份验证失败"),
-    Err(BotError::Network(_)) => eprintln!("网络连接错误"),
-    Err(e) => eprintln!("其他错误: {}", e),
-}
-```
+收到 429 时 `BotError::Api` 会携带可用的 `Retry-After`；框架不会自动重试，你可以根据自身节流需求自行包一层退避。
 
-## 批量操作示例
+## 参见
 
-### 批量获取频道信息
-
-```rust
-use futures::future::try_join_all;
-
-async fn get_multiple_guilds(
-    api: &BotApi,
-    token: &Token,
-    guild_ids: &[String]
-) -> Result<Vec<Guild>, BotError> {
-    let futures: Vec<_> = guild_ids.iter()
-        .map(|id| api.get_guild(token, id))
-        .collect();
-    
-    try_join_all(futures).await
-}
-```
-
-### 批量发送消息
-
-```rust
-async fn broadcast_message(
-    api: &BotApi,
-    token: &Token,
-    channel_ids: &[String],
-    content: &str
-) -> Result<Vec<Message>, BotError> {
-    let mut results = Vec::new();
-    
-    for channel_id in channel_ids {
-        let params = MessageParams::new_text(content);
-        match api.post_message_with_params(token, channel_id, params).await {
-            Ok(message) => results.push(message),
-            Err(e) => eprintln!("发送到频道 {} 失败: {}", channel_id, e),
-        }
-        
-        // 避免速率限制
-        tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
-    }
-    
-    Ok(results)
-}
-```
-
-## 最佳实践
-
-1. **错误处理**: 始终处理可能的 API 错误
-2. **速率限制**: 在批量操作中添加适当的延迟
-3. **重试机制**: 对临时错误实现自动重试
-4. **参数验证**: 在调用 API 前验证输入参数
-5. **日志记录**: 记录重要的 API 调用和错误
-
-## 另请参阅
-
-- [`Token` API 参考](./token.md) - 身份验证令牌管理
-- [`Context` API 参考](./context.md) - 事件处理器中的 API 使用
-- [API 客户端使用指南](/zh/guide/api-client.md) - API 使用最佳实践
-- [错误处理指南](/zh/guide/error-handling.md) - API 错误处理策略
+- [Client](./client.md) —— 持有 `BotApi` 的高层事件循环。
+- [Context](./context.md) —— 事件回调中的请求作用域包装器，暴露同样的接口。
+- [模型](./models/messages.md) —— 请求与响应的结构体定义。
+- [Token](./token.md) —— 凭证管理与刷新。
