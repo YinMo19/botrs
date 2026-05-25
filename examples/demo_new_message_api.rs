@@ -314,7 +314,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     info!("Token validated successfully");
 
     // Set up intents - we want to receive public guild messages (@ mentions)
-    // This is equivalent to: intents = botpy.Intents(public_guild_messages=True)
     let intents = Intents::default().with_public_guild_messages();
 
     let mut client = Client::new(token, intents, NewApiDemoHandler, true)?;

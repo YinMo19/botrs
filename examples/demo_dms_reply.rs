@@ -163,7 +163,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     info!("Token validated successfully");
 
     // Set up intents - we want both direct messages and public guild messages
-    // This is equivalent to: intents = botpy.Intents(direct_message=True, public_guild_messages=True)
     let intents = Intents::default()
         .with_direct_message()
         .with_public_guild_messages();

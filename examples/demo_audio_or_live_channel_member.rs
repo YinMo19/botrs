@@ -91,7 +91,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     info!("Token validated successfully");
 
     // Set up intents - we want to receive audio or live channel member events
-    // This is equivalent to: intents = botpy.Intents(audio_or_live_channel_member=True)
     let intents = Intents::default().with_audio_or_live_channel_member();
 
     info!("Configured intents: {}", intents);

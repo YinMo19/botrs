@@ -1,6 +1,6 @@
 # BotRS Examples
 
-This directory contains complete examples for developing QQ Guild bots using the BotRS framework. These examples are Rust implementations equivalent to the Python botpy examples.
+This directory contains complete examples for developing QQ Guild bots using the BotRS framework.
 
 ## Directory Structure
 

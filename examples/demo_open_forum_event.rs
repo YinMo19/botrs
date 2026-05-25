@@ -95,7 +95,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     info!("Token validated successfully");
 
     // Set up intents - we want to receive open forum events
-    // This is equivalent to: intents = botpy.Intents(open_forum_event=True)
     let intents = Intents::default().with_open_forum_event();
 
     info!("Configured intents: {}", intents);
