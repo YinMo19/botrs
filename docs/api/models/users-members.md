@@ -50,23 +50,23 @@ Represents a guild member, containing user information plus guild-specific data.
 
 ```rust
 pub struct Member {
+    pub guild_id: String,
     pub user: Option<User>,
-    pub nick: Option<String>,
+    pub nick: String,
     pub roles: Vec<String>,
-    pub joined_at: Option<String>,
-    pub deaf: Option<bool>,
-    pub mute: Option<bool>,
+    pub joined_at: String,
+    pub op_user_id: String,
 }
 ```
 
 #### Fields
 
+- `guild_id`: Guild ID
 - `user`: Base user information
 - `nick`: Member's nickname in the guild (overrides username)
 - `roles`: List of role IDs assigned to this member
 - `joined_at`: ISO 8601 timestamp when the member joined the guild
-- `deaf`: Whether the member is server-deafened in voice channels
-- `mute`: Whether the member is server-muted in voice channels
+- `op_user_id`: Operator user ID
 
 #### Methods
 
@@ -76,10 +76,10 @@ The `Member` struct provides convenience methods for common operations:
 
 ```rust
 impl Member {
-    pub fn display_name(&self) -> &str {
-        self.nick.as_deref()
-            .or_else(|| self.user.as_ref()?.username.as_deref())
-            .unwrap_or("Unknown")
+    pub fn display_name(&self) -> Option<&str> {
+        (!self.nick.is_empty())
+            .then_some(self.nick.as_str())
+            .or_else(|| self.user.as_ref().map(|user| user.username.as_str()))
     }
 }
 ```
@@ -91,8 +91,8 @@ async fn handle_member_join(ctx: Context, member: Member) {
     let display_name = member.display_name();
     println!("New member joined: {}", display_name);
     
-    if let Some(joined_at) = &member.joined_at {
-        println!("Joined at: {}", joined_at);
+    if !member.joined_at.is_empty() {
+        println!("Joined at: {}", member.joined_at);
     }
     
     // Check if member has any roles
@@ -229,21 +229,12 @@ async fn get_member_details(ctx: Context, guild_id: &str, user_id: &str) -> Resu
         println!("Member: {}", user.username);
         println!("User ID: {}", user.id);
         
-        if let Some(nick) = &member.nick {
-            println!("Nickname: {}", nick);
+        if !member.nick.is_empty() {
+            println!("Nickname: {}", member.nick);
         }
         
-        if let Some(joined_at) = &member.joined_at {
-            println!("Joined: {}", joined_at);
-        }
-        
-        // Check voice status
-        if member.mute.unwrap_or(false) {
-            println!("Member is server muted");
-        }
-        
-        if member.deaf.unwrap_or(false) {
-            println!("Member is server deafened");
+        if !member.joined_at.is_empty() {
+            println!("Joined: {}", member.joined_at);
         }
     }
     
@@ -270,8 +261,7 @@ async fn list_guild_members(ctx: Context, guild_id: &str) -> Result<()> {
             total_members += 1;
             
             if let Some(user) = &member.user {
-                let display_name = member.nick.as_deref()
-                    .unwrap_or(user.username);
+                let display_name = member.display_name().unwrap_or(&user.username);
                 
                 println!("{}. {} (ID: {})", total_members, display_name, user.id);
                 
@@ -520,8 +510,8 @@ async fn verify_new_member(ctx: Context, guild_id: &str, member: Member) -> Resu
         }
         
         // Log join information
-        if let Some(joined_at) = &member.joined_at {
-            println!("Member joined at: {}", joined_at);
+        if !member.joined_at.is_empty() {
+            println!("Member joined at: {}", member.joined_at);
         }
     }
     

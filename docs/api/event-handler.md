@@ -231,9 +231,7 @@ async fn guild_create(&self, ctx: Context, guild: Guild) {}
 
 ```rust
 async fn guild_create(&self, _ctx: Context, guild: Guild) {
-    println!("Joined guild: {} (ID: {})", 
-             guild.name.as_deref().unwrap_or("Unknown"),
-             guild.id.as_deref().unwrap_or("Unknown"));
+    println!("Joined guild: {} (ID: {})", guild.name, guild.id);
 }
 ```
 

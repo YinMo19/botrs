@@ -507,11 +507,11 @@ impl EventHandler for ComprehensiveBot {
     }
     
     async fn guild_create(&self, _ctx: Context, guild: Guild) {
-        info!("📥 加入频道：{}", guild.name.as_deref().unwrap_or("未知"));
+        info!("📥 加入频道：{}", guild.name);
     }
     
     async fn guild_delete(&self, _ctx: Context, guild: Guild) {
-        info!("📤 离开频道：{}", guild.name.as_deref().unwrap_or("未知"));
+        info!("📤 离开频道：{}", guild.name);
     }
     
     async fn error(&self, error: BotError) {

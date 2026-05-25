@@ -1751,12 +1751,10 @@ impl BotApi {
         hoist: Option<bool>,
     ) -> Result<GuildRole> {
         let role = GuildRole {
-            id: None,
-            name: name.map(String::from),
-            color,
-            hoist,
-            number: None,
-            member_limit: None,
+            name: name.unwrap_or_default().to_string(),
+            color: color.unwrap_or_default(),
+            hoist: hoist.map(u32::from).unwrap_or_default(),
+            ..Default::default()
         };
         let result = self
             .create_guild_role_with_update(token, guild_id, role)
@@ -1805,12 +1803,11 @@ impl BotApi {
         hoist: Option<bool>,
     ) -> Result<GuildRole> {
         let role = GuildRole {
-            id: Some(role_id.to_string()),
-            name: name.map(String::from),
-            color,
-            hoist,
-            number: None,
-            member_limit: None,
+            id: role_id.to_string(),
+            name: name.unwrap_or_default().to_string(),
+            color: color.unwrap_or_default(),
+            hoist: hoist.map(u32::from).unwrap_or_default(),
+            ..Default::default()
         };
         let result = self
             .update_guild_role_with_update(token, guild_id, role_id, role)

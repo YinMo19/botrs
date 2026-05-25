@@ -218,8 +218,8 @@ async fn get_guild_info(
 
 // 使用示例
 let guild = get_guild_info(&api, &token, "guild_123").await?;
-println!("频道名称: {}", guild.name.unwrap_or_default());
-println!("成员数量: {}", guild.member_count.unwrap_or_default());
+println!("频道名称: {}", guild.name);
+println!("成员数量: {}", guild.member_count);
 ```
 
 ### 获取子频道列表
@@ -297,7 +297,7 @@ async fn get_member_info(
 
 // 使用示例
 let member = get_member_info(&api, &token, "guild_123", "user_456").await?;
-println!("成员昵称: {}", member.nick.unwrap_or_default());
+println!("成员昵称: {}", member.nick);
 ```
 
 ### 获取成员列表

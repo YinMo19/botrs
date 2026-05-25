@@ -134,6 +134,15 @@ fn is_zero_u32(value: &u32) -> bool {
     *value == 0
 }
 
+fn string_field(value: &serde_json::Value, key: &str) -> Option<String> {
+    value.get(key).and_then(|value| {
+        value
+            .as_str()
+            .map(str::to_string)
+            .or_else(|| value.is_number().then(|| value.to_string()))
+    })
+}
+
 fn is_botgo_space(c: char) -> bool {
     matches!(c, ' ' | '\u{00a0}')
 }
@@ -387,11 +396,7 @@ impl Message {
                         .map(String::from)
                         .collect()
                 }),
-                joined_at: v
-                    .get("joined_at")
-                    .and_then(|j| j.as_str())
-                    .and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok())
-                    .map(|dt| dt.with_timezone(&chrono::Utc)),
+                joined_at: string_field(v, "joined_at"),
             }),
             message_reference: data
                 .get("message_reference")
@@ -429,16 +434,8 @@ impl Message {
                 .get("seq_in_channel")
                 .and_then(|v| v.as_str())
                 .map(String::from),
-            timestamp: data
-                .get("timestamp")
-                .and_then(|v| v.as_str())
-                .and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok())
-                .map(|dt| dt.with_timezone(&chrono::Utc)),
-            edited_timestamp: data
-                .get("edited_timestamp")
-                .and_then(|v| v.as_str())
-                .and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok())
-                .map(|dt| dt.with_timezone(&chrono::Utc)),
+            timestamp: string_field(&data, "timestamp"),
+            edited_timestamp: string_field(&data, "edited_timestamp"),
             mention_everyone: data.get("mention_everyone").and_then(|v| v.as_bool()),
             src_guild_id: data
                 .get("src_guild_id")
@@ -633,11 +630,7 @@ impl GroupMessage {
                 })
                 .unwrap_or_default(),
             msg_seq: data.get("msg_seq").and_then(|v| v.as_u64()),
-            timestamp: data
-                .get("timestamp")
-                .and_then(|v| v.as_str())
-                .and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok())
-                .map(|dt| dt.with_timezone(&chrono::Utc)),
+            timestamp: string_field(&data, "timestamp"),
             author: data
                 .get("author")
                 .map(|v| GroupMessageUser::from_data(v.clone())),
@@ -752,11 +745,7 @@ impl C2CMessage {
                 })
                 .unwrap_or_default(),
             msg_seq: data.get("msg_seq").and_then(|v| v.as_u64()),
-            timestamp: data
-                .get("timestamp")
-                .and_then(|v| v.as_str())
-                .and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok())
-                .map(|dt| dt.with_timezone(&chrono::Utc)),
+            timestamp: string_field(&data, "timestamp"),
             author: data
                 .get("author")
                 .map(|v| C2CMessageUser::from_data(v.clone())),
@@ -847,11 +836,7 @@ impl MessageAudit {
                 .get("message_id")
                 .and_then(|v| v.as_str())
                 .map(String::from),
-            audit_time: data
-                .get("audit_time")
-                .and_then(|v| v.as_str())
-                .and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok())
-                .map(|dt| dt.with_timezone(&chrono::Utc)),
+            audit_time: string_field(&data, "audit_time"),
             channel_id: data
                 .get("channel_id")
                 .and_then(|v| v.as_str())
@@ -860,11 +845,7 @@ impl MessageAudit {
                 .get("guild_id")
                 .and_then(|v| v.as_str())
                 .map(String::from),
-            create_time: data
-                .get("create_time")
-                .and_then(|v| v.as_str())
-                .and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok())
-                .map(|dt| dt.with_timezone(&chrono::Utc)),
+            create_time: string_field(&data, "create_time"),
             seq_in_channel: data
                 .get("seq_in_channel")
                 .and_then(|v| v.as_str())
@@ -1021,11 +1002,7 @@ impl DirectMessageMember {
     /// Creates a new direct message member from API data.
     pub fn from_data(data: serde_json::Value) -> Self {
         Self {
-            joined_at: data
-                .get("joined_at")
-                .and_then(|v| v.as_str())
-                .and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok())
-                .map(|dt| dt.with_timezone(&chrono::Utc)),
+            joined_at: string_field(&data, "joined_at"),
         }
     }
 }

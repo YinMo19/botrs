@@ -153,7 +153,7 @@ async fn guild_create(&self, ctx: Context, guild: Guild) {}
 
 ```rust
 async fn guild_create(&self, ctx: Context, guild: Guild) {
-    println!("加入了新频道: {}", guild.name.unwrap_or_default());
+    println!("加入了新频道: {}", guild.name);
 }
 ```
 
