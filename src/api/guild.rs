@@ -1,8 +1,8 @@
 use super::{BotApi, resource};
 use crate::error::Result;
 use crate::models::guild::{
-    Guild, GuildMembersPager, GuildRoleMembers, GuildRoleMembersPager, Member, MemberDeleteOptions,
-    UpdateGuildMute, normalize_delete_history_msg_days,
+    BotpyUpdateGuildMute, Guild, GuildMembersPager, GuildRoleMembers, GuildRoleMembersPager,
+    Member, MemberDeleteOptions, UpdateGuildMute, normalize_delete_history_msg_days,
 };
 use crate::token::Token;
 use tracing::debug;
@@ -147,7 +147,7 @@ impl BotApi {
     ) -> Result<()> {
         debug!("Muting all members in guild {}", guild_id);
 
-        let body = UpdateGuildMute::new(mute_end_timestamp, mute_seconds);
+        let body = BotpyUpdateGuildMute::new(mute_end_timestamp, mute_seconds);
 
         let path = resource::guild_mute(guild_id);
         self.http

@@ -15,6 +15,37 @@ pub struct UpdateGuildMute {
     pub user_ids: Vec<String>,
 }
 
+/// Request body used by botpy-style inline mute helpers.
+#[derive(Debug, Clone, PartialEq, Serialize)]
+pub(crate) struct BotpyUpdateGuildMute {
+    pub(crate) mute_end_timestamp: Option<String>,
+    pub(crate) mute_seconds: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) user_ids: Option<Vec<String>>,
+}
+
+impl BotpyUpdateGuildMute {
+    pub(crate) fn new(mute_end_timestamp: Option<&str>, mute_seconds: Option<&str>) -> Self {
+        Self {
+            mute_end_timestamp: mute_end_timestamp.map(ToOwned::to_owned),
+            mute_seconds: mute_seconds.map(ToOwned::to_owned),
+            user_ids: None,
+        }
+    }
+
+    pub(crate) fn new_multi(
+        user_ids: Vec<String>,
+        mute_end_timestamp: Option<&str>,
+        mute_seconds: Option<&str>,
+    ) -> Self {
+        Self {
+            mute_end_timestamp: mute_end_timestamp.map(ToOwned::to_owned),
+            mute_seconds: mute_seconds.map(ToOwned::to_owned),
+            user_ids: Some(user_ids),
+        }
+    }
+}
+
 impl UpdateGuildMute {
     /// Creates a mute request body.
     pub fn new(mute_end_timestamp: Option<&str>, mute_seconds: Option<&str>) -> Self {

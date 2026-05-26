@@ -1,6 +1,8 @@
 use super::{BotApi, resource};
 use crate::error::Result;
-use crate::models::guild::{MemberAddRoleBody, UpdateGuildMute, UpdateGuildMuteResponse};
+use crate::models::guild::{
+    BotpyUpdateGuildMute, MemberAddRoleBody, UpdateGuildMute, UpdateGuildMuteResponse,
+};
 use crate::token::Token;
 use serde::Serialize;
 use tracing::debug;
@@ -113,7 +115,7 @@ impl BotApi {
     ) -> Result<()> {
         debug!("Muting member {} in guild {}", user_id, guild_id);
 
-        let body = UpdateGuildMute::new(mute_end_timestamp, mute_seconds);
+        let body = BotpyUpdateGuildMute::new(mute_end_timestamp, mute_seconds);
 
         let path = resource::guild_member_mute(guild_id, user_id);
         self.http
@@ -135,8 +137,14 @@ impl BotApi {
             return Err(crate::error::BotError::invalid_data("no user id param"));
         }
 
-        let body = UpdateGuildMute::new_multi(user_ids, mute_end_timestamp, mute_seconds);
-        self.multi_member_mute(token, guild_id, &body).await
+        let body = BotpyUpdateGuildMute::new_multi(user_ids, mute_end_timestamp, mute_seconds);
+        debug!("Muting multiple members in guild {}", guild_id);
+        let path = resource::guild_mute(guild_id);
+        let response = self
+            .http
+            .patch(token, &path, None::<&()>, Some(&body))
+            .await?;
+        Self::decode_json(response)
     }
 
     /// Cancels mute for several guild members.
@@ -279,6 +287,26 @@ mod tests {
         let request = request.await.unwrap();
         assert!(request.starts_with("DELETE /guilds/guild-1/members/user-1/roles/role-1 HTTP/1.1"));
         assert!(request.ends_with("\r\n\r\n{\"channel\":{\"id\":\"channel-1\"}}"));
+        server.await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn inline_mute_member_matches_botpy_null_fields() {
+        let (base_url, request, server) = spawn_capture_server().await;
+        let api = test_api(base_url).await;
+        api.mute_member(
+            api.token_required().unwrap(),
+            "guild-1",
+            "user-1",
+            None,
+            Some("20"),
+        )
+        .await
+        .unwrap();
+
+        let request = request.await.unwrap();
+        assert!(request.starts_with("PATCH /guilds/guild-1/members/user-1/mute HTTP/1.1"));
+        assert!(request.ends_with("\r\n\r\n{\"mute_end_timestamp\":null,\"mute_seconds\":\"20\"}"));
         server.await.unwrap();
     }
 }
