@@ -66,9 +66,11 @@ impl BotApi {
         I: IntoIterator<Item = O>,
         O: Into<OpenApiOption>,
     {
-        let guild_id = dm.guild_id.as_deref().ok_or_else(|| {
-            crate::BotError::invalid_data("direct message session missing guild_id")
-        })?;
+        let guild_id = (!dm.guild_id.is_empty())
+            .then_some(dm.guild_id.as_str())
+            .ok_or_else(|| {
+                crate::BotError::invalid_data("direct message session missing guild_id")
+            })?;
         let opts = Options::from_options(options);
         if opts.url.is_none() {
             return self
@@ -150,9 +152,11 @@ impl BotApi {
         I: IntoIterator<Item = O>,
         O: Into<OpenApiOption>,
     {
-        let guild_id = dm.guild_id.as_deref().ok_or_else(|| {
-            crate::BotError::invalid_data("direct message session missing guild_id")
-        })?;
+        let guild_id = (!dm.guild_id.is_empty())
+            .then_some(dm.guild_id.as_str())
+            .ok_or_else(|| {
+                crate::BotError::invalid_data("direct message session missing guild_id")
+            })?;
         let opts = Options::from_options(options);
         if opts.url.is_none() {
             return self

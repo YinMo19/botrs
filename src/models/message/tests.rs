@@ -501,12 +501,9 @@ mod tests {
             "content": "ignored"
         }));
 
-        assert_eq!(session.guild_id.as_deref(), Some("guild-1"));
-        assert_eq!(session.channel_id.as_deref(), Some("channel-1"));
-        assert_eq!(
-            session.create_time.as_deref(),
-            Some("2024-01-02T03:04:05+08:00")
-        );
+        assert_eq!(session.guild_id, "guild-1");
+        assert_eq!(session.channel_id, "channel-1");
+        assert_eq!(session.create_time, "2024-01-02T03:04:05+08:00");
 
         let value = serde_json::to_value(&session).unwrap();
         assert_eq!(value["guild_id"], serde_json::json!("guild-1"));
@@ -516,6 +513,25 @@ mod tests {
             serde_json::json!("2024-01-02T03:04:05+08:00")
         );
         assert!(value.get("content").is_none());
+    }
+
+    #[test]
+    fn direct_message_session_uses_required_zero_value_fields() {
+        let session: DirectMessage = serde_json::from_value(serde_json::json!({})).unwrap();
+
+        assert_eq!(session.guild_id, "");
+        assert_eq!(session.channel_id, "");
+        assert_eq!(session.create_time, "");
+
+        let value = serde_json::to_value(&session).unwrap();
+        assert_eq!(
+            value,
+            serde_json::json!({
+                "guild_id": "",
+                "channel_id": "",
+                "create_time": ""
+            })
+        );
     }
 
     #[test]

@@ -1,15 +1,18 @@
-use crate::models::Snowflake;
+use crate::models::{Snowflake, Timestamp};
 use serde::{Deserialize, Serialize};
 
 /// Direct message session returned by the direct-message OpenAPI.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct DirectMessage {
     /// Guild ID of the DM session
-    pub guild_id: Option<Snowflake>,
+    #[serde(default)]
+    pub guild_id: Snowflake,
     /// Channel ID of the DM session
-    pub channel_id: Option<Snowflake>,
+    #[serde(default)]
+    pub channel_id: Snowflake,
     /// Creation timestamp
-    pub create_time: Option<String>,
+    #[serde(default)]
+    pub create_time: Timestamp,
 }
 
 /// Backward-compatible alias for the direct-message session DTO.
