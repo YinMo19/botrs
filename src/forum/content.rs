@@ -25,6 +25,28 @@ wire_enum!(Format, u8, Unknown, {
     Json = 4,
 });
 
+/// Body used by the forum thread creation API.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ThreadToCreate {
+    /// Thread title.
+    pub title: String,
+    /// Thread content.
+    pub content: String,
+    /// Content format.
+    pub format: Format,
+}
+
+impl ThreadToCreate {
+    /// Creates a forum thread request body.
+    pub fn new(title: impl Into<String>, content: impl Into<String>, format: Format) -> Self {
+        Self {
+            title: title.into(),
+            content: content.into(),
+            format,
+        }
+    }
+}
+
 /// Text element structure
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct Text {

@@ -5,6 +5,7 @@ mod audio;
 mod channel;
 mod direct_message;
 mod files;
+mod forum;
 mod guild;
 mod interaction;
 mod message;

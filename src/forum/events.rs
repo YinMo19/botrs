@@ -2,6 +2,28 @@ use crate::api::BotApi;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
+/// Response returned when listing forum threads.
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct ForumRsp {
+    /// Threads in the channel.
+    #[serde(default)]
+    pub threads: Vec<ThreadInfo>,
+    /// Whether the listing is complete.
+    #[serde(default)]
+    pub is_finish: i32,
+}
+
+/// Response returned after creating a forum thread.
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct PostThreadRsp {
+    /// Async task ID for the create operation.
+    #[serde(default)]
+    pub task_id: String,
+    /// Creation time returned by the API.
+    #[serde(default)]
+    pub create_time: String,
+}
+
 /// Thread info structure for forum events.
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct ThreadInfo {

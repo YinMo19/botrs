@@ -150,6 +150,7 @@ mod channel;
 mod channel_permissions;
 mod compat;
 mod direct_message;
+mod forum;
 mod gateway;
 mod guild;
 mod interaction;

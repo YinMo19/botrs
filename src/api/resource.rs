@@ -124,6 +124,14 @@ pub(crate) fn channel_mic(channel_id: &str) -> String {
     format!("/channels/{channel_id}/mic")
 }
 
+pub(crate) fn channel_threads(channel_id: &str) -> String {
+    format!("/channels/{channel_id}/threads")
+}
+
+pub(crate) fn channel_thread(channel_id: &str, thread_id: &str) -> String {
+    format!("/channels/{channel_id}/threads/{thread_id}")
+}
+
 pub(crate) fn guild_roles(guild_id: &str) -> String {
     format!("/guilds/{guild_id}/roles")
 }

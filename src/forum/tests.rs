@@ -51,6 +51,40 @@ fn thread_info_keeps_title_and_content_as_strings() {
 }
 
 #[test]
+fn forum_rest_models_match_botpy_shapes() {
+    let body = ThreadToCreate::new("Title", "Content", Format::Markdown);
+    assert_eq!(
+        serde_json::to_value(&body).unwrap(),
+        serde_json::json!({
+            "title": "Title",
+            "content": "Content",
+            "format": 3
+        })
+    );
+
+    let forum_rsp: ForumRsp = serde_json::from_value(serde_json::json!({
+        "threads": [{
+            "thread_id": "thread-1",
+            "title": "Title",
+            "content": "Content",
+            "date_time": "2024-01-02T03:04:05+08:00"
+        }],
+        "is_finish": 1
+    }))
+    .unwrap();
+    assert_eq!(forum_rsp.threads[0].thread_id, "thread-1");
+    assert_eq!(forum_rsp.is_finish, 1);
+
+    let post_rsp: PostThreadRsp = serde_json::from_value(serde_json::json!({
+        "task_id": "task-1",
+        "create_time": "1710000000"
+    }))
+    .unwrap();
+    assert_eq!(post_rsp.task_id, "task-1");
+    assert_eq!(post_rsp.create_time, "1710000000");
+}
+
+#[test]
 fn forum_events_use_required_zero_value_fields() {
     let thread = serde_json::to_value(Thread::new(
         BotApi::new(crate::http::HttpClient::new(30, false).unwrap()),

@@ -17,7 +17,10 @@ mod prelude {
     pub(super) use crate::api::BotApi;
     pub(super) use crate::audio::{Audio, AudioControl, PublicAudio};
     pub(super) use crate::error::{BotError, Result};
-    pub(super) use crate::forum::{ForumAuditResult, OpenThread, Post, Reply, Thread};
+    pub(super) use crate::forum::{
+        Format, ForumAuditResult, ForumRsp, OpenThread, Post, PostThreadRsp, Reply, Thread,
+        ThreadInfo, ThreadToCreate,
+    };
     pub(super) use crate::http::HttpClient;
     pub(super) use crate::intents::Intents;
     pub(super) use crate::interaction::Interaction;

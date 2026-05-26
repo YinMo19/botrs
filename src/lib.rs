@@ -55,8 +55,8 @@ pub use facade::{
     SetLogger, SetOpenAPIClient, SetSessionManager, SetWebsocketClient,
 };
 pub use forum::{
-    Content, Format, ForumAuditResult, OpenThread, Post, PostInfo, Reply, ReplyInfo, Thread,
-    ThreadInfo, Title,
+    Content, Format, ForumAuditResult, ForumRsp, OpenThread, Post, PostInfo, PostThreadRsp, Reply,
+    ReplyInfo, Thread, ThreadInfo, ThreadToCreate, Title,
 };
 pub use intents::Intents;
 pub use interaction::{
