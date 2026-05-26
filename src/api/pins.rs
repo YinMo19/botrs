@@ -14,6 +14,25 @@ impl BotApi {
     ) -> Result<PinsMessage> {
         debug!("Pinning message {} in channel {}", message_id, channel_id);
         let path = resource::channel_pin(channel_id, message_id);
+        self.request_json(
+            token,
+            reqwest::Method::PUT,
+            &path,
+            None::<&()>,
+            Some(&serde_json::json!({})),
+        )
+        .await
+    }
+
+    /// Pins one message in a channel using botgo's empty-body request shape.
+    pub(crate) async fn add_pins_botgo(
+        &self,
+        token: &Token,
+        channel_id: &str,
+        message_id: &str,
+    ) -> Result<PinsMessage> {
+        debug!("Pinning message {} in channel {}", message_id, channel_id);
+        let path = resource::channel_pin(channel_id, message_id);
         let response = self
             .http
             .put(token, &path, None::<&()>, None::<&()>)
