@@ -34,6 +34,11 @@ impl HttpClient {
         }
 
         let body = response.text().await.map_err(BotError::Http)?;
+        if crate::openapi::IsSuccessStatus(status.as_u16()) && body.trim().is_empty() {
+            debug!("Request successful, empty response body");
+            return Ok(Value::Null);
+        }
+
         let json: serde_json::Value = serde_json::from_str(&body).map_err(|e| {
             error!("Failed to parse JSON response: {}", e);
             error!("Response body: {}", body);
