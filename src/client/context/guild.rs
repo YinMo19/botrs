@@ -149,6 +149,11 @@ impl Context {
             .await
     }
 
+    /// Lists members currently in a voice channel.
+    pub async fn get_voice_members(&self, channel_id: &str) -> Result<Vec<GuildMember>> {
+        self.api.get_voice_members(&self.token, channel_id).await
+    }
+
     /// Lists guild members using inline pagination parameters.
     pub async fn get_guild_members(
         &self,
