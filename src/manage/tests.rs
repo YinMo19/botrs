@@ -21,6 +21,18 @@ fn test_manage_event_type_as_str() {
 }
 
 #[test]
+fn manage_event_type_serializes_as_botpy_event_name() {
+    assert_eq!(
+        serde_json::to_value(ManageEventType::GroupMsgReceive).unwrap(),
+        serde_json::json!("group_msg_receive")
+    );
+    assert_eq!(
+        serde_json::from_value::<ManageEventType>(serde_json::json!("c2c_msg_reject")).unwrap(),
+        ManageEventType::C2CMsgReject
+    );
+}
+
+#[test]
 fn test_is_group_event() {
     assert!(ManageEventType::GroupAddRobot.is_group_event());
     assert!(!ManageEventType::FriendAdd.is_group_event());
