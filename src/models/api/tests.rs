@@ -137,3 +137,28 @@ fn pins_message_keeps_official_json_shape() {
     assert_eq!(value["channel_id"], "channel-1");
     assert_eq!(value["message_ids"][0], "message-1");
 }
+
+#[test]
+fn message_response_collects_extra_fields() {
+    let response: MessageResponse = serde_json::from_value(serde_json::json!({
+        "id": "message-1",
+        "timestamp": "2026-01-01T00:00:00+08:00",
+        "msg_seq": 1,
+        "audit_id": "audit-1"
+    }))
+    .unwrap();
+
+    assert_eq!(response.id.as_deref(), Some("message-1"));
+    assert_eq!(
+        response.timestamp.as_deref(),
+        Some("2026-01-01T00:00:00+08:00")
+    );
+    assert_eq!(response.extra["msg_seq"], serde_json::json!(1));
+    assert_eq!(response.extra["audit_id"], serde_json::json!("audit-1"));
+
+    let value = serde_json::to_value(&response).unwrap();
+    assert_eq!(value["id"], "message-1");
+    assert_eq!(value["timestamp"], "2026-01-01T00:00:00+08:00");
+    assert_eq!(value["msg_seq"], 1);
+    assert_eq!(value["audit_id"], "audit-1");
+}
