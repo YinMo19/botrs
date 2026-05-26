@@ -15,6 +15,11 @@ impl BotApi {
         Self::decode_json(response)
     }
 
+    /// Botpy-compatible current bot user API.
+    pub async fn me(&self, token: &Token) -> Result<BotInfo> {
+        self.get_bot_info(token).await
+    }
+
     /// Lists guilds visible to the current bot using inline pagination parameters.
     pub async fn get_guilds(
         &self,
@@ -94,6 +99,16 @@ mod tests {
         oneshot::Receiver<String>,
         tokio::task::JoinHandle<()>,
     ) {
+        spawn_capture_server_with_body(r#"[{"id":"guild-1","name":"Guild One"}]"#).await
+    }
+
+    async fn spawn_capture_server_with_body(
+        body: &'static str,
+    ) -> (
+        String,
+        oneshot::Receiver<String>,
+        tokio::task::JoinHandle<()>,
+    ) {
         let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
         let addr = listener.local_addr().unwrap();
         let (tx, rx) = oneshot::channel();
@@ -115,7 +130,6 @@ mod tests {
             let request = String::from_utf8_lossy(&request_bytes).to_string();
             let _ = tx.send(request);
 
-            let body = r#"[{"id":"guild-1","name":"Guild One"}]"#;
             let response = format!(
                 "HTTP/1.1 200 OK\r\ncontent-type: application/json\r\ncontent-length: {}\r\nconnection: close\r\n\r\n{}",
                 body.len(),
@@ -125,6 +139,23 @@ mod tests {
         });
 
         (format!("http://{addr}"), rx, handle)
+    }
+
+    #[tokio::test]
+    async fn me_alias_matches_botpy_current_user_route() {
+        let (base_url, request, server) = spawn_capture_server_with_body(
+            r#"{"id":"bot-1","username":"Bot","avatar":"avatar-url","share_url":"https://example.test/share"}"#,
+        )
+        .await;
+        let api = test_api(base_url).await;
+        let bot = api.me(api.token_required().unwrap()).await.unwrap();
+
+        assert_eq!(bot.id, "bot-1");
+        assert_eq!(bot.username, "Bot");
+        assert_eq!(bot.share_url, "https://example.test/share");
+        let request = request.await.unwrap();
+        assert!(request.starts_with("GET /users/@me HTTP/1.1"));
+        server.await.unwrap();
     }
 
     #[tokio::test]
