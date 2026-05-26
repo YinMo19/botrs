@@ -6,6 +6,7 @@ use crate::models::{
 };
 use crate::token::Token;
 use serde::Serialize;
+use serde_json::Value;
 use tracing::debug;
 
 #[derive(Debug, Serialize)]
@@ -221,12 +222,19 @@ impl BotApi {
         Self::decode_json(response)
     }
 
-    /// Deletes a channel and returns the deleted channel model.
-    pub async fn delete_channel(&self, token: &Token, channel_id: &str) -> Result<Channel> {
+    /// Deletes a channel.
+    ///
+    /// The platform may return the deleted channel object or an empty success
+    /// response. Empty responses are represented as `None`.
+    pub async fn delete_channel(&self, token: &Token, channel_id: &str) -> Result<Option<Channel>> {
         debug!("Deleting channel {}", channel_id);
         let path = resource::channel(channel_id);
         let response = self.http.delete(token, &path, None::<&()>).await?;
-        Self::decode_json(response)
+        if response == Value::Null {
+            Ok(None)
+        } else {
+            Self::decode_json(response).map(Some)
+        }
     }
 
     /// Lists members currently present in a voice channel.
@@ -260,6 +268,23 @@ mod tests {
     }
 
     async fn spawn_capture_server() -> (
+        String,
+        oneshot::Receiver<String>,
+        tokio::task::JoinHandle<()>,
+    ) {
+        spawn_capture_server_with_response(
+            "200 OK",
+            Some(
+                r#"{"id":"channel-1","guild_id":"guild-1","name":"channel_test","type":0,"sub_type":0}"#,
+            ),
+        )
+        .await
+    }
+
+    async fn spawn_capture_server_with_response(
+        status: &'static str,
+        body: Option<&'static str>,
+    ) -> (
         String,
         oneshot::Receiver<String>,
         tokio::task::JoinHandle<()>,
@@ -298,12 +323,16 @@ mod tests {
             let request = String::from_utf8_lossy(&request_bytes).to_string();
             let _ = tx.send(request);
 
-            let body = r#"{"id":"channel-1","guild_id":"guild-1","name":"channel_test","type":0,"sub_type":0}"#;
-            let response = format!(
-                "HTTP/1.1 200 OK\r\ncontent-type: application/json\r\ncontent-length: {}\r\nconnection: close\r\n\r\n{}",
-                body.len(),
-                body
-            );
+            let body = body.unwrap_or_default();
+            let response = if body.is_empty() {
+                format!("HTTP/1.1 {status}\r\ncontent-length: 0\r\nconnection: close\r\n\r\n")
+            } else {
+                format!(
+                    "HTTP/1.1 {status}\r\ncontent-type: application/json\r\ncontent-length: {}\r\nconnection: close\r\n\r\n{}",
+                    body.len(),
+                    body
+                )
+            };
             stream.write_all(response.as_bytes()).await.unwrap();
         });
 
@@ -361,6 +390,40 @@ mod tests {
         assert!(request.ends_with(
             "\r\n\r\n{\"name\":\"\",\"position\":0,\"parent_id\":\"\",\"private_type\":0,\"speak_permission\":0}"
         ));
+        server.await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn delete_channel_keeps_deleted_channel_when_returned() {
+        let (base_url, request, server) = spawn_capture_server().await;
+        let api = test_api(base_url).await;
+        let channel = api
+            .delete_channel(api.token_required().unwrap(), "channel-1")
+            .await
+            .unwrap();
+
+        assert_eq!(
+            channel.as_ref().map(|channel| channel.id.as_str()),
+            Some("channel-1")
+        );
+        let request = request.await.unwrap();
+        assert!(request.starts_with("DELETE /channels/channel-1 HTTP/1.1"));
+        server.await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn delete_channel_accepts_empty_success_response() {
+        let (base_url, request, server) =
+            spawn_capture_server_with_response("204 No Content", None).await;
+        let api = test_api(base_url).await;
+        let channel = api
+            .delete_channel(api.token_required().unwrap(), "channel-1")
+            .await
+            .unwrap();
+
+        assert!(channel.is_none());
+        let request = request.await.unwrap();
+        assert!(request.starts_with("DELETE /channels/channel-1 HTTP/1.1"));
         server.await.unwrap();
     }
 }

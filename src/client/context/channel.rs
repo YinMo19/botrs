@@ -167,8 +167,8 @@ impl Context {
         self.api.patch_channel(&self.token, channel_id, value).await
     }
 
-    /// Deletes a channel and returns the deleted channel model.
-    pub async fn delete_channel(&self, channel_id: &str) -> Result<Channel> {
+    /// Deletes a channel.
+    pub async fn delete_channel(&self, channel_id: &str) -> Result<Option<Channel>> {
         self.api.delete_channel(&self.token, channel_id).await
     }
 
