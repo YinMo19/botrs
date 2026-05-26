@@ -1,0 +1,325 @@
+use super::HttpClient;
+use crate::error::{BotError, Result};
+use crate::token::Token;
+use reqwest::{
+    Method,
+    header::{HeaderMap, HeaderValue},
+};
+use serde::Serialize;
+use tracing::debug;
+
+impl HttpClient {
+    /// Makes a GET request to the API.
+    pub async fn get<Q>(
+        &self,
+        token: &Token,
+        path: &str,
+        query: Option<&Q>,
+    ) -> Result<serde_json::Value>
+    where
+        Q: Serialize + ?Sized,
+    {
+        self.request(Method::GET, token, path, query, None::<&()>)
+            .await
+    }
+
+    /// Makes a POST request to the API.
+    pub async fn post<Q, B>(
+        &self,
+        token: &Token,
+        path: &str,
+        query: Option<&Q>,
+        body: Option<&B>,
+    ) -> Result<serde_json::Value>
+    where
+        Q: Serialize + ?Sized,
+        B: Serialize + ?Sized,
+    {
+        self.request(Method::POST, token, path, query, body).await
+    }
+
+    pub(crate) async fn request_json_url<Q, B>(
+        &self,
+        token: &Token,
+        method: Method,
+        url: &str,
+        query: Option<&Q>,
+        body: Option<&B>,
+    ) -> Result<serde_json::Value>
+    where
+        Q: Serialize + ?Sized,
+        B: Serialize + ?Sized,
+    {
+        self.request_json_url_with_headers(method, token, url, query, body, HeaderMap::new())
+            .await
+    }
+
+    /// Makes a PUT request to the API.
+    pub async fn put<Q, B>(
+        &self,
+        token: &Token,
+        path: &str,
+        query: Option<&Q>,
+        body: Option<&B>,
+    ) -> Result<serde_json::Value>
+    where
+        Q: Serialize + ?Sized,
+        B: Serialize + ?Sized,
+    {
+        self.request(Method::PUT, token, path, query, body).await
+    }
+
+    /// Makes a PUT request with additional headers.
+    pub async fn put_with_headers<Q, B>(
+        &self,
+        token: &Token,
+        path: &str,
+        query: Option<&Q>,
+        body: Option<&B>,
+        headers: HeaderMap,
+    ) -> Result<serde_json::Value>
+    where
+        Q: Serialize + ?Sized,
+        B: Serialize + ?Sized,
+    {
+        self.request_with_headers(Method::PUT, token, path, query, body, headers)
+            .await
+    }
+
+    /// Makes a PUT request with a raw request body and additional headers.
+    pub async fn put_raw_with_headers<Q>(
+        &self,
+        token: &Token,
+        path: &str,
+        query: Option<&Q>,
+        body: impl Into<String>,
+        headers: HeaderMap,
+    ) -> Result<serde_json::Value>
+    where
+        Q: Serialize + ?Sized,
+    {
+        self.request_raw_with_headers(Method::PUT, token, path, query, body, headers)
+            .await
+    }
+
+    /// Makes a DELETE request to the API.
+    pub async fn delete<Q>(
+        &self,
+        token: &Token,
+        path: &str,
+        query: Option<&Q>,
+    ) -> Result<serde_json::Value>
+    where
+        Q: Serialize + ?Sized,
+    {
+        self.request(Method::DELETE, token, path, query, None::<&()>)
+            .await
+    }
+
+    /// Makes a DELETE request with a JSON request body.
+    pub async fn delete_with_body<Q, B>(
+        &self,
+        token: &Token,
+        path: &str,
+        query: Option<&Q>,
+        body: Option<&B>,
+    ) -> Result<serde_json::Value>
+    where
+        Q: Serialize + ?Sized,
+        B: Serialize + ?Sized,
+    {
+        self.request(Method::DELETE, token, path, query, body).await
+    }
+
+    /// Makes a PATCH request to the API.
+    pub async fn patch<Q, B>(
+        &self,
+        token: &Token,
+        path: &str,
+        query: Option<&Q>,
+        body: Option<&B>,
+    ) -> Result<serde_json::Value>
+    where
+        Q: Serialize + ?Sized,
+        B: Serialize + ?Sized,
+    {
+        self.request(Method::PATCH, token, path, query, body).await
+    }
+
+    /// Passes through an arbitrary request to the provided URL.
+    pub async fn transport<B>(
+        &self,
+        token: &Token,
+        method: Method,
+        url: &str,
+        body: Option<&B>,
+    ) -> Result<Vec<u8>>
+    where
+        B: Serialize + ?Sized,
+    {
+        let mut headers = self.authorized_headers(token, HeaderMap::new()).await?;
+        if body.is_some() {
+            headers.insert("Content-Type", "application/json".parse().unwrap());
+        }
+
+        let mut context = crate::openapi::FilterContext::request(method.clone(), url, headers);
+        crate::openapi::DoReqFilterChains(&mut context)?;
+
+        let request_headers = context.request_headers.clone();
+        let mut request = self
+            .client
+            .request(method.clone(), url)
+            .headers(request_headers.clone());
+        if let Some(body) = body {
+            request = request.json(body);
+        }
+        let response = request.send().await.map_err(BotError::Http)?;
+        self.handle_bytes_response(response, method, url, request_headers)
+            .await
+    }
+
+    /// Makes a generic HTTP request to the API.
+    pub(crate) async fn request<Q, B>(
+        &self,
+        method: Method,
+        token: &Token,
+        path: &str,
+        query: Option<&Q>,
+        body: Option<&B>,
+    ) -> Result<serde_json::Value>
+    where
+        Q: Serialize + ?Sized,
+        B: Serialize + ?Sized,
+    {
+        self.request_with_headers(method, token, path, query, body, HeaderMap::new())
+            .await
+    }
+
+    pub(crate) async fn request_with_headers<Q, B>(
+        &self,
+        method: Method,
+        token: &Token,
+        path: &str,
+        query: Option<&Q>,
+        body: Option<&B>,
+        headers: HeaderMap,
+    ) -> Result<serde_json::Value>
+    where
+        Q: Serialize + ?Sized,
+        B: Serialize + ?Sized,
+    {
+        let url = format!("{}{}", self.base_url, path);
+        self.request_json_url_with_headers(method, token, &url, query, body, headers)
+            .await
+    }
+
+    pub(crate) async fn request_json_url_with_headers<Q, B>(
+        &self,
+        method: Method,
+        token: &Token,
+        url: &str,
+        query: Option<&Q>,
+        body: Option<&B>,
+        headers: HeaderMap,
+    ) -> Result<serde_json::Value>
+    where
+        Q: Serialize + ?Sized,
+        B: Serialize + ?Sized,
+    {
+        debug!("Making {} request to: {}", method, url);
+
+        let mut headers = self.authorized_headers(token, headers).await?;
+        if body.is_some() {
+            headers.insert("Content-Type", "application/json".parse().unwrap());
+        }
+
+        let mut context = crate::openapi::FilterContext::request(method.clone(), url, headers);
+        crate::openapi::DoReqFilterChains(&mut context)?;
+        let request_headers = context.request_headers.clone();
+
+        let mut request = self
+            .client
+            .request(method.clone(), url)
+            .headers(request_headers.clone());
+
+        if let Some(q) = query {
+            request = request.query(q);
+        }
+
+        if let Some(b) = body {
+            request = request.json(b);
+        }
+
+        let response = request.send().await.map_err(BotError::Http)?;
+
+        self.handle_response(response, method, url, request_headers)
+            .await
+    }
+
+    pub(crate) async fn request_raw_with_headers<Q>(
+        &self,
+        method: Method,
+        token: &Token,
+        path: &str,
+        query: Option<&Q>,
+        body: impl Into<String>,
+        headers: HeaderMap,
+    ) -> Result<serde_json::Value>
+    where
+        Q: Serialize + ?Sized,
+    {
+        let url = format!("{}{}", self.base_url, path);
+        debug!("Making {} request to: {}", method, url);
+
+        let mut headers = self.authorized_headers(token, headers).await?;
+        headers.insert("Content-Type", "application/json".parse().unwrap());
+
+        let mut context = crate::openapi::FilterContext::request(method.clone(), &url, headers);
+        crate::openapi::DoReqFilterChains(&mut context)?;
+        let request_headers = context.request_headers.clone();
+
+        let mut request = self
+            .client
+            .request(method.clone(), &url)
+            .headers(request_headers.clone());
+
+        if let Some(q) = query {
+            request = request.query(q);
+        }
+
+        let response = request
+            .body(body.into())
+            .send()
+            .await
+            .map_err(BotError::Http)?;
+
+        self.handle_response(response, method, &url, request_headers)
+            .await
+    }
+
+    pub(crate) async fn authorized_headers(
+        &self,
+        token: &Token,
+        mut headers: HeaderMap,
+    ) -> Result<HeaderMap> {
+        headers.insert(
+            "Authorization",
+            token.authorization_header().await?.parse().map_err(|err| {
+                BotError::internal(format!("invalid authorization header: {err}"))
+            })?,
+        );
+        let app_id = self
+            .union_app_id
+            .as_deref()
+            .unwrap_or_else(|| token.app_id());
+        if !app_id.is_empty() {
+            headers.insert(
+                "X-Union-Appid",
+                HeaderValue::from_str(app_id).map_err(|err| {
+                    BotError::internal(format!("invalid X-Union-Appid header: {err}"))
+                })?,
+            );
+        }
+        Ok(headers)
+    }
+}
