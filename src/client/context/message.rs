@@ -60,11 +60,83 @@ impl Context {
             .await
     }
 
+    /// Sends a group message using botpy's locals()-style request body.
+    #[allow(clippy::too_many_arguments)]
+    pub async fn post_group_message_botpy(
+        &self,
+        group_openid: &str,
+        msg_type: Option<u32>,
+        content: Option<&str>,
+        embed: Option<&Embed>,
+        ark: Option<&Ark>,
+        message_reference: Option<&Reference>,
+        media: Option<&Media>,
+        msg_id: Option<&str>,
+        msg_seq: Option<u32>,
+        event_id: Option<&str>,
+        markdown: Option<&MarkdownPayload>,
+        keyboard: Option<&KeyboardPayload>,
+    ) -> Result<MessageResponse> {
+        self.api
+            .post_group_message_botpy(
+                &self.token,
+                group_openid,
+                msg_type,
+                content,
+                embed,
+                ark,
+                message_reference,
+                media,
+                msg_id,
+                msg_seq,
+                event_id,
+                markdown,
+                keyboard,
+            )
+            .await
+    }
+
     /// Sends a text message to a C2C conversation.
     pub async fn send_c2c_message(&self, openid: &str, content: &str) -> Result<MessageResponse> {
         let params = crate::models::message::C2CMessageParams::new_text(content);
         self.api
             .post_c2c_message_with_params(&self.token, openid, params)
+            .await
+    }
+
+    /// Sends a C2C message using botpy's locals()-style request body.
+    #[allow(clippy::too_many_arguments)]
+    pub async fn post_c2c_message_botpy(
+        &self,
+        openid: &str,
+        msg_type: Option<u32>,
+        content: Option<&str>,
+        embed: Option<&Embed>,
+        ark: Option<&Ark>,
+        message_reference: Option<&Reference>,
+        media: Option<&Media>,
+        msg_id: Option<&str>,
+        msg_seq: Option<u32>,
+        event_id: Option<&str>,
+        markdown: Option<&MarkdownPayload>,
+        keyboard: Option<&KeyboardPayload>,
+    ) -> Result<MessageResponse> {
+        self.api
+            .post_c2c_message_botpy(
+                &self.token,
+                openid,
+                msg_type,
+                content,
+                embed,
+                ark,
+                message_reference,
+                media,
+                msg_id,
+                msg_seq,
+                event_id,
+                markdown,
+                keyboard,
+            )
             .await
     }
 
