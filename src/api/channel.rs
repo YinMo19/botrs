@@ -7,7 +7,60 @@ use crate::models::{
     guild::Member,
 };
 use crate::token::Token;
+use serde::Serialize;
 use tracing::debug;
+
+#[derive(Debug, Serialize)]
+struct BotpyCreateChannel {
+    name: String,
+    #[serde(rename = "type")]
+    channel_type: ChannelType,
+    #[serde(rename = "subtype")]
+    sub_type: ChannelSubType,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    position: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    parent_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    private_type: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    private_user_ids: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    speak_permission: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    application_id: Option<String>,
+}
+
+impl BotpyCreateChannel {
+    #[allow(clippy::too_many_arguments)]
+    fn new(
+        name: &str,
+        channel_type: ChannelType,
+        sub_type: ChannelSubType,
+        position: Option<u32>,
+        parent_id: Option<&str>,
+        private_type: Option<u32>,
+        private_user_ids: Option<Vec<String>>,
+        speak_permission: Option<u32>,
+        application_id: Option<&str>,
+    ) -> Self {
+        Self {
+            name: name.to_string(),
+            channel_type,
+            sub_type,
+            position: position.filter(|value| *value != 0),
+            parent_id: parent_id
+                .filter(|value| !value.is_empty())
+                .map(ToOwned::to_owned),
+            private_type: private_type.filter(|value| *value != 0),
+            private_user_ids: private_user_ids.filter(|value| !value.is_empty()),
+            speak_permission: speak_permission.filter(|value| *value != 0),
+            application_id: application_id
+                .filter(|value| !value.is_empty())
+                .map(ToOwned::to_owned),
+        }
+    }
+}
 
 impl BotApi {
     // Channel APIs
@@ -59,20 +112,24 @@ impl BotApi {
         speak_permission: Option<u32>,
         application_id: Option<&str>,
     ) -> Result<Channel> {
-        let value = ChannelValueObject {
-            name: Some(name.to_string()),
-            channel_type: Some(channel_type),
-            sub_type: Some(sub_type),
-            position: position.map(i64::from),
-            parent_id: parent_id.map(String::from),
-            private_type: private_type.map(|value| PrivateType::from(value as u8)),
+        debug!("Creating channel in guild {}", guild_id);
+        let body = BotpyCreateChannel::new(
+            name,
+            channel_type,
+            sub_type,
+            position,
+            parent_id,
+            private_type,
             private_user_ids,
-            speak_permission: speak_permission.map(|value| SpeakPermission::from(value as u8)),
-            application_id: application_id.map(String::from),
-            ..Default::default()
-        };
-
-        self.post_channel(token, guild_id, &value).await
+            speak_permission,
+            application_id,
+        );
+        let path = resource::guild_channels(guild_id);
+        let response = self
+            .http
+            .post(token, &path, None::<&()>, Some(&body))
+            .await?;
+        Self::decode_json(response)
     }
 
     /// Creates a private channel.
@@ -153,5 +210,102 @@ impl BotApi {
         let path = resource::voice_channel_members(channel_id);
         let response = self.http.get(token, &path, None::<&()>).await?;
         Self::decode_json(response)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tokio::io::{AsyncReadExt, AsyncWriteExt};
+    use tokio::net::TcpListener;
+    use tokio::sync::oneshot;
+
+    async fn test_api(base_url: String) -> BotApi {
+        let token = crate::Token::new("APPID_XXXXXX", "SECRET_XXXXXX");
+        token
+            .set_cached_access_token_for_test("ACCESS_TOKEN_XXXXXX")
+            .await;
+        let mut http = crate::http::HttpClient::new(30, false).unwrap();
+        http.base_url = base_url;
+        BotApi::with_token(http, token)
+    }
+
+    async fn spawn_capture_server() -> (
+        String,
+        oneshot::Receiver<String>,
+        tokio::task::JoinHandle<()>,
+    ) {
+        let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let addr = listener.local_addr().unwrap();
+        let (tx, rx) = oneshot::channel();
+
+        let handle = tokio::spawn(async move {
+            let (mut stream, _) = listener.accept().await.unwrap();
+            let mut request_bytes = Vec::new();
+            let mut buffer = [0_u8; 4096];
+            loop {
+                let n = stream.read(&mut buffer).await.unwrap();
+                request_bytes.extend_from_slice(&buffer[..n]);
+
+                let request = String::from_utf8_lossy(&request_bytes);
+                let Some(header_end) = request.find("\r\n\r\n") else {
+                    continue;
+                };
+                let content_length = request
+                    .lines()
+                    .find_map(|line| {
+                        let (name, value) = line.split_once(':')?;
+                        name.eq_ignore_ascii_case("content-length")
+                            .then(|| value.trim().parse::<usize>().ok())
+                            .flatten()
+                    })
+                    .unwrap_or(0);
+                let body_start = header_end + 4;
+                if request_bytes.len().saturating_sub(body_start) >= content_length {
+                    break;
+                }
+            }
+
+            let request = String::from_utf8_lossy(&request_bytes).to_string();
+            let _ = tx.send(request);
+
+            let body = r#"{"id":"channel-1","guild_id":"guild-1","name":"channel_test","type":0,"sub_type":0}"#;
+            let response = format!(
+                "HTTP/1.1 200 OK\r\ncontent-type: application/json\r\ncontent-length: {}\r\nconnection: close\r\n\r\n{}",
+                body.len(),
+                body
+            );
+            stream.write_all(response.as_bytes()).await.unwrap();
+        });
+
+        (format!("http://{addr}"), rx, handle)
+    }
+
+    #[tokio::test]
+    async fn inline_create_channel_matches_botpy_subtype_body() {
+        let (base_url, request, server) = spawn_capture_server().await;
+        let api = test_api(base_url).await;
+        let channel = api
+            .create_channel(
+                api.token_required().unwrap(),
+                "guild-1",
+                "channel_test",
+                ChannelType::Text,
+                ChannelSubType::Chat,
+                Some(0),
+                Some(""),
+                Some(0),
+                Some(Vec::new()),
+                Some(0),
+                Some(""),
+            )
+            .await
+            .unwrap();
+
+        assert_eq!(channel.id, "channel-1");
+        let request = request.await.unwrap();
+        assert!(request.starts_with("POST /guilds/guild-1/channels HTTP/1.1"));
+        assert!(request.ends_with("\r\n\r\n{\"name\":\"channel_test\",\"type\":0,\"subtype\":0}"));
+        server.await.unwrap();
     }
 }
