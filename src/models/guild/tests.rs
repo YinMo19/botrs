@@ -172,6 +172,37 @@ fn role_keeps_official_json_shape() {
 }
 
 #[test]
+fn update_role_new_matches_botgo_request_body() {
+    let body = UpdateRole::new(
+        "guild-1",
+        GuildRole {
+            name: "Admin".to_string(),
+            color: 0,
+            hoist: 1,
+            ..Default::default()
+        },
+    );
+
+    assert_eq!(body.update.color, DefaultColor);
+    assert_eq!(
+        serde_json::to_value(&body).unwrap(),
+        serde_json::json!({
+            "guild_id": "guild-1",
+            "filter": {
+                "name": 1,
+                "color": 1,
+                "hoist": 1
+            },
+            "info": {
+                "name": "Admin",
+                "color": DefaultColor,
+                "hoist": 1
+            }
+        })
+    );
+}
+
+#[test]
 fn update_guild_mute_uses_zero_value_omitempty_shape() {
     let empty = serde_json::to_value(UpdateGuildMute::default()).unwrap();
     assert_eq!(empty, serde_json::json!({}));
