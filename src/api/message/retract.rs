@@ -15,7 +15,7 @@ impl BotApi {
         debug!("Recalling message {} in channel {}", message_id, channel_id);
         let params = Self::recall_hide_tip_query(hidetip);
         let path = resource::channel_message(channel_id, message_id);
-        self.http.delete(token, &path, Some(&params)).await?;
+        self.http.delete(token, &path, params.as_ref()).await?;
         Ok(())
     }
 

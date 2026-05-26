@@ -183,7 +183,7 @@ impl BotApi {
                     self.token_required()?,
                     channel_id,
                     message_id,
-                    Some(opts.hide_tip),
+                    opts.hide_tip.then_some(true),
                 )
                 .await;
         }
