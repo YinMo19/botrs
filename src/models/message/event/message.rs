@@ -55,6 +55,7 @@ pub struct Message {
     /// Message scene information
     pub message_scene: Option<MessageScene>,
     /// Event ID from the gateway
+    #[serde(skip)]
     pub event_id: Option<String>,
 }
 

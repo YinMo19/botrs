@@ -35,6 +35,9 @@ mod tests {
         assert_eq!(message.event_id.as_deref(), Some("event-1"));
         assert!(message.mentions.is_empty());
         assert!(message.attachments.is_empty());
+
+        let value = serde_json::to_value(&message).unwrap();
+        assert!(value.get("event_id").is_none());
     }
 
     #[test]
@@ -520,6 +523,22 @@ mod tests {
         let mut message = Message::new();
         message.content = Some("Hello, world!".to_string());
         assert!(message.has_content());
+    }
+
+    #[test]
+    fn message_event_id_is_internal_only() {
+        let message = Message::from_data(
+            crate::api::BotApi::new(crate::http::HttpClient::new(30, false).unwrap()),
+            "event-1".to_string(),
+            serde_json::json!({
+                "id": "message-1",
+                "content": "hello"
+            }),
+        );
+
+        assert_eq!(message.event_id.as_deref(), Some("event-1"));
+        let value = serde_json::to_value(&message).unwrap();
+        assert!(value.get("event_id").is_none());
     }
 
     #[test]

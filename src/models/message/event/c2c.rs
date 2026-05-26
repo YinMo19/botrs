@@ -29,6 +29,7 @@ pub struct C2CMessage {
     /// Message scene information
     pub message_scene: Option<Value>,
     /// Event ID from the gateway
+    #[serde(skip)]
     pub event_id: Option<String>,
 }
 
