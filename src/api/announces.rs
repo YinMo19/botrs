@@ -1,6 +1,6 @@
 use super::{BotApi, resource};
 use crate::error::Result;
-use crate::models::announce::{Announce, AnnouncesType, RecommendChannel};
+use crate::models::announce::{Announce, AnnouncesType, GuildAnnouncesToCreate, RecommendChannel};
 use crate::token::Token;
 use serde_json::{Value, json};
 use tracing::debug;
@@ -126,10 +126,12 @@ impl BotApi {
             guild_id, message_id
         );
 
-        let body = json!({
-            "channel_id": channel_id,
-            "message_id": message_id
-        });
+        let body = GuildAnnouncesToCreate {
+            channel_id: channel_id.to_string(),
+            message_id: message_id.to_string(),
+            announces_type: u8::from(AnnouncesType::Member) as u32,
+            recommend_channels: Vec::new(),
+        };
 
         let path = resource::guild_announces(guild_id);
         let response = self
@@ -161,10 +163,12 @@ impl BotApi {
     ) -> Result<Announce> {
         debug!("Creating recommend announcement in guild {}", guild_id);
 
-        let body = json!({
-            "announces_type": u8::from(announces_type),
-            "recommend_channels": recommend_channels
-        });
+        let body = GuildAnnouncesToCreate {
+            channel_id: String::new(),
+            message_id: String::new(),
+            announces_type: u8::from(announces_type) as u32,
+            recommend_channels,
+        };
 
         let path = resource::guild_announces(guild_id);
         let response = self
