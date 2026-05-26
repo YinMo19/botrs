@@ -17,6 +17,20 @@ struct ScheduleQuery<'a> {
     since: &'a str,
 }
 
+#[derive(Serialize)]
+struct InlineScheduleWrapper<'a> {
+    schedule: InlineScheduleBody<'a>,
+}
+
+#[derive(Serialize)]
+struct InlineScheduleBody<'a> {
+    name: &'a str,
+    start_timestamp: &'a str,
+    end_timestamp: &'a str,
+    jump_channel_id: &'a str,
+    reminder_id: String,
+}
+
 impl BotApi {
     // Schedule APIs
 
@@ -60,15 +74,44 @@ impl BotApi {
         jump_channel_id: &str,
         remind_type: RemindType,
     ) -> Result<Schedule> {
-        let schedule = Schedule::new(
+        self.create_schedule_with_reminder_id(
+            token,
+            channel_id,
             name,
             start_timestamp,
             end_timestamp,
-            Some(jump_channel_id.to_string()),
-            remind_type,
-        );
-        self.create_schedule_with_model(token, channel_id, &schedule)
-            .await
+            jump_channel_id,
+            remind_type.to_wire_string(),
+        )
+        .await
+    }
+
+    /// Creates a schedule from inline fields using a raw reminder ID.
+    pub async fn create_schedule_with_reminder_id(
+        &self,
+        token: &Token,
+        channel_id: &str,
+        name: &str,
+        start_timestamp: &str,
+        end_timestamp: &str,
+        jump_channel_id: &str,
+        reminder_id: impl ToString,
+    ) -> Result<Schedule> {
+        let wrapper = InlineScheduleWrapper {
+            schedule: InlineScheduleBody {
+                name,
+                start_timestamp,
+                end_timestamp,
+                jump_channel_id,
+                reminder_id: reminder_id.to_string(),
+            },
+        };
+        let path = resource::channel_schedules(channel_id);
+        let response = self
+            .http
+            .post(token, &path, None::<&()>, Some(&wrapper))
+            .await?;
+        Self::decode_json(response)
     }
 
     /// Creates a schedule from a structured model.
@@ -103,15 +146,46 @@ impl BotApi {
         jump_channel_id: &str,
         remind_type: RemindType,
     ) -> Result<Schedule> {
-        let schedule = Schedule::new(
+        self.update_schedule_with_reminder_id(
+            token,
+            channel_id,
+            schedule_id,
             name,
             start_timestamp,
             end_timestamp,
-            Some(jump_channel_id.to_string()),
-            remind_type,
-        );
-        self.update_schedule_with_model(token, channel_id, schedule_id, &schedule)
-            .await
+            jump_channel_id,
+            remind_type.to_wire_string(),
+        )
+        .await
+    }
+
+    /// Updates a schedule from inline fields using a raw reminder ID.
+    pub async fn update_schedule_with_reminder_id(
+        &self,
+        token: &Token,
+        channel_id: &str,
+        schedule_id: &str,
+        name: &str,
+        start_timestamp: &str,
+        end_timestamp: &str,
+        jump_channel_id: &str,
+        reminder_id: impl ToString,
+    ) -> Result<Schedule> {
+        let wrapper = InlineScheduleWrapper {
+            schedule: InlineScheduleBody {
+                name,
+                start_timestamp,
+                end_timestamp,
+                jump_channel_id,
+                reminder_id: reminder_id.to_string(),
+            },
+        };
+        let path = resource::channel_schedule(channel_id, schedule_id);
+        let response = self
+            .http
+            .patch(token, &path, None::<&()>, Some(&wrapper))
+            .await?;
+        Self::decode_json(response)
     }
 
     /// Updates a schedule from a structured model.
@@ -156,7 +230,7 @@ impl BotApi {
 
 #[cfg(test)]
 mod tests {
-    use super::schedule_query;
+    use super::{InlineScheduleBody, InlineScheduleWrapper, schedule_query};
 
     #[test]
     fn schedule_query_defaults_since_to_zero() {
@@ -165,5 +239,26 @@ mod tests {
 
         let value = serde_json::to_value(schedule_query(Some("1710000000"))).unwrap();
         assert_eq!(value["since"], "1710000000");
+    }
+
+    #[test]
+    fn inline_schedule_body_matches_botpy_shape() {
+        let value = serde_json::to_value(InlineScheduleWrapper {
+            schedule: InlineScheduleBody {
+                name: "meeting",
+                start_timestamp: "1640995200",
+                end_timestamp: "1640998800",
+                jump_channel_id: "channel-1",
+                reminder_id: "0".to_string(),
+            },
+        })
+        .unwrap();
+
+        assert_eq!(value["schedule"]["name"], "meeting");
+        assert_eq!(value["schedule"]["start_timestamp"], "1640995200");
+        assert_eq!(value["schedule"]["end_timestamp"], "1640998800");
+        assert_eq!(value["schedule"]["jump_channel_id"], "channel-1");
+        assert_eq!(value["schedule"]["reminder_id"], "0");
+        assert!(value["schedule"].get("remind_type").is_none());
     }
 }
