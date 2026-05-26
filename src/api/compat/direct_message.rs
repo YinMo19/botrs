@@ -66,11 +66,8 @@ impl BotApi {
         I: IntoIterator<Item = O>,
         O: Into<OpenApiOption>,
     {
-        let guild_id = (!dm.guild_id.is_empty())
-            .then_some(dm.guild_id.as_str())
-            .ok_or_else(|| {
-                crate::BotError::invalid_data("direct message session missing guild_id")
-            })?;
+        // Botgo reads dm.GuildID directly and leaves empty values to the request layer.
+        let guild_id = dm.guild_id.as_str();
         let opts = Options::from_options(options);
         if opts.url.is_none() {
             return self
@@ -152,11 +149,8 @@ impl BotApi {
         I: IntoIterator<Item = O>,
         O: Into<OpenApiOption>,
     {
-        let guild_id = (!dm.guild_id.is_empty())
-            .then_some(dm.guild_id.as_str())
-            .ok_or_else(|| {
-                crate::BotError::invalid_data("direct message session missing guild_id")
-            })?;
+        // Botgo reads dm.GuildID directly and leaves empty values to the request layer.
+        let guild_id = dm.guild_id.as_str();
         let opts = Options::from_options(options);
         if opts.url.is_none() {
             return self
@@ -172,5 +166,81 @@ impl BotApi {
             Some(&body),
         )
         .await
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tokio::io::{AsyncReadExt, AsyncWriteExt};
+    use tokio::net::TcpListener;
+    use tokio::sync::oneshot;
+
+    async fn test_api(base_url: String) -> BotApi {
+        let token = crate::Token::new("APPID_XXXXXX", "SECRET_XXXXXX");
+        token
+            .set_cached_access_token_for_test("ACCESS_TOKEN_XXXXXX")
+            .await;
+        let mut http = crate::http::HttpClient::new(30, false).unwrap();
+        http.base_url = base_url;
+        BotApi::with_token(http, token)
+    }
+
+    async fn spawn_json_server() -> (
+        String,
+        oneshot::Receiver<String>,
+        tokio::task::JoinHandle<()>,
+    ) {
+        let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let addr = listener.local_addr().unwrap();
+        let (tx, rx) = oneshot::channel();
+
+        let handle = tokio::spawn(async move {
+            let (mut stream, _) = listener.accept().await.unwrap();
+            let mut buffer = [0_u8; 4096];
+            let n = stream.read(&mut buffer).await.unwrap();
+            let request = String::from_utf8_lossy(&buffer[..n]);
+            let first_line = request.lines().next().unwrap_or_default().to_string();
+            let _ = tx.send(first_line);
+
+            let body = r#"{"id":"message-1"}"#;
+            let response = format!(
+                "HTTP/1.1 200 OK\r\ncontent-type: application/json\r\ncontent-length: {}\r\nconnection: close\r\n\r\n{}",
+                body.len(),
+                body
+            );
+            stream.write_all(response.as_bytes()).await.unwrap();
+        });
+
+        (format!("http://{addr}"), rx, handle)
+    }
+
+    #[tokio::test]
+    async fn dm_compat_routes_preserve_empty_guild_id() {
+        let dm = DirectMessageSession::default();
+        let msg = MessageToCreate::default();
+
+        let (base_url, first_line, server) = spawn_json_server().await;
+        let message = test_api(base_url)
+            .await
+            .PostDirectMessage(&dm, &msg)
+            .await
+            .unwrap();
+        assert_eq!(message.id.as_deref(), Some("message-1"));
+        assert_eq!(first_line.await.unwrap(), "POST /dms//messages HTTP/1.1");
+        server.await.unwrap();
+
+        let (base_url, first_line, server) = spawn_json_server().await;
+        let message = test_api(base_url)
+            .await
+            .PostDMSettingGuide(&dm, "guild-1")
+            .await
+            .unwrap();
+        assert_eq!(message.id.as_deref(), Some("message-1"));
+        assert_eq!(
+            first_line.await.unwrap(),
+            "POST /dms//settingguide HTTP/1.1"
+        );
+        server.await.unwrap();
     }
 }
