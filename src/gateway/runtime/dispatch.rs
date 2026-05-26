@@ -57,7 +57,6 @@ impl Gateway {
                                 "[botrs] 收到 READY 事件，session_id: {}，连接耗时: {:?}",
                                 ready.session_id, elapsed
                             );
-                            // Start heartbeat task with 30 second interval like Python
                             self.start_heartbeat_task(write.clone());
                             debug!("[botrs] 心跳任务已启动");
 

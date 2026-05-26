@@ -23,12 +23,12 @@ impl Gateway {
                     && let Ok(hello) = serde_json::from_value::<Hello>(data.clone())
                 {
                     debug!(
-                        "[botrs] 收到 HELLO 事件，服务器建议心跳间隔: {}ms (我们使用固定30000ms)",
+                        "[botrs] 收到 HELLO 事件，使用服务器建议心跳间隔: {}ms",
                         hello.heartbeat_interval
                     );
                     self.heartbeat_interval = Some(hello.heartbeat_interval);
-                    // Use 30000ms like Python
-                    self.heartbeat_interval_ms.store(30000, Ordering::Relaxed);
+                    self.heartbeat_interval_ms
+                        .store(hello.heartbeat_interval.max(1), Ordering::Relaxed);
 
                     // Send identify or resume like Python's on_connected
                     debug!("[botrs] 发送身份验证信息");

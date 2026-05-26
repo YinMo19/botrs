@@ -11,7 +11,7 @@ use tokio_tungstenite::tungstenite::Message;
 use tracing::{debug, warn};
 
 impl Gateway {
-    /// Starts the heartbeat task with fixed 30-second interval (matching Python implementation).
+    /// Starts the heartbeat task using the interval provided by HELLO.
     pub(super) fn start_heartbeat_task(
         &mut self,
         write: Arc<Mutex<futures_util::stream::SplitSink<WsStream, Message>>>,
@@ -24,16 +24,21 @@ impl Gateway {
         let heartbeat_counter = self.heartbeat_count.clone();
         let last_heartbeat_ack = self.last_heartbeat_ack.clone();
         let last_heartbeat_sent = self.last_heartbeat_sent.clone();
+        let heartbeat_interval_ms = self.heartbeat_interval_ms.clone();
 
-        debug!("[botrs] 心跳维持启动... (30秒间隔)");
+        debug!(
+            "[botrs] 心跳维持启动... ({}ms间隔)",
+            self.normalized_heartbeat_interval_ms()
+        );
 
         let handle = tokio::spawn(async move {
-            // Use fixed 30-second interval like Python version
-            let interval_seconds = 30;
             let heartbeat_start_time = Instant::now();
 
             loop {
-                sleep(Duration::from_secs(interval_seconds)).await;
+                let interval = Gateway::heartbeat_interval_duration(
+                    heartbeat_interval_ms.load(Ordering::Relaxed),
+                );
+                sleep(interval).await;
 
                 let current_count = heartbeat_counter.fetch_add(1, Ordering::Relaxed) + 1;
                 let total_elapsed = heartbeat_start_time.elapsed();
@@ -142,5 +147,13 @@ impl Gateway {
                 total_heartbeats, connection_duration
             );
         }
+    }
+
+    pub(super) fn normalized_heartbeat_interval_ms(&self) -> u64 {
+        self.heartbeat_interval_ms.load(Ordering::Relaxed).max(1)
+    }
+
+    pub(super) fn heartbeat_interval_duration(interval_ms: u64) -> Duration {
+        Duration::from_millis(interval_ms.max(1))
     }
 }

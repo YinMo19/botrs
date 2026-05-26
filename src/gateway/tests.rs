@@ -58,6 +58,18 @@ fn test_session_start_interval() {
 }
 
 #[test]
+fn heartbeat_interval_uses_hello_millis_with_minimum() {
+    assert_eq!(
+        Gateway::heartbeat_interval_duration(41_250),
+        Duration::from_millis(41_250)
+    );
+    assert_eq!(
+        Gateway::heartbeat_interval_duration(0),
+        Duration::from_millis(1)
+    );
+}
+
+#[test]
 fn test_close_code_classification() {
     assert!(Gateway::cannot_resume_close_code(
         WSCodeBackendSessionNoLongerValid
