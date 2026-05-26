@@ -234,3 +234,18 @@ fn channel_permissions_omit_empty_fields() {
         serde_json::json!({})
     );
 }
+
+#[test]
+fn channel_permissions_validate_only_non_empty_values() {
+    let update_permissions = UpdateChannelPermissions {
+        add: Some(String::new()),
+        remove: Some(String::new()),
+    };
+    assert!(update_permissions.validate().is_ok());
+
+    let update_permissions = UpdateChannelPermissions::new(Some("7"), Some("0"));
+    assert!(update_permissions.validate().is_ok());
+
+    let update_permissions = UpdateChannelPermissions::new(Some("not-a-number"), None::<&str>);
+    assert!(update_permissions.validate().is_err());
+}

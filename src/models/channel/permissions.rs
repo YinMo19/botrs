@@ -71,12 +71,12 @@ impl UpdateChannelPermissions {
 
     /// Validates that the permission strings can be parsed as unsigned integers.
     pub fn validate(&self) -> crate::error::Result<()> {
-        if let Some(add) = self.add.as_deref() {
+        if let Some(add) = self.add.as_deref().filter(|value| !value.is_empty()) {
             add.parse::<u64>().map_err(|err| {
                 crate::error::BotError::invalid_data(format!("invalid parameter add: {err}"))
             })?;
         }
-        if let Some(remove) = self.remove.as_deref() {
+        if let Some(remove) = self.remove.as_deref().filter(|value| !value.is_empty()) {
             remove.parse::<u64>().map_err(|err| {
                 crate::error::BotError::invalid_data(format!("invalid parameter remove: {err}"))
             })?;
