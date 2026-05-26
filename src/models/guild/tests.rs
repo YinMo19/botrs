@@ -313,3 +313,21 @@ fn member_add_role_body_matches_botgo_json_shape() {
         })
     );
 }
+
+#[test]
+fn member_delete_options_match_botgo_option_shape() {
+    let mut options = MemberDeleteOptions::new().with_delete_history_msg_days(99);
+    WithAddBlackList(true)(&mut options);
+    WithDeleteHistoryMsg(42)(&mut options);
+
+    assert_eq!(options.delete_history_msg_days, 42);
+    assert_eq!(
+        serde_json::to_value(&options).unwrap(),
+        serde_json::json!({
+            "add_blacklist": true,
+            "delete_history_msg_days": 42
+        })
+    );
+
+    assert_eq!(normalize_delete_history_msg_days(42), NoDelete);
+}

@@ -82,7 +82,7 @@ impl MemberDeleteOptions {
 
     /// Sets the history deletion window.
     pub fn with_delete_history_msg_days(mut self, days: DeleteHistoryMsgDay) -> Self {
-        self.delete_history_msg_days = normalize_delete_history_msg_days(days);
+        self.delete_history_msg_days = days;
         self
     }
 }
@@ -108,7 +108,7 @@ pub fn WithAddBlackList(add_blacklist: bool) -> MemberDeleteOption {
 #[allow(non_snake_case)]
 pub fn WithDeleteHistoryMsg(days: DeleteHistoryMsgDay) -> MemberDeleteOption {
     Box::new(move |options| {
-        options.delete_history_msg_days = normalize_delete_history_msg_days(days);
+        options.delete_history_msg_days = days;
     })
 }
 
