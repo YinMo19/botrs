@@ -102,7 +102,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     info!("Token validated successfully");
 
     // Set up intents - we want to receive public messages (C2C management events)
-    let intents = Intents::default().with_public_messages();
+    let intents = Intents::none().with_public_messages();
 
     info!("Configured intents: {}", intents);
 
