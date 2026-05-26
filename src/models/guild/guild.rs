@@ -42,7 +42,7 @@ pub struct Guild {
     #[serde(default)]
     pub union_org_id: String,
     /// Operator user ID
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "String::is_empty")]
     pub op_user_id: Snowflake,
 }
 

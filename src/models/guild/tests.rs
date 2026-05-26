@@ -85,6 +85,9 @@ fn guild_uses_required_zero_value_fields() {
     assert_eq!(guild.union_world_id, "");
     assert_eq!(guild.union_org_id, "");
     assert_eq!(guild.op_user_id, "");
+
+    let value = serde_json::to_value(&guild).unwrap();
+    assert!(value.get("op_user_id").is_none());
 }
 
 #[test]
