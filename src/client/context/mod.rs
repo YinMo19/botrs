@@ -12,6 +12,7 @@ mod me;
 mod message;
 mod pins;
 mod reaction;
+mod schedule;
 mod webhook;
 
 /// Context passed to event handlers containing API access and bot information.
