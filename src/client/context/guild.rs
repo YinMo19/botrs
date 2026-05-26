@@ -40,7 +40,7 @@ impl Context {
         name: Option<&str>,
         color: Option<u32>,
         hoist: Option<bool>,
-    ) -> Result<GuildRole> {
+    ) -> Result<UpdateResult> {
         self.api
             .create_guild_role(&self.token, guild_id, name, color, hoist)
             .await
@@ -65,7 +65,7 @@ impl Context {
         name: Option<&str>,
         color: Option<u32>,
         hoist: Option<bool>,
-    ) -> Result<GuildRole> {
+    ) -> Result<UpdateResult> {
         self.api
             .update_guild_role(&self.token, guild_id, role_id, name, color, hoist)
             .await

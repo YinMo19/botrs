@@ -60,20 +60,18 @@ impl BotApi {
         name: Option<&str>,
         color: Option<u32>,
         hoist: Option<bool>,
-    ) -> Result<GuildRole> {
+    ) -> Result<UpdateResult> {
         debug!("Creating guild role in {}", guild_id);
         let body = BotpyRoleFields::new(name, color, hoist);
         let path = resource::guild_roles(guild_id);
-        let result: UpdateResult = self
-            .request_json(
-                token,
-                reqwest::Method::POST,
-                &path,
-                None::<&()>,
-                Some(&body),
-            )
-            .await?;
-        Ok(result.role.unwrap_or_default())
+        self.request_json(
+            token,
+            reqwest::Method::POST,
+            &path,
+            None::<&()>,
+            Some(&body),
+        )
+        .await
     }
 
     /// Updates a guild role from a structured role body.
@@ -102,20 +100,18 @@ impl BotApi {
         name: Option<&str>,
         color: Option<u32>,
         hoist: Option<bool>,
-    ) -> Result<GuildRole> {
+    ) -> Result<UpdateResult> {
         debug!("Updating guild role {} in {}", role_id, guild_id);
         let body = BotpyRoleFields::new(name, color, hoist);
         let path = resource::guild_role(guild_id, role_id);
-        let result: UpdateResult = self
-            .request_json(
-                token,
-                reqwest::Method::PATCH,
-                &path,
-                None::<&()>,
-                Some(&body),
-            )
-            .await?;
-        Ok(result.role.unwrap_or_default())
+        self.request_json(
+            token,
+            reqwest::Method::PATCH,
+            &path,
+            None::<&()>,
+            Some(&body),
+        )
+        .await
     }
 
     /// Deletes a guild role.
@@ -204,7 +200,7 @@ mod tests {
     async fn inline_create_role_matches_botpy_flat_body() {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
-        let role = api
+        let result = api
             .create_guild_role(
                 api.token_required().unwrap(),
                 "guild-1",
@@ -215,10 +211,37 @@ mod tests {
             .await
             .unwrap();
 
-        assert_eq!(role.id, "role-1");
+        assert_eq!(result.role_id, "role-1");
+        assert_eq!(result.guild_id, "guild-1");
+        assert_eq!(result.role.as_ref().unwrap().id, "role-1");
         let request = request.await.unwrap();
         assert!(request.starts_with("POST /guilds/guild-1/roles HTTP/1.1"));
         assert!(request.ends_with("\r\n\r\n{\"name\":\"Test Role\",\"color\":4278245297}"));
+        server.await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn inline_update_role_returns_botpy_update_result() {
+        let (base_url, request, server) = spawn_capture_server().await;
+        let api = test_api(base_url).await;
+        let result = api
+            .update_guild_role(
+                api.token_required().unwrap(),
+                "guild-1",
+                "role-1",
+                Some("Test Role"),
+                Some(0),
+                Some(false),
+            )
+            .await
+            .unwrap();
+
+        assert_eq!(result.role_id, "role-1");
+        assert_eq!(result.guild_id, "guild-1");
+        assert_eq!(result.role.as_ref().unwrap().name, "Test Role");
+        let request = request.await.unwrap();
+        assert!(request.starts_with("PATCH /guilds/guild-1/roles/role-1 HTTP/1.1"));
+        assert!(request.ends_with("\r\n\r\n{\"name\":\"Test Role\",\"color\":0,\"hoist\":0}"));
         server.await.unwrap();
     }
 }
