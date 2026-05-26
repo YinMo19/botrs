@@ -9,10 +9,26 @@ use crate::models::{
     },
 };
 use crate::token::Token;
+use base64::Engine;
 use reqwest::Method;
 use serde::Serialize;
 use serde_json::{Value, json};
 use tracing::debug;
+
+#[derive(Serialize)]
+struct BotpyChannelMessageBody<'a> {
+    channel_id: &'a str,
+    content: Option<&'a str>,
+    embed: Option<&'a Embed>,
+    ark: Option<&'a Ark>,
+    message_reference: Option<&'a Reference>,
+    image: Option<&'a str>,
+    file_image: Option<String>,
+    msg_id: Option<&'a str>,
+    event_id: Option<&'a str>,
+    markdown: Option<&'a MarkdownPayload>,
+    keyboard: Option<&'a Keyboard>,
+}
 
 #[derive(Serialize)]
 struct BotpyKeyboardMessageBody<'a> {
@@ -139,6 +155,43 @@ impl BotApi {
     ) -> Result<MessageResponse> {
         debug!("Sending message to channel {}", channel_id);
         let body = MessageToCreate::from(params);
+        let path = resource::channel_messages(channel_id);
+        self.request_message_response_body(token, Method::POST, &path, &body)
+            .await
+    }
+
+    /// Sends a channel message using botpy's locals()-style request body.
+    #[allow(clippy::too_many_arguments)]
+    pub async fn post_message_botpy(
+        &self,
+        token: &Token,
+        channel_id: &str,
+        content: Option<&str>,
+        embed: Option<&Embed>,
+        ark: Option<&Ark>,
+        message_reference: Option<&Reference>,
+        image: Option<&str>,
+        file_image: Option<&[u8]>,
+        msg_id: Option<&str>,
+        event_id: Option<&str>,
+        markdown: Option<&MarkdownPayload>,
+        keyboard: Option<&Keyboard>,
+    ) -> Result<MessageResponse> {
+        debug!("Sending botpy-style message to channel {}", channel_id);
+        let body = BotpyChannelMessageBody {
+            channel_id,
+            content,
+            embed,
+            ark,
+            message_reference,
+            image,
+            file_image: file_image
+                .map(|data| base64::engine::general_purpose::STANDARD.encode(data)),
+            msg_id,
+            event_id,
+            markdown,
+            keyboard,
+        };
         let path = resource::channel_messages(channel_id);
         self.request_message_response_body(token, Method::POST, &path, &body)
             .await
@@ -326,6 +379,50 @@ mod tests {
     fn request_body(request: &str) -> serde_json::Value {
         let body = request.split("\r\n\r\n").nth(1).unwrap_or_default();
         serde_json::from_str(body).unwrap()
+    }
+
+    #[tokio::test]
+    async fn post_message_botpy_matches_locals_body() {
+        let (base_url, request, server) = spawn_capture_server().await;
+        let api = test_api(base_url).await;
+        let response = api
+            .post_message_botpy(
+                api.token_required().unwrap(),
+                "channel-1",
+                Some("hello"),
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+            )
+            .await
+            .unwrap();
+
+        assert_eq!(response.id.as_deref(), Some("message-1"));
+        let request = request.await.unwrap();
+        assert!(request.starts_with("POST /channels/channel-1/messages HTTP/1.1"));
+        assert_eq!(
+            request_body(&request),
+            serde_json::json!({
+                "channel_id": "channel-1",
+                "content": "hello",
+                "embed": null,
+                "ark": null,
+                "message_reference": null,
+                "image": null,
+                "file_image": null,
+                "msg_id": null,
+                "event_id": null,
+                "markdown": null,
+                "keyboard": null
+            })
+        );
+        server.await.unwrap();
     }
 
     #[tokio::test]

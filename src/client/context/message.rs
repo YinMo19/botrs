@@ -9,6 +9,40 @@ impl Context {
             .await
     }
 
+    /// Sends a channel message using botpy's locals()-style request body.
+    #[allow(clippy::too_many_arguments)]
+    pub async fn post_message_botpy(
+        &self,
+        channel_id: &str,
+        content: Option<&str>,
+        embed: Option<&Embed>,
+        ark: Option<&Ark>,
+        message_reference: Option<&Reference>,
+        image: Option<&str>,
+        file_image: Option<&[u8]>,
+        msg_id: Option<&str>,
+        event_id: Option<&str>,
+        markdown: Option<&MarkdownPayload>,
+        keyboard: Option<&Keyboard>,
+    ) -> Result<MessageResponse> {
+        self.api
+            .post_message_botpy(
+                &self.token,
+                channel_id,
+                content,
+                embed,
+                ark,
+                message_reference,
+                image,
+                file_image,
+                msg_id,
+                event_id,
+                markdown,
+                keyboard,
+            )
+            .await
+    }
+
     /// Sends a channel message containing an embed and optional text content.
     pub async fn send_message_with_embed(
         &self,
