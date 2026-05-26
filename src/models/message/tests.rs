@@ -119,6 +119,7 @@ mod tests {
             media: Some(Media {
                 file_info: Some("file-info".to_string()),
                 ttl: Some(60),
+                ..Default::default()
             }),
             msg_seq: Some(42),
             ..Default::default()
@@ -132,6 +133,28 @@ mod tests {
                     "file_info": "file-info"
                 },
                 "msg_seq": 42
+            })
+        );
+    }
+
+    #[test]
+    fn media_keeps_upload_response_file_uuid() {
+        let media: Media = serde_json::from_value(serde_json::json!({
+            "file_uuid": "FILE_UUID_XXXXXX",
+            "file_info": "FILE_INFO_XXXXXX",
+            "ttl": 3600
+        }))
+        .unwrap();
+
+        assert_eq!(media.file_uuid.as_deref(), Some("FILE_UUID_XXXXXX"));
+        assert_eq!(media.file_info.as_deref(), Some("FILE_INFO_XXXXXX"));
+        assert_eq!(media.ttl, Some(3600));
+
+        let request_media = MediaInfo::from(media);
+        assert_eq!(
+            serde_json::to_value(&request_media).unwrap(),
+            serde_json::json!({
+                "file_info": "FILE_INFO_XXXXXX"
             })
         );
     }

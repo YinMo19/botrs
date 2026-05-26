@@ -33,6 +33,7 @@ impl From<Media> for MediaInfo {
 impl From<MediaInfo> for Media {
     fn from(media: MediaInfo) -> Self {
         Self {
+            file_uuid: None,
             file_info: media.file_info,
             ttl: None,
         }

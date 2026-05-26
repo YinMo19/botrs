@@ -344,9 +344,14 @@ pub struct MarkdownParam {
 /// Media message structure.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct Media {
+    /// Uploaded file ID
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub file_uuid: Option<String>,
     /// File info
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub file_info: Option<String>,
     /// TTL (time to live)
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub ttl: Option<u32>,
 }
 
