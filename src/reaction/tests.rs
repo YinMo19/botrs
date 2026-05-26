@@ -15,7 +15,11 @@ fn test_reaction_target_type_from() {
     assert_eq!(ReactionTargetType::from(1), ReactionTargetType::Post);
     assert_eq!(ReactionTargetType::from(2), ReactionTargetType::Comment);
     assert_eq!(ReactionTargetType::from(3), ReactionTargetType::Reply);
-    assert_eq!(ReactionTargetType::from(99), ReactionTargetType::Message); // Default fallback
+    assert_eq!(
+        ReactionTargetType::from(99),
+        ReactionTargetType::Unknown(99)
+    );
+    assert_eq!(i32::from(ReactionTargetType::Unknown(99)), 99);
 }
 
 #[test]
