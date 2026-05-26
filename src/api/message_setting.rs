@@ -5,16 +5,7 @@ use crate::token::Token;
 use tracing::debug;
 
 impl BotApi {
-    /// Gets guild message frequency settings.
-    ///
-    /// # Arguments
-    ///
-    /// * `token` - Authentication token
-    /// * `guild_id` - The guild ID
-    ///
-    /// # Returns
-    ///
-    /// Message settings for the guild.
+    /// Fetches guild message frequency settings.
     pub async fn get_message_setting(
         &self,
         token: &Token,

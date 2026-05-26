@@ -7,19 +7,7 @@ use std::collections::HashMap;
 use tracing::debug;
 
 impl BotApi {
-    /// Adds a reaction to a message.
-    ///
-    /// # Arguments
-    ///
-    /// * `token` - Authentication token
-    /// * `channel_id` - The channel ID
-    /// * `message_id` - The message ID
-    /// * `emoji_type` - The emoji type (1=system, 2=emoji)
-    /// * `emoji_id` - The emoji ID
-    ///
-    /// # Returns
-    ///
-    /// Success indication.
+    /// Adds a reaction to a message using raw emoji type and ID values.
     pub async fn put_reaction(
         &self,
         token: &Token,
@@ -39,7 +27,7 @@ impl BotApi {
         Ok(())
     }
 
-    /// Adds a reaction to a message using a structured emoji object.
+    /// Adds a reaction to a message using a structured emoji value.
     pub async fn create_message_reaction(
         &self,
         token: &Token,
@@ -51,19 +39,7 @@ impl BotApi {
             .await
     }
 
-    /// Removes a reaction from a message.
-    ///
-    /// # Arguments
-    ///
-    /// * `token` - Authentication token
-    /// * `channel_id` - The channel ID
-    /// * `message_id` - The message ID
-    /// * `emoji_type` - The emoji type (1=system, 2=emoji)
-    /// * `emoji_id` - The emoji ID
-    ///
-    /// # Returns
-    ///
-    /// Success indication.
+    /// Removes the bot's reaction using raw emoji type and ID values.
     pub async fn delete_reaction(
         &self,
         token: &Token,
@@ -81,7 +57,7 @@ impl BotApi {
         Ok(())
     }
 
-    /// Deletes own reaction from a message using a structured emoji object.
+    /// Removes the bot's reaction using a structured emoji value.
     pub async fn delete_own_message_reaction(
         &self,
         token: &Token,
@@ -93,23 +69,10 @@ impl BotApi {
             .await
     }
 
-    // Reaction APIs
-
-    /// Gets the list of users who reacted with a specific emoji.
+    /// Lists users that reacted with a specific emoji.
     ///
-    /// # Arguments
-    ///
-    /// * `token` - Authentication token
-    /// * `channel_id` - The channel ID containing the message
-    /// * `message_id` - The message ID
-    /// * `emoji_type` - The type of emoji (1 = system, 2 = custom)
-    /// * `emoji_id` - The emoji ID
-    /// * `cookie` - Optional pagination cookie from previous request
-    /// * `limit` - Maximum number of users to return (1-100, default 20)
-    ///
-    /// # Returns
-    ///
-    /// List of users who reacted and pagination info.
+    /// `cookie` continues pagination from a previous response; `limit` defaults
+    /// to the platform default when omitted.
     pub async fn get_reaction_users(
         &self,
         token: &Token,
@@ -137,7 +100,7 @@ impl BotApi {
         Self::decode_json(response)
     }
 
-    /// Gets message reaction users using structured emoji and pager objects.
+    /// Lists users that reacted with a specific emoji using structured options.
     pub async fn get_message_reaction_users(
         &self,
         token: &Token,

@@ -14,8 +14,7 @@ impl Context {
             .await
     }
 
-    /// Adds a reaction to a message using a structured emoji object.
-
+    /// Adds a reaction to a message using a structured emoji value.
     pub async fn create_message_reaction(
         &self,
         channel_id: &str,
@@ -27,19 +26,7 @@ impl Context {
             .await
     }
 
-    /// Removes a reaction from a message.
-    ///
-    /// # Arguments
-    ///
-    /// * `channel_id` - The channel ID
-    /// * `message_id` - The message ID
-    /// * `emoji_type` - The emoji type (1 for system emoji, 2 for custom emoji)
-    /// * `emoji_id` - The emoji ID
-    ///
-    /// # Returns
-    ///
-    /// Result indicating success or failure.
-
+    /// Removes the bot's reaction using raw emoji type and ID values.
     pub async fn remove_reaction(
         &self,
         channel_id: &str,
@@ -52,8 +39,7 @@ impl Context {
             .await
     }
 
-    /// Deletes own reaction from a message using a structured emoji object.
-
+    /// Removes the bot's reaction using a structured emoji value.
     pub async fn delete_own_message_reaction(
         &self,
         channel_id: &str,
@@ -65,8 +51,7 @@ impl Context {
             .await
     }
 
-    /// Gets message reaction users using structured emoji and pager objects.
-
+    /// Lists users that reacted with a specific emoji.
     pub async fn get_message_reaction_users(
         &self,
         channel_id: &str,

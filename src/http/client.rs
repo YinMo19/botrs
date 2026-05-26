@@ -24,12 +24,7 @@ pub struct HttpClient {
 }
 
 impl HttpClient {
-    /// Creates a new HTTP client.
-    ///
-    /// # Arguments
-    ///
-    /// * `timeout` - Request timeout in seconds
-    /// * `is_sandbox` - Whether to use sandbox environment
+    /// Creates an HTTP client for the production or sandbox API environment.
     ///
     /// # Examples
     ///

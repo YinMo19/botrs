@@ -23,14 +23,7 @@ pub struct APIPermissionDemand {
 }
 
 impl APIPermissionDemand {
-    /// Creates a new APIPermissionDemand instance.
-    ///
-    /// # Arguments
-    ///
-    /// * `guild_id` - The guild ID where permission is requested
-    /// * `channel_id` - The channel ID where the request will be sent
-    /// * `api_identify` - The API identifier for which permission is requested
-    /// * `desc` - Description explaining why the permission is needed
+    /// Creates a permission demand request.
     pub fn new(
         guild_id: impl Into<String>,
         channel_id: impl Into<String>,

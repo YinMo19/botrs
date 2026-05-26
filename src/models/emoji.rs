@@ -80,12 +80,7 @@ pub struct Emoji {
 }
 
 impl Emoji {
-    /// Creates a new Emoji instance.
-    ///
-    /// # Arguments
-    ///
-    /// * `id` - The emoji ID
-    /// * `emoji_type` - The type of emoji (system or custom)
+    /// Creates an emoji with the given ID and type.
     pub fn new(id: impl Into<String>, emoji_type: EmojiType) -> Self {
         Self {
             id: id.into(),
@@ -95,22 +90,12 @@ impl Emoji {
         }
     }
 
-    /// Creates a new system emoji.
-    ///
-    /// # Arguments
-    ///
-    /// * `id` - The system emoji ID
+    /// Creates a system emoji.
     pub fn system(id: impl Into<String>) -> Self {
         Self::new(id, EmojiType::System)
     }
 
-    /// Creates a new custom emoji.
-    ///
-    /// # Arguments
-    ///
-    /// * `id` - The custom emoji ID
-    /// * `name` - Optional name for the emoji
-    /// * `url` - Optional URL to the emoji image
+    /// Creates a custom emoji with optional display metadata.
     pub fn custom(id: impl Into<String>, name: Option<String>, url: Option<String>) -> Self {
         Self {
             id: id.into(),

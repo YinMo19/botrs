@@ -12,16 +12,7 @@ use tracing::debug;
 impl BotApi {
     // Channel APIs
 
-    /// Gets channel information.
-    ///
-    /// # Arguments
-    ///
-    /// * `token` - Authentication token
-    /// * `channel_id` - The channel ID
-    ///
-    /// # Returns
-    ///
-    /// Channel information.
+    /// Fetches one channel by ID.
     pub async fn get_channel(&self, token: &Token, channel_id: &str) -> Result<Channel> {
         debug!("Getting channel {}", channel_id);
         let path = resource::channel(channel_id);
@@ -29,16 +20,7 @@ impl BotApi {
         Self::decode_json(response)
     }
 
-    /// Gets channels in a guild.
-    ///
-    /// # Arguments
-    ///
-    /// * `token` - Authentication token
-    /// * `guild_id` - The guild ID
-    ///
-    /// # Returns
-    ///
-    /// List of channels.
+    /// Lists channels in a guild.
     pub async fn get_channels(&self, token: &Token, guild_id: &str) -> Result<Vec<Channel>> {
         debug!("Getting channels for guild {}", guild_id);
         let path = resource::guild_channels(guild_id);
@@ -46,25 +28,7 @@ impl BotApi {
         Self::decode_json(response)
     }
 
-    /// Creates a new channel.
-    ///
-    /// # Arguments
-    ///
-    /// * `token` - Authentication token
-    /// * `guild_id` - The guild ID
-    /// * `name` - Channel name
-    /// * `channel_type` - Channel type
-    /// * `sub_type` - Channel sub-type
-    /// * `position` - Optional position
-    /// * `parent_id` - Optional parent category ID
-    /// * `private_type` - Optional private type
-    /// * `private_user_ids` - Optional private user IDs
-    /// * `speak_permission` - Optional speak permission
-    /// * `application_id` - Optional application ID
-    ///
-    /// # Returns
-    ///
-    /// The created channel.
+    /// Creates a guild channel from a structured channel body.
     pub async fn post_channel(
         &self,
         token: &Token,
@@ -80,7 +44,7 @@ impl BotApi {
         Self::decode_json(response)
     }
 
-    /// Creates a new channel.
+    /// Creates a guild channel from inline fields.
     pub async fn create_channel(
         &self,
         token: &Token,
@@ -132,21 +96,7 @@ impl BotApi {
         self.post_channel(token, guild_id, &value).await
     }
 
-    /// Updates a channel.
-    ///
-    /// # Arguments
-    ///
-    /// * `token` - Authentication token
-    /// * `channel_id` - The channel ID
-    /// * `name` - Optional new name
-    /// * `position` - Optional new position
-    /// * `parent_id` - Optional new parent ID
-    /// * `private_type` - Optional new private type
-    /// * `speak_permission` - Optional new speak permission
-    ///
-    /// # Returns
-    ///
-    /// The updated channel.
+    /// Updates a channel from inline fields.
     pub async fn update_channel(
         &self,
         token: &Token,
@@ -169,7 +119,7 @@ impl BotApi {
         self.patch_channel(token, channel_id, &value).await
     }
 
-    /// Updates a channel with a channel value object.
+    /// Updates a channel from a structured channel body.
     pub async fn patch_channel(
         &self,
         token: &Token,
@@ -185,16 +135,7 @@ impl BotApi {
         Self::decode_json(response)
     }
 
-    /// Deletes a channel.
-    ///
-    /// # Arguments
-    ///
-    /// * `token` - Authentication token
-    /// * `channel_id` - The channel ID
-    ///
-    /// # Returns
-    ///
-    /// The deleted channel.
+    /// Deletes a channel and returns the deleted channel model.
     pub async fn delete_channel(&self, token: &Token, channel_id: &str) -> Result<Channel> {
         debug!("Deleting channel {}", channel_id);
         let path = resource::channel(channel_id);
@@ -202,7 +143,7 @@ impl BotApi {
         Self::decode_json(response)
     }
 
-    /// Lists members in a voice channel.
+    /// Lists members currently present in a voice channel.
     pub async fn list_voice_channel_members(
         &self,
         token: &Token,

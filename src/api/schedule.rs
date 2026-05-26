@@ -9,17 +9,7 @@ use tracing::debug;
 impl BotApi {
     // Schedule APIs
 
-    /// Gets the list of schedules for a channel.
-    ///
-    /// # Arguments
-    ///
-    /// * `token` - Authentication token
-    /// * `channel_id` - The schedule channel ID
-    /// * `since` - Optional timestamp to get schedules after this time
-    ///
-    /// # Returns
-    ///
-    /// List of schedules.
+    /// Lists schedules in a channel, optionally filtering by start timestamp.
     pub async fn get_schedules(
         &self,
         token: &Token,
@@ -39,17 +29,7 @@ impl BotApi {
         Self::decode_json(response)
     }
 
-    /// Gets a specific schedule by ID.
-    ///
-    /// # Arguments
-    ///
-    /// * `token` - Authentication token
-    /// * `channel_id` - The schedule channel ID
-    /// * `schedule_id` - The schedule ID
-    ///
-    /// # Returns
-    ///
-    /// The schedule details.
+    /// Fetches one schedule by ID.
     pub async fn get_schedule(
         &self,
         token: &Token,
@@ -63,21 +43,7 @@ impl BotApi {
         Self::decode_json(response)
     }
 
-    /// Creates a new schedule in a channel.
-    ///
-    /// # Arguments
-    ///
-    /// * `token` - Authentication token
-    /// * `channel_id` - The schedule channel ID
-    /// * `name` - Name of the schedule
-    /// * `start_timestamp` - Start time as Unix timestamp string
-    /// * `end_timestamp` - End time as Unix timestamp string
-    /// * `jump_channel_id` - Channel ID to jump to when event starts
-    /// * `remind_type` - Type of reminder to set
-    ///
-    /// # Returns
-    ///
-    /// The created schedule.
+    /// Creates a schedule from inline fields.
     pub async fn create_schedule(
         &self,
         token: &Token,
@@ -99,7 +65,7 @@ impl BotApi {
             .await
     }
 
-    /// Creates a new schedule in a channel from a schedule model.
+    /// Creates a schedule from a structured model.
     pub async fn create_schedule_with_model(
         &self,
         token: &Token,
@@ -119,22 +85,7 @@ impl BotApi {
         Self::decode_json(response)
     }
 
-    /// Updates an existing schedule.
-    ///
-    /// # Arguments
-    ///
-    /// * `token` - Authentication token
-    /// * `channel_id` - The schedule channel ID
-    /// * `schedule_id` - The schedule ID to update
-    /// * `name` - New name of the schedule
-    /// * `start_timestamp` - New start time as Unix timestamp string
-    /// * `end_timestamp` - New end time as Unix timestamp string
-    /// * `jump_channel_id` - New channel ID to jump to when event starts
-    /// * `remind_type` - New type of reminder to set
-    ///
-    /// # Returns
-    ///
-    /// The updated schedule.
+    /// Updates a schedule from inline fields.
     pub async fn update_schedule(
         &self,
         token: &Token,
@@ -157,7 +108,7 @@ impl BotApi {
             .await
     }
 
-    /// Updates an existing schedule from a schedule model.
+    /// Updates a schedule from a structured model.
     pub async fn update_schedule_with_model(
         &self,
         token: &Token,
@@ -179,17 +130,7 @@ impl BotApi {
         Self::decode_json(response)
     }
 
-    /// Deletes a schedule.
-    ///
-    /// # Arguments
-    ///
-    /// * `token` - Authentication token
-    /// * `channel_id` - The schedule channel ID
-    /// * `schedule_id` - The schedule ID to delete
-    ///
-    /// # Returns
-    ///
-    /// Success indication.
+    /// Deletes a schedule and returns the raw platform response.
     pub async fn delete_schedule(
         &self,
         token: &Token,

@@ -26,13 +26,7 @@ pub struct Reaction {
 }
 
 impl Reaction {
-    /// Create a new Reaction instance
-    ///
-    /// # Arguments
-    ///
-    /// * `api` - The Bot API client
-    /// * `event_id` - Optional event ID
-    /// * `data` - Reaction data from the gateway
+    /// Parses a reaction event from the gateway payload.
     pub fn new(api: BotApi, event_id: Option<String>, data: &Value) -> crate::Result<Self> {
         let message_reaction = serde_json::from_value(data.clone())?;
         Ok(Self::from_message_reaction(api, event_id, message_reaction))

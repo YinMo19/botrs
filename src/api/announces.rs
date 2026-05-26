@@ -6,19 +6,10 @@ use serde_json::{Value, json};
 use tracing::debug;
 
 impl BotApi {
-    /// Uploads a group file.
+    /// Sends a file message to an open-platform group conversation.
     ///
-    /// # Arguments
-    ///
-    /// * `token` - Authentication token
-    /// * `group_openid` - The group OpenID
-    /// * `file_type` - File type (1=image, 2=video, 3=audio, 4=file)
-    /// * `url` - File URL
-    /// * `srv_send_msg` - Whether to send directly
-    ///
-    /// # Returns
-    ///
-    /// Media response.
+    /// `file_type` follows the platform numeric values: image, video, audio,
+    /// or generic file.
     pub async fn post_group_file(
         &self,
         token: &Token,
@@ -43,19 +34,10 @@ impl BotApi {
         Ok(response)
     }
 
-    /// Uploads a C2C file.
+    /// Sends a file message to a C2C conversation.
     ///
-    /// # Arguments
-    ///
-    /// * `token` - Authentication token
-    /// * `openid` - The user's OpenID
-    /// * `file_type` - File type (1=image, 2=video, 3=audio, 4=file)
-    /// * `url` - File URL
-    /// * `srv_send_msg` - Whether to send directly
-    ///
-    /// # Returns
-    ///
-    /// Media response.
+    /// `file_type` follows the platform numeric values: image, video, audio,
+    /// or generic file.
     pub async fn post_c2c_file(
         &self,
         token: &Token,
@@ -82,17 +64,7 @@ impl BotApi {
 
     // Announcement APIs
 
-    /// Creates a channel announcement from a message.
-    ///
-    /// # Arguments
-    ///
-    /// * `token` - Authentication token
-    /// * `channel_id` - The channel ID where the announcement will be created
-    /// * `message_id` - The message ID to turn into an announcement
-    ///
-    /// # Returns
-    ///
-    /// The created announcement.
+    /// Creates a channel announcement from an existing message.
     pub async fn create_channel_announce(
         &self,
         token: &Token,
@@ -116,17 +88,7 @@ impl BotApi {
         Self::decode_json(response)
     }
 
-    /// Deletes a channel announcement.
-    ///
-    /// # Arguments
-    ///
-    /// * `token` - Authentication token
-    /// * `channel_id` - The channel ID
-    /// * `message_id` - The message ID of the announcement to delete
-    ///
-    /// # Returns
-    ///
-    /// Success indication.
+    /// Deletes a channel announcement by message ID.
     pub async fn delete_channel_announce(
         &self,
         token: &Token,
@@ -151,18 +113,7 @@ impl BotApi {
         Ok(())
     }
 
-    /// Creates a message-type guild announcement.
-    ///
-    /// # Arguments
-    ///
-    /// * `token` - Authentication token
-    /// * `guild_id` - The guild ID where the announcement will be created
-    /// * `channel_id` - The channel ID containing the message to announce
-    /// * `message_id` - The message ID to turn into an announcement
-    ///
-    /// # Returns
-    ///
-    /// The created announcement.
+    /// Creates a message-type guild announcement from an existing message.
     pub async fn create_announce(
         &self,
         token: &Token,
@@ -200,18 +151,7 @@ impl BotApi {
             .await
     }
 
-    /// Creates a recommended channel announcement.
-    ///
-    /// # Arguments
-    ///
-    /// * `token` - Authentication token
-    /// * `guild_id` - The guild ID where the announcement will be created
-    /// * `announces_type` - The type of announcement
-    /// * `recommend_channels` - List of channels to recommend
-    ///
-    /// # Returns
-    ///
-    /// The created announcement.
+    /// Creates a guild announcement that recommends channels.
     pub async fn create_recommend_announce(
         &self,
         token: &Token,
@@ -246,17 +186,7 @@ impl BotApi {
             .await
     }
 
-    /// Deletes a guild announcement.
-    ///
-    /// # Arguments
-    ///
-    /// * `token` - Authentication token
-    /// * `guild_id` - The guild ID
-    /// * `message_id` - The message ID of the announcement to delete, or "all" to delete all
-    ///
-    /// # Returns
-    ///
-    /// Success indication.
+    /// Deletes a guild announcement by message ID and returns the raw response.
     pub async fn delete_announce(
         &self,
         token: &Token,

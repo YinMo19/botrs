@@ -10,16 +10,7 @@ use tracing::debug;
 impl BotApi {
     // Guild-related APIs
 
-    /// Gets guild information.
-    ///
-    /// # Arguments
-    ///
-    /// * `token` - Authentication token
-    /// * `guild_id` - The guild ID
-    ///
-    /// # Returns
-    ///
-    /// Guild information.
+    /// Fetches one guild by ID.
     pub async fn get_guild(&self, token: &Token, guild_id: &str) -> Result<Guild> {
         debug!("Getting guild {}", guild_id);
         let path = resource::guild(guild_id);
@@ -29,17 +20,7 @@ impl BotApi {
 
     // Member APIs
 
-    /// Gets a guild member.
-    ///
-    /// # Arguments
-    ///
-    /// * `token` - Authentication token
-    /// * `guild_id` - The guild ID
-    /// * `user_id` - The user ID
-    ///
-    /// # Returns
-    ///
-    /// Member information.
+    /// Fetches one guild member.
     pub async fn get_guild_member(
         &self,
         token: &Token,
@@ -52,18 +33,7 @@ impl BotApi {
         Self::decode_json(response)
     }
 
-    /// Gets guild members list.
-    ///
-    /// # Arguments
-    ///
-    /// * `token` - Authentication token
-    /// * `guild_id` - The guild ID
-    /// * `after` - Get members after this user ID
-    /// * `limit` - Maximum number of members to return (1-400)
-    ///
-    /// # Returns
-    ///
-    /// List of members.
+    /// Lists guild members using inline pagination parameters.
     pub async fn get_guild_members(
         &self,
         token: &Token,
@@ -76,7 +46,7 @@ impl BotApi {
             .await
     }
 
-    /// Gets guild members using a pager.
+    /// Lists guild members using a pre-built pager.
     pub async fn get_guild_members_with_pager(
         &self,
         token: &Token,
@@ -92,7 +62,7 @@ impl BotApi {
         Self::decode_json(response)
     }
 
-    /// Gets guild role members list.
+    /// Lists members that have a guild role.
     pub async fn get_guild_role_members(
         &self,
         token: &Token,
@@ -107,7 +77,7 @@ impl BotApi {
             .await
     }
 
-    /// Gets guild role members using a pager.
+    /// Lists members that have a guild role using a pre-built pager.
     pub async fn get_guild_role_members_with_pager(
         &self,
         token: &Token,
@@ -126,17 +96,7 @@ impl BotApi {
 
     /// Removes a member from a guild.
     ///
-    /// # Arguments
-    ///
-    /// * `token` - Authentication token
-    /// * `guild_id` - The guild ID
-    /// * `user_id` - The user ID
-    /// * `add_blacklist` - Whether to add to blacklist
-    /// * `delete_history_msg_days` - Days of message history to delete
-    ///
-    /// # Returns
-    ///
-    /// Success indication.
+    /// `delete_history_msg_days` is normalized to the platform-supported values.
     pub async fn delete_member(
         &self,
         token: &Token,
@@ -156,7 +116,7 @@ impl BotApi {
             .await
     }
 
-    /// Removes a member from a guild with structured delete options.
+    /// Removes a member from a guild using explicit delete options.
     pub async fn delete_member_with_options(
         &self,
         token: &Token,
@@ -175,18 +135,9 @@ impl BotApi {
 
     // Muting APIs
 
-    /// Mutes all members in a guild.
+    /// Mutes every member in a guild.
     ///
-    /// # Arguments
-    ///
-    /// * `token` - Authentication token
-    /// * `guild_id` - The guild ID
-    /// * `mute_end_timestamp` - Optional end timestamp
-    /// * `mute_seconds` - Optional duration in seconds
-    ///
-    /// # Returns
-    ///
-    /// Success indication.
+    /// The platform accepts either an end timestamp or a duration in seconds.
     pub async fn mute_all(
         &self,
         token: &Token,
@@ -205,16 +156,7 @@ impl BotApi {
         Ok(())
     }
 
-    /// Cancels mute for all members.
-    ///
-    /// # Arguments
-    ///
-    /// * `token` - Authentication token
-    /// * `guild_id` - The guild ID
-    ///
-    /// # Returns
-    ///
-    /// Success indication.
+    /// Cancels the guild-wide mute.
     pub async fn cancel_mute_all(&self, token: &Token, guild_id: &str) -> Result<()> {
         debug!("Canceling mute for all members in guild {}", guild_id);
 

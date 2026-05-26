@@ -7,17 +7,7 @@ use tracing::debug;
 impl BotApi {
     // Audio APIs
 
-    /// Updates audio control.
-    ///
-    /// # Arguments
-    ///
-    /// * `token` - Authentication token
-    /// * `channel_id` - The channel ID
-    /// * `audio_control` - Audio control data
-    ///
-    /// # Returns
-    ///
-    /// Success indication.
+    /// Updates audio control and discards the submitted body.
     pub async fn update_audio(
         &self,
         token: &Token,
@@ -28,7 +18,7 @@ impl BotApi {
         Ok(())
     }
 
-    /// Updates audio control and returns the submitted audio control body.
+    /// Updates audio control and returns the submitted control body.
     pub async fn post_audio(
         &self,
         token: &Token,
@@ -44,16 +34,7 @@ impl BotApi {
         Ok(audio_control.clone())
     }
 
-    /// Turn on microphone.
-    ///
-    /// # Arguments
-    ///
-    /// * `token` - Authentication token
-    /// * `channel_id` - The channel ID
-    ///
-    /// # Returns
-    ///
-    /// Success indication.
+    /// Enables the bot microphone in an audio channel.
     pub async fn on_microphone(&self, token: &Token, channel_id: &str) -> Result<()> {
         debug!("Turning on microphone in channel {}", channel_id);
         let path = resource::channel_mic(channel_id);
@@ -63,16 +44,7 @@ impl BotApi {
         Ok(())
     }
 
-    /// Turn off microphone.
-    ///
-    /// # Arguments
-    ///
-    /// * `token` - Authentication token
-    /// * `channel_id` - The channel ID
-    ///
-    /// # Returns
-    ///
-    /// Success indication.
+    /// Disables the bot microphone in an audio channel.
     pub async fn off_microphone(&self, token: &Token, channel_id: &str) -> Result<()> {
         debug!("Turning off microphone in channel {}", channel_id);
         let path = resource::channel_mic(channel_id);

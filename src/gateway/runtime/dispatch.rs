@@ -9,17 +9,10 @@ use tokio::sync::mpsc;
 use tracing::{debug, info};
 
 impl Gateway {
-    /// Handles an incoming WebSocket message content.
+    /// Handles one decoded WebSocket text frame.
     ///
-    /// # Arguments
-    ///
-    /// * `text` - The message text
-    /// * `event_sender` - Channel to send events
-    /// * `write` - WebSocket write stream
-    ///
-    /// # Returns
-    ///
-    /// Result indicating success or failure.
+    /// System opcodes may mutate gateway state or request a control action;
+    /// dispatch events are forwarded to the client event loop.
     pub(super) async fn handle_message_content(
         &mut self,
         text: &str,

@@ -6,40 +6,12 @@ impl Context {
         self.api.get_channel(&self.token, channel_id).await
     }
 
-    /// Gets message information.
-    ///
-    /// # Arguments
-    ///
-    /// * `channel_id` - The channel ID
-    /// * `message_id` - The message ID
-    ///
-    /// # Returns
-    ///
-    /// The message.
-
+    /// Lists channels in a guild.
     pub async fn get_channels(&self, guild_id: &str) -> Result<Vec<Channel>> {
         self.api.get_channels(&self.token, guild_id).await
     }
 
-    /// Creates a new channel in a guild.
-    ///
-    /// # Arguments
-    ///
-    /// * `guild_id` - The guild ID
-    /// * `name` - Channel name
-    /// * `channel_type` - Channel type
-    /// * `sub_type` - Channel sub type
-    /// * `position` - Channel position
-    /// * `parent_id` - Parent channel ID for category channels
-    /// * `private_type` - Private type (0=public, 1=private, 2=voice private)
-    /// * `private_user_ids` - List of user IDs for private channels
-    /// * `speak_permission` - Speak permission (0=invalid, 1=all members, 2=members with role)
-    /// * `application_id` - Application ID for application channels
-    ///
-    /// # Returns
-    ///
-    /// The created channel.
-
+    /// Creates a guild channel from inline fields.
     pub async fn create_channel(
         &self,
         guild_id: &str,
@@ -70,8 +42,7 @@ impl Context {
             .await
     }
 
-    /// Creates a new channel from a channel value object.
-
+    /// Creates a guild channel from a structured channel body.
     pub async fn post_channel(
         &self,
         guild_id: &str,
@@ -80,8 +51,7 @@ impl Context {
         self.api.post_channel(&self.token, guild_id, value).await
     }
 
-    /// Creates a private channel.
-
+    /// Creates a private channel and grants access to the supplied users.
     pub async fn create_private_channel(
         &self,
         guild_id: &str,
@@ -93,16 +63,7 @@ impl Context {
             .await
     }
 
-    /// Gets guild roles.
-    ///
-    /// # Arguments
-    ///
-    /// * `guild_id` - The guild ID
-    ///
-    /// # Returns
-    ///
-    /// List of guild roles.
-
+    /// Fetches channel permissions for one user.
     pub async fn get_channel_user_permissions(
         &self,
         channel_id: &str,
@@ -113,8 +74,7 @@ impl Context {
             .await
     }
 
-    /// Updates channel permissions for a user.
-
+    /// Updates channel permissions for one user using a structured body.
     pub async fn put_channel_permissions(
         &self,
         channel_id: &str,
@@ -126,8 +86,7 @@ impl Context {
             .await
     }
 
-    /// Updates channel permissions for a user.
-
+    /// Updates channel permissions for one user using add/remove bitsets.
     pub async fn update_channel_user_permissions(
         &self,
         channel_id: &str,
@@ -140,17 +99,7 @@ impl Context {
             .await
     }
 
-    /// Gets channel permissions for a role.
-    ///
-    /// # Arguments
-    ///
-    /// * `channel_id` - The channel ID
-    /// * `role_id` - The role ID
-    ///
-    /// # Returns
-    ///
-    /// Channel permissions for the role.
-
+    /// Fetches channel permissions for one role.
     pub async fn get_channel_role_permissions(
         &self,
         channel_id: &str,
@@ -161,8 +110,7 @@ impl Context {
             .await
     }
 
-    /// Updates channel permissions for a role.
-
+    /// Updates channel permissions for one role using a structured body.
     pub async fn put_channel_roles_permissions(
         &self,
         channel_id: &str,
@@ -174,8 +122,7 @@ impl Context {
             .await
     }
 
-    /// Updates channel permissions for a role.
-
+    /// Updates channel permissions for one role using add/remove bitsets.
     pub async fn update_channel_role_permissions(
         &self,
         channel_id: &str,
@@ -188,21 +135,7 @@ impl Context {
             .await
     }
 
-    /// Updates a channel.
-    ///
-    /// # Arguments
-    ///
-    /// * `channel_id` - The channel ID
-    /// * `name` - Optional new name
-    /// * `position` - Optional new position
-    /// * `parent_id` - Optional new parent ID
-    /// * `private_type` - Optional new private type
-    /// * `speak_permission` - Optional new speak permission
-    ///
-    /// # Returns
-    ///
-    /// The updated channel.
-
+    /// Updates a channel from inline fields.
     pub async fn update_channel(
         &self,
         channel_id: &str,
@@ -225,8 +158,7 @@ impl Context {
             .await
     }
 
-    /// Updates a channel from a channel value object.
-
+    /// Updates a channel from a structured channel body.
     pub async fn patch_channel(
         &self,
         channel_id: &str,
@@ -235,22 +167,12 @@ impl Context {
         self.api.patch_channel(&self.token, channel_id, value).await
     }
 
-    /// Deletes a channel.
-    ///
-    /// # Arguments
-    ///
-    /// * `channel_id` - The channel ID
-    ///
-    /// # Returns
-    ///
-    /// The deleted channel.
-
+    /// Deletes a channel and returns the deleted channel model.
     pub async fn delete_channel(&self, channel_id: &str) -> Result<Channel> {
         self.api.delete_channel(&self.token, channel_id).await
     }
 
-    /// Lists members in a voice channel.
-
+    /// Lists members currently present in a voice channel.
     pub async fn list_voice_channel_members(&self, channel_id: &str) -> Result<Vec<GuildMember>> {
         self.api
             .list_voice_channel_members(&self.token, channel_id)

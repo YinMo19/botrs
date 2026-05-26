@@ -28,14 +28,7 @@ pub struct APIPermission {
 }
 
 impl APIPermission {
-    /// Creates a new APIPermission instance.
-    ///
-    /// # Arguments
-    ///
-    /// * `path` - The API endpoint path
-    /// * `method` - The HTTP method (GET, POST, etc.)
-    /// * `desc` - Optional description of the API
-    /// * `auth_status` - Authorization status (0 = unauthorized, 1 = authorized)
+    /// Creates an API permission record.
     pub fn new(
         path: impl Into<String>,
         method: impl Into<String>,

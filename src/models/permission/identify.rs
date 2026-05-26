@@ -12,12 +12,7 @@ pub struct APIPermissionDemandIdentify {
 }
 
 impl APIPermissionDemandIdentify {
-    /// Creates a new APIPermissionDemandIdentify instance.
-    ///
-    /// # Arguments
-    ///
-    /// * `path` - The API endpoint path
-    /// * `method` - The HTTP method (GET, POST, etc.)
+    /// Creates an API permission identifier from method and path.
     pub fn new(path: impl Into<String>, method: impl Into<String>) -> Self {
         Self {
             path: path.into(),

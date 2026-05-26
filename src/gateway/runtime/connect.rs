@@ -9,16 +9,7 @@ use tracing::debug;
 use url::Url;
 
 impl Gateway {
-    /// Connects to the gateway and starts the event loop.
-    ///
-    /// # Arguments
-    ///
-    /// * `event_sender` - Channel to send events to
-    ///
-    /// # Returns
-    ///
-    /// Result indicating success or failure.
-    /// Connects to the WebSocket gateway with auto-reconnect logic.
+    /// Connects to the gateway and retries until reconnect is disabled.
     pub async fn connect(
         &mut self,
         event_sender: mpsc::UnboundedSender<GatewayEvent>,
@@ -88,7 +79,7 @@ impl Gateway {
         result
     }
 
-    /// Single connection attempt
+    /// Opens one WebSocket connection and runs its event loop.
     pub(super) async fn try_connect(
         &mut self,
         event_sender: &mpsc::UnboundedSender<GatewayEvent>,

@@ -32,15 +32,7 @@ pub struct Schedule {
 }
 
 impl Schedule {
-    /// Creates a new Schedule instance.
-    ///
-    /// # Arguments
-    ///
-    /// * `name` - Name of the schedule event
-    /// * `start_timestamp` - Start time as Unix timestamp string
-    /// * `end_timestamp` - End time as Unix timestamp string
-    /// * `jump_channel_id` - Optional channel ID to jump to
-    /// * `remind_type` - Type of reminder to set
+    /// Creates a schedule with Unix timestamp strings and a reminder type.
     pub fn new(
         name: impl Into<String>,
         start_timestamp: impl Into<String>,

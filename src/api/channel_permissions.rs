@@ -7,17 +7,7 @@ use crate::token::Token;
 use tracing::debug;
 
 impl BotApi {
-    /// Gets channel permissions for a user.
-    ///
-    /// # Arguments
-    ///
-    /// * `token` - Authentication token
-    /// * `channel_id` - The channel ID
-    /// * `user_id` - The user ID
-    ///
-    /// # Returns
-    ///
-    /// Channel permissions.
+    /// Fetches channel permissions for one user.
     pub async fn get_channel_user_permissions(
         &self,
         token: &Token,
@@ -33,7 +23,7 @@ impl BotApi {
         Self::decode_json(response)
     }
 
-    /// Updates channel permissions for a user.
+    /// Updates channel permissions for one user using a structured body.
     pub async fn put_channel_permissions(
         &self,
         token: &Token,
@@ -53,7 +43,7 @@ impl BotApi {
         Ok(())
     }
 
-    /// Updates channel permissions for a user.
+    /// Updates channel permissions for one user using add/remove bitsets.
     pub async fn update_channel_user_permissions(
         &self,
         token: &Token,
@@ -67,17 +57,7 @@ impl BotApi {
             .await
     }
 
-    /// Gets channel permissions for a role.
-    ///
-    /// # Arguments
-    ///
-    /// * `token` - Authentication token
-    /// * `channel_id` - The channel ID
-    /// * `role_id` - The role ID
-    ///
-    /// # Returns
-    ///
-    /// Channel permissions.
+    /// Fetches channel permissions for one role.
     pub async fn get_channel_role_permissions(
         &self,
         token: &Token,
@@ -93,7 +73,7 @@ impl BotApi {
         Self::decode_json(response)
     }
 
-    /// Updates channel permissions for a role.
+    /// Updates channel permissions for one role using a structured body.
     pub async fn put_channel_roles_permissions(
         &self,
         token: &Token,
@@ -113,7 +93,7 @@ impl BotApi {
         Ok(())
     }
 
-    /// Updates channel permissions for a role.
+    /// Updates channel permissions for one role using add/remove bitsets.
     pub async fn update_channel_role_permissions(
         &self,
         token: &Token,

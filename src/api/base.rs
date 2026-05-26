@@ -10,11 +10,7 @@ use std::collections::HashMap;
 use std::time::Duration;
 
 impl BotApi {
-    /// Creates a new Bot API client.
-    ///
-    /// # Arguments
-    ///
-    /// * `http` - The HTTP client to use for requests
+    /// Creates a Bot API client backed by the provided HTTP client.
     ///
     /// # Examples
     ///

@@ -2,14 +2,10 @@ use super::prelude::*;
 use super::{Client, Context, EventHandler};
 
 impl<H: EventHandler + 'static> Client<H> {
-    /// Creates a new client.
+    /// Creates a client using the crate default request timeout.
     ///
-    /// # Arguments
-    ///
-    /// * `token` - Authentication token
-    /// * `intents` - Intent flags for events to receive
-    /// * `handler` - Event handler implementation
-    /// * `is_sandbox` - Whether to use sandbox environment
+    /// The handler is shared across all gateway shards and receives the events
+    /// selected by `intents`.
     ///
     /// # Examples
     ///
@@ -52,19 +48,7 @@ impl<H: EventHandler + 'static> Client<H> {
         })
     }
 
-    /// Creates a new client with custom configuration.
-    ///
-    /// # Arguments
-    ///
-    /// * `token` - Authentication token
-    /// * `intents` - Intent flags for events to receive
-    /// * `handler` - Event handler implementation
-    /// * `timeout` - Request timeout in seconds
-    /// * `is_sandbox` - Whether to use sandbox environment
-    ///
-    /// # Returns
-    ///
-    /// A new client instance.
+    /// Creates a client with an explicit HTTP request timeout.
     pub fn with_config(
         token: Token,
         intents: Intents,
@@ -86,13 +70,10 @@ impl<H: EventHandler + 'static> Client<H> {
         })
     }
 
-    /// Starts the bot and connects to the gateway.
+    /// Connects to the gateway and processes events until the session manager stops.
     ///
-    /// This method will block until the bot is stopped or an error occurs.
-    ///
-    /// # Returns
-    ///
-    /// Result indicating success or failure.
+    /// Handler errors are passed to [`EventHandler::error`] while the event loop
+    /// continues to receive later gateway events.
     ///
     /// # Examples
     ///

@@ -5,19 +5,7 @@ use crate::token::Token;
 use tracing::debug;
 
 impl BotApi {
-    /// Adds a member to a guild role.
-    ///
-    /// # Arguments
-    ///
-    /// * `token` - Authentication token
-    /// * `guild_id` - The guild ID
-    /// * `role_id` - The role ID
-    /// * `user_id` - The user ID
-    /// * `channel_id` - Optional channel ID (for channel-specific roles)
-    ///
-    /// # Returns
-    ///
-    /// Success indication.
+    /// Adds a role to a guild member, optionally scoped to a channel.
     pub async fn create_guild_role_member(
         &self,
         token: &Token,
@@ -42,7 +30,7 @@ impl BotApi {
         Ok(())
     }
 
-    /// Adds a member to a guild role with a structured body.
+    /// Adds a role to a guild member using a structured body.
     pub async fn member_add_role(
         &self,
         token: &Token,
@@ -56,19 +44,7 @@ impl BotApi {
         Ok(())
     }
 
-    /// Removes a member from a guild role.
-    ///
-    /// # Arguments
-    ///
-    /// * `token` - Authentication token
-    /// * `guild_id` - The guild ID
-    /// * `role_id` - The role ID
-    /// * `user_id` - The user ID
-    /// * `channel_id` - Optional channel ID (for channel-specific roles)
-    ///
-    /// # Returns
-    ///
-    /// Success indication.
+    /// Removes a role from a guild member, optionally scoped to a channel.
     pub async fn delete_guild_role_member(
         &self,
         token: &Token,
@@ -93,7 +69,7 @@ impl BotApi {
         Ok(())
     }
 
-    /// Deletes a member from a guild role with a structured body.
+    /// Removes a role from a guild member using a structured body.
     pub async fn member_delete_role(
         &self,
         token: &Token,
@@ -109,19 +85,9 @@ impl BotApi {
         Ok(())
     }
 
-    /// Mutes a specific member.
+    /// Mutes one guild member.
     ///
-    /// # Arguments
-    ///
-    /// * `token` - Authentication token
-    /// * `guild_id` - The guild ID
-    /// * `user_id` - The user ID
-    /// * `mute_end_timestamp` - Optional end timestamp
-    /// * `mute_seconds` - Optional duration in seconds
-    ///
-    /// # Returns
-    ///
-    /// Success indication.
+    /// The platform accepts either an end timestamp or a duration in seconds.
     pub async fn mute_member(
         &self,
         token: &Token,
@@ -141,7 +107,7 @@ impl BotApi {
         Ok(())
     }
 
-    /// Mutes multiple guild members.
+    /// Mutes several guild members with inline parameters.
     pub async fn mute_multi_member(
         &self,
         token: &Token,
@@ -158,7 +124,7 @@ impl BotApi {
         self.multi_member_mute(token, guild_id, &body).await
     }
 
-    /// Cancels mute for multiple guild members.
+    /// Cancels mute for several guild members.
     pub async fn cancel_mute_multi_member(
         &self,
         token: &Token,
@@ -173,7 +139,7 @@ impl BotApi {
         self.multi_member_mute(token, guild_id, &body).await
     }
 
-    /// Mutes multiple guild members with a structured request body.
+    /// Mutes several guild members using a structured request body.
     pub async fn multi_member_mute(
         &self,
         token: &Token,

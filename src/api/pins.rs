@@ -5,17 +5,7 @@ use crate::token::Token;
 use tracing::debug;
 
 impl BotApi {
-    /// Pins a message.
-    ///
-    /// # Arguments
-    ///
-    /// * `token` - Authentication token
-    /// * `channel_id` - The channel ID
-    /// * `message_id` - The message ID
-    ///
-    /// # Returns
-    ///
-    /// Success indication.
+    /// Pins one message in a channel.
     pub async fn put_pin(
         &self,
         token: &Token,
@@ -31,17 +21,7 @@ impl BotApi {
         Self::decode_json(response)
     }
 
-    /// Unpins a message.
-    ///
-    /// # Arguments
-    ///
-    /// * `token` - Authentication token
-    /// * `channel_id` - The channel ID
-    /// * `message_id` - The message ID
-    ///
-    /// # Returns
-    ///
-    /// Success indication.
+    /// Unpins one message from a channel.
     pub async fn delete_pin(
         &self,
         token: &Token,
@@ -55,15 +35,6 @@ impl BotApi {
     }
 
     /// Clears all pinned messages in a channel.
-    ///
-    /// # Arguments
-    ///
-    /// * `token` - Authentication token
-    /// * `channel_id` - The channel ID
-    ///
-    /// # Returns
-    ///
-    /// Success indication.
     pub async fn clean_pins(&self, token: &Token, channel_id: &str) -> Result<()> {
         debug!("Clearing pinned messages in channel {}", channel_id);
         let path = resource::channel_pins_all(channel_id);
@@ -71,16 +42,7 @@ impl BotApi {
         Ok(())
     }
 
-    /// Gets pinned messages.
-    ///
-    /// # Arguments
-    ///
-    /// * `token` - Authentication token
-    /// * `channel_id` - The channel ID
-    ///
-    /// # Returns
-    ///
-    /// Pinned messages.
+    /// Lists pinned messages in a channel.
     pub async fn get_pins(&self, token: &Token, channel_id: &str) -> Result<PinsMessage> {
         debug!("Getting pinned messages in channel {}", channel_id);
         let path = resource::channel_pins(channel_id);

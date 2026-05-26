@@ -53,14 +53,7 @@ pub struct Gateway {
 }
 
 impl Gateway {
-    /// Creates a new gateway client.
-    ///
-    /// # Arguments
-    ///
-    /// * `url` - The WebSocket gateway URL
-    /// * `token` - Authentication token
-    /// * `intents` - Intent flags for events to receive
-    /// * `shard` - Optional shard information
+    /// Creates a gateway client for one websocket session or shard.
     ///
     /// # Examples
     ///

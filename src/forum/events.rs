@@ -95,13 +95,7 @@ struct ThreadWire {
 }
 
 impl Thread {
-    /// Create a new Thread instance
-    ///
-    /// # Arguments
-    ///
-    /// * `api` - The Bot API client
-    /// * `event_id` - Optional event ID
-    /// * `data` - Thread data from the gateway
+    /// Builds a forum thread event from the gateway payload.
     pub fn new(api: BotApi, event_id: Option<String>, data: &Value) -> Self {
         let wire: ThreadWire = serde_json::from_value(data.clone()).unwrap_or_default();
         Self {

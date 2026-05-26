@@ -140,13 +140,7 @@ pub struct Audio {
 }
 
 impl Audio {
-    /// Create a new Audio instance
-    ///
-    /// # Arguments
-    ///
-    /// * `api` - The Bot API client
-    /// * `event_id` - Optional event ID
-    /// * `data` - Audio action data
+    /// Builds audio event data from the gateway payload.
     pub fn new(api: BotApi, event_id: Option<String>, data: AudioAction) -> Self {
         Self {
             api,
@@ -207,12 +201,7 @@ struct PublicAudioWire {
 }
 
 impl PublicAudio {
-    /// Create a new PublicAudio instance
-    ///
-    /// # Arguments
-    ///
-    /// * `api` - The Bot API client
-    /// * `data` - Audio live data from the gateway
+    /// Builds public audio event data from the gateway payload.
     pub fn new(api: BotApi, data: serde_json::Value) -> Self {
         let wire: PublicAudioWire = serde_json::from_value(data).unwrap_or_default();
         Self {

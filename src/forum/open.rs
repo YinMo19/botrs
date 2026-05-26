@@ -92,12 +92,7 @@ struct OpenThreadWire {
 }
 
 impl OpenThread {
-    /// Create a new OpenThread instance
-    ///
-    /// # Arguments
-    ///
-    /// * `api` - The Bot API client
-    /// * `data` - Open forum event data from the gateway
+    /// Builds an open forum event from the gateway payload.
     pub fn new(api: BotApi, data: &Value) -> Self {
         let wire: OpenThreadWire = serde_json::from_value(data.clone()).unwrap_or_default();
         Self {

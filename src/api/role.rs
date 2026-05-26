@@ -7,16 +7,7 @@ use tracing::debug;
 impl BotApi {
     // Guild Role APIs
 
-    /// Gets guild roles.
-    ///
-    /// # Arguments
-    ///
-    /// * `token` - Authentication token
-    /// * `guild_id` - The guild ID
-    ///
-    /// # Returns
-    ///
-    /// Guild roles information.
+    /// Lists roles configured in a guild.
     pub async fn get_guild_roles(&self, token: &Token, guild_id: &str) -> Result<GuildRoles> {
         debug!("Getting guild roles for {}", guild_id);
         let path = resource::guild_roles(guild_id);
@@ -24,19 +15,7 @@ impl BotApi {
         Self::decode_json(response)
     }
 
-    /// Creates a new guild role.
-    ///
-    /// # Arguments
-    ///
-    /// * `token` - Authentication token
-    /// * `guild_id` - The guild ID
-    /// * `name` - Role name
-    /// * `color` - Role color (ARGB hex as decimal)
-    /// * `hoist` - Whether to display separately in member list
-    ///
-    /// # Returns
-    ///
-    /// The created role.
+    /// Creates a guild role from a structured role body.
     pub async fn create_guild_role_with_update(
         &self,
         token: &Token,
@@ -73,20 +52,7 @@ impl BotApi {
         Ok(result.role.unwrap_or_default())
     }
 
-    /// Updates a guild role.
-    ///
-    /// # Arguments
-    ///
-    /// * `token` - Authentication token
-    /// * `guild_id` - The guild ID
-    /// * `role_id` - The role ID
-    /// * `name` - Role name
-    /// * `color` - Role color (ARGB hex as decimal)
-    /// * `hoist` - Whether to display separately in member list
-    ///
-    /// # Returns
-    ///
-    /// The updated role.
+    /// Updates a guild role from a structured role body.
     pub async fn update_guild_role_with_update(
         &self,
         token: &Token,
@@ -127,16 +93,6 @@ impl BotApi {
     }
 
     /// Deletes a guild role.
-    ///
-    /// # Arguments
-    ///
-    /// * `token` - Authentication token
-    /// * `guild_id` - The guild ID
-    /// * `role_id` - The role ID
-    ///
-    /// # Returns
-    ///
-    /// Success indication.
     pub async fn delete_guild_role(
         &self,
         token: &Token,

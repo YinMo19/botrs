@@ -55,13 +55,7 @@ pub struct Interaction {
 }
 
 impl Interaction {
-    /// Create a new Interaction instance
-    ///
-    /// # Arguments
-    ///
-    /// * `api` - The Bot API client
-    /// * `event_id` - Optional event ID
-    /// * `data` - Interaction payload data from the gateway
+    /// Builds an interaction event from the gateway payload.
     pub fn new(api: BotApi, event_id: Option<String>, data: &Value) -> Self {
         let wire: InteractionWire = serde_json::from_value(data.clone()).unwrap_or_default();
         Self {

@@ -6,30 +6,12 @@ impl Context {
         self.api.get_guild(&self.token, guild_id).await
     }
 
-    /// Gets guild message frequency settings.
-    ///
-    /// # Arguments
-    ///
-    /// * `guild_id` - The guild ID
-    ///
-    /// # Returns
-    ///
-    /// Message settings for the guild.
-
+    /// Fetches the guild message frequency settings.
     pub async fn get_message_setting(&self, guild_id: &str) -> Result<MessageSetting> {
         self.api.get_message_setting(&self.token, guild_id).await
     }
 
-    /// Gets channel information.
-    ///
-    /// # Arguments
-    ///
-    /// * `channel_id` - The channel ID
-    ///
-    /// # Returns
-    ///
-    /// Channel information.
-
+    /// Lists guilds visible to the current bot using inline pagination parameters.
     pub async fn get_guilds(
         &self,
         guild_id: Option<&str>,
@@ -41,39 +23,17 @@ impl Context {
             .await
     }
 
-    /// Gets current-user guilds with a structured pager.
-
+    /// Lists guilds visible to the current bot using a pre-built pager.
     pub async fn get_guilds_with_pager(&self, pager: &GuildPager) -> Result<Vec<Guild>> {
         self.api.get_guilds_with_pager(&self.token, pager).await
     }
 
-    /// Gets channels in a guild.
-    ///
-    /// # Arguments
-    ///
-    /// * `guild_id` - The guild ID
-    ///
-    /// # Returns
-    ///
-    /// List of channels.
-
+    /// Lists roles configured in a guild.
     pub async fn get_guild_roles(&self, guild_id: &str) -> Result<GuildRoles> {
         self.api.get_guild_roles(&self.token, guild_id).await
     }
 
-    /// Creates a new guild role.
-    ///
-    /// # Arguments
-    ///
-    /// * `guild_id` - The guild ID
-    /// * `name` - Role name
-    /// * `color` - Role color (ARGB hex value converted to decimal)
-    /// * `hoist` - Whether to display separately in member list (0=no, 1=yes)
-    ///
-    /// # Returns
-    ///
-    /// The created guild role.
-
+    /// Creates a guild role from inline fields.
     pub async fn create_guild_role(
         &self,
         guild_id: &str,
@@ -86,8 +46,7 @@ impl Context {
             .await
     }
 
-    /// Creates a guild role with a structured role body.
-
+    /// Creates a guild role from a structured role body.
     pub async fn create_guild_role_with_update(
         &self,
         guild_id: &str,
@@ -98,20 +57,7 @@ impl Context {
             .await
     }
 
-    /// Updates a guild role.
-    ///
-    /// # Arguments
-    ///
-    /// * `guild_id` - The guild ID
-    /// * `role_id` - The role ID
-    /// * `name` - Role name
-    /// * `color` - Role color (ARGB hex value converted to decimal)
-    /// * `hoist` - Whether to display separately in member list (0=no, 1=yes)
-    ///
-    /// # Returns
-    ///
-    /// The updated guild role.
-
+    /// Updates a guild role from inline fields.
     pub async fn update_guild_role(
         &self,
         guild_id: &str,
@@ -125,8 +71,7 @@ impl Context {
             .await
     }
 
-    /// Updates a guild role with a structured role body.
-
+    /// Updates a guild role from a structured role body.
     pub async fn update_guild_role_with_update(
         &self,
         guild_id: &str,
@@ -139,35 +84,13 @@ impl Context {
     }
 
     /// Deletes a guild role.
-    ///
-    /// # Arguments
-    ///
-    /// * `guild_id` - The guild ID
-    /// * `role_id` - The role ID
-    ///
-    /// # Returns
-    ///
-    /// Result indicating success or failure.
-
     pub async fn delete_guild_role(&self, guild_id: &str, role_id: &str) -> Result<()> {
         self.api
             .delete_guild_role(&self.token, guild_id, role_id)
             .await
     }
 
-    /// Adds a role to a guild member.
-    ///
-    /// # Arguments
-    ///
-    /// * `guild_id` - The guild ID
-    /// * `user_id` - The user ID
-    /// * `role_id` - The role ID
-    /// * `channel_id` - Optional channel ID for channel-specific roles
-    ///
-    /// # Returns
-    ///
-    /// Result indicating success or failure.
-
+    /// Adds a role to a guild member, optionally scoped to a channel.
     pub async fn add_guild_role_member(
         &self,
         guild_id: &str,
@@ -180,8 +103,7 @@ impl Context {
             .await
     }
 
-    /// Adds a role to a guild member with a structured body.
-
+    /// Adds a role to a guild member using a structured body.
     pub async fn member_add_role(
         &self,
         guild_id: &str,
@@ -194,19 +116,7 @@ impl Context {
             .await
     }
 
-    /// Removes a role from a guild member.
-    ///
-    /// # Arguments
-    ///
-    /// * `guild_id` - The guild ID
-    /// * `user_id` - The user ID
-    /// * `role_id` - The role ID
-    /// * `channel_id` - Optional channel ID for channel-specific roles
-    ///
-    /// # Returns
-    ///
-    /// Result indicating success or failure.
-
+    /// Removes a role from a guild member, optionally scoped to a channel.
     pub async fn remove_guild_role_member(
         &self,
         guild_id: &str,
@@ -219,8 +129,7 @@ impl Context {
             .await
     }
 
-    /// Deletes a role from a guild member with a structured body.
-
+    /// Removes a role from a guild member using a structured body.
     pub async fn member_delete_role(
         &self,
         guild_id: &str,
@@ -233,35 +142,14 @@ impl Context {
             .await
     }
 
-    /// Gets guild member information.
-    ///
-    /// # Arguments
-    ///
-    /// * `guild_id` - The guild ID
-    /// * `user_id` - The user ID
-    ///
-    /// # Returns
-    ///
-    /// Member information.
-
+    /// Fetches one guild member.
     pub async fn get_guild_member(&self, guild_id: &str, user_id: &str) -> Result<GuildMember> {
         self.api
             .get_guild_member(&self.token, guild_id, user_id)
             .await
     }
 
-    /// Gets guild members list.
-    ///
-    /// # Arguments
-    ///
-    /// * `guild_id` - The guild ID
-    /// * `after` - Optional user ID to get members after
-    /// * `limit` - Number of members to return (1-400, default 1)
-    ///
-    /// # Returns
-    ///
-    /// List of members.
-
+    /// Lists guild members using inline pagination parameters.
     pub async fn get_guild_members(
         &self,
         guild_id: &str,
@@ -273,8 +161,7 @@ impl Context {
             .await
     }
 
-    /// Gets guild members list using a structured pager.
-
+    /// Lists guild members using a pre-built pager.
     pub async fn get_guild_members_with_pager(
         &self,
         guild_id: &str,
@@ -285,8 +172,7 @@ impl Context {
             .await
     }
 
-    /// Gets guild role members list.
-
+    /// Lists members that have a guild role.
     pub async fn get_guild_role_members(
         &self,
         guild_id: &str,
@@ -299,8 +185,7 @@ impl Context {
             .await
     }
 
-    /// Gets guild role members using a pager.
-
+    /// Lists members that have a guild role using a pre-built pager.
     pub async fn get_guild_role_members_with_pager(
         &self,
         guild_id: &str,
@@ -312,19 +197,9 @@ impl Context {
             .await
     }
 
-    /// Kicks a member from the guild.
+    /// Removes a member from the guild.
     ///
-    /// # Arguments
-    ///
-    /// * `guild_id` - The guild ID
-    /// * `user_id` - The user ID to kick
-    /// * `add_blacklist` - Whether to add user to blacklist
-    /// * `delete_history_msg_days` - Days of message history to delete (3, 7, 15, 30)
-    ///
-    /// # Returns
-    ///
-    /// Result indicating success or failure.
-
+    /// `delete_history_msg_days` follows the platform-supported day values.
     pub async fn kick_member(
         &self,
         guild_id: &str,
@@ -343,8 +218,7 @@ impl Context {
             .await
     }
 
-    /// Kicks a member from the guild with explicit delete options.
-
+    /// Removes a member from the guild using explicit delete options.
     pub async fn delete_member_with_options(
         &self,
         guild_id: &str,
@@ -356,17 +230,9 @@ impl Context {
             .await
     }
 
-    /// Updates audio control in a channel.
+    /// Mutes every member in a guild.
     ///
-    /// # Arguments
-    ///
-    /// * `channel_id` - The channel ID
-    /// * `audio_control` - Audio control data
-    ///
-    /// # Returns
-    ///
-    /// Result indicating success or failure.
-
+    /// The platform accepts either an end timestamp or a duration in seconds.
     pub async fn mute_all(
         &self,
         guild_id: &str,
@@ -378,33 +244,14 @@ impl Context {
             .await
     }
 
-    /// Cancels mute for all members in a guild.
-    ///
-    /// # Arguments
-    ///
-    /// * `guild_id` - The guild ID
-    ///
-    /// # Returns
-    ///
-    /// Result indicating success or failure.
-
+    /// Cancels the guild-wide mute.
     pub async fn cancel_mute_all(&self, guild_id: &str) -> Result<()> {
         self.api.cancel_mute_all(&self.token, guild_id).await
     }
 
-    /// Mutes a specific member in a guild.
+    /// Mutes one guild member.
     ///
-    /// # Arguments
-    ///
-    /// * `guild_id` - The guild ID
-    /// * `user_id` - The user ID to mute
-    /// * `mute_end_timestamp` - Optional end timestamp
-    /// * `mute_seconds` - Optional duration in seconds
-    ///
-    /// # Returns
-    ///
-    /// Result indicating success or failure.
-
+    /// The platform accepts either an end timestamp or a duration in seconds.
     pub async fn mute_member(
         &self,
         guild_id: &str,
@@ -423,8 +270,7 @@ impl Context {
             .await
     }
 
-    /// Mutes multiple members in a guild.
-
+    /// Mutes several guild members with inline parameters.
     pub async fn mute_multi_member(
         &self,
         guild_id: &str,
@@ -443,8 +289,7 @@ impl Context {
             .await
     }
 
-    /// Cancels mute for multiple members in a guild.
-
+    /// Cancels mute for several guild members.
     pub async fn cancel_mute_multi_member(
         &self,
         guild_id: &str,
@@ -455,8 +300,7 @@ impl Context {
             .await
     }
 
-    /// Mutes multiple members with a structured request body.
-
+    /// Mutes several guild members using a structured request body.
     pub async fn multi_member_mute(
         &self,
         guild_id: &str,

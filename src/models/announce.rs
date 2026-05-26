@@ -18,12 +18,7 @@ pub struct RecommendChannel {
 }
 
 impl RecommendChannel {
-    /// Creates a new RecommendChannel instance.
-    ///
-    /// # Arguments
-    ///
-    /// * `channel_id` - The ID of the channel to recommend
-    /// * `introduce` - Optional description for the channel
+    /// Creates a recommended-channel entry.
     pub fn new(channel_id: impl Into<String>, introduce: Option<String>) -> Self {
         Self {
             channel_id: channel_id.into(),
@@ -114,13 +109,7 @@ pub struct GuildAnnouncesToCreate {
 }
 
 impl Announce {
-    /// Creates a new message-type announcement.
-    ///
-    /// # Arguments
-    ///
-    /// * `guild_id` - The guild ID where the announcement is created
-    /// * `channel_id` - The channel ID containing the message
-    /// * `message_id` - The message ID to announce
+    /// Creates a message-type announcement.
     pub fn new_message(
         guild_id: impl Into<String>,
         channel_id: impl Into<String>,
@@ -135,13 +124,7 @@ impl Announce {
         }
     }
 
-    /// Creates a new recommended channel announcement.
-    ///
-    /// # Arguments
-    ///
-    /// * `guild_id` - The guild ID where the announcement is created
-    /// * `announces_type` - The type of announcement
-    /// * `recommend_channels` - List of channels to recommend
+    /// Creates a recommended-channel announcement.
     pub fn new_recommend(
         guild_id: impl Into<String>,
         announces_type: AnnouncesType,

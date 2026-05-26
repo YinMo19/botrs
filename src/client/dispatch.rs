@@ -2,16 +2,10 @@ use super::prelude::*;
 use super::{Client, Context, EventHandler};
 
 impl<H: EventHandler + 'static> Client<H> {
-    /// Handles a gateway event by dispatching it to the appropriate handler method.
+    /// Converts one gateway envelope into the typed event passed to `EventHandler`.
     ///
-    /// # Arguments
-    ///
-    /// * `ctx` - Event context
-    /// * `event` - Gateway event to handle
-    ///
-    /// # Returns
-    ///
-    /// Result indicating success or failure.
+    /// Unknown event names are forwarded unchanged so callers can still observe
+    /// newer gateway events before this crate has first-class models for them.
     pub(super) async fn handle_event(&self, ctx: Context, event: GatewayEvent) -> Result<()> {
         debug!("Handling event: {:?}", event.event_type);
 

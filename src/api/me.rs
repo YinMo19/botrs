@@ -8,33 +8,14 @@ use crate::token::Token;
 use tracing::debug;
 
 impl BotApi {
-    /// Gets information about the current bot.
-    ///
-    /// # Arguments
-    ///
-    /// * `token` - Authentication token
-    ///
-    /// # Returns
-    ///
-    /// The bot's information.
+    /// Fetches information about the current bot.
     pub async fn get_bot_info(&self, token: &Token) -> Result<BotInfo> {
         debug!("Getting bot info");
         let response = self.http.get(token, resource::USER_ME, None::<&()>).await?;
         Self::decode_json(response)
     }
 
-    /// Gets the current user's guilds.
-    ///
-    /// # Arguments
-    ///
-    /// * `token` - Authentication token
-    /// * `guild_id` - Optional starting guild ID
-    /// * `limit` - Maximum number of guilds to return (1-100)
-    /// * `desc` - Whether to return results in descending order
-    ///
-    /// # Returns
-    ///
-    /// List of guilds.
+    /// Lists guilds visible to the current bot using inline pagination parameters.
     pub async fn get_guilds(
         &self,
         token: &Token,
@@ -56,7 +37,7 @@ impl BotApi {
         self.get_guilds_with_pager(token, &pager).await
     }
 
-    /// Gets the current user's guilds with a structured pager.
+    /// Lists guilds visible to the current bot using a pre-built pager.
     pub async fn get_guilds_with_pager(
         &self,
         token: &Token,

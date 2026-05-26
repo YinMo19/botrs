@@ -5,17 +5,7 @@ use reqwest::header::{HeaderMap, HeaderValue};
 use tracing::debug;
 
 impl BotApi {
-    /// Updates an interaction response.
-    ///
-    /// # Arguments
-    ///
-    /// * `token` - Authentication token
-    /// * `interaction_id` - The interaction ID
-    /// * `body` - JSON body string to send
-    ///
-    /// # Returns
-    ///
-    /// Success indication.
+    /// Sends a raw interaction response body with the callback app ID header.
     pub async fn put_interaction(
         &self,
         token: &Token,

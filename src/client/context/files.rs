@@ -14,19 +14,10 @@ impl Context {
             .await
     }
 
-    /// Sends a file to a C2C chat.
+    /// Sends a file message to a C2C chat.
     ///
-    /// # Arguments
-    ///
-    /// * `openid` - The user's OpenID
-    /// * `file_type` - The file type (1=image, 2=video, 3=audio, 4=file)
-    /// * `url` - The file URL
-    /// * `srv_send_msg` - Whether to send as message
-    ///
-    /// # Returns
-    ///
-    /// The file upload response.
-
+    /// `file_type` follows the platform numeric values: image, video, audio,
+    /// or generic file.
     pub async fn post_c2c_file(
         &self,
         openid: &str,

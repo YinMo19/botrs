@@ -43,13 +43,7 @@ pub struct C2CManageEvent {
 }
 
 impl C2CManageEvent {
-    /// Create a new C2CManageEvent instance
-    ///
-    /// # Arguments
-    ///
-    /// * `api` - The Bot API client
-    /// * `event_id` - Optional event ID
-    /// * `data` - Management event data from the gateway
+    /// Builds a C2C management event from the gateway payload.
     pub fn new(api: BotApi, event_id: Option<String>, data: &serde_json::Value) -> Self {
         let wire: C2CManageWire = serde_json::from_value(data.clone()).unwrap_or_default();
         Self {

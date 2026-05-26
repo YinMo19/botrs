@@ -41,12 +41,7 @@ pub struct Token {
 }
 
 impl Token {
-    /// Creates a new token with the given app ID and secret.
-    ///
-    /// # Arguments
-    ///
-    /// * `app_id` - The bot's application ID
-    /// * `secret` - The bot's secret key
+    /// Creates a token from the bot app ID and secret.
     ///
     /// # Examples
     ///
@@ -82,12 +77,8 @@ impl Token {
 
     /// Generates the authorization header value for API requests.
     ///
-    /// The authorization header uses the format "QQBot {access_token}"
-    /// where the access_token is obtained from the QQ API using app_id and secret.
-    ///
-    /// # Returns
-    ///
-    /// A string containing the authorization header value.
+    /// Returns `QQBot {access_token}`, refreshing the cached access token when
+    /// it is missing or expired.
     ///
     /// # Examples
     ///
@@ -107,14 +98,9 @@ impl Token {
         Ok(format!("QQBot {access_token}"))
     }
 
-    /// Generates the bot token for WebSocket authentication.
+    /// Generates the WebSocket authentication token.
     ///
-    /// The bot token uses the format "QQBot {access_token}"
-    /// which is the same as the authorization header.
-    ///
-    /// # Returns
-    ///
-    /// A string containing the bot token.
+    /// The gateway uses the same `QQBot {access_token}` value as HTTP requests.
     pub async fn bot_token(&self) -> Result<String> {
         self.authorization_header().await
     }
@@ -222,10 +208,6 @@ impl Token {
 
     /// Validates that the token has non-empty app ID and secret.
     ///
-    /// # Returns
-    ///
-    /// `Ok(())` if the token is valid, otherwise returns a `BotError::Auth`.
-    ///
     /// # Examples
     ///
     /// ```rust
@@ -251,11 +233,6 @@ impl Token {
     ///
     /// Looks for `QQ_BOT_APP_ID` and `QQ_BOT_SECRET` environment variables.
     ///
-    /// # Returns
-    ///
-    /// A `Result` containing the token if both environment variables are found,
-    /// otherwise returns a `BotError::Config`.
-    ///
     /// # Examples
     ///
     /// ```rust,no_run
@@ -277,13 +254,7 @@ impl Token {
         Ok(token)
     }
 
-    /// Safely formats the token for logging purposes.
-    ///
-    /// This method masks the secret to prevent accidental exposure in logs.
-    ///
-    /// # Returns
-    ///
-    /// A string representation safe for logging.
+    /// Formats the token for logs without exposing the full secret.
     pub fn safe_display(&self) -> String {
         let masked_secret = if self.secret.len() > 8 {
             format!(

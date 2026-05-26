@@ -9,18 +9,7 @@ impl Context {
             .await
     }
 
-    /// Sends a message with embed to a channel.
-    ///
-    /// # Arguments
-    ///
-    /// * `channel_id` - The channel ID to send the message to
-    /// * `content` - Optional message content
-    /// * `embed` - Embed to send
-    ///
-    /// # Returns
-    ///
-    /// The sent message response.
-
+    /// Sends a channel message containing an embed and optional text content.
     pub async fn send_message_with_embed(
         &self,
         channel_id: &str,
@@ -37,18 +26,7 @@ impl Context {
             .await
     }
 
-    /// Sends a reply to a message.
-    ///
-    /// # Arguments
-    ///
-    /// * `channel_id` - The channel ID to send the reply to
-    /// * `content` - Reply content
-    /// * `message_id` - The message ID to reply to
-    ///
-    /// # Returns
-    ///
-    /// The sent message response.
-
+    /// Sends a channel reply and ignores lookup failures for the referenced message.
     pub async fn reply_message(
         &self,
         channel_id: &str,
@@ -70,17 +48,7 @@ impl Context {
             .await
     }
 
-    /// Sends a group message.
-    ///
-    /// # Arguments
-    ///
-    /// * `group_openid` - The group OpenID
-    /// * `content` - Message content
-    ///
-    /// # Returns
-    ///
-    /// The sent group message response.
-
+    /// Sends a text message to an open-platform group conversation.
     pub async fn send_group_message(
         &self,
         group_openid: &str,
@@ -92,17 +60,7 @@ impl Context {
             .await
     }
 
-    /// Sends a C2C (client-to-client) message.
-    ///
-    /// # Arguments
-    ///
-    /// * `openid` - The user's OpenID
-    /// * `content` - Message content
-    ///
-    /// # Returns
-    ///
-    /// The sent C2C message response.
-
+    /// Sends a text message to a C2C conversation.
     pub async fn send_c2c_message(&self, openid: &str, content: &str) -> Result<MessageResponse> {
         let params = crate::models::message::C2CMessageParams::new_text(content);
         self.api
@@ -110,24 +68,14 @@ impl Context {
             .await
     }
 
-    /// Gets guild information.
-    ///
-    /// # Arguments
-    ///
-    /// * `guild_id` - The guild ID
-    ///
-    /// # Returns
-    ///
-    /// Guild information.
-
+    /// Fetches one channel message by ID.
     pub async fn get_message(&self, channel_id: &str, message_id: &str) -> Result<Message> {
         self.api
             .get_message(&self.token, channel_id, message_id)
             .await
     }
 
-    /// Gets channel messages using pagination.
-
+    /// Lists channel messages using a pre-built pager.
     pub async fn get_messages(
         &self,
         channel_id: &str,
@@ -136,8 +84,7 @@ impl Context {
         self.api.get_messages(&self.token, channel_id, pager).await
     }
 
-    /// Gets channel messages using simple pagination parameters.
-
+    /// Lists channel messages using inline pagination parameters.
     pub async fn get_messages_with_params(
         &self,
         channel_id: &str,
@@ -150,8 +97,7 @@ impl Context {
             .await
     }
 
-    /// Edits a channel message.
-
+    /// Edits a channel message with the provided message payload.
     pub async fn patch_message(
         &self,
         channel_id: &str,
@@ -163,8 +109,7 @@ impl Context {
             .await
     }
 
-    /// Posts a channel setting guide message.
-
+    /// Posts a channel setting-guide message for the specified users.
     pub async fn post_setting_guide(
         &self,
         channel_id: &str,
@@ -175,8 +120,7 @@ impl Context {
             .await
     }
 
-    /// Posts a channel setting guide message and returns the full message.
-
+    /// Posts a channel setting-guide message and returns the full message model.
     pub async fn post_setting_guide_message(
         &self,
         channel_id: &str,
@@ -187,18 +131,7 @@ impl Context {
             .await
     }
 
-    /// Recalls (deletes) a message.
-    ///
-    /// # Arguments
-    ///
-    /// * `channel_id` - The channel ID
-    /// * `message_id` - The message ID to recall
-    /// * `hide_tip` - Whether to hide the recall tip
-    ///
-    /// # Returns
-    ///
-    /// Result indicating success or failure.
-
+    /// Recalls a channel message, optionally hiding the recall notification.
     pub async fn recall_message(
         &self,
         channel_id: &str,
@@ -210,8 +143,7 @@ impl Context {
             .await
     }
 
-    /// Recalls a C2C message.
-
+    /// Recalls a C2C message, optionally hiding the recall notification.
     pub async fn retract_c2c_message(
         &self,
         openid: &str,
@@ -223,8 +155,7 @@ impl Context {
             .await
     }
 
-    /// Recalls a group message.
-
+    /// Recalls a group message, optionally hiding the recall notification.
     pub async fn retract_group_message(
         &self,
         group_openid: &str,
@@ -236,8 +167,7 @@ impl Context {
             .await
     }
 
-    /// Recalls a direct message.
-
+    /// Recalls a direct message, optionally hiding the recall notification.
     pub async fn retract_dm_message(
         &self,
         guild_id: &str,
