@@ -6,6 +6,17 @@ use serde::Serialize;
 use serde_json::Value;
 use tracing::debug;
 
+fn schedule_query(since: Option<&str>) -> ScheduleQuery<'_> {
+    ScheduleQuery {
+        since: since.unwrap_or("0"),
+    }
+}
+
+#[derive(Serialize)]
+struct ScheduleQuery<'a> {
+    since: &'a str,
+}
+
 impl BotApi {
     // Schedule APIs
 
@@ -18,14 +29,9 @@ impl BotApi {
     ) -> Result<Vec<Schedule>> {
         debug!("Getting schedules for channel {}", channel_id);
 
-        #[derive(Serialize)]
-        struct ScheduleQuery<'a> {
-            since: &'a str,
-        }
-
-        let query = since.map(|since| ScheduleQuery { since });
+        let query = schedule_query(since);
         let path = resource::channel_schedules(channel_id);
-        let response = self.http.get(token, &path, query.as_ref()).await?;
+        let response = self.http.get(token, &path, Some(&query)).await?;
         Self::decode_json(response)
     }
 
@@ -145,5 +151,19 @@ impl BotApi {
         let path = resource::channel_schedule(channel_id, schedule_id);
         let response = self.http.delete(token, &path, None::<&()>).await?;
         Ok(response)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::schedule_query;
+
+    #[test]
+    fn schedule_query_defaults_since_to_zero() {
+        let value = serde_json::to_value(schedule_query(None)).unwrap();
+        assert_eq!(value["since"], "0");
+
+        let value = serde_json::to_value(schedule_query(Some("1710000000"))).unwrap();
+        assert_eq!(value["since"], "1710000000");
     }
 }
