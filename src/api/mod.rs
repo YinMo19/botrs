@@ -142,60 +142,6 @@ pub struct BotApi {
     token: Option<Token>,
 }
 
-macro_rules! channel_like_message_params {
-    ($params:ident, $content:expr, $embed:expr, $ark:expr, $message_reference:expr, $image:expr, $file_image:expr, $msg_id:expr, $event_id:expr, $markdown:expr, $keyboard:expr) => {
-        $params {
-            content: $content.map(str::to_string),
-            msg_type: None,
-            embed: $embed.cloned(),
-            ark: $ark.cloned(),
-            message_reference: $message_reference.cloned(),
-            image: $image.map(str::to_string),
-            file_image: $file_image.map(|data| {
-                base64::Engine::encode(&base64::engine::general_purpose::STANDARD, data)
-            }),
-            msg_id: $msg_id.map(str::to_string),
-            event_id: $event_id.map(str::to_string),
-            markdown: $markdown.cloned(),
-            keyboard: $keyboard.cloned(),
-            timestamp: None,
-            msg_seq: None,
-            subscribe_id: None,
-            input_notify: None,
-            media: None,
-            prompt_keyboard: None,
-            action_button: None,
-            stream: None,
-            feature_id: None,
-        }
-    };
-}
-
-macro_rules! open_message_params {
-    ($params:ident, $msg_type:expr, $content:expr, $embed:expr, $ark:expr, $message_reference:expr, $media:expr, $msg_id:expr, $msg_seq:expr, $event_id:expr, $markdown:expr, $keyboard:expr) => {
-        $params {
-            msg_type: $msg_type.unwrap_or(0),
-            content: $content.map(str::to_string),
-            embed: $embed.cloned(),
-            ark: $ark.cloned(),
-            message_reference: $message_reference.cloned(),
-            media: $media.cloned(),
-            msg_id: $msg_id.map(str::to_string),
-            msg_seq: $msg_seq,
-            event_id: $event_id.map(str::to_string),
-            markdown: $markdown.cloned(),
-            keyboard: $keyboard.cloned(),
-            timestamp: None,
-            subscribe_id: None,
-            input_notify: None,
-            prompt_keyboard: None,
-            action_button: None,
-            stream: None,
-            feature_id: None,
-        }
-    };
-}
-
 mod announces;
 mod api_permissions;
 mod audio;

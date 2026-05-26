@@ -1,13 +1,14 @@
 #[cfg(test)]
 mod tests {
     use super::super::{
-        ActionButton, ActionTypeSubscribe, ApiMessage, Ark, ArkKv, ArkObj, ArkObjKv, DirectMessage,
-        ETLInput, Embed, Emoji, InputNotify, Keyboard, KeyboardButton, KeyboardButtonAction,
-        KeyboardButtonPermission, KeyboardButtonRenderData, KeyboardContent, KeyboardModal,
-        KeyboardRow, KeyboardStyle, KeyboardSubscribeData, KeyboardTemplateId, MPTBefore,
-        MediaInfo, MentionAllUser, MentionChannel, MentionUser, Message, MessageAttachment,
-        MessageAudit, MessageCreateType, MessageReference, MessageToCreate, MessageUser,
-        MessagesPager, ParseCommand, Reference, RichMediaMessage, SendType, Stream, APIMessage,
+        APIMessage, ActionButton, ActionTypeSubscribe, ApiMessage, Ark, ArkKv, ArkObj, ArkObjKv,
+        DirectMessage, ETLInput, Embed, Emoji, GroupMessageParams, InputNotify, Keyboard,
+        KeyboardButton, KeyboardButtonAction, KeyboardButtonPermission, KeyboardButtonRenderData,
+        KeyboardContent, KeyboardModal, KeyboardRow, KeyboardStyle, KeyboardSubscribeData,
+        KeyboardTemplateId, MPTBefore, Media, MediaInfo, MentionAllUser, MentionChannel,
+        MentionUser, Message, MessageAttachment, MessageAudit, MessageCreateType, MessageParams,
+        MessageReference, MessageToCreate, MessageUser, MessagesPager, ParseCommand, Reference,
+        RichMediaMessage, SendType, Stream,
     };
 
     #[test]
@@ -62,6 +63,48 @@ mod tests {
         let api_message = ApiMessage::from(message);
         assert_eq!(api_message.GetEventID(), "event-1");
         assert_eq!(api_message.GetSendType(), SendType::Text);
+    }
+
+    #[test]
+    fn message_params_convert_to_create_payload_shape() {
+        let params = MessageParams {
+            content: Some("hello".to_string()),
+            image: Some("https://example.com/image.png".to_string()),
+            msg_id: Some("message-1".to_string()),
+            file_image: Some("aW1hZ2U=".to_string()),
+            ..Default::default()
+        };
+        assert_eq!(
+            serde_json::to_value(MessageToCreate::from(params)).unwrap(),
+            serde_json::json!({
+                "content": "hello",
+                "image": "https://example.com/image.png",
+                "msg_id": "message-1",
+                "file_image": "aW1hZ2U="
+            })
+        );
+
+        let params = GroupMessageParams {
+            msg_type: 7,
+            content: Some("media".to_string()),
+            media: Some(Media {
+                file_info: Some("file-info".to_string()),
+                ttl: Some(60),
+            }),
+            msg_seq: Some(42),
+            ..Default::default()
+        };
+        assert_eq!(
+            serde_json::to_value(MessageToCreate::from(params)).unwrap(),
+            serde_json::json!({
+                "content": "media",
+                "msg_type": 7,
+                "media": {
+                    "file_info": "file-info"
+                },
+                "msg_seq": 42
+            })
+        );
     }
 
     #[test]
@@ -565,4 +608,3 @@ mod tests {
         assert!(!message.is_from_bot());
     }
 }
-
