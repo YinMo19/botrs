@@ -95,7 +95,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     info!("Token validated successfully");
 
     // Set up intents - we want to receive open forum events
-    let intents = Intents::default().with_open_forum_event();
+    let intents = Intents::none().with_open_forum_event();
 
     info!("Configured intents: {}", intents);
 
