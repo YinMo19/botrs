@@ -1,4 +1,5 @@
 use super::*;
+use crate::BotApi;
 
 #[test]
 fn test_manage_event_type_from_str() {
@@ -98,4 +99,35 @@ fn subscribe_message_status_uses_required_zero_value_fields() {
     assert_eq!(empty["group_openid"], "");
     assert_eq!(empty["openid"], "");
     assert_eq!(empty["result"], serde_json::json!([]));
+}
+
+#[test]
+fn manage_event_ids_are_internal_only() {
+    let http = crate::http::HttpClient::new(30, false).unwrap();
+    let api = BotApi::new(http);
+    let group = GroupManageEvent::new(
+        api.clone(),
+        Some("event-1".to_string()),
+        &serde_json::json!({
+            "timestamp": 1710000000_u64,
+            "group_openid": "group-1",
+            "op_member_openid": "member-1"
+        }),
+    );
+    let c2c = C2CManageEvent::new(
+        api,
+        Some("event-2".to_string()),
+        &serde_json::json!({
+            "timestamp": 1710000001_u64,
+            "openid": "user-1"
+        }),
+    );
+
+    assert_eq!(group.event_id.as_deref(), Some("event-1"));
+    assert_eq!(c2c.event_id.as_deref(), Some("event-2"));
+
+    let group_value = serde_json::to_value(&group).unwrap();
+    let c2c_value = serde_json::to_value(&c2c).unwrap();
+    assert!(group_value.get("event_id").is_none());
+    assert!(c2c_value.get("event_id").is_none());
 }

@@ -79,6 +79,7 @@ pub struct Thread {
     /// Author ID
     pub author_id: Option<String>,
     /// Event ID
+    #[serde(skip)]
     pub event_id: Option<String>,
 }
 
@@ -139,6 +140,7 @@ pub struct Post {
     /// Post information
     pub post_info: PostInfo,
     /// Event ID
+    #[serde(skip)]
     pub event_id: Option<String>,
 }
 
@@ -189,6 +191,7 @@ pub struct Reply {
     /// Reply information
     pub reply_info: ReplyInfo,
     /// Event ID
+    #[serde(skip)]
     pub event_id: Option<String>,
 }
 

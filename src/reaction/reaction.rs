@@ -22,6 +22,7 @@ pub struct Reaction {
     /// Target of the reaction (message, post, etc.)
     pub target: ReactionTarget,
     /// Event ID
+    #[serde(skip)]
     pub event_id: Option<String>,
 }
 

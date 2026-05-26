@@ -8,6 +8,7 @@ pub struct GroupManageEvent {
     #[serde(skip)]
     api: BotApi,
     /// Event ID
+    #[serde(skip)]
     pub event_id: Option<String>,
     /// Timestamp of the event
     pub timestamp: Option<u64>,

@@ -72,6 +72,7 @@ pub struct OpenThread {
     /// Reply information when present
     pub reply_info: Option<ReplyInfo>,
     /// Event ID
+    #[serde(skip)]
     pub event_id: Option<String>,
 }
 

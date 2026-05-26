@@ -101,6 +101,8 @@ fn interaction_payload_uses_expected_type_fields() {
     let value = serde_json::to_value(&interaction).unwrap();
     assert_eq!(value["type"], serde_json::json!(2));
     assert_eq!(value["data"]["type"], serde_json::json!(9));
+    assert_eq!(interaction.event_id.as_deref(), Some("event-1"));
+    assert!(value.get("event_id").is_none());
     assert!(value.get("interaction_type").is_none());
     assert!(value["data"].get("data_type").is_none());
 }

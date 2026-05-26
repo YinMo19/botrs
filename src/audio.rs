@@ -113,6 +113,7 @@ pub struct Audio {
     #[serde(skip)]
     api: BotApi,
     /// Event ID
+    #[serde(skip)]
     pub event_id: Option<String>,
     /// Channel ID where the audio event occurred
     pub channel_id: Option<String>,
@@ -273,5 +274,25 @@ mod tests {
         assert!(audio.channel_id.is_none());
         assert!(audio.audio_url.is_none());
         assert!(audio.text.is_none());
+    }
+
+    #[test]
+    fn audio_event_id_is_internal_only() {
+        let http = crate::http::HttpClient::new(30, false).unwrap();
+        let api = BotApi::new(http);
+        let audio = Audio::new(
+            api,
+            Some("event-1".to_string()),
+            AudioAction {
+                guild_id: "guild-1".to_string(),
+                channel_id: "channel-1".to_string(),
+                audio_url: "https://example.com/audio.mp3".to_string(),
+                text: "now playing".to_string(),
+            },
+        );
+
+        assert_eq!(audio.event_id.as_deref(), Some("event-1"));
+        let value = serde_json::to_value(&audio).unwrap();
+        assert!(value.get("event_id").is_none());
     }
 }

@@ -26,7 +26,7 @@ pub struct Interaction {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub chat_type: Option<u64>,
     /// Event ID
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip)]
     pub event_id: Option<String>,
     /// Interaction data
     #[serde(skip_serializing_if = "is_default")]

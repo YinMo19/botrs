@@ -1,4 +1,5 @@
 use super::*;
+use crate::BotApi;
 
 #[test]
 fn test_reaction_target_type() {
@@ -62,6 +63,27 @@ fn message_reaction_keeps_official_dto_shape() {
     assert_eq!(value["target"]["type"], 0);
     assert_eq!(value["emoji"]["id"], "43");
     assert_eq!(value["emoji"]["type"], 1);
+    assert!(value.get("event_id").is_none());
+}
+
+#[test]
+fn reaction_event_id_is_internal_only() {
+    let http = crate::http::HttpClient::new(30, false).unwrap();
+    let api = BotApi::new(http);
+    let reaction = Reaction::from_message_reaction(
+        api,
+        Some("event-1".to_string()),
+        MessageReaction::new(
+            "user-1",
+            "channel-1",
+            "guild-1",
+            ReactionTarget::new("message-1", ReactionTargetType::Message),
+            Emoji::new("43", 1),
+        ),
+    );
+
+    assert_eq!(reaction.event_id.as_deref(), Some("event-1"));
+    let value = serde_json::to_value(&reaction).unwrap();
     assert!(value.get("event_id").is_none());
 }
 

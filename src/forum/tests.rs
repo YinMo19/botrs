@@ -1,4 +1,5 @@
 use super::*;
+use crate::BotApi;
 
 #[test]
 fn test_format() {
@@ -79,4 +80,47 @@ fn forum_audit_result_serializes_zero_value_strings() {
     assert_eq!(value["date_time"], "");
     // event_id is internal-only and never appears on the wire.
     assert!(value.get("event_id").is_none());
+}
+
+#[test]
+fn forum_wrapper_event_ids_are_internal_only() {
+    let http = crate::http::HttpClient::new(30, false).unwrap();
+    let api = BotApi::new(http);
+    let data = serde_json::json!({
+        "guild_id": "guild-1",
+        "channel_id": "channel-1",
+        "author_id": "author-1",
+        "thread_info": {
+            "thread_id": "thread-1"
+        },
+        "post_info": {
+            "thread_id": "thread-1",
+            "post_id": "post-1"
+        },
+        "reply_info": {
+            "thread_id": "thread-1",
+            "post_id": "post-1",
+            "reply_id": "reply-1"
+        }
+    });
+
+    let thread = Thread::new(api.clone(), Some("event-1".to_string()), &data);
+    let post = Post::new(api.clone(), Some("event-2".to_string()), &data);
+    let reply = Reply::new(api.clone(), Some("event-3".to_string()), &data);
+    let mut open_thread = OpenThread::new(api, &data);
+    open_thread.event_id = Some("event-4".to_string());
+
+    assert_eq!(thread.event_id.as_deref(), Some("event-1"));
+    assert_eq!(post.event_id.as_deref(), Some("event-2"));
+    assert_eq!(reply.event_id.as_deref(), Some("event-3"));
+    assert_eq!(open_thread.event_id.as_deref(), Some("event-4"));
+
+    for value in [
+        serde_json::to_value(&thread).unwrap(),
+        serde_json::to_value(&post).unwrap(),
+        serde_json::to_value(&reply).unwrap(),
+        serde_json::to_value(&open_thread).unwrap(),
+    ] {
+        assert!(value.get("event_id").is_none());
+    }
 }
