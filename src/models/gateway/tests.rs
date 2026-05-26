@@ -81,3 +81,25 @@ fn gateway_event_omits_absent_wire_fields() {
     assert!(value.get("t").is_none());
     assert!(value.get("s").is_none());
 }
+
+#[test]
+fn identify_properties_default_to_botgo_zero_value() {
+    let identify = Identify {
+        token: "QQBot ACCESS_TOKEN_XXXXXX".to_string(),
+        intents: crate::intents::IntentGroupMessages,
+        shard: Some([0, 1]),
+        properties: IdentifyProperties::default(),
+    };
+
+    let value = serde_json::to_value(&identify).unwrap();
+
+    assert_eq!(
+        value,
+        serde_json::json!({
+            "token": "QQBot ACCESS_TOKEN_XXXXXX",
+            "intents": crate::intents::IntentGroupMessages,
+            "shard": [0, 1],
+            "properties": {}
+        })
+    );
+}

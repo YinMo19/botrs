@@ -39,9 +39,9 @@ pub struct IdentifyProperties {
 impl Default for IdentifyProperties {
     fn default() -> Self {
         Self {
-            os: std::env::consts::OS.to_string(),
-            browser: "botrs".to_string(),
-            device: "botrs".to_string(),
+            os: String::new(),
+            browser: String::new(),
+            device: String::new(),
         }
     }
 }
