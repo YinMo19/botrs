@@ -1,4 +1,4 @@
-use crate::models::serde_helpers::option_is_none_or_default;
+use crate::models::serde_helpers::{option_is_none_or_default, serialize_option_as_default};
 use serde::{Deserialize, Serialize};
 
 /// Ark template message structure.
@@ -300,22 +300,22 @@ pub type MarkdownParams = MarkdownParam;
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct MarkdownPayload {
     /// Template ID
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, serialize_with = "serialize_option_as_default")]
     pub template_id: Option<i32>,
     /// Custom template ID
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, serialize_with = "serialize_option_as_default")]
     pub custom_template_id: Option<String>,
     /// Template parameters
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, serialize_with = "serialize_option_as_default")]
     pub params: Option<Vec<MarkdownParam>>,
     /// Markdown content
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, serialize_with = "serialize_option_as_default")]
     pub content: Option<String>,
     /// Markdown style
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, serialize_with = "serialize_option_as_default")]
     pub style: Option<MarkdownStyle>,
     /// Markdown guide message
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, serialize_with = "serialize_option_as_default")]
     pub process_msg: Option<String>,
 }
 
@@ -323,10 +323,10 @@ pub struct MarkdownPayload {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct MarkdownStyle {
     /// Body font size, for example small/middle/large.
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, serialize_with = "serialize_option_as_default")]
     pub main_font_size: Option<String>,
     /// Layout, for example hide_avatar_and_center.
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, serialize_with = "serialize_option_as_default")]
     pub layout: Option<String>,
 }
 
@@ -334,8 +334,10 @@ pub struct MarkdownStyle {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct MarkdownParam {
     /// Parameter key
+    #[serde(default, serialize_with = "serialize_option_as_default")]
     pub key: Option<String>,
     /// Parameter values
+    #[serde(default, serialize_with = "serialize_option_as_default")]
     pub values: Option<Vec<String>>,
 }
 
@@ -352,7 +354,9 @@ pub struct Media {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Reference {
     /// Referenced message ID
+    #[serde(default, serialize_with = "serialize_option_as_default")]
     pub message_id: Option<String>,
     /// Whether to ignore getting reference message error
+    #[serde(default, serialize_with = "serialize_option_as_default")]
     pub ignore_get_message_error: Option<bool>,
 }

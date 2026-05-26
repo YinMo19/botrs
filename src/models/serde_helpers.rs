@@ -27,6 +27,22 @@ where
     value.as_ref().is_none_or(|v| *v == T::default())
 }
 
+/// Serialize `None` as `T::default()` for optional fields that model Go
+/// non-pointer fields inside an already-present parent object.
+pub(crate) fn serialize_option_as_default<T, S>(
+    value: &Option<T>,
+    serializer: S,
+) -> std::result::Result<S::Ok, S::Error>
+where
+    T: Default + serde::Serialize,
+    S: serde::Serializer,
+{
+    match value {
+        Some(value) => value.serialize(serializer),
+        None => T::default().serialize(serializer),
+    }
+}
+
 /// True when an unsigned 32-bit value is zero.
 pub(crate) fn is_zero_u32(value: &u32) -> bool {
     *value == 0

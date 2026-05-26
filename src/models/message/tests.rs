@@ -5,10 +5,10 @@ mod tests {
         DirectMessage, ETLInput, Embed, Emoji, GroupMessageParams, InputNotify, Keyboard,
         KeyboardButton, KeyboardButtonAction, KeyboardButtonPermission, KeyboardButtonRenderData,
         KeyboardContent, KeyboardModal, KeyboardRow, KeyboardStyle, KeyboardSubscribeData,
-        KeyboardTemplateId, MPTBefore, Media, MediaInfo, MentionAllUser, MentionChannel,
-        MentionUser, Message, MessageAttachment, MessageAudit, MessageCreateType, MessageParams,
-        MessageReference, MessageToCreate, MessageUser, MessagesPager, ParseCommand, Reference,
-        RichMediaMessage, SendType, Stream,
+        KeyboardTemplateId, MPTBefore, MarkdownParam, MarkdownPayload, MarkdownStyle, Media,
+        MediaInfo, MentionAllUser, MentionChannel, MentionUser, Message, MessageAttachment,
+        MessageAudit, MessageCreateType, MessageParams, MessageReference, MessageToCreate,
+        MessageUser, MessagesPager, ParseCommand, Reference, RichMediaMessage, SendType, Stream,
     };
 
     #[test]
@@ -469,6 +469,52 @@ mod tests {
                         "template_id": 1
                     }]
                 }
+            })
+        );
+    }
+
+    #[test]
+    fn markdown_payload_keeps_official_zero_value_shape() {
+        let markdown = MarkdownPayload {
+            style: Some(MarkdownStyle::default()),
+            params: Some(vec![MarkdownParam {
+                key: None,
+                values: None,
+            }]),
+            ..Default::default()
+        };
+
+        assert_eq!(
+            serde_json::to_value(&markdown).unwrap(),
+            serde_json::json!({
+                "template_id": 0,
+                "custom_template_id": "",
+                "params": [{
+                    "key": "",
+                    "values": []
+                }],
+                "content": "",
+                "style": {
+                    "main_font_size": "",
+                    "layout": ""
+                },
+                "process_msg": ""
+            })
+        );
+    }
+
+    #[test]
+    fn reference_keeps_official_zero_value_shape() {
+        let reference = Reference {
+            message_id: Some("message-1".to_string()),
+            ignore_get_message_error: None,
+        };
+
+        assert_eq!(
+            serde_json::to_value(&reference).unwrap(),
+            serde_json::json!({
+                "message_id": "message-1",
+                "ignore_get_message_error": false
             })
         );
     }
