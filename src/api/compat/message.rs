@@ -179,11 +179,11 @@ impl BotApi {
         let opts = Options::from_options(options);
         if opts.url.is_none() {
             return self
-                .recall_message(
+                .recall_message_botgo(
                     self.token_required()?,
                     channel_id,
                     message_id,
-                    opts.hide_tip.then_some(true),
+                    opts.hide_tip,
                 )
                 .await;
         }

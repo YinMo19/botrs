@@ -13,7 +13,22 @@ impl BotApi {
         hidetip: Option<bool>,
     ) -> Result<()> {
         debug!("Recalling message {} in channel {}", message_id, channel_id);
-        let params = Self::recall_hide_tip_query(hidetip);
+        let params = Self::recall_hide_tip_query(Some(hidetip.unwrap_or(false)));
+        let path = resource::channel_message(channel_id, message_id);
+        self.http.delete(token, &path, params.as_ref()).await?;
+        Ok(())
+    }
+
+    /// Recalls a channel message using botgo's option-driven query behavior.
+    pub(crate) async fn recall_message_botgo(
+        &self,
+        token: &Token,
+        channel_id: &str,
+        message_id: &str,
+        hidetip: bool,
+    ) -> Result<()> {
+        debug!("Recalling message {} in channel {}", message_id, channel_id);
+        let params = Self::hide_tip_query(hidetip);
         let path = resource::channel_message(channel_id, message_id);
         self.http.delete(token, &path, params.as_ref()).await?;
         Ok(())
@@ -61,5 +76,98 @@ impl BotApi {
         let params = Self::hide_tip_query(hidetip.unwrap_or(false));
         self.http.delete(token, &path, params.as_ref()).await?;
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tokio::io::{AsyncReadExt, AsyncWriteExt};
+    use tokio::net::TcpListener;
+    use tokio::sync::oneshot;
+
+    async fn test_api(base_url: String) -> BotApi {
+        let token = crate::Token::new("APPID_XXXXXX", "SECRET_XXXXXX");
+        token
+            .set_cached_access_token_for_test("ACCESS_TOKEN_XXXXXX")
+            .await;
+        let mut http = crate::http::HttpClient::new(30, false).unwrap();
+        http.base_url = base_url;
+        BotApi::with_token(http, token)
+    }
+
+    async fn spawn_capture_server() -> (
+        String,
+        oneshot::Receiver<String>,
+        tokio::task::JoinHandle<()>,
+    ) {
+        let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let addr = listener.local_addr().unwrap();
+        let (tx, rx) = oneshot::channel();
+
+        let handle = tokio::spawn(async move {
+            let (mut stream, _) = listener.accept().await.unwrap();
+            let mut request_bytes = Vec::new();
+            let mut buffer = [0_u8; 4096];
+            loop {
+                let n = stream.read(&mut buffer).await.unwrap();
+                request_bytes.extend_from_slice(&buffer[..n]);
+
+                let request = String::from_utf8_lossy(&request_bytes);
+                if request.contains("\r\n\r\n") {
+                    break;
+                }
+            }
+
+            let request = String::from_utf8_lossy(&request_bytes).to_string();
+            let _ = tx.send(request);
+
+            let response = "HTTP/1.1 200 OK\r\ncontent-type: application/json\r\ncontent-length: 2\r\nconnection: close\r\n\r\n{}";
+            stream.write_all(response.as_bytes()).await.unwrap();
+        });
+
+        (format!("http://{addr}"), rx, handle)
+    }
+
+    #[tokio::test]
+    async fn recall_message_matches_botpy_default_hidetip_false() {
+        let (base_url, request, server) = spawn_capture_server().await;
+        let api = test_api(base_url).await;
+
+        api.recall_message(
+            api.token_required().unwrap(),
+            "channel-1",
+            "message-1",
+            None,
+        )
+        .await
+        .unwrap();
+
+        let request = request.await.unwrap();
+        assert!(
+            request.starts_with(
+                "DELETE /channels/channel-1/messages/message-1?hidetip=false HTTP/1.1"
+            )
+        );
+        server.await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn recall_message_botgo_omits_false_hidetip() {
+        let (base_url, request, server) = spawn_capture_server().await;
+        let api = test_api(base_url).await;
+
+        api.recall_message_botgo(
+            api.token_required().unwrap(),
+            "channel-1",
+            "message-1",
+            false,
+        )
+        .await
+        .unwrap();
+
+        let request = request.await.unwrap();
+        assert!(request.starts_with("DELETE /channels/channel-1/messages/message-1 HTTP/1.1"));
+        server.await.unwrap();
     }
 }
