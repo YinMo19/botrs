@@ -6,13 +6,17 @@ use serde_json::Value;
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct ThreadInfo {
     /// Thread title
-    pub title: Option<String>,
+    #[serde(default)]
+    pub title: String,
     /// Thread content
-    pub content: Option<String>,
+    #[serde(default)]
+    pub content: String,
     /// Thread ID
-    pub thread_id: Option<String>,
+    #[serde(default)]
+    pub thread_id: String,
     /// Creation date and time
-    pub date_time: Option<String>,
+    #[serde(default)]
+    pub date_time: String,
 }
 
 impl ThreadInfo {
@@ -26,13 +30,17 @@ impl ThreadInfo {
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct PostInfo {
     /// Thread ID
-    pub thread_id: Option<String>,
+    #[serde(default)]
+    pub thread_id: String,
     /// Post ID
-    pub post_id: Option<String>,
+    #[serde(default)]
+    pub post_id: String,
     /// Post content
-    pub content: Option<String>,
+    #[serde(default)]
+    pub content: String,
     /// Creation date and time
-    pub date_time: Option<String>,
+    #[serde(default)]
+    pub date_time: String,
 }
 
 impl PostInfo {
@@ -46,15 +54,20 @@ impl PostInfo {
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct ReplyInfo {
     /// Thread ID
-    pub thread_id: Option<String>,
+    #[serde(default)]
+    pub thread_id: String,
     /// Post ID
-    pub post_id: Option<String>,
+    #[serde(default)]
+    pub post_id: String,
     /// Reply ID
-    pub reply_id: Option<String>,
+    #[serde(default)]
+    pub reply_id: String,
     /// Reply content
-    pub content: Option<String>,
+    #[serde(default)]
+    pub content: String,
     /// Creation date and time
-    pub date_time: Option<String>,
+    #[serde(default)]
+    pub date_time: String,
 }
 
 impl ReplyInfo {
@@ -71,13 +84,17 @@ pub struct Thread {
     #[serde(skip)]
     api: BotApi,
     /// Thread information
+    #[serde(default)]
     pub thread_info: ThreadInfo,
     /// Channel ID
-    pub channel_id: Option<String>,
+    #[serde(default)]
+    pub channel_id: String,
     /// Guild ID
-    pub guild_id: Option<String>,
+    #[serde(default)]
+    pub guild_id: String,
     /// Author ID
-    pub author_id: Option<String>,
+    #[serde(default)]
+    pub author_id: String,
     /// Event ID
     #[serde(skip)]
     pub event_id: Option<String>,
@@ -88,11 +105,11 @@ struct ThreadWire {
     #[serde(default)]
     thread_info: ThreadInfo,
     #[serde(default)]
-    channel_id: Option<String>,
+    channel_id: String,
     #[serde(default)]
-    guild_id: Option<String>,
+    guild_id: String,
     #[serde(default)]
-    author_id: Option<String>,
+    author_id: String,
 }
 
 impl Thread {
@@ -132,12 +149,16 @@ pub struct Post {
     #[serde(skip)]
     api: BotApi,
     /// Guild ID
-    pub guild_id: Option<String>,
+    #[serde(default)]
+    pub guild_id: String,
     /// Channel ID
-    pub channel_id: Option<String>,
+    #[serde(default)]
+    pub channel_id: String,
     /// Author ID
-    pub author_id: Option<String>,
+    #[serde(default)]
+    pub author_id: String,
     /// Post information
+    #[serde(default)]
     pub post_info: PostInfo,
     /// Event ID
     #[serde(skip)]
@@ -147,11 +168,11 @@ pub struct Post {
 #[derive(Debug, Default, Deserialize)]
 struct PostWire {
     #[serde(default)]
-    guild_id: Option<String>,
+    guild_id: String,
     #[serde(default)]
-    channel_id: Option<String>,
+    channel_id: String,
     #[serde(default)]
-    author_id: Option<String>,
+    author_id: String,
     #[serde(default)]
     post_info: PostInfo,
 }
@@ -183,12 +204,16 @@ pub struct Reply {
     #[serde(skip)]
     api: BotApi,
     /// Guild ID
-    pub guild_id: Option<String>,
+    #[serde(default)]
+    pub guild_id: String,
     /// Channel ID
-    pub channel_id: Option<String>,
+    #[serde(default)]
+    pub channel_id: String,
     /// Author ID
-    pub author_id: Option<String>,
+    #[serde(default)]
+    pub author_id: String,
     /// Reply information
+    #[serde(default)]
     pub reply_info: ReplyInfo,
     /// Event ID
     #[serde(skip)]
@@ -198,11 +223,11 @@ pub struct Reply {
 #[derive(Debug, Default, Deserialize)]
 struct ReplyWire {
     #[serde(default)]
-    guild_id: Option<String>,
+    guild_id: String,
     #[serde(default)]
-    channel_id: Option<String>,
+    channel_id: String,
     #[serde(default)]
-    author_id: Option<String>,
+    author_id: String,
     #[serde(default)]
     reply_info: ReplyInfo,
 }

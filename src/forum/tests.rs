@@ -28,16 +28,10 @@ fn thread_info_keeps_title_and_content_as_strings() {
     });
 
     let thread_info = ThreadInfo::new(&data);
-    assert_eq!(thread_info.thread_id.as_deref(), Some("thread-1"));
-    assert_eq!(thread_info.title.as_deref(), Some("{\"paragraphs\":[]}"));
-    assert_eq!(
-        thread_info.content.as_deref(),
-        Some("{\"paragraphs\":[{\"elems\":[]}]}")
-    );
-    assert_eq!(
-        thread_info.date_time.as_deref(),
-        Some("2024-01-02T03:04:05+08:00")
-    );
+    assert_eq!(thread_info.thread_id, "thread-1");
+    assert_eq!(thread_info.title, "{\"paragraphs\":[]}");
+    assert_eq!(thread_info.content, "{\"paragraphs\":[{\"elems\":[]}]}");
+    assert_eq!(thread_info.date_time, "2024-01-02T03:04:05+08:00");
 
     let value = serde_json::to_value(&thread_info).unwrap();
     assert_eq!(value["title"], serde_json::json!("{\"paragraphs\":[]}"));
@@ -45,6 +39,37 @@ fn thread_info_keeps_title_and_content_as_strings() {
         value["content"],
         serde_json::json!("{\"paragraphs\":[{\"elems\":[]}]}")
     );
+}
+
+#[test]
+fn forum_events_use_required_zero_value_fields() {
+    let thread = serde_json::to_value(Thread::new(
+        BotApi::new(crate::http::HttpClient::new(30, false).unwrap()),
+        Some("event-1".to_string()),
+        &serde_json::json!({}),
+    ))
+    .unwrap();
+    assert_eq!(thread["guild_id"], "");
+    assert_eq!(thread["channel_id"], "");
+    assert_eq!(thread["author_id"], "");
+    assert_eq!(thread["thread_info"]["thread_id"], "");
+    assert_eq!(thread["thread_info"]["title"], "");
+    assert_eq!(thread["thread_info"]["content"], "");
+    assert_eq!(thread["thread_info"]["date_time"], "");
+    assert!(thread.get("event_id").is_none());
+
+    let post_info = serde_json::to_value(PostInfo::default()).unwrap();
+    assert_eq!(post_info["thread_id"], "");
+    assert_eq!(post_info["post_id"], "");
+    assert_eq!(post_info["content"], "");
+    assert_eq!(post_info["date_time"], "");
+
+    let reply_info = serde_json::to_value(ReplyInfo::default()).unwrap();
+    assert_eq!(reply_info["thread_id"], "");
+    assert_eq!(reply_info["post_id"], "");
+    assert_eq!(reply_info["reply_id"], "");
+    assert_eq!(reply_info["content"], "");
+    assert_eq!(reply_info["date_time"], "");
 }
 
 #[test]
