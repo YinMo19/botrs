@@ -109,6 +109,41 @@ impl Context {
             .await
     }
 
+    /// Sends a botpy-style inline keyboard message.
+    pub async fn post_keyboard_message(
+        &self,
+        channel_id: &str,
+        keyboard: Option<&KeyboardPayload>,
+        markdown: Option<&MarkdownPayload>,
+    ) -> Result<MessageResponse> {
+        self.api
+            .post_keyboard_message(&self.token, channel_id, keyboard, markdown)
+            .await
+    }
+
+    /// Edits a guild message using botpy's inline markdown/keyboard body shape.
+    pub async fn patch_guild_message(
+        &self,
+        channel_id: &str,
+        patch_msg_id: &str,
+        msg_id: Option<&str>,
+        event_id: Option<&str>,
+        markdown: Option<&MarkdownPayload>,
+        keyboard: Option<&KeyboardPayload>,
+    ) -> Result<MessageResponse> {
+        self.api
+            .patch_guild_message(
+                &self.token,
+                channel_id,
+                patch_msg_id,
+                msg_id,
+                event_id,
+                markdown,
+                keyboard,
+            )
+            .await
+    }
+
     /// Posts a channel setting-guide message for the specified users.
     pub async fn post_setting_guide(
         &self,
