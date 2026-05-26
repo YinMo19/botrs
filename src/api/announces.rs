@@ -219,12 +219,15 @@ impl BotApi {
     }
 
     /// Deletes a guild announcement by message ID and returns the raw response.
-    pub async fn delete_announce(
+    ///
+    /// Passing `None::<&str>` matches botpy's default `message_id="all"`.
+    pub async fn delete_announce<'a>(
         &self,
         token: &Token,
         guild_id: &str,
-        message_id: &str,
+        message_id: impl Into<Option<&'a str>>,
     ) -> Result<Value> {
+        let message_id = message_id.into().unwrap_or("all");
         debug!("Deleting announcement {} in guild {}", message_id, guild_id);
 
         let path = resource::guild_announce(guild_id, message_id);
@@ -426,6 +429,22 @@ mod tests {
                 "srv_send_msg": false
             })
         );
+        server.await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn delete_announce_defaults_to_all_like_botpy() {
+        let (base_url, request, server) = spawn_capture_server().await;
+        let api = test_api(base_url).await;
+
+        let response = api
+            .delete_announce(api.token_required().unwrap(), "guild-1", None::<&str>)
+            .await
+            .unwrap();
+
+        assert_eq!(response["file_uuid"], "file-1");
+        let request = request.await.unwrap();
+        assert!(request.starts_with("DELETE /guilds/guild-1/announces/all HTTP/1.1"));
         server.await.unwrap();
     }
 
