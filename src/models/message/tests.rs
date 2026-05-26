@@ -150,6 +150,27 @@ mod tests {
     }
 
     #[test]
+    fn open_message_manual_params_default_msg_seq_like_botpy() {
+        let group = GroupMessageParams {
+            msg_type: 0,
+            content: Some("hello".to_string()),
+            msg_id: Some("message-1".to_string()),
+            ..Default::default()
+        };
+        let group_value = serde_json::to_value(MessageToCreate::from(group)).unwrap();
+        assert_eq!(group_value["msg_seq"], 1);
+
+        let c2c = C2CMessageParams {
+            msg_type: 0,
+            content: Some("hello".to_string()),
+            msg_id: Some("message-1".to_string()),
+            ..Default::default()
+        };
+        let c2c_value = serde_json::to_value(MessageToCreate::from(c2c)).unwrap();
+        assert_eq!(c2c_value["msg_seq"], 1);
+    }
+
+    #[test]
     fn media_keeps_upload_response_file_uuid() {
         let media: Media = serde_json::from_value(serde_json::json!({
             "file_uuid": "FILE_UUID_XXXXXX",

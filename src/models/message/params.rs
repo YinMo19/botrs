@@ -262,7 +262,7 @@ macro_rules! impl_open_message_params {
                     keyboard: params.keyboard.map(Into::into),
                     event_id: params.event_id,
                     timestamp: params.timestamp,
-                    msg_seq: params.msg_seq,
+                    msg_seq: params.msg_seq.or(Some(1)),
                     subscribe_id: params.subscribe_id,
                     input_notify: params.input_notify,
                     media: params.media.map(Into::into),
