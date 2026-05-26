@@ -2,7 +2,28 @@ use super::{BotApi, resource};
 use crate::error::Result;
 use crate::models::guild::{MemberAddRoleBody, UpdateGuildMute, UpdateGuildMuteResponse};
 use crate::token::Token;
+use serde::Serialize;
 use tracing::debug;
+
+#[derive(Debug, Serialize)]
+struct BotpyMemberRoleBody {
+    channel: BotpyMemberRoleChannel,
+}
+
+#[derive(Debug, Serialize)]
+struct BotpyMemberRoleChannel {
+    id: Option<String>,
+}
+
+impl BotpyMemberRoleBody {
+    fn new(channel_id: Option<&str>) -> Self {
+        Self {
+            channel: BotpyMemberRoleChannel {
+                id: channel_id.map(ToOwned::to_owned),
+            },
+        }
+    }
+}
 
 impl BotApi {
     /// Adds a role to a guild member, optionally scoped to a channel.
@@ -19,13 +40,10 @@ impl BotApi {
             user_id, role_id, guild_id
         );
 
-        let body = if let Some(channel_id) = channel_id {
-            MemberAddRoleBody::with_channel_id(channel_id)
-        } else {
-            MemberAddRoleBody::new()
-        };
-
-        self.member_add_role(token, guild_id, role_id, user_id, &body)
+        let body = BotpyMemberRoleBody::new(channel_id);
+        let path = resource::guild_member_role(guild_id, user_id, role_id);
+        self.http
+            .put(token, &path, None::<&()>, Some(&body))
             .await?;
         Ok(())
     }
@@ -58,13 +76,10 @@ impl BotApi {
             user_id, role_id, guild_id
         );
 
-        let body = if let Some(channel_id) = channel_id {
-            MemberAddRoleBody::with_channel_id(channel_id)
-        } else {
-            MemberAddRoleBody::new()
-        };
-
-        self.member_delete_role(token, guild_id, role_id, user_id, &body)
+        let body = BotpyMemberRoleBody::new(channel_id);
+        let path = resource::guild_member_role(guild_id, user_id, role_id);
+        self.http
+            .delete_with_body(token, &path, None::<&()>, Some(&body))
             .await?;
         Ok(())
     }
@@ -157,5 +172,113 @@ impl BotApi {
             .patch(token, &path, None::<&()>, Some(mute))
             .await?;
         Self::decode_json(response)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tokio::io::{AsyncReadExt, AsyncWriteExt};
+    use tokio::net::TcpListener;
+    use tokio::sync::oneshot;
+
+    async fn test_api(base_url: String) -> BotApi {
+        let token = crate::Token::new("APPID_XXXXXX", "SECRET_XXXXXX");
+        token
+            .set_cached_access_token_for_test("ACCESS_TOKEN_XXXXXX")
+            .await;
+        let mut http = crate::http::HttpClient::new(30, false).unwrap();
+        http.base_url = base_url;
+        BotApi::with_token(http, token)
+    }
+
+    async fn spawn_capture_server() -> (
+        String,
+        oneshot::Receiver<String>,
+        tokio::task::JoinHandle<()>,
+    ) {
+        let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let addr = listener.local_addr().unwrap();
+        let (tx, rx) = oneshot::channel();
+
+        let handle = tokio::spawn(async move {
+            let (mut stream, _) = listener.accept().await.unwrap();
+            let mut request_bytes = Vec::new();
+            let mut buffer = [0_u8; 4096];
+            loop {
+                let n = stream.read(&mut buffer).await.unwrap();
+                request_bytes.extend_from_slice(&buffer[..n]);
+
+                let request = String::from_utf8_lossy(&request_bytes);
+                let Some(header_end) = request.find("\r\n\r\n") else {
+                    continue;
+                };
+                let content_length = request
+                    .lines()
+                    .find_map(|line| {
+                        let (name, value) = line.split_once(':')?;
+                        name.eq_ignore_ascii_case("content-length")
+                            .then(|| value.trim().parse::<usize>().ok())
+                            .flatten()
+                    })
+                    .unwrap_or(0);
+                let body_start = header_end + 4;
+                if request_bytes.len().saturating_sub(body_start) >= content_length {
+                    break;
+                }
+            }
+
+            let request = String::from_utf8_lossy(&request_bytes).to_string();
+            let _ = tx.send(request);
+
+            stream
+                .write_all(
+                    b"HTTP/1.1 204 No Content\r\ncontent-length: 0\r\nconnection: close\r\n\r\n",
+                )
+                .await
+                .unwrap();
+        });
+
+        (format!("http://{addr}"), rx, handle)
+    }
+
+    #[tokio::test]
+    async fn inline_add_role_member_matches_botpy_null_channel_id() {
+        let (base_url, request, server) = spawn_capture_server().await;
+        let api = test_api(base_url).await;
+        api.create_guild_role_member(
+            api.token_required().unwrap(),
+            "guild-1",
+            "role-1",
+            "user-1",
+            None,
+        )
+        .await
+        .unwrap();
+
+        let request = request.await.unwrap();
+        assert!(request.starts_with("PUT /guilds/guild-1/members/user-1/roles/role-1 HTTP/1.1"));
+        assert!(request.ends_with("\r\n\r\n{\"channel\":{\"id\":null}}"));
+        server.await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn inline_delete_role_member_matches_botpy_channel_id_only() {
+        let (base_url, request, server) = spawn_capture_server().await;
+        let api = test_api(base_url).await;
+        api.delete_guild_role_member(
+            api.token_required().unwrap(),
+            "guild-1",
+            "role-1",
+            "user-1",
+            Some("channel-1"),
+        )
+        .await
+        .unwrap();
+
+        let request = request.await.unwrap();
+        assert!(request.starts_with("DELETE /guilds/guild-1/members/user-1/roles/role-1 HTTP/1.1"));
+        assert!(request.ends_with("\r\n\r\n{\"channel\":{\"id\":\"channel-1\"}}"));
+        server.await.unwrap();
     }
 }
