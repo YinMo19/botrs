@@ -13,6 +13,11 @@ fn schedule_query(since: Option<&str>) -> ScheduleQuery<'_> {
 }
 
 #[derive(Serialize)]
+struct BotpyScheduleQuery<'a> {
+    since: Option<&'a str>,
+}
+
+#[derive(Serialize)]
 struct ScheduleQuery<'a> {
     since: &'a str,
 }
@@ -42,6 +47,23 @@ impl BotApi {
         since: Option<&str>,
     ) -> Result<Vec<Schedule>> {
         debug!("Getting schedules for channel {}", channel_id);
+
+        let body = BotpyScheduleQuery { since };
+        let path = resource::channel_schedules(channel_id);
+        let response = self
+            .request_json(token, reqwest::Method::GET, &path, None::<&()>, Some(&body))
+            .await?;
+        Ok(response)
+    }
+
+    /// Lists schedules using botgo's query-parameter request shape.
+    pub(crate) async fn list_schedules_with_query(
+        &self,
+        token: &Token,
+        channel_id: &str,
+        since: Option<&str>,
+    ) -> Result<Vec<Schedule>> {
+        debug!("Getting schedules for channel {} with query", channel_id);
 
         let query = schedule_query(since);
         let path = resource::channel_schedules(channel_id);
@@ -230,7 +252,76 @@ impl BotApi {
 
 #[cfg(test)]
 mod tests {
-    use super::{InlineScheduleBody, InlineScheduleWrapper, schedule_query};
+    use super::{BotpyScheduleQuery, InlineScheduleBody, InlineScheduleWrapper, schedule_query};
+    use tokio::io::{AsyncReadExt, AsyncWriteExt};
+    use tokio::net::TcpListener;
+    use tokio::sync::oneshot;
+
+    async fn test_api(base_url: String) -> crate::api::BotApi {
+        let token = crate::Token::new("APPID_XXXXXX", "SECRET_XXXXXX");
+        token
+            .set_cached_access_token_for_test("ACCESS_TOKEN_XXXXXX")
+            .await;
+        let mut http = crate::http::HttpClient::new(30, false).unwrap();
+        http.base_url = base_url;
+        crate::api::BotApi::with_token(http, token)
+    }
+
+    async fn spawn_capture_server() -> (
+        String,
+        oneshot::Receiver<String>,
+        tokio::task::JoinHandle<()>,
+    ) {
+        let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let addr = listener.local_addr().unwrap();
+        let (tx, rx) = oneshot::channel();
+
+        let handle = tokio::spawn(async move {
+            let (mut stream, _) = listener.accept().await.unwrap();
+            let mut request_bytes = Vec::new();
+            let mut buffer = [0_u8; 4096];
+            loop {
+                let n = stream.read(&mut buffer).await.unwrap();
+                request_bytes.extend_from_slice(&buffer[..n]);
+
+                let request = String::from_utf8_lossy(&request_bytes);
+                let Some(header_end) = request.find("\r\n\r\n") else {
+                    continue;
+                };
+                let content_length = request
+                    .lines()
+                    .find_map(|line| {
+                        let (name, value) = line.split_once(':')?;
+                        name.eq_ignore_ascii_case("content-length")
+                            .then(|| value.trim().parse::<usize>().ok())
+                            .flatten()
+                    })
+                    .unwrap_or(0);
+                let body_start = header_end + 4;
+                if request_bytes.len().saturating_sub(body_start) >= content_length {
+                    break;
+                }
+            }
+
+            let request = String::from_utf8_lossy(&request_bytes).to_string();
+            let _ = tx.send(request);
+
+            let body = r#"[{"id":"schedule-1","name":"meeting"}]"#;
+            let response = format!(
+                "HTTP/1.1 200 OK\r\ncontent-type: application/json\r\ncontent-length: {}\r\nconnection: close\r\n\r\n{}",
+                body.len(),
+                body
+            );
+            stream.write_all(response.as_bytes()).await.unwrap();
+        });
+
+        (format!("http://{addr}"), rx, handle)
+    }
+
+    fn request_body(request: &str) -> serde_json::Value {
+        let body = request.split("\r\n\r\n").nth(1).unwrap_or_default();
+        serde_json::from_str(body).unwrap()
+    }
 
     #[test]
     fn schedule_query_defaults_since_to_zero() {
@@ -239,6 +330,50 @@ mod tests {
 
         let value = serde_json::to_value(schedule_query(Some("1710000000"))).unwrap();
         assert_eq!(value["since"], "1710000000");
+    }
+
+    #[test]
+    fn botpy_schedule_query_keeps_null_since() {
+        let value = serde_json::to_value(BotpyScheduleQuery { since: None }).unwrap();
+        assert_eq!(value, serde_json::json!({"since": null}));
+
+        let value = serde_json::to_value(BotpyScheduleQuery {
+            since: Some("1710000000"),
+        })
+        .unwrap();
+        assert_eq!(value, serde_json::json!({"since": "1710000000"}));
+    }
+
+    #[tokio::test]
+    async fn get_schedules_matches_botpy_get_json_body() {
+        let (base_url, request, server) = spawn_capture_server().await;
+        let api = test_api(base_url).await;
+        let schedules = api
+            .get_schedules(api.token_required().unwrap(), "channel-1", None)
+            .await
+            .unwrap();
+
+        assert_eq!(schedules[0].id, "schedule-1");
+        let request = request.await.unwrap();
+        assert!(request.starts_with("GET /channels/channel-1/schedules HTTP/1.1"));
+        assert_eq!(request_body(&request), serde_json::json!({"since": null}));
+        server.await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn list_schedules_with_query_preserves_botgo_shape() {
+        let (base_url, request, server) = spawn_capture_server().await;
+        let api = test_api(base_url).await;
+        let schedules = api
+            .list_schedules_with_query(api.token_required().unwrap(), "channel-1", Some("0"))
+            .await
+            .unwrap();
+
+        assert_eq!(schedules[0].id, "schedule-1");
+        let request = request.await.unwrap();
+        assert!(request.starts_with("GET /channels/channel-1/schedules?since=0 HTTP/1.1"));
+        assert!(request.ends_with("\r\n\r\n"));
+        server.await.unwrap();
     }
 
     #[test]

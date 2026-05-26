@@ -7,7 +7,7 @@ impl BotApi {
     #[allow(non_snake_case)]
     pub async fn ListSchedules(&self, channel_id: &str, since: u64) -> Result<Vec<Schedule>> {
         let since = since.to_string();
-        self.get_schedules(self.token_required()?, channel_id, Some(since.as_str()))
+        self.list_schedules_with_query(self.token_required()?, channel_id, Some(since.as_str()))
             .await
     }
 
