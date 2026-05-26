@@ -700,6 +700,47 @@ mod tests {
     }
 
     #[test]
+    fn message_attachment_omits_go_zero_values() {
+        let attachment = MessageAttachment {
+            id: Some(String::new()),
+            filename: Some(String::new()),
+            content_type: Some(String::new()),
+            size: Some(0),
+            url: Some(String::new()),
+            width: Some(0),
+            height: Some(0),
+        };
+
+        assert_eq!(
+            serde_json::to_value(&attachment).unwrap(),
+            serde_json::json!({})
+        );
+
+        let attachment = MessageAttachment {
+            id: Some("attachment-1".to_string()),
+            filename: Some("image.png".to_string()),
+            content_type: Some("image/png".to_string()),
+            size: Some(128),
+            url: Some("https://example.com/image.png".to_string()),
+            width: Some(64),
+            height: Some(32),
+        };
+
+        assert_eq!(
+            serde_json::to_value(&attachment).unwrap(),
+            serde_json::json!({
+                "id": "attachment-1",
+                "filename": "image.png",
+                "content_type": "image/png",
+                "size": 128,
+                "url": "https://example.com/image.png",
+                "width": 64,
+                "height": 32
+            })
+        );
+    }
+
+    #[test]
     fn test_bot_detection() {
         let mut message = Message::new();
         message.author = Some(MessageUser {
