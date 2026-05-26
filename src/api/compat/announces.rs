@@ -1,8 +1,8 @@
 use crate::api::BotApi;
+use crate::api::resource;
 use crate::error::Result;
-use crate::models::announce::{
-    Announce, AnnouncesType, ChannelAnnouncesToCreate, GuildAnnouncesToCreate,
-};
+use crate::models::announce::{Announce, ChannelAnnouncesToCreate, GuildAnnouncesToCreate};
+use reqwest::Method;
 
 impl BotApi {
     /// Channel announce creation API.
@@ -37,23 +37,14 @@ impl BotApi {
         guild_id: &str,
         announce: &GuildAnnouncesToCreate,
     ) -> Result<Announce> {
-        if !announce.recommend_channels.is_empty() {
-            self.create_recommend_announce(
-                self.token_required()?,
-                guild_id,
-                AnnouncesType::from(announce.announces_type as u8),
-                announce.recommend_channels.clone(),
-            )
-            .await
-        } else {
-            self.create_guild_announce(
-                self.token_required()?,
-                guild_id,
-                &announce.channel_id,
-                &announce.message_id,
-            )
-            .await
-        }
+        self.request_json(
+            self.token_required()?,
+            Method::POST,
+            &resource::guild_announces(guild_id),
+            None::<&()>,
+            Some(announce),
+        )
+        .await
     }
 
     /// Guild announce delete API.

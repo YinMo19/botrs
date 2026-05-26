@@ -256,6 +256,28 @@ mod tests {
     }
 
     #[test]
+    fn announce_create_bodies_keep_required_fields() {
+        let channel = serde_json::to_value(ChannelAnnouncesToCreate::default()).unwrap();
+        assert_eq!(
+            channel,
+            serde_json::json!({
+                "message_id": ""
+            })
+        );
+
+        let guild = serde_json::to_value(GuildAnnouncesToCreate::default()).unwrap();
+        assert_eq!(
+            guild,
+            serde_json::json!({
+                "channel_id": "",
+                "message_id": "",
+                "announces_type": 0,
+                "recommend_channels": []
+            })
+        );
+    }
+
+    #[test]
     fn test_announce_display() {
         let message_announce = Announce::new_message("guild1", "channel1", "message1");
         let display = format!("{}", message_announce);
