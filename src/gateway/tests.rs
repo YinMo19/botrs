@@ -16,6 +16,7 @@ fn test_gateway_creation() {
     assert!(!gateway.is_ready());
     assert!(gateway.session_id().is_none());
     assert_eq!(gateway.last_sequence(), 0);
+    assert_eq!(gateway.shard, Some([0, 1]));
 }
 
 #[test]

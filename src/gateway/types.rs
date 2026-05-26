@@ -72,6 +72,7 @@ impl Gateway {
         intents: Intents,
         shard: Option<[u32; 2]>,
     ) -> Self {
+        let shard = shard.or(Some([0, 1]));
         Self {
             url: url.into(),
             token,
