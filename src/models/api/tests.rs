@@ -77,6 +77,29 @@ fn websocket_ap_keeps_official_json_shape() {
 }
 
 #[test]
+fn bot_info_keeps_current_user_extra_fields() {
+    let bot: BotInfo = serde_json::from_value(serde_json::json!({
+        "id": "bot-1",
+        "username": "bot",
+        "avatar": "https://example.com/avatar.png",
+        "union_openid": "UNION_OPENID_XXXXXX",
+        "union_user_account": "UNION_ACCOUNT_XXXXXX",
+        "share_url": "https://example.com/share",
+        "welcome_msg": "hello"
+    }))
+    .unwrap();
+
+    assert_eq!(bot.id, "bot-1");
+    assert_eq!(bot.username, "bot");
+    assert_eq!(bot.avatar, "https://example.com/avatar.png");
+    assert!(!bot.bot);
+    assert_eq!(bot.union_openid, "UNION_OPENID_XXXXXX");
+    assert_eq!(bot.union_user_account, "UNION_ACCOUNT_XXXXXX");
+    assert_eq!(bot.share_url, "https://example.com/share");
+    assert_eq!(bot.welcome_msg, "hello");
+}
+
+#[test]
 fn audio_action_uses_required_zero_value_fields() {
     let action: AudioAction = serde_json::from_value(serde_json::json!({})).unwrap();
 

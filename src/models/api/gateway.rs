@@ -38,12 +38,27 @@ pub struct ShardConfig {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct BotInfo {
     /// The bot's ID
+    #[serde(default)]
     pub id: Snowflake,
     /// The bot's username
+    #[serde(default)]
     pub username: String,
     /// The bot's avatar hash
-    pub avatar: Option<String>,
+    #[serde(default)]
+    pub avatar: String,
     /// Whether this is a bot account
     #[serde(default)]
     pub bot: bool,
+    /// The bot's union openid.
+    #[serde(default)]
+    pub union_openid: String,
+    /// The bot's union user account.
+    #[serde(default)]
+    pub union_user_account: String,
+    /// Robot share URL returned by the current-user endpoint.
+    #[serde(default)]
+    pub share_url: String,
+    /// Robot welcome message returned by the current-user endpoint.
+    #[serde(default)]
+    pub welcome_msg: String,
 }

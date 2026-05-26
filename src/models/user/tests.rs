@@ -47,6 +47,27 @@ fn user_keeps_official_json_shape() {
 }
 
 #[test]
+fn user_from_bot_info_preserves_union_fields() {
+    let user = User::from(crate::models::api::BotInfo {
+        id: "bot-1".to_string(),
+        username: "bot".to_string(),
+        avatar: "avatar-key".to_string(),
+        bot: true,
+        union_openid: "UNION_OPENID_XXXXXX".to_string(),
+        union_user_account: "UNION_ACCOUNT_XXXXXX".to_string(),
+        share_url: "https://example.com/share".to_string(),
+        welcome_msg: "hello".to_string(),
+    });
+
+    assert_eq!(user.id, "bot-1");
+    assert_eq!(user.username, "bot");
+    assert_eq!(user.avatar, "avatar-key");
+    assert!(user.bot);
+    assert_eq!(user.union_openid, "UNION_OPENID_XXXXXX");
+    assert_eq!(user.union_user_account, "UNION_ACCOUNT_XXXXXX");
+}
+
+#[test]
 fn test_user_mention() {
     let user = User::new("123456789", "TestUser");
     assert_eq!(user.mention(), "<@!123456789>");

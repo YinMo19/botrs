@@ -91,10 +91,10 @@ impl From<BotInfo> for User {
         Self {
             id: bot.id,
             username: bot.username,
-            avatar: bot.avatar.unwrap_or_default(),
+            avatar: bot.avatar,
             bot: bot.bot,
-            union_openid: String::new(),
-            union_user_account: String::new(),
+            union_openid: bot.union_openid,
+            union_user_account: bot.union_user_account,
         }
     }
 }
