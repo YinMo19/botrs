@@ -12,6 +12,32 @@ mod tests {
     };
 
     #[test]
+    fn c2c_message_accepts_minimal_gateway_payload() {
+        let message = super::super::C2CMessage::from_data(
+            crate::api::BotApi::new(crate::http::HttpClient::new(30, true).unwrap()),
+            "event-1".to_string(),
+            serde_json::json!({
+                "author": {
+                    "bot": false,
+                    "id": "OPENID_XXXXXX",
+                    "union_openid": "UNION_OPENID_XXXXXX",
+                    "user_openid": "USER_OPENID_XXXXXX"
+                },
+                "content": "ping",
+                "id": "ROBOT1.0_MESSAGE_ID_XXXXXX",
+                "msg_seq": 0,
+                "source": "default",
+                "timestamp": "2026-05-27T00:47:07+08:00"
+            }),
+        );
+
+        assert_eq!(message.id.as_deref(), Some("ROBOT1.0_MESSAGE_ID_XXXXXX"));
+        assert_eq!(message.event_id.as_deref(), Some("event-1"));
+        assert!(message.mentions.is_empty());
+        assert!(message.attachments.is_empty());
+    }
+
+    #[test]
     fn test_message_helpers() {
         assert_eq!(MentionUser("123"), "<@123>");
         assert_eq!(MentionAllUser(), "@everyone");

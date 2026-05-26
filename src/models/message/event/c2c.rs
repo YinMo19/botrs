@@ -15,8 +15,10 @@ pub struct C2CMessage {
     /// Referenced message information
     pub message_reference: Option<MessageReference>,
     /// Users mentioned in this message
+    #[serde(default)]
     pub mentions: Vec<C2CMessageUser>,
     /// Attachments in this message
+    #[serde(default)]
     pub attachments: Vec<MessageAttachment>,
     /// Global message sequence number
     pub msg_seq: Option<u64>,
