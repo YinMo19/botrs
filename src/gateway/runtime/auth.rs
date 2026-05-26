@@ -28,10 +28,14 @@ impl Gateway {
             }
         } else {
             // New identification
-            debug!("Sending identify");
+            let intents = self.identify_intents();
+            debug!(
+                "Sending identify with intents={} shard={:?}",
+                intents, self.shard
+            );
             let identify = Identify {
                 token: self.token.bot_token().await?,
-                intents: self.identify_intents(),
+                intents,
                 shard: self.shard,
                 properties: IdentifyProperties::default(),
             };
