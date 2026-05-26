@@ -11,6 +11,7 @@ use crate::models::{
 use crate::token::Token;
 use base64::Engine;
 use reqwest::Method;
+use reqwest::multipart::{Form, Part};
 use serde::Serialize;
 use serde_json::{Value, json};
 use tracing::debug;
@@ -47,6 +48,35 @@ struct BotpyPatchGuildMessageBody<'a> {
 }
 
 impl BotApi {
+    fn botpy_channel_message_multipart(
+        channel_id: &str,
+        content: Option<&str>,
+        image: Option<&str>,
+        file_image: &[u8],
+        msg_id: Option<&str>,
+        event_id: Option<&str>,
+    ) -> Form {
+        let mut form = Form::new().text("channel_id", channel_id.to_string()).part(
+            "file_image",
+            Part::bytes(file_image.to_vec()).file_name("file_image"),
+        );
+
+        for (name, value) in [
+            ("content", content),
+            ("image", image),
+            ("msg_id", msg_id),
+            ("event_id", event_id),
+        ] {
+            if let Some(value) = value
+                && !value.is_empty()
+            {
+                form = form.text(name, value.to_string());
+            }
+        }
+
+        form
+    }
+
     /// Gets a specific message.
     pub async fn get_message(
         &self,
@@ -178,6 +208,18 @@ impl BotApi {
         keyboard: Option<&Keyboard>,
     ) -> Result<MessageResponse> {
         debug!("Sending botpy-style message to channel {}", channel_id);
+        if let Some(file_image) = file_image {
+            let form = Self::botpy_channel_message_multipart(
+                channel_id, content, image, file_image, msg_id, event_id,
+            );
+            let path = resource::channel_messages(channel_id);
+            let response = self
+                .http
+                .request_multipart(Method::POST, token, &path, form)
+                .await?;
+            return Self::decode_json(response);
+        }
+
         let body = BotpyChannelMessageBody {
             channel_id,
             content,
@@ -346,17 +388,38 @@ mod tests {
                 let Some(header_end) = request.find("\r\n\r\n") else {
                     continue;
                 };
-                let content_length = request
-                    .lines()
-                    .find_map(|line| {
-                        let (name, value) = line.split_once(':')?;
-                        name.eq_ignore_ascii_case("content-length")
-                            .then(|| value.trim().parse::<usize>().ok())
-                            .flatten()
-                    })
-                    .unwrap_or(0);
+                let is_chunked = request.lines().any(|line| {
+                    let Some((name, value)) = line.split_once(':') else {
+                        return false;
+                    };
+                    name.eq_ignore_ascii_case("transfer-encoding")
+                        && value
+                            .split(',')
+                            .any(|encoding| encoding.trim().eq_ignore_ascii_case("chunked"))
+                });
+                let is_multipart = request.lines().any(|line| {
+                    let Some((name, value)) = line.split_once(':') else {
+                        return false;
+                    };
+                    name.eq_ignore_ascii_case("content-type")
+                        && value.trim().starts_with("multipart/form-data")
+                });
+                let content_length = request.lines().find_map(|line| {
+                    let (name, value) = line.split_once(':')?;
+                    name.eq_ignore_ascii_case("content-length")
+                        .then(|| value.trim().parse::<usize>().ok())
+                        .flatten()
+                });
                 let body_start = header_end + 4;
-                if request_bytes.len().saturating_sub(body_start) >= content_length {
+                if is_chunked || is_multipart {
+                    if request[body_start..].contains("image-bytes") {
+                        break;
+                    }
+                } else if let Some(content_length) = content_length {
+                    if request_bytes.len().saturating_sub(body_start) >= content_length {
+                        break;
+                    }
+                } else {
                     break;
                 }
             }
@@ -377,8 +440,19 @@ mod tests {
     }
 
     fn request_body(request: &str) -> serde_json::Value {
-        let body = request.split("\r\n\r\n").nth(1).unwrap_or_default();
+        let body = request
+            .split_once("\r\n\r\n")
+            .map(|(_, body)| body)
+            .unwrap_or_default();
         serde_json::from_str(body).unwrap()
+    }
+
+    fn request_header(request: &str, header_name: &str) -> Option<String> {
+        request.lines().find_map(|line| {
+            let (name, value) = line.split_once(':')?;
+            name.eq_ignore_ascii_case(header_name)
+                .then(|| value.trim().to_string())
+        })
     }
 
     #[tokio::test]
@@ -422,6 +496,52 @@ mod tests {
                 "keyboard": null
             })
         );
+        server.await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn post_message_botpy_file_image_uses_multipart_form() {
+        let (base_url, request, server) = spawn_capture_server().await;
+        let api = test_api(base_url).await;
+        let response = api
+            .post_message_botpy(
+                api.token_required().unwrap(),
+                "channel-1",
+                Some("hello"),
+                None,
+                None,
+                None,
+                Some("https://example.com/image.png"),
+                Some(b"image-bytes"),
+                Some("message-1"),
+                None,
+                None,
+                None,
+            )
+            .await
+            .unwrap();
+
+        assert_eq!(response.id.as_deref(), Some("message-1"));
+        let request = request.await.unwrap();
+        assert!(request.starts_with("POST /channels/channel-1/messages HTTP/1.1"));
+        let content_type = request_header(&request, "content-type").unwrap_or_default();
+        assert!(content_type.starts_with("multipart/form-data; boundary="));
+
+        let body = request
+            .split_once("\r\n\r\n")
+            .map(|(_, body)| body)
+            .unwrap_or_default();
+        assert!(body.contains(r#"name="channel_id""#));
+        assert!(body.contains("channel-1"), "multipart body:\n{body}");
+        assert!(body.contains(r#"name="content""#));
+        assert!(body.contains("hello"));
+        assert!(body.contains(r#"name="image""#));
+        assert!(body.contains("https://example.com/image.png"));
+        assert!(body.contains(r#"name="msg_id""#));
+        assert!(body.contains("message-1"));
+        assert!(body.contains(r#"name="file_image""#));
+        assert!(body.contains("image-bytes"));
+        assert!(!body.contains("aW1hZ2UtYnl0ZXM="));
         server.await.unwrap();
     }
 
