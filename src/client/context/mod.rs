@@ -1,6 +1,7 @@
 use super::prelude::*;
 
 mod announce;
+mod api_permissions;
 mod audio;
 mod channel;
 mod direct_message;
