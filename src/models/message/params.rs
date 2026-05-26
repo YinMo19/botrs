@@ -232,6 +232,7 @@ macro_rules! impl_open_message_params {
                 Self {
                     msg_type: 0,
                     content: Some(content.into()),
+                    msg_seq: Some(1),
                     ..Default::default()
                 }
             }

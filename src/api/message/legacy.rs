@@ -123,7 +123,7 @@ impl OpenMessageParts {
             message_reference: message_reference.cloned(),
             media: media.cloned(),
             msg_id: msg_id.map(str::to_string),
-            msg_seq,
+            msg_seq: Some(msg_seq.unwrap_or(1)),
             event_id: event_id.map(str::to_string),
             markdown: markdown.cloned(),
             keyboard: keyboard.cloned(),

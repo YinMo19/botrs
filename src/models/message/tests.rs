@@ -2,13 +2,14 @@
 mod tests {
     use super::super::{
         APIMessage, ActionButton, ActionTypeSubscribe, ApiMessage, Ark, ArkKv, ArkObj, ArkObjKv,
-        DirectMessage, ETLInput, Embed, Emoji, GroupMessageParams, InputNotify, Keyboard,
-        KeyboardButton, KeyboardButtonAction, KeyboardButtonPermission, KeyboardButtonRenderData,
-        KeyboardContent, KeyboardModal, KeyboardRow, KeyboardStyle, KeyboardSubscribeData,
-        KeyboardTemplateId, MPTBefore, MarkdownParam, MarkdownPayload, MarkdownStyle, Media,
-        MediaInfo, MentionAllUser, MentionChannel, MentionUser, Message, MessageAttachment,
-        MessageAudit, MessageCreateType, MessageParams, MessageReference, MessageToCreate,
-        MessageUser, MessagesPager, ParseCommand, Reference, RichMediaMessage, SendType, Stream,
+        C2CMessageParams, DirectMessage, ETLInput, Embed, Emoji, GroupMessageParams, InputNotify,
+        Keyboard, KeyboardButton, KeyboardButtonAction, KeyboardButtonPermission,
+        KeyboardButtonRenderData, KeyboardContent, KeyboardModal, KeyboardRow, KeyboardStyle,
+        KeyboardSubscribeData, KeyboardTemplateId, MPTBefore, MarkdownParam, MarkdownPayload,
+        MarkdownStyle, Media, MediaInfo, MentionAllUser, MentionChannel, MentionUser, Message,
+        MessageAttachment, MessageAudit, MessageCreateType, MessageParams, MessageReference,
+        MessageToCreate, MessageUser, MessagesPager, ParseCommand, Reference, RichMediaMessage,
+        SendType, Stream,
     };
 
     #[test]
@@ -135,6 +136,17 @@ mod tests {
                 "msg_seq": 42
             })
         );
+    }
+
+    #[test]
+    fn open_message_text_params_default_msg_seq_like_botpy() {
+        let group = GroupMessageParams::new_text("hello");
+        let group_value = serde_json::to_value(MessageToCreate::from(group)).unwrap();
+        assert_eq!(group_value["msg_seq"], 1);
+
+        let c2c = C2CMessageParams::new_text("hello");
+        let c2c_value = serde_json::to_value(MessageToCreate::from(c2c)).unwrap();
+        assert_eq!(c2c_value["msg_seq"], 1);
     }
 
     #[test]
