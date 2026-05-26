@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct C2CFriendData {
     /// User OpenID
+    #[serde(default)]
     pub openid: String,
     /// Add/delete timestamp
     #[serde(default)]

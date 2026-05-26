@@ -102,6 +102,22 @@ fn subscribe_message_status_uses_required_zero_value_fields() {
 }
 
 #[test]
+fn c2c_friend_data_uses_required_zero_value_fields() {
+    let friend: C2CFriendData = serde_json::from_value(serde_json::json!({})).unwrap();
+
+    assert_eq!(friend.openid, "");
+    assert_eq!(friend.timestamp, 0);
+    assert_eq!(friend.nick, "");
+    assert_eq!(friend.avatar, "");
+
+    let value = serde_json::to_value(&friend).unwrap();
+    assert_eq!(value["openid"], "");
+    assert_eq!(value["timestamp"], 0);
+    assert_eq!(value["nick"], "");
+    assert_eq!(value["avatar"], "");
+}
+
+#[test]
 fn manage_event_ids_are_internal_only() {
     let http = crate::http::HttpClient::new(30, false).unwrap();
     let api = BotApi::new(http);
