@@ -1,11 +1,12 @@
 use serde::{Deserialize, Serialize};
 
 /// Reaction target type enumeration
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(from = "i32", into = "i32")]
 #[repr(i32)]
 pub enum ReactionTargetType {
     /// Message reaction
+    #[default]
     Message = 0,
     /// Post reaction
     Post = 1,

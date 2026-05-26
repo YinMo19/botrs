@@ -67,6 +67,28 @@ fn message_reaction_keeps_official_dto_shape() {
 }
 
 #[test]
+fn message_reaction_uses_required_zero_value_fields() {
+    let reaction: MessageReaction = serde_json::from_value(serde_json::json!({})).unwrap();
+
+    assert_eq!(reaction.user_id, "");
+    assert_eq!(reaction.channel_id, "");
+    assert_eq!(reaction.guild_id, "");
+    assert_eq!(reaction.target.id, "");
+    assert_eq!(reaction.target.target_type, ReactionTargetType::Message);
+    assert_eq!(reaction.emoji.id, "");
+    assert_eq!(reaction.emoji.emoji_type, 0);
+
+    let value = serde_json::to_value(&reaction).unwrap();
+    assert_eq!(value["user_id"], "");
+    assert_eq!(value["channel_id"], "");
+    assert_eq!(value["guild_id"], "");
+    assert_eq!(value["target"]["id"], "");
+    assert_eq!(value["target"]["type"], 0);
+    assert_eq!(value["emoji"]["id"], "");
+    assert_eq!(value["emoji"]["type"], 0);
+}
+
+#[test]
 fn reaction_event_id_is_internal_only() {
     let http = crate::http::HttpClient::new(30, false).unwrap();
     let api = BotApi::new(http);
@@ -85,6 +107,32 @@ fn reaction_event_id_is_internal_only() {
     assert_eq!(reaction.event_id.as_deref(), Some("event-1"));
     let value = serde_json::to_value(&reaction).unwrap();
     assert!(value.get("event_id").is_none());
+}
+
+#[test]
+fn reaction_users_omits_empty_response_fields() {
+    let empty = serde_json::to_value(ReactionUsers::default()).unwrap();
+    assert_eq!(empty, serde_json::json!({}));
+
+    let users: ReactionUsers = serde_json::from_value(serde_json::json!({
+        "cookie": "cursor-1",
+        "is_end": true,
+        "users": [{
+            "id": "user-1",
+            "username": "tester",
+            "avatar": "https://example.com/avatar.png"
+        }]
+    }))
+    .unwrap();
+
+    assert_eq!(users.cookie.as_deref(), Some("cursor-1"));
+    assert!(users.is_end);
+    assert_eq!(users.users.len(), 1);
+
+    let value = serde_json::to_value(&users).unwrap();
+    assert_eq!(value["cookie"], "cursor-1");
+    assert_eq!(value["is_end"], true);
+    assert_eq!(value["users"][0]["id"], "user-1");
 }
 
 #[test]
