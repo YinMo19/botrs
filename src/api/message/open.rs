@@ -1,4 +1,3 @@
-use super::legacy::OpenMessageParts;
 use crate::api::{BotApi, resource};
 use crate::error::Result;
 use crate::models::{
@@ -246,7 +245,9 @@ impl BotApi {
         markdown: Option<&MarkdownPayload>,
         keyboard: Option<&KeyboardPayload>,
     ) -> Result<MessageResponse> {
-        let params: GroupMessageParams = OpenMessageParts::new(
+        self.post_group_message_botpy(
+            token,
+            group_openid,
             msg_type,
             content,
             embed,
@@ -259,10 +260,7 @@ impl BotApi {
             markdown,
             keyboard,
         )
-        .into();
-
-        self.post_group_message_with_params(token, group_openid, params)
-            .await
+        .await
     }
 
     /// Sends a C2C (client-to-client) message using C2CMessageParams.
@@ -369,7 +367,9 @@ impl BotApi {
         markdown: Option<&MarkdownPayload>,
         keyboard: Option<&KeyboardPayload>,
     ) -> Result<MessageResponse> {
-        let params: C2CMessageParams = OpenMessageParts::new(
+        self.post_c2c_message_botpy(
+            token,
+            openid,
             msg_type,
             content,
             embed,
@@ -382,10 +382,7 @@ impl BotApi {
             markdown,
             keyboard,
         )
-        .into();
-
-        self.post_c2c_message_with_params(token, openid, params)
-            .await
+        .await
     }
 
     async fn post_open_api_payload<T>(
@@ -529,12 +526,106 @@ mod tests {
         server.await.unwrap();
     }
 
+    #[allow(deprecated)]
+    #[tokio::test]
+    async fn legacy_group_message_matches_botpy_defaults_and_nulls() {
+        let (base_url, request, server) = spawn_capture_server().await;
+        let api = test_api(base_url).await;
+        let response = api
+            .post_group_message(
+                api.token_required().unwrap(),
+                "group-openid-1",
+                None,
+                Some("hello"),
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+            )
+            .await
+            .unwrap();
+
+        assert_eq!(response.id.as_deref(), Some("message-1"));
+        let request = request.await.unwrap();
+        assert!(request.starts_with("POST /v2/groups/group-openid-1/messages HTTP/1.1"));
+        assert_eq!(
+            request_body(&request),
+            serde_json::json!({
+                "group_openid": "group-openid-1",
+                "msg_type": 0,
+                "content": "hello",
+                "embed": null,
+                "ark": null,
+                "message_reference": null,
+                "media": null,
+                "msg_id": null,
+                "msg_seq": 1,
+                "event_id": null,
+                "markdown": null,
+                "keyboard": null
+            })
+        );
+        server.await.unwrap();
+    }
+
     #[tokio::test]
     async fn botpy_c2c_message_body_keeps_defaults_and_nulls() {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
         let response = api
             .post_c2c_message_botpy(
+                api.token_required().unwrap(),
+                "openid-1",
+                None,
+                Some("hello"),
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+            )
+            .await
+            .unwrap();
+
+        assert_eq!(response.id.as_deref(), Some("message-1"));
+        let request = request.await.unwrap();
+        assert!(request.starts_with("POST /v2/users/openid-1/messages HTTP/1.1"));
+        assert_eq!(
+            request_body(&request),
+            serde_json::json!({
+                "openid": "openid-1",
+                "msg_type": 0,
+                "content": "hello",
+                "embed": null,
+                "ark": null,
+                "message_reference": null,
+                "media": null,
+                "msg_id": null,
+                "msg_seq": 1,
+                "event_id": null,
+                "markdown": null,
+                "keyboard": null
+            })
+        );
+        server.await.unwrap();
+    }
+
+    #[allow(deprecated)]
+    #[tokio::test]
+    async fn legacy_c2c_message_matches_botpy_defaults_and_nulls() {
+        let (base_url, request, server) = spawn_capture_server().await;
+        let api = test_api(base_url).await;
+        let response = api
+            .post_c2c_message(
                 api.token_required().unwrap(),
                 "openid-1",
                 None,

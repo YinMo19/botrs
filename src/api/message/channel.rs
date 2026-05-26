@@ -1,4 +1,3 @@
-use super::legacy::ChannelLikeMessageParts;
 use crate::api::{BotApi, resource};
 use crate::error::Result;
 use crate::models::{
@@ -331,7 +330,9 @@ impl BotApi {
         markdown: Option<&MarkdownPayload>,
         keyboard: Option<&Keyboard>,
     ) -> Result<MessageResponse> {
-        let params: MessageParams = ChannelLikeMessageParts::new(
+        self.post_message_botpy(
+            token,
+            channel_id,
             content,
             embed,
             ark,
@@ -343,10 +344,7 @@ impl BotApi {
             markdown,
             keyboard,
         )
-        .into();
-
-        self.post_message_with_params(token, channel_id, params)
-            .await
+        .await
     }
 }
 
@@ -411,12 +409,16 @@ mod tests {
                         .flatten()
                 });
                 let body_start = header_end + 4;
-                if is_chunked || is_multipart {
-                    if request[body_start..].contains("image-bytes") {
+                if let Some(content_length) = content_length {
+                    if request_bytes.len().saturating_sub(body_start) >= content_length {
                         break;
                     }
-                } else if let Some(content_length) = content_length {
-                    if request_bytes.len().saturating_sub(body_start) >= content_length {
+                } else if is_chunked {
+                    if request[body_start..].contains("\r\n0\r\n\r\n") {
+                        break;
+                    }
+                } else if is_multipart {
+                    if request[body_start..].contains("image-bytes") {
                         break;
                     }
                 } else {
@@ -461,6 +463,51 @@ mod tests {
         let api = test_api(base_url).await;
         let response = api
             .post_message_botpy(
+                api.token_required().unwrap(),
+                "channel-1",
+                Some("hello"),
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+            )
+            .await
+            .unwrap();
+
+        assert_eq!(response.id.as_deref(), Some("message-1"));
+        let request = request.await.unwrap();
+        assert!(request.starts_with("POST /channels/channel-1/messages HTTP/1.1"));
+        assert_eq!(
+            request_body(&request),
+            serde_json::json!({
+                "channel_id": "channel-1",
+                "content": "hello",
+                "embed": null,
+                "ark": null,
+                "message_reference": null,
+                "image": null,
+                "file_image": null,
+                "msg_id": null,
+                "event_id": null,
+                "markdown": null,
+                "keyboard": null
+            })
+        );
+        server.await.unwrap();
+    }
+
+    #[allow(deprecated)]
+    #[tokio::test]
+    async fn legacy_post_message_matches_botpy_locals_body() {
+        let (base_url, request, server) = spawn_capture_server().await;
+        let api = test_api(base_url).await;
+        let response = api
+            .post_message(
                 api.token_required().unwrap(),
                 "channel-1",
                 Some("hello"),

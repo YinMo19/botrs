@@ -1,4 +1,4 @@
-use crate::api::{BotApi, message::legacy::ChannelLikeMessageParts, resource};
+use crate::api::{BotApi, resource};
 use crate::error::Result;
 use crate::models::{
     api::MessageResponse,
@@ -153,7 +153,9 @@ impl BotApi {
         markdown: Option<&MarkdownPayload>,
         keyboard: Option<&Keyboard>,
     ) -> Result<MessageResponse> {
-        let params: DirectMessageParams = ChannelLikeMessageParts::new(
+        self.post_dms_botpy(
+            token,
+            guild_id,
             content,
             embed,
             ark,
@@ -165,9 +167,7 @@ impl BotApi {
             markdown,
             keyboard,
         )
-        .into();
-
-        self.post_dms_with_params(token, guild_id, params).await
+        .await
     }
 }
 
@@ -232,12 +232,16 @@ mod tests {
                         .flatten()
                 });
                 let body_start = header_end + 4;
-                if is_chunked || is_multipart {
-                    if request[body_start..].contains("image-bytes") {
+                if let Some(content_length) = content_length {
+                    if request_bytes.len().saturating_sub(body_start) >= content_length {
                         break;
                     }
-                } else if let Some(content_length) = content_length {
-                    if request_bytes.len().saturating_sub(body_start) >= content_length {
+                } else if is_chunked {
+                    if request[body_start..].contains("\r\n0\r\n\r\n") {
+                        break;
+                    }
+                } else if is_multipart {
+                    if request[body_start..].contains("image-bytes") {
                         break;
                     }
                 } else {
@@ -282,6 +286,51 @@ mod tests {
         let api = test_api(base_url).await;
         let response = api
             .post_dms_botpy(
+                api.token_required().unwrap(),
+                "guild-1",
+                Some("hello"),
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+            )
+            .await
+            .unwrap();
+
+        assert_eq!(response.id.as_deref(), Some("message-1"));
+        let request = request.await.unwrap();
+        assert!(request.starts_with("POST /dms/guild-1/messages HTTP/1.1"));
+        assert_eq!(
+            request_body(&request),
+            serde_json::json!({
+                "guild_id": "guild-1",
+                "content": "hello",
+                "embed": null,
+                "ark": null,
+                "message_reference": null,
+                "image": null,
+                "file_image": null,
+                "msg_id": null,
+                "event_id": null,
+                "markdown": null,
+                "keyboard": null
+            })
+        );
+        server.await.unwrap();
+    }
+
+    #[allow(deprecated)]
+    #[tokio::test]
+    async fn legacy_post_dms_matches_botpy_locals_body() {
+        let (base_url, request, server) = spawn_capture_server().await;
+        let api = test_api(base_url).await;
+        let response = api
+            .post_dms(
                 api.token_required().unwrap(),
                 "guild-1",
                 Some("hello"),
