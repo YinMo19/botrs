@@ -31,7 +31,7 @@ impl Gateway {
             debug!("Sending identify");
             let identify = Identify {
                 token: self.token.bot_token().await?,
-                intents: self.intents.bits(),
+                intents: self.identify_intents(),
                 shard: self.shard,
                 properties: IdentifyProperties::default(),
             };

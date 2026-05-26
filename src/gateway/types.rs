@@ -1,3 +1,4 @@
+use crate::intents::IntentGuilds;
 use crate::intents::Intents;
 use crate::token::Token;
 use std::sync::Arc;
@@ -133,5 +134,13 @@ impl Gateway {
         };
 
         Duration::from_secs(rounded.max(1))
+    }
+
+    pub(super) const fn identify_intents(&self) -> u32 {
+        if self.intents.bits() == 0 {
+            IntentGuilds
+        } else {
+            self.intents.bits()
+        }
     }
 }

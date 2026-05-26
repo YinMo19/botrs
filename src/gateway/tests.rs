@@ -28,6 +28,26 @@ fn test_gateway_with_shard() {
 }
 
 #[test]
+fn identify_intents_fall_back_to_guilds_when_empty() {
+    let token = Token::new("test_app_id", "test_secret");
+    let gateway = Gateway::new("wss://example.com", token, Intents::none(), Some([0, 1]));
+
+    assert_eq!(gateway.identify_intents(), crate::intents::IntentGuilds);
+}
+
+#[test]
+fn identify_intents_keep_configured_bits() {
+    let token = Token::new("test_app_id", "test_secret");
+    let intents = Intents::none().with_public_messages();
+    let gateway = Gateway::new("wss://example.com", token, intents, Some([0, 1]));
+
+    assert_eq!(
+        gateway.identify_intents(),
+        crate::intents::IntentGroupMessages
+    );
+}
+
+#[test]
 fn test_session_start_interval() {
     assert_eq!(Gateway::session_start_interval(0), Duration::from_secs(2));
     assert_eq!(Gateway::session_start_interval(1), Duration::from_secs(2));
