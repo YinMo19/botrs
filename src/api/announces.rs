@@ -1,6 +1,7 @@
 use super::{BotApi, resource};
 use crate::error::Result;
 use crate::models::announce::{Announce, AnnouncesType, RecommendChannel};
+use crate::models::message::Media;
 use crate::token::Token;
 use serde::Serialize;
 use serde_json::{Value, json};
@@ -46,7 +47,7 @@ impl BotApi {
         file_type: u32,
         url: &str,
         srv_send_msg: Option<bool>,
-    ) -> Result<Value> {
+    ) -> Result<Media> {
         debug!("Uploading group file to {}", group_openid);
 
         let body = BotpyGroupFileBody {
@@ -61,7 +62,7 @@ impl BotApi {
             .http
             .post(token, &path, None::<&()>, Some(&body))
             .await?;
-        Ok(response)
+        Self::decode_json(response)
     }
 
     /// Sends a file message to a C2C conversation.
@@ -75,7 +76,7 @@ impl BotApi {
         file_type: u32,
         url: &str,
         srv_send_msg: Option<bool>,
-    ) -> Result<Value> {
+    ) -> Result<Media> {
         debug!("Uploading C2C file to {}", openid);
 
         let body = BotpyC2cFileBody {
@@ -90,7 +91,7 @@ impl BotApi {
             .http
             .post(token, &path, None::<&()>, Some(&body))
             .await?;
-        Ok(response)
+        Self::decode_json(response)
     }
 
     // Announcement APIs
@@ -379,7 +380,9 @@ mod tests {
             .await
             .unwrap();
 
-        assert_eq!(response["file_uuid"], "file-1");
+        assert_eq!(response.file_uuid.as_deref(), Some("file-1"));
+        assert_eq!(response.file_info.as_deref(), Some("info-1"));
+        assert_eq!(response.ttl, Some(60));
         let request = request.await.unwrap();
         assert!(request.starts_with("POST /v2/groups/group-openid-1/files HTTP/1.1"));
         assert_eq!(
@@ -409,7 +412,9 @@ mod tests {
             .await
             .unwrap();
 
-        assert_eq!(response["file_uuid"], "file-1");
+        assert_eq!(response.file_uuid.as_deref(), Some("file-1"));
+        assert_eq!(response.file_info.as_deref(), Some("info-1"));
+        assert_eq!(response.ttl, Some(60));
         let request = request.await.unwrap();
         assert!(request.starts_with("POST /v2/users/openid-1/files HTTP/1.1"));
         assert_eq!(

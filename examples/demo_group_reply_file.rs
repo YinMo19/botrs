@@ -56,23 +56,11 @@ impl EventHandler for GroupReplyFileHandler {
 
         info!("Successfully uploaded group file: {:?}", upload_media);
 
-        // Get message ID for reply
-        let msg_id = message.id.as_deref();
-
-        // Convert Value to Media struct
-        let media = match serde_json::from_value::<botrs::models::message::Media>(upload_media) {
-            Ok(media) => media,
-            Err(e) => {
-                warn!("Failed to parse media response: {}", e);
-                return;
-            }
-        };
-
         // Send group message with media (equivalent to message._api.post_group_message with media)
         let params = botrs::models::message::GroupMessageParams {
             msg_type: 7, // 7表示富媒体类型 (rich media type)
-            msg_id: msg_id.map(|s| s.to_string()),
-            media: Some(media),
+            msg_id: message.id.clone(),
+            media: Some(upload_media),
             ..Default::default()
         };
 

@@ -8,7 +8,7 @@ impl Context {
         file_type: u32,
         url: &str,
         srv_send_msg: Option<bool>,
-    ) -> Result<serde_json::Value> {
+    ) -> Result<Media> {
         self.api
             .post_group_file(&self.token, group_openid, file_type, url, srv_send_msg)
             .await
@@ -24,7 +24,7 @@ impl Context {
         file_type: u32,
         url: &str,
         srv_send_msg: Option<bool>,
-    ) -> Result<serde_json::Value> {
+    ) -> Result<Media> {
         self.api
             .post_c2c_file(&self.token, openid, file_type, url, srv_send_msg)
             .await
