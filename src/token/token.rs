@@ -1,46 +1,17 @@
-//! Authentication token management for QQ Guild Bot API.
-//!
-//! This module provides the `Token` struct for managing bot authentication
-//! credentials including app ID and secret, with access token management.
-
-#![allow(non_upper_case_globals)]
-
 use crate::error::{BotError, Result};
-// use base64::{engine::general_purpose, Engine as _};
 use serde::{Deserialize, Serialize};
-use std::fmt;
 use std::sync::Arc;
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use std::time::{SystemTime, UNIX_EPOCH};
 use tokio::sync::Mutex;
 
-pub const TypeBearer: &str = "Bearer";
-pub const TypeQQBot: &str = "QQBot";
-const DEFAULT_EXPIRY_DELTA_MILLIS: u64 = 9_000;
-const RAND_TIME_UPPER_LIMIT_MILLIS: u64 = 500;
-
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct QQBotCredentials {
-    #[serde(alias = "appid", alias = "appId")]
-    pub app_id: String,
-    #[serde(alias = "secret", alias = "appSecret")]
-    pub app_secret: String,
-}
-
-pub type QQBotTokenSource = Token;
-
-#[allow(non_snake_case)]
-pub fn NewQQBotTokenSource(credentials: &QQBotCredentials) -> QQBotTokenSource {
-    Token::new(&credentials.app_id, &credentials.app_secret)
-}
-
 #[derive(Debug, Default)]
-struct TokenState {
-    access_token: Option<String>,
-    expires_at: Option<u64>,
-    expires_in: Option<u64>,
+pub(super) struct TokenState {
+    pub(super) access_token: Option<String>,
+    pub(super) expires_at: Option<u64>,
+    pub(super) expires_in: Option<u64>,
 }
 
-fn default_state() -> Arc<Mutex<TokenState>> {
+pub(super) fn default_state() -> Arc<Mutex<TokenState>> {
     Arc::new(Mutex::new(TokenState::default()))
 }
 
@@ -61,12 +32,12 @@ fn default_state() -> Arc<Mutex<TokenState>> {
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Token {
     /// The application ID provided by QQ
-    app_id: String,
+    pub(super) app_id: String,
     /// The application secret provided by QQ
-    secret: String,
+    pub(super) secret: String,
     /// Shared token cache and refresh lock.
     #[serde(skip, default = "default_state")]
-    state: Arc<Mutex<TokenState>>,
+    pub(super) state: Arc<Mutex<TokenState>>,
 }
 
 impl Token {
@@ -149,7 +120,7 @@ impl Token {
     }
 
     /// Ensures the token has a valid access token, refreshing if necessary.
-    async fn ensure_valid_token(&self) -> Result<()> {
+    pub(super) async fn ensure_valid_token(&self) -> Result<()> {
         let current_time = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .map_err(|_| BotError::internal("Failed to get current time"))?
@@ -210,7 +181,7 @@ impl Token {
 
         let expires_in = token_response
             .get("expires_in")
-            .and_then(parse_expires_in)
+            .and_then(super::parse_expires_in)
             .ok_or_else(|| BotError::auth("No expires_in in response"))?;
 
         state.access_token = Some(access_token.to_string());
@@ -220,7 +191,7 @@ impl Token {
         Ok(())
     }
 
-    async fn force_refresh_access_token(&self) -> Result<()> {
+    pub(super) async fn force_refresh_access_token(&self) -> Result<()> {
         let current_time = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .map_err(|_| BotError::internal("Failed to get current time"))?
@@ -238,7 +209,7 @@ impl Token {
             .ok_or_else(|| BotError::auth("No valid access token available"))
     }
 
-    async fn cached_expires_in(&self) -> Option<u64> {
+    pub(super) async fn cached_expires_in(&self) -> Option<u64> {
         self.state.lock().await.expires_in
     }
 
@@ -327,221 +298,5 @@ impl Token {
             "Token {{ app_id: {}, secret: {} }}",
             self.app_id, masked_secret
         )
-    }
-}
-
-#[allow(non_snake_case)]
-pub async fn StartRefreshAccessToken(
-    token_source: QQBotTokenSource,
-) -> Result<tokio::task::JoinHandle<()>> {
-    token_source.ensure_valid_token().await?;
-
-    Ok(tokio::spawn(async move {
-        let mut consecutive_failures = 0;
-        loop {
-            let refresh_millis = if consecutive_failures > 0 {
-                if consecutive_failures > 10 {
-                    panic!("get token failed continuously for more than ten times");
-                }
-                1_000
-            } else {
-                token_source
-                    .cached_expires_in()
-                    .await
-                    .map(get_refresh_millis)
-                    .unwrap_or(1_000)
-            };
-
-            tracing::debug!("refresh after {} milli sec", refresh_millis);
-            tokio::time::sleep(Duration::from_millis(refresh_millis)).await;
-
-            match token_source.force_refresh_access_token().await {
-                Ok(()) => consecutive_failures = 0,
-                Err(err) => {
-                    consecutive_failures += 1;
-                    tracing::error!("refresh access token failed: {}", err);
-                }
-            }
-        }
-    }))
-}
-
-fn parse_expires_in(value: &serde_json::Value) -> Option<u64> {
-    value
-        .as_u64()
-        .or_else(|| value.as_str().and_then(|value| value.parse().ok()))
-}
-
-fn get_refresh_millis(token_ttl_secs: u64) -> u64 {
-    let refresh_millis = token_ttl_secs.saturating_mul(1_000);
-    if refresh_millis < DEFAULT_EXPIRY_DELTA_MILLIS {
-        return refresh_millis;
-    }
-
-    let refresh_millis = refresh_millis - DEFAULT_EXPIRY_DELTA_MILLIS;
-    if refresh_millis > RAND_TIME_UPPER_LIMIT_MILLIS {
-        refresh_millis - jitter_millis(RAND_TIME_UPPER_LIMIT_MILLIS)
-    } else {
-        refresh_millis
-    }
-}
-
-fn jitter_millis(upper_bound: u64) -> u64 {
-    if upper_bound == 0 {
-        return 0;
-    }
-
-    SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .map(|duration| u64::from(duration.subsec_nanos()) % upper_bound)
-        .unwrap_or_default()
-}
-
-impl fmt::Display for Token {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.safe_display())
-    }
-}
-
-impl PartialEq for Token {
-    fn eq(&self, other: &Self) -> bool {
-        self.app_id == other.app_id && self.secret == other.secret
-    }
-}
-
-impl Eq for Token {}
-
-/// Implement custom Debug to avoid exposing secrets in debug output
-impl fmt::Debug for Token {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("Token")
-            .field("app_id", &self.app_id)
-            .field("secret", &"[REDACTED]")
-            .finish()
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_token_creation() {
-        let token = Token::new("123456", "secret123");
-        assert_eq!(token.app_id(), "123456");
-        assert_eq!(token.secret(), "secret123");
-    }
-
-    #[tokio::test]
-    async fn test_authorization_header() {
-        let token = Token::new("test", "secret");
-
-        // Since we don't have real credentials, this should fail
-        let result = token.authorization_header().await;
-        assert!(
-            result.is_err(),
-            "Expected authorization_header to fail with invalid credentials"
-        );
-    }
-
-    #[tokio::test]
-    async fn test_bot_token() {
-        let token = Token::new("test", "secret");
-        // In real usage, both methods would fetch the same access token
-        // For this test, we just verify they both start with "QQBot "
-        let bot_token_result = token.bot_token().await;
-        let auth_header_result = token.authorization_header().await;
-
-        // Both should fail in the same way since we don't have real credentials
-        assert!(bot_token_result.is_err());
-        assert!(auth_header_result.is_err());
-    }
-
-    #[tokio::test]
-    async fn cloned_tokens_share_cached_access_token() {
-        let token = Token::new("123", "secret");
-        {
-            let mut state = token.state.lock().await;
-            state.access_token = Some("cached-token".to_string());
-            state.expires_at = Some(u64::MAX);
-            state.expires_in = Some(7200);
-        }
-
-        let cloned = token.clone();
-        assert_eq!(
-            cloned.authorization_header().await.unwrap(),
-            "QQBot cached-token"
-        );
-        assert_eq!(cloned.cached_expires_in().await, Some(7200));
-    }
-
-    #[test]
-    fn refresh_millis_matches_expected_bounds() {
-        assert_eq!(get_refresh_millis(8), 8_000);
-        assert_eq!(get_refresh_millis(9), 0);
-
-        let refresh_millis = get_refresh_millis(10);
-        assert!((501..=1_000).contains(&refresh_millis));
-
-        let refresh_millis = get_refresh_millis(7200);
-        assert!((7_190_501..=7_191_000).contains(&refresh_millis));
-    }
-
-    #[test]
-    fn parse_expires_in_accepts_number_or_string() {
-        assert_eq!(parse_expires_in(&serde_json::json!("7200")), Some(7200));
-        assert_eq!(parse_expires_in(&serde_json::json!(7200)), Some(7200));
-        assert_eq!(parse_expires_in(&serde_json::json!("bad")), None);
-    }
-
-    #[test]
-    fn test_validation() {
-        let valid_token = Token::new("123", "secret");
-        assert!(valid_token.validate().is_ok());
-
-        let empty_app_id = Token::new("", "secret");
-        assert!(empty_app_id.validate().is_err());
-
-        let empty_secret = Token::new("123", "");
-        assert!(empty_secret.validate().is_err());
-    }
-
-    #[test]
-    fn test_safe_display() {
-        let token = Token::new("123456", "verylongsecret123");
-        let display = token.safe_display();
-        assert!(display.contains("123456"));
-        assert!(display.contains("very"));
-        assert!(display.contains("123"));
-        assert!(display.contains("****"));
-        assert!(!display.contains("longsecret"));
-
-        let short_token = Token::new("123", "short");
-        let short_display = short_token.safe_display();
-        assert!(short_display.contains("****"));
-        assert!(!short_display.contains("short"));
-    }
-
-    #[test]
-    fn test_debug_format() {
-        let token = Token::new("123456", "secret123");
-        let debug_str = format!("{:?}", token);
-        assert!(debug_str.contains("123456"));
-        assert!(debug_str.contains("[REDACTED]"));
-        assert!(!debug_str.contains("secret123"));
-    }
-
-    #[test]
-    fn test_token_source_alias() {
-        let credentials = QQBotCredentials {
-            app_id: "123456".to_string(),
-            app_secret: "secret123".to_string(),
-        };
-        let token = NewQQBotTokenSource(&credentials);
-        assert_eq!(token.app_id(), "123456");
-        assert_eq!(token.GetAppID(), "123456");
-        assert_eq!(token.secret(), "secret123");
-        assert_eq!(TypeQQBot, "QQBot");
-        assert_eq!(TypeBearer, "Bearer");
     }
 }
