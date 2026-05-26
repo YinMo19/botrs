@@ -1,0 +1,139 @@
+use super::*;
+
+#[test]
+fn test_api_response() {
+    let success: ApiResponse<String> = ApiResponse::success("test".to_string());
+    assert!(success.is_success());
+    assert!(!success.is_error());
+    assert!(success.into_result().is_ok());
+
+    let error: ApiResponse<String> = ApiResponse::error(404, "Not found");
+    assert!(!error.is_success());
+    assert!(error.is_error());
+    assert!(error.into_result().is_err());
+}
+
+#[test]
+fn test_pagination() {
+    let pagination = Pagination::new(2, 10, 25);
+    assert_eq!(pagination.total_pages, 3);
+    assert!(pagination.has_prev);
+    assert!(pagination.has_next);
+
+    let last_page = Pagination::new(3, 10, 25);
+    assert!(!last_page.has_next);
+    assert!(last_page.has_prev);
+}
+
+#[test]
+fn test_rate_limit() {
+    let rate_limit = RateLimit {
+        bucket: Some("global".to_string()),
+        limit: 100,
+        remaining: 0,
+        reset: chrono::Utc::now().timestamp() as u64 + 60,
+        retry_after: Some(60),
+    };
+
+    assert!(rate_limit.is_exceeded());
+    assert!(rate_limit.reset_in() > 0);
+}
+
+#[test]
+fn test_api_error() {
+    let error = ApiError::new(429, "Rate limited");
+    assert!(error.is_rate_limit());
+    assert!(!error.is_auth_error());
+    assert!(!error.is_not_found());
+    assert!(!error.is_server_error());
+
+    let auth_error = ApiError::new(401, "Unauthorized");
+    assert!(auth_error.is_auth_error());
+}
+
+#[test]
+fn websocket_ap_keeps_official_json_shape() {
+    let ap: WebsocketAP = serde_json::from_value(serde_json::json!({
+        "url": "wss://api.sgroup.qq.com/websocket",
+        "shards": 2,
+        "session_start_limit": {
+            "total": 10,
+            "remaining": 9,
+            "reset_after": 1000,
+            "max_concurrency": 1
+        }
+    }))
+    .unwrap();
+
+    assert_eq!(ap.url, "wss://api.sgroup.qq.com/websocket");
+    assert_eq!(ap.shards, 2);
+    assert_eq!(ap.session_start_limit.total, 10);
+    assert_eq!(ap.session_start_limit.remaining, 9);
+    assert_eq!(ap.session_start_limit.reset_after, 1000);
+    assert_eq!(ap.session_start_limit.max_concurrency, 1);
+
+    let value = serde_json::to_value(&ap).unwrap();
+    assert_eq!(value["session_start_limit"]["reset_after"], 1000);
+}
+
+#[test]
+fn audio_action_uses_required_zero_value_fields() {
+    let action: AudioAction = serde_json::from_value(serde_json::json!({})).unwrap();
+
+    assert_eq!(action.guild_id, "");
+    assert_eq!(action.channel_id, "");
+    assert_eq!(action.audio_url, "");
+    assert_eq!(action.text, "");
+}
+
+#[test]
+fn audio_action_keeps_official_json_shape() {
+    let action = AudioAction {
+        guild_id: "guild-1".to_string(),
+        channel_id: "channel-1".to_string(),
+        audio_url: "https://example.com/audio.mp3".to_string(),
+        text: "now playing".to_string(),
+    };
+    let value = serde_json::to_value(&action).unwrap();
+
+    assert_eq!(value["guild_id"], "guild-1");
+    assert_eq!(value["channel_id"], "channel-1");
+    assert_eq!(value["audio_url"], "https://example.com/audio.mp3");
+    assert_eq!(value["text"], "now playing");
+}
+
+#[test]
+fn audio_action_from_value_tolerates_missing_fields() {
+    let action = AudioAction::from_value(&serde_json::json!({
+        "guild_id": "guild-1",
+        "channel_id": 123,
+    }));
+
+    assert_eq!(action.guild_id, "guild-1");
+    assert_eq!(action.channel_id, "");
+    assert_eq!(action.audio_url, "");
+    assert_eq!(action.text, "");
+}
+
+#[test]
+fn pins_message_uses_required_zero_value_fields() {
+    let pins: PinsMessage = serde_json::from_value(serde_json::json!({})).unwrap();
+
+    assert!(pins.guild_id.is_empty());
+    assert!(pins.channel_id.is_empty());
+    assert!(pins.message_ids.is_empty());
+}
+
+#[test]
+fn pins_message_keeps_official_json_shape() {
+    let pins = PinsMessage {
+        guild_id: "guild-1".to_string(),
+        channel_id: "channel-1".to_string(),
+        message_ids: vec!["message-1".to_string(), "message-2".to_string()],
+    };
+    let value = serde_json::to_value(&pins).unwrap();
+
+    assert_eq!(value["guild_id"], "guild-1");
+    assert_eq!(value["channel_id"], "channel-1");
+    assert_eq!(value["message_ids"][0], "message-1");
+}
