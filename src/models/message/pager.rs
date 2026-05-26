@@ -101,4 +101,3 @@ pub struct SettingGuideToCreate {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub setting_guide: Option<SettingGuide>,
 }
-

@@ -18,25 +18,10 @@ pub enum EmojiType {
     Unknown(u8),
 }
 
-impl From<u8> for EmojiType {
-    fn from(value: u8) -> Self {
-        match value {
-            1 => Self::System,
-            2 => Self::Custom,
-            other => Self::Unknown(other),
-        }
-    }
-}
-
-impl From<EmojiType> for u8 {
-    fn from(emoji_type: EmojiType) -> Self {
-        match emoji_type {
-            EmojiType::System => 1,
-            EmojiType::Custom => 2,
-            EmojiType::Unknown(value) => value,
-        }
-    }
-}
+wire_enum!(EmojiType, u8, Unknown, {
+    System = 1,
+    Custom = 2,
+});
 
 impl EmojiType {
     /// Returns a human-readable description of the emoji type.

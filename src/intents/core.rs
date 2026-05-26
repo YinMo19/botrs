@@ -1,5 +1,21 @@
 use serde::{Deserialize, Serialize};
 
+macro_rules! intent_accessors {
+    ($($with:ident, $check:ident, $intent:ident, $doc:literal);+ $(;)?) => {
+        $(
+            #[doc = concat!("Enable ", $doc, " intent.")]
+            pub const fn $with(self) -> Self {
+                self.with_intent(Self::$intent)
+            }
+
+            #[doc = concat!("Check if ", $doc, " intent is enabled.")]
+            pub const fn $check(self) -> bool {
+                self.contains(Self::$intent)
+            }
+        )+
+    };
+}
+
 /// Represents the intents that control which gateway events the bot receives.
 ///
 /// Intents are a system that allows you to control which events your bot receives
@@ -134,144 +150,21 @@ impl Intents {
         self
     }
 
-    /// Enable guilds intent.
-    pub const fn with_guilds(self) -> Self {
-        self.with_intent(Self::GUILDS)
-    }
-
-    /// Enable guild members intent.
-    pub const fn with_guild_members(self) -> Self {
-        self.with_intent(Self::GUILD_MEMBERS)
-    }
-
-    /// Enable guild messages intent (privileged).
-    pub const fn with_guild_messages(self) -> Self {
-        self.with_intent(Self::GUILD_MESSAGES)
-    }
-
-    /// Enable guild message reactions intent.
-    pub const fn with_guild_message_reactions(self) -> Self {
-        self.with_intent(Self::GUILD_MESSAGE_REACTIONS)
-    }
-
-    /// Enable direct messages intent.
-    pub const fn with_direct_message(self) -> Self {
-        self.with_intent(Self::DIRECT_MESSAGE)
-    }
-
-    /// Enable interaction intent.
-    pub const fn with_interaction(self) -> Self {
-        self.with_intent(Self::INTERACTION)
-    }
-
-    /// Enable message audit intent.
-    pub const fn with_message_audit(self) -> Self {
-        self.with_intent(Self::MESSAGE_AUDIT)
-    }
-
-    /// Enable forums intent (privileged).
-    pub const fn with_forums(self) -> Self {
-        self.with_intent(Self::FORUMS)
-    }
-
-    /// Enable audio action intent.
-    pub const fn with_audio_action(self) -> Self {
-        self.with_intent(Self::AUDIO_ACTION)
-    }
-
-    /// Enable public guild messages intent.
-    pub const fn with_public_guild_messages(self) -> Self {
-        self.with_intent(Self::PUBLIC_GUILD_MESSAGES)
-    }
-
-    /// Enable audio or live channel member intent.
-    pub const fn with_audio_or_live_channel_member(self) -> Self {
-        self.with_intent(Self::AUDIO_OR_LIVE_CHANNEL_MEMBER)
-    }
-
-    /// Enable open forum event intent.
-    pub const fn with_open_forum_event(self) -> Self {
-        self.with_intent(Self::OPEN_FORUM_EVENT)
-    }
-
-    /// Enable enter AIO intent.
-    pub const fn with_enter_aio(self) -> Self {
-        self.with_intent(Self::ENTER_AIO)
-    }
-
-    /// Enable public messages intent.
-    pub const fn with_public_messages(self) -> Self {
-        self.with_intent(Self::PUBLIC_MESSAGES)
-    }
-
-    /// Check if guilds intent is enabled.
-    pub const fn guilds(self) -> bool {
-        self.contains(Self::GUILDS)
-    }
-
-    /// Check if guild members intent is enabled.
-    pub const fn guild_members(self) -> bool {
-        self.contains(Self::GUILD_MEMBERS)
-    }
-
-    /// Check if guild messages intent is enabled.
-    pub const fn guild_messages(self) -> bool {
-        self.contains(Self::GUILD_MESSAGES)
-    }
-
-    /// Check if guild message reactions intent is enabled.
-    pub const fn guild_message_reactions(self) -> bool {
-        self.contains(Self::GUILD_MESSAGE_REACTIONS)
-    }
-
-    /// Check if direct messages intent is enabled.
-    pub const fn direct_message(self) -> bool {
-        self.contains(Self::DIRECT_MESSAGE)
-    }
-
-    /// Check if interaction intent is enabled.
-    pub const fn interaction(self) -> bool {
-        self.contains(Self::INTERACTION)
-    }
-
-    /// Check if message audit intent is enabled.
-    pub const fn message_audit(self) -> bool {
-        self.contains(Self::MESSAGE_AUDIT)
-    }
-
-    /// Check if forums intent is enabled.
-    pub const fn forums(self) -> bool {
-        self.contains(Self::FORUMS)
-    }
-
-    /// Check if audio action intent is enabled.
-    pub const fn audio_action(self) -> bool {
-        self.contains(Self::AUDIO_ACTION)
-    }
-
-    /// Check if public guild messages intent is enabled.
-    pub const fn public_guild_messages(self) -> bool {
-        self.contains(Self::PUBLIC_GUILD_MESSAGES)
-    }
-
-    /// Check if audio or live channel member intent is enabled.
-    pub const fn audio_or_live_channel_member(self) -> bool {
-        self.contains(Self::AUDIO_OR_LIVE_CHANNEL_MEMBER)
-    }
-
-    /// Check if open forum event intent is enabled.
-    pub const fn open_forum_event(self) -> bool {
-        self.contains(Self::OPEN_FORUM_EVENT)
-    }
-
-    /// Check if enter AIO intent is enabled.
-    pub const fn enter_aio(self) -> bool {
-        self.contains(Self::ENTER_AIO)
-    }
-
-    /// Check if public messages intent is enabled.
-    pub const fn public_messages(self) -> bool {
-        self.contains(Self::PUBLIC_MESSAGES)
+    intent_accessors! {
+        with_guilds, guilds, GUILDS, "guilds";
+        with_guild_members, guild_members, GUILD_MEMBERS, "guild members";
+        with_guild_messages, guild_messages, GUILD_MESSAGES, "guild messages";
+        with_guild_message_reactions, guild_message_reactions, GUILD_MESSAGE_REACTIONS, "guild message reactions";
+        with_direct_message, direct_message, DIRECT_MESSAGE, "direct messages";
+        with_interaction, interaction, INTERACTION, "interaction";
+        with_message_audit, message_audit, MESSAGE_AUDIT, "message audit";
+        with_forums, forums, FORUMS, "forums";
+        with_audio_action, audio_action, AUDIO_ACTION, "audio action";
+        with_public_guild_messages, public_guild_messages, PUBLIC_GUILD_MESSAGES, "public guild messages";
+        with_audio_or_live_channel_member, audio_or_live_channel_member, AUDIO_OR_LIVE_CHANNEL_MEMBER, "audio or live channel member";
+        with_open_forum_event, open_forum_event, OPEN_FORUM_EVENT, "open forum event";
+        with_enter_aio, enter_aio, ENTER_AIO, "enter AIO";
+        with_public_messages, public_messages, PUBLIC_MESSAGES, "public messages";
     }
 
     /// Check if any privileged intents are enabled.

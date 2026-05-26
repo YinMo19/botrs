@@ -1,4 +1,4 @@
-use crate::api::{resource, BotApi};
+use crate::api::{BotApi, resource};
 use crate::error::Result;
 use crate::models::guild::{MemberAddRoleBody, UpdateGuildMute, UpdateGuildMuteResponse};
 

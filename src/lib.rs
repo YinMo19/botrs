@@ -2,6 +2,9 @@
 #![allow(clippy::too_many_arguments)]
 #![doc = include_str!("../README.md")]
 
+#[macro_use]
+mod macros;
+
 pub mod api;
 pub mod audio;
 pub mod client;
@@ -33,10 +36,6 @@ pub mod websocket;
 // Re-export main types for convenience
 pub use api::BotApi;
 pub use audio::{Audio, AudioControl, AudioStatus, PublicAudio, PublicAudioType};
-pub use facade::{
-    DefaultImpl, NewOpenAPI, NewSandboxOpenAPI, RegisterDispatchEventHandler, SelectOpenAPIVersion,
-    SetLogger, SetOpenAPIClient, SetSessionManager, SetWebsocketClient,
-};
 pub use client::{Client, Context, EventHandler};
 pub use connection::{ConnectionSession, ConnectionState, Session};
 pub use constant::*;
@@ -50,6 +49,10 @@ pub use event::{
     ParseData, PlainEventHandler, PostEventHandler, PublicMessageDeleteEventHandler, ReadyHandler,
     RegisterHandler, RegisterHandlers, ReplyEventHandler, SubscribeMsgStatusEventHandler,
     ThreadEventHandler,
+};
+pub use facade::{
+    DefaultImpl, NewOpenAPI, NewSandboxOpenAPI, RegisterDispatchEventHandler, SelectOpenAPIVersion,
+    SetLogger, SetOpenAPIClient, SetSessionManager, SetWebsocketClient,
 };
 pub use forum::{
     Content, Format, ForumAuditResult, OpenThread, Post, PostInfo, Reply, ReplyInfo, Thread,

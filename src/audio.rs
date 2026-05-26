@@ -69,25 +69,10 @@ pub enum PublicAudioType {
     Unknown(u8),
 }
 
-impl From<u8> for PublicAudioType {
-    fn from(value: u8) -> Self {
-        match value {
-            2 => Self::Voice,
-            5 => Self::Live,
-            other => Self::Unknown(other),
-        }
-    }
-}
-
-impl From<PublicAudioType> for u8 {
-    fn from(value: PublicAudioType) -> Self {
-        match value {
-            PublicAudioType::Voice => 2,
-            PublicAudioType::Live => 5,
-            PublicAudioType::Unknown(other) => other,
-        }
-    }
-}
+wire_enum!(PublicAudioType, u8, Unknown, {
+    Voice = 2,
+    Live = 5,
+});
 
 impl Serialize for PublicAudioType {
     fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>

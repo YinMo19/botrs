@@ -46,25 +46,10 @@ pub enum AnnouncesType {
     Unknown(u8),
 }
 
-impl From<u8> for AnnouncesType {
-    fn from(value: u8) -> Self {
-        match value {
-            0 => Self::Member,
-            1 => Self::Welcome,
-            other => Self::Unknown(other),
-        }
-    }
-}
-
-impl From<AnnouncesType> for u8 {
-    fn from(announces_type: AnnouncesType) -> Self {
-        match announces_type {
-            AnnouncesType::Member => 0,
-            AnnouncesType::Welcome => 1,
-            AnnouncesType::Unknown(value) => value,
-        }
-    }
-}
+wire_enum!(AnnouncesType, u8, Unknown, {
+    Member = 0,
+    Welcome = 1,
+});
 
 impl From<AnnouncesType> for i32 {
     fn from(announces_type: AnnouncesType) -> Self {

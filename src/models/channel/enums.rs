@@ -41,19 +41,14 @@ pub const ChannelTypeApplication: ChannelType = CHANNEL_TYPE_APPLICATION;
 #[allow(non_upper_case_globals)]
 pub const ChannelTypeForum: ChannelType = CHANNEL_TYPE_FORUM;
 
-impl From<u32> for ChannelType {
-    fn from(value: u32) -> Self {
-        match value {
-            0 => Self::Text,
-            2 => Self::Voice,
-            4 => Self::Category,
-            10005 => Self::Live,
-            10006 => Self::Application,
-            10007 => Self::Forum,
-            other => Self::Unknown(other),
-        }
-    }
-}
+wire_enum!(ChannelType, u32, Unknown, {
+    Text = 0,
+    Voice = 2,
+    Category = 4,
+    Live = 10005,
+    Application = 10006,
+    Forum = 10007,
+});
 
 impl ChannelType {
     /// Create ChannelType from u8 value
@@ -64,20 +59,6 @@ impl ChannelType {
     /// Create ChannelType from the raw integer value.
     pub fn from_u32(value: u32) -> Self {
         Self::from(value)
-    }
-}
-
-impl From<ChannelType> for u32 {
-    fn from(channel_type: ChannelType) -> Self {
-        match channel_type {
-            ChannelType::Text => 0,
-            ChannelType::Voice => 2,
-            ChannelType::Category => 4,
-            ChannelType::Live => 10005,
-            ChannelType::Application => 10006,
-            ChannelType::Forum => 10007,
-            ChannelType::Unknown(value) => value,
-        }
     }
 }
 
@@ -112,34 +93,17 @@ pub const ChannelSubTypeGuide: ChannelSubType = CHANNEL_SUB_TYPE_GUIDE;
 #[allow(non_upper_case_globals)]
 pub const ChannelSubTypeTeamGame: ChannelSubType = CHANNEL_SUB_TYPE_TEAM_GAME;
 
-impl From<u32> for ChannelSubType {
-    fn from(value: u32) -> Self {
-        match value {
-            0 => Self::Chat,
-            1 => Self::Notice,
-            2 => Self::Guide,
-            3 => Self::TeamGame,
-            other => Self::Unknown(other),
-        }
-    }
-}
+wire_enum!(ChannelSubType, u32, Unknown, {
+    Chat = 0,
+    Notice = 1,
+    Guide = 2,
+    TeamGame = 3,
+});
 
 impl ChannelSubType {
     /// Create ChannelSubType from u8 value
     pub fn from_u8(value: u8) -> Option<Self> {
         Some(Self::from(value as u32))
-    }
-}
-
-impl From<ChannelSubType> for u32 {
-    fn from(subtype: ChannelSubType) -> Self {
-        match subtype {
-            ChannelSubType::Chat => 0,
-            ChannelSubType::Notice => 1,
-            ChannelSubType::Guide => 2,
-            ChannelSubType::TeamGame => 3,
-            ChannelSubType::Unknown(value) => value,
-        }
     }
 }
 
@@ -171,27 +135,11 @@ pub const ChannelPrivateTypeOnlyAdmin: ChannelPrivateType = CHANNEL_PRIVATE_TYPE
 pub const ChannelPrivateTypeAdminAndMember: ChannelPrivateType =
     CHANNEL_PRIVATE_TYPE_ADMIN_AND_MEMBER;
 
-impl From<u8> for PrivateType {
-    fn from(value: u8) -> Self {
-        match value {
-            0 => Self::Public,
-            1 => Self::OnlyAdmin,
-            2 => Self::AdminAndMember,
-            other => Self::Unknown(other),
-        }
-    }
-}
-
-impl From<PrivateType> for u8 {
-    fn from(private_type: PrivateType) -> Self {
-        match private_type {
-            PrivateType::Public => 0,
-            PrivateType::OnlyAdmin => 1,
-            PrivateType::AdminAndMember => 2,
-            PrivateType::Unknown(other) => other,
-        }
-    }
-}
+wire_enum!(PrivateType, u8, Unknown, {
+    Public = 0,
+    OnlyAdmin = 1,
+    AdminAndMember = 2,
+});
 
 impl PrivateType {
     /// Create PrivateType from u8 value
@@ -237,27 +185,11 @@ pub const SpeakPermissionTypePublic: SpeakPermissionType = SPEAK_PERMISSION_TYPE
 pub const SpeakPermissionTypeAdminAndMember: SpeakPermissionType =
     SPEAK_PERMISSION_TYPE_ADMIN_AND_MEMBER;
 
-impl From<u8> for SpeakPermission {
-    fn from(value: u8) -> Self {
-        match value {
-            0 => Self::Invalid,
-            1 => Self::Public,
-            2 => Self::AdminAndMember,
-            other => Self::Unknown(other),
-        }
-    }
-}
-
-impl From<SpeakPermission> for u8 {
-    fn from(speak_permission: SpeakPermission) -> Self {
-        match speak_permission {
-            SpeakPermission::Invalid => 0,
-            SpeakPermission::Public => 1,
-            SpeakPermission::AdminAndMember => 2,
-            SpeakPermission::Unknown(other) => other,
-        }
-    }
-}
+wire_enum!(SpeakPermission, u8, Unknown, {
+    Invalid = 0,
+    Public = 1,
+    AdminAndMember = 2,
+});
 
 impl SpeakPermission {
     /// Create SpeakPermission from u8 value

@@ -1,6 +1,8 @@
-use crate::api::{resource, BotApi};
+use crate::api::{BotApi, resource};
 use crate::error::Result;
-use crate::models::message::{DirectMessageSession, DirectMessageToCreate, Message, MessageToCreate};
+use crate::models::message::{
+    DirectMessageSession, DirectMessageToCreate, Message, MessageToCreate,
+};
 use crate::options::{OpenApiOption, Options};
 use reqwest::Method;
 use serde_json::Value;

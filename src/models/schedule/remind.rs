@@ -27,39 +27,17 @@ pub enum RemindType {
     Unknown(u8),
 }
 
-impl From<u8> for RemindType {
-    fn from(value: u8) -> Self {
-        match value {
-            0 => Self::None,
-            1 => Self::OnStart,
-            2 => Self::Before5Minutes,
-            3 => Self::Before15Minutes,
-            4 => Self::Before30Minutes,
-            5 => Self::Before1Hour,
-            6 => Self::Before2Hours,
-            7 => Self::Before1Day,
-            8 => Self::Before2Days,
-            other => Self::Unknown(other),
-        }
-    }
-}
-
-impl From<RemindType> for u8 {
-    fn from(remind_type: RemindType) -> Self {
-        match remind_type {
-            RemindType::None => 0,
-            RemindType::OnStart => 1,
-            RemindType::Before5Minutes => 2,
-            RemindType::Before15Minutes => 3,
-            RemindType::Before30Minutes => 4,
-            RemindType::Before1Hour => 5,
-            RemindType::Before2Hours => 6,
-            RemindType::Before1Day => 7,
-            RemindType::Before2Days => 8,
-            RemindType::Unknown(value) => value,
-        }
-    }
-}
+wire_enum!(RemindType, u8, Unknown, {
+    None = 0,
+    OnStart = 1,
+    Before5Minutes = 2,
+    Before15Minutes = 3,
+    Before30Minutes = 4,
+    Before1Hour = 5,
+    Before2Hours = 6,
+    Before1Day = 7,
+    Before2Days = 8,
+});
 
 impl RemindType {
     /// Returns the wire value for this reminder type.

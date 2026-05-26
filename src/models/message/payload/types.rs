@@ -17,25 +17,10 @@ pub enum SendType {
     Unknown(u8),
 }
 
-impl From<u8> for SendType {
-    fn from(value: u8) -> Self {
-        match value {
-            1 => Self::Text,
-            2 => Self::RichMedia,
-            other => Self::Unknown(other),
-        }
-    }
-}
-
-impl From<SendType> for u8 {
-    fn from(send_type: SendType) -> Self {
-        match send_type {
-            SendType::Text => 1,
-            SendType::RichMedia => 2,
-            SendType::Unknown(value) => value,
-        }
-    }
-}
+wire_enum!(SendType, u8, Unknown, {
+    Text = 1,
+    RichMedia = 2,
+});
 
 /// Message type used by the message create APIs.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -77,32 +62,12 @@ pub const RichMediaMsg: MessageCreateType = MessageCreateType::RichMedia;
 #[allow(non_upper_case_globals)]
 pub const RichMedia: SendType = SendType::RichMedia;
 
-impl From<u32> for MessageCreateType {
-    fn from(value: u32) -> Self {
-        match value {
-            0 => Self::Text,
-            2 => Self::Markdown,
-            3 => Self::Ark,
-            4 => Self::Embed,
-            5 => Self::At,
-            6 => Self::InputNotify,
-            7 => Self::RichMedia,
-            other => Self::Unknown(other),
-        }
-    }
-}
-
-impl From<MessageCreateType> for u32 {
-    fn from(message_type: MessageCreateType) -> Self {
-        match message_type {
-            MessageCreateType::Text => 0,
-            MessageCreateType::Markdown => 2,
-            MessageCreateType::Ark => 3,
-            MessageCreateType::Embed => 4,
-            MessageCreateType::At => 5,
-            MessageCreateType::InputNotify => 6,
-            MessageCreateType::RichMedia => 7,
-            MessageCreateType::Unknown(value) => value,
-        }
-    }
-}
+wire_enum!(MessageCreateType, u32, Unknown, {
+    Text = 0,
+    Markdown = 2,
+    Ark = 3,
+    Embed = 4,
+    At = 5,
+    InputNotify = 6,
+    RichMedia = 7,
+});

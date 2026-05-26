@@ -108,31 +108,13 @@ pub enum RobotStatus {
     Unknown(u8),
 }
 
-impl From<u8> for RobotStatus {
-    fn from(value: u8) -> Self {
-        match value {
-            0 => Self::Offline,
-            1 => Self::Online,
-            2 => Self::Idle,
-            3 => Self::Dnd,
-            4 => Self::Invisible,
-            other => Self::Unknown(other),
-        }
-    }
-}
-
-impl From<RobotStatus> for u8 {
-    fn from(status: RobotStatus) -> Self {
-        match status {
-            RobotStatus::Offline => 0,
-            RobotStatus::Online => 1,
-            RobotStatus::Idle => 2,
-            RobotStatus::Dnd => 3,
-            RobotStatus::Invisible => 4,
-            RobotStatus::Unknown(value) => value,
-        }
-    }
-}
+wire_enum!(RobotStatus, u8, Unknown, {
+    Offline = 0,
+    Online = 1,
+    Idle = 2,
+    Dnd = 3,
+    Invisible = 4,
+});
 
 impl RobotStatus {
     /// Returns true if the status indicates the robot is available.
@@ -244,33 +226,14 @@ pub enum ActivityType {
     Unknown(u8),
 }
 
-impl From<u8> for ActivityType {
-    fn from(value: u8) -> Self {
-        match value {
-            0 => Self::Playing,
-            1 => Self::Streaming,
-            2 => Self::Listening,
-            3 => Self::Watching,
-            4 => Self::Custom,
-            5 => Self::Competing,
-            other => Self::Unknown(other),
-        }
-    }
-}
-
-impl From<ActivityType> for u8 {
-    fn from(activity_type: ActivityType) -> Self {
-        match activity_type {
-            ActivityType::Playing => 0,
-            ActivityType::Streaming => 1,
-            ActivityType::Listening => 2,
-            ActivityType::Watching => 3,
-            ActivityType::Custom => 4,
-            ActivityType::Competing => 5,
-            ActivityType::Unknown(value) => value,
-        }
-    }
-}
+wire_enum!(ActivityType, u8, Unknown, {
+    Playing = 0,
+    Streaming = 1,
+    Listening = 2,
+    Watching = 3,
+    Custom = 4,
+    Competing = 5,
+});
 
 #[cfg(test)]
 mod tests {

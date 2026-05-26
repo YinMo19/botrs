@@ -356,4 +356,3 @@ pub struct Reference {
     /// Whether to ignore getting reference message error
     pub ignore_get_message_error: Option<bool>,
 }
-

@@ -19,17 +19,12 @@ pub const InteractionTypePing: InteractionType = InteractionType::Ping;
 #[allow(non_upper_case_globals)]
 pub const InteractionTypeCommand: InteractionType = InteractionType::ApplicationCommand;
 
-impl From<u8> for InteractionType {
-    fn from(value: u8) -> Self {
-        match value {
-            1 => Self::Ping,
-            2 => Self::ApplicationCommand,
-            10 => Self::HttpProxy,
-            11 => Self::InlineKeyboard,
-            _ => Self::Ping, // Default fallback
-        }
-    }
-}
+wire_enum_with_default!(InteractionType, u8, Ping, {
+    Ping = 1,
+    ApplicationCommand = 2,
+    HttpProxy = 10,
+    InlineKeyboard = 11,
+});
 
 impl Serialize for InteractionType {
     fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
@@ -91,19 +86,14 @@ pub const ACTION_TYPE_SEND_ARK: ActionType = 0;
 #[allow(non_upper_case_globals)]
 pub const ActionTypeSendARK: ActionType = ACTION_TYPE_SEND_ARK;
 
-impl From<u8> for InteractionDataType {
-    fn from(value: u8) -> Self {
-        match value {
-            9 => Self::ChatInputSearch,
-            10 => Self::HttpProxy,
-            11 => Self::InlineKeyboardButtonClick,
-            12 => Self::CallbackCommandClick,
-            13 => Self::MessageFeedbackClick,
-            14 => Self::ClearSessionClick,
-            _ => Self::ChatInputSearch, // Default fallback
-        }
-    }
-}
+wire_enum_with_default!(InteractionDataType, u8, ChatInputSearch, {
+    ChatInputSearch = 9,
+    HttpProxy = 10,
+    InlineKeyboardButtonClick = 11,
+    CallbackCommandClick = 12,
+    MessageFeedbackClick = 13,
+    ClearSessionClick = 14,
+});
 
 impl Serialize for InteractionDataType {
     fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>

@@ -1,8 +1,6 @@
 use crate::api::BotApi;
 use crate::error::Result;
-use crate::models::permission::{
-    APIPermissionDemand, APIPermissionDemandToCreate, APIPermissions,
-};
+use crate::models::permission::{APIPermissionDemand, APIPermissionDemandToCreate, APIPermissions};
 
 impl BotApi {
     /// API permissions list API.

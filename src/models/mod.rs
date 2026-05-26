@@ -136,25 +136,10 @@ pub enum MessageType {
     Unknown(u8),
 }
 
-impl From<u8> for MessageType {
-    fn from(value: u8) -> Self {
-        match value {
-            0 => Self::Default,
-            1 => Self::System,
-            other => Self::Unknown(other),
-        }
-    }
-}
-
-impl From<MessageType> for u8 {
-    fn from(message_type: MessageType) -> Self {
-        match message_type {
-            MessageType::Default => 0,
-            MessageType::System => 1,
-            MessageType::Unknown(value) => value,
-        }
-    }
-}
+wire_enum!(MessageType, u8, Unknown, {
+    Default = 0,
+    System = 1,
+});
 
 /// Represents a color value.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
