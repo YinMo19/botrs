@@ -8,6 +8,7 @@ fn test_intent_creation() {
     let intents = Intents::all();
     assert!(intents.guilds());
     assert!(intents.public_guild_messages());
+    assert!(!intents.enter_aio());
 }
 
 #[test]
@@ -45,4 +46,14 @@ fn test_display() {
     let display = format!("{}", intents);
     assert!(display.contains("GUILDS"));
     assert!(display.contains("PUBLIC_GUILD_MESSAGES"));
+}
+
+#[test]
+fn default_intents_match_botpy_default_bits() {
+    let intents = Intents::default();
+
+    assert_eq!(intents.bits(), 1_846_285_315);
+    assert!(!intents.guild_messages());
+    assert!(!intents.forums());
+    assert!(!intents.enter_aio());
 }

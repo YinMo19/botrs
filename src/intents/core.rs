@@ -60,7 +60,10 @@ impl Intents {
         Self::new()
     }
 
-    /// Create an intent set with all available intents enabled.
+    /// Create an intent set with the same standard intents enabled by botpy's
+    /// `Intents.all()`.
+    ///
+    /// `ENTER_AIO` remains opt-in through [`Self::with_enter_aio`].
     pub const fn all() -> Self {
         Self {
             bits: Self::GUILDS
@@ -75,15 +78,15 @@ impl Intents {
                 | Self::PUBLIC_GUILD_MESSAGES
                 | Self::AUDIO_OR_LIVE_CHANNEL_MEMBER
                 | Self::OPEN_FORUM_EVENT
-                | Self::ENTER_AIO
                 | Self::PUBLIC_MESSAGES,
         }
     }
 
     /// Create the default set of intents for most bots.
     ///
-    /// This includes all public intents and excludes privileged intents
-    /// that require special permissions (guild_messages and forums).
+    /// This matches botpy's `Intents.default()`: all standard public intents
+    /// except the privileged `guild_messages` and `forums` intents. `ENTER_AIO`
+    /// remains explicitly opt-in.
     pub const fn default() -> Self {
         Self::all()
             .without_intent(Self::GUILD_MESSAGES)
