@@ -1,0 +1,263 @@
+use super::*;
+use crate::models::{HasId, HasName};
+
+#[test]
+fn test_guild_creation() {
+    let guild = Guild::new();
+    assert_eq!(guild.id, "");
+    assert_eq!(guild.name, "");
+    assert!(!guild.is_owned_by_current_user());
+    assert_eq!(guild.get_member_count(), 0);
+    assert_eq!(guild.get_max_members(), 0);
+}
+
+#[test]
+fn test_guild_with_data() {
+    let mut guild = Guild::new();
+    guild.id = "123456789".to_string();
+    guild.name = "Test Guild".to_string();
+    guild.is_owner = true;
+    guild.member_count = 100;
+    guild.max_members = 500;
+    guild.description = "A test guild".to_string();
+
+    assert_eq!(guild.id(), Some(&"123456789".to_string()));
+    assert_eq!(guild.name(), "Test Guild");
+    assert!(guild.is_owned_by_current_user());
+    assert_eq!(guild.get_member_count(), 100);
+    assert_eq!(guild.get_max_members(), 500);
+    assert!(!guild.is_at_member_limit());
+    assert!(guild.has_description());
+    assert_eq!(guild.display_name(), Some("Test Guild"));
+}
+
+#[test]
+fn guild_fields_use_official_json_names() {
+    let guild = Guild::from_data(
+        crate::api::BotApi::new(crate::http::HttpClient::new(30, false).unwrap()),
+        "guild-1".to_string(),
+        serde_json::json!({
+            "name": "Guild",
+            "owner": true,
+            "channels": [
+                {
+                    "id": "channel-1",
+                    "guild_id": "guild-1",
+                    "name": "general",
+                    "type": 0
+                }
+            ],
+            "union_world_id": "world-1",
+            "union_org_id": "org-1",
+            "op_user_id": "operator-1"
+        }),
+    );
+
+    assert_eq!(guild.id, "guild-1");
+    assert!(guild.is_owner);
+    assert_eq!(guild.channels.len(), 1);
+    assert_eq!(guild.channels[0].id, "channel-1");
+    assert_eq!(guild.union_world_id, "world-1");
+    assert_eq!(guild.union_org_id, "org-1");
+    assert_eq!(guild.op_user_id, "operator-1");
+
+    let value = serde_json::to_value(&guild).unwrap();
+    assert_eq!(value["owner"], serde_json::json!(true));
+    assert!(value.get("is_owner").is_none());
+    assert_eq!(value["channels"][0]["id"], serde_json::json!("channel-1"));
+    assert_eq!(value["union_world_id"], serde_json::json!("world-1"));
+}
+
+#[test]
+fn guild_uses_required_zero_value_fields() {
+    let guild: Guild = serde_json::from_value(serde_json::json!({})).unwrap();
+
+    assert_eq!(guild.id, "");
+    assert_eq!(guild.name, "");
+    assert_eq!(guild.icon, "");
+    assert_eq!(guild.owner_id, "");
+    assert!(!guild.is_owner);
+    assert_eq!(guild.member_count, 0);
+    assert_eq!(guild.max_members, 0);
+    assert_eq!(guild.description, "");
+    assert_eq!(guild.joined_at, "");
+    assert!(guild.channels.is_empty());
+    assert_eq!(guild.union_world_id, "");
+    assert_eq!(guild.union_org_id, "");
+    assert_eq!(guild.op_user_id, "");
+}
+
+#[test]
+fn test_member_limit() {
+    let mut guild = Guild::new();
+    guild.member_count = 500;
+    guild.max_members = 500;
+    assert!(guild.is_at_member_limit());
+
+    guild.member_count = 499;
+    assert!(!guild.is_at_member_limit());
+
+    guild.member_count = 501;
+    assert!(guild.is_at_member_limit());
+}
+
+#[test]
+fn test_icon_url() {
+    let mut guild = Guild::new();
+    assert!(guild.icon_url().is_none());
+
+    guild.id = "123456789".to_string();
+    guild.icon = "abc123".to_string();
+    let url = guild.icon_url().unwrap();
+    assert!(url.contains("123456789"));
+    assert!(url.contains("abc123"));
+}
+
+#[test]
+fn test_role_creation() {
+    let role = Role::new();
+    assert_eq!(role.id, "");
+    assert_eq!(role.name, "");
+    assert!(!role.is_hoisted());
+    assert_eq!(role.member_count(), 0);
+}
+
+#[test]
+fn test_role_with_data() {
+    let mut role = Role::new();
+    role.id = "role123".to_string();
+    role.name = "Admin".to_string();
+    role.color = 0xFF0000;
+    role.hoist = 1;
+    role.member_count = 5;
+    role.member_limit = 10;
+
+    assert_eq!(role.id(), Some(&"role123".to_string()));
+    assert_eq!(role.name(), "Admin");
+    assert_eq!(role.color_hex(), Some("#FF0000".to_string()));
+    assert!(role.is_hoisted());
+    assert_eq!(role.member_count(), 5);
+    assert_eq!(role.get_member_limit(), 10);
+    assert!(!role.is_at_member_limit());
+}
+
+#[test]
+fn role_keeps_official_json_shape() {
+    let role = GuildRole {
+        id: "role-1".to_string(),
+        name: "Admin".to_string(),
+        color: 0xFF0000,
+        hoist: 1,
+        member_count: 5,
+        member_limit: 10,
+    };
+    let value = serde_json::to_value(&role).unwrap();
+
+    assert_eq!(value["id"], "role-1");
+    assert_eq!(value["name"], "Admin");
+    assert_eq!(value["color"], 0xFF0000);
+    assert_eq!(value["hoist"], 1);
+    assert_eq!(value["number"], 5);
+    assert_eq!(value["member_limit"], 10);
+
+    let roles = GuildRoles {
+        guild_id: "guild-1".to_string(),
+        roles: vec![role],
+        num_limit: "30".to_string(),
+    };
+    let value = serde_json::to_value(&roles).unwrap();
+    assert_eq!(value["guild_id"], "guild-1");
+    assert_eq!(value["role_num_limit"], "30");
+    assert!(value.get("num_limit").is_none());
+}
+
+#[test]
+fn update_guild_mute_uses_zero_value_omitempty_shape() {
+    let empty = serde_json::to_value(UpdateGuildMute::default()).unwrap();
+    assert_eq!(empty, serde_json::json!({}));
+
+    let single = UpdateGuildMute::new(Some("1710000000"), None);
+    let value = serde_json::to_value(&single).unwrap();
+    assert_eq!(single.mute_end_timestamp, "1710000000");
+    assert_eq!(single.mute_seconds, "");
+    assert!(single.user_ids.is_empty());
+    assert_eq!(
+        value,
+        serde_json::json!({"mute_end_timestamp": "1710000000"})
+    );
+
+    let cancel = UpdateGuildMute::cancel_multi(vec!["user-1".to_string()]);
+    let value = serde_json::to_value(&cancel).unwrap();
+    assert_eq!(
+        value,
+        serde_json::json!({
+            "mute_end_timestamp": "0",
+            "mute_seconds": "0",
+            "user_ids": ["user-1"]
+        })
+    );
+}
+
+#[test]
+fn pager_query_params_match_official_priority() {
+    let members = GuildMembersPager::new("user-1", 100);
+    assert_eq!(
+        members.QueryParams().get("after").map(String::as_str),
+        Some("user-1")
+    );
+
+    let role_members = GuildRoleMembersPager::new("next-1", 50);
+    assert_eq!(
+        role_members
+            .QueryParams()
+            .get("start_index")
+            .map(String::as_str),
+        Some("next-1")
+    );
+
+    let guilds = GuildPager::new()
+        .with_before("before-1")
+        .with_after("after-1")
+        .with_limit(20);
+    let query = guilds.QueryParams();
+    assert_eq!(query.get("after").map(String::as_str), Some("after-1"));
+    assert!(!query.contains_key("before"));
+}
+
+#[test]
+fn test_member_creation() {
+    let member = Member::new();
+    assert!(member.user.is_none());
+    assert_eq!(member.nick, "");
+    assert_eq!(member.role_ids().len(), 0);
+}
+
+#[test]
+fn test_member_with_roles() {
+    let mut member = Member::new();
+    member.roles = vec!["role1".to_string(), "role2".to_string()];
+
+    assert!(member.has_role("role1"));
+    assert!(member.has_role("role2"));
+    assert!(!member.has_role("role3"));
+    assert_eq!(member.role_ids().len(), 2);
+}
+
+#[test]
+fn member_uses_required_zero_value_fields() {
+    let member: Member = serde_json::from_value(serde_json::json!({})).unwrap();
+
+    assert_eq!(member.guild_id, "");
+    assert!(member.user.is_none());
+    assert_eq!(member.nick, "");
+    assert!(member.roles.is_empty());
+    assert_eq!(member.joined_at, "");
+    assert_eq!(member.op_user_id, "");
+
+    let value = serde_json::to_value(&member).unwrap();
+    assert_eq!(value["guild_id"], "");
+    assert_eq!(value["nick"], "");
+    assert_eq!(value["roles"], serde_json::json!([]));
+    assert_eq!(value["joined_at"], "");
+    assert!(value.get("op_user_id").is_none());
+}
