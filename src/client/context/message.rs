@@ -43,6 +43,38 @@ impl Context {
             .await
     }
 
+    /// Sends a channel message using botpy's method name and request body.
+    #[allow(clippy::too_many_arguments)]
+    pub async fn post_message(
+        &self,
+        channel_id: &str,
+        content: Option<&str>,
+        embed: Option<&Embed>,
+        ark: Option<&Ark>,
+        message_reference: Option<&Reference>,
+        image: Option<&str>,
+        file_image: Option<&[u8]>,
+        msg_id: Option<&str>,
+        event_id: Option<&str>,
+        markdown: Option<&MarkdownPayload>,
+        keyboard: Option<&Keyboard>,
+    ) -> Result<MessageResponse> {
+        self.post_message_botpy(
+            channel_id,
+            content,
+            embed,
+            ark,
+            message_reference,
+            image,
+            file_image,
+            msg_id,
+            event_id,
+            markdown,
+            keyboard,
+        )
+        .await
+    }
+
     /// Sends a channel message containing an embed and optional text content.
     pub async fn send_message_with_embed(
         &self,
@@ -130,6 +162,40 @@ impl Context {
             .await
     }
 
+    /// Sends a group message using botpy's method name and request body.
+    #[allow(clippy::too_many_arguments)]
+    pub async fn post_group_message(
+        &self,
+        group_openid: &str,
+        msg_type: Option<u32>,
+        content: Option<&str>,
+        embed: Option<&Embed>,
+        ark: Option<&Ark>,
+        message_reference: Option<&Reference>,
+        media: Option<&Media>,
+        msg_id: Option<&str>,
+        msg_seq: Option<u32>,
+        event_id: Option<&str>,
+        markdown: Option<&MarkdownPayload>,
+        keyboard: Option<&KeyboardPayload>,
+    ) -> Result<MessageResponse> {
+        self.post_group_message_botpy(
+            group_openid,
+            msg_type,
+            content,
+            embed,
+            ark,
+            message_reference,
+            media,
+            msg_id,
+            msg_seq,
+            event_id,
+            markdown,
+            keyboard,
+        )
+        .await
+    }
+
     /// Sends a text message to a C2C conversation.
     pub async fn send_c2c_message(&self, openid: &str, content: &str) -> Result<MessageResponse> {
         let params = crate::models::message::C2CMessageParams::new_text(content);
@@ -172,6 +238,40 @@ impl Context {
                 keyboard,
             )
             .await
+    }
+
+    /// Sends a C2C message using botpy's method name and request body.
+    #[allow(clippy::too_many_arguments)]
+    pub async fn post_c2c_message(
+        &self,
+        openid: &str,
+        msg_type: Option<u32>,
+        content: Option<&str>,
+        embed: Option<&Embed>,
+        ark: Option<&Ark>,
+        message_reference: Option<&Reference>,
+        media: Option<&Media>,
+        msg_id: Option<&str>,
+        msg_seq: Option<u32>,
+        event_id: Option<&str>,
+        markdown: Option<&MarkdownPayload>,
+        keyboard: Option<&KeyboardPayload>,
+    ) -> Result<MessageResponse> {
+        self.post_c2c_message_botpy(
+            openid,
+            msg_type,
+            content,
+            embed,
+            ark,
+            message_reference,
+            media,
+            msg_id,
+            msg_seq,
+            event_id,
+            markdown,
+            keyboard,
+        )
+        .await
     }
 
     /// Fetches one channel message by ID.

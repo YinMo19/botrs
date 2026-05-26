@@ -103,6 +103,19 @@ impl Context {
             .await
     }
 
+    /// Adds a role to a guild member using botpy's argument order.
+    pub async fn create_guild_role_member(
+        &self,
+        guild_id: &str,
+        role_id: &str,
+        user_id: &str,
+        channel_id: Option<&str>,
+    ) -> Result<()> {
+        self.api
+            .create_guild_role_member(&self.token, guild_id, role_id, user_id, channel_id)
+            .await
+    }
+
     /// Adds a role to a guild member using a structured body.
     pub async fn member_add_role(
         &self,
@@ -122,6 +135,19 @@ impl Context {
         guild_id: &str,
         user_id: &str,
         role_id: &str,
+        channel_id: Option<&str>,
+    ) -> Result<()> {
+        self.api
+            .delete_guild_role_member(&self.token, guild_id, role_id, user_id, channel_id)
+            .await
+    }
+
+    /// Removes a role from a guild member using botpy's argument order.
+    pub async fn delete_guild_role_member(
+        &self,
+        guild_id: &str,
+        role_id: &str,
+        user_id: &str,
         channel_id: Option<&str>,
     ) -> Result<()> {
         self.api

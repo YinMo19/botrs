@@ -6,8 +6,20 @@ impl Context {
         self.api.put_pin(&self.token, channel_id, message_id).await
     }
 
+    /// Pins one message using botpy's method name.
+    pub async fn put_pin(&self, channel_id: &str, message_id: &str) -> Result<PinsMessage> {
+        self.api.put_pin(&self.token, channel_id, message_id).await
+    }
+
     /// Unpins one message from a channel.
     pub async fn unpin_message(&self, channel_id: &str, message_id: &str) -> Result<()> {
+        self.api
+            .delete_pin(&self.token, channel_id, message_id)
+            .await
+    }
+
+    /// Unpins one message using botpy's method name.
+    pub async fn delete_pin(&self, channel_id: &str, message_id: &str) -> Result<()> {
         self.api
             .delete_pin(&self.token, channel_id, message_id)
             .await

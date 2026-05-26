@@ -67,6 +67,38 @@ impl Context {
             .await
     }
 
+    /// Sends a direct message using botpy's method name and request body.
+    #[allow(clippy::too_many_arguments)]
+    pub async fn post_dms(
+        &self,
+        guild_id: &str,
+        content: Option<&str>,
+        embed: Option<&Embed>,
+        ark: Option<&Ark>,
+        message_reference: Option<&Reference>,
+        image: Option<&str>,
+        file_image: Option<&[u8]>,
+        msg_id: Option<&str>,
+        event_id: Option<&str>,
+        markdown: Option<&MarkdownPayload>,
+        keyboard: Option<&Keyboard>,
+    ) -> Result<MessageResponse> {
+        self.post_dms_botpy(
+            guild_id,
+            content,
+            embed,
+            ark,
+            message_reference,
+            image,
+            file_image,
+            msg_id,
+            event_id,
+            markdown,
+            keyboard,
+        )
+        .await
+    }
+
     /// Posts a DM setting guide message.
 
     pub async fn post_dm_setting_guide(
