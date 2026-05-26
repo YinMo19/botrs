@@ -3,10 +3,19 @@ use crate::BotApi;
 
 #[test]
 fn test_format() {
-    assert_eq!(Format::PlainText as u8, 1);
-    assert_eq!(Format::Html as u8, 2);
-    assert_eq!(Format::Markdown as u8, 3);
-    assert_eq!(Format::Json as u8, 4);
+    assert_eq!(u8::from(Format::PlainText), 1);
+    assert_eq!(u8::from(Format::Html), 2);
+    assert_eq!(u8::from(Format::Markdown), 3);
+    assert_eq!(u8::from(Format::Json), 4);
+    assert_eq!(serde_json::to_value(Format::Markdown).unwrap(), 3);
+    assert_eq!(
+        serde_json::from_value::<Format>(serde_json::json!(4)).unwrap(),
+        Format::Json
+    );
+    assert_eq!(
+        serde_json::from_value::<Format>(serde_json::json!(99)).unwrap(),
+        Format::Unknown(99)
+    );
 }
 
 #[test]

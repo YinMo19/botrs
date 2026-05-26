@@ -3,6 +3,7 @@ use serde_json::Value;
 
 /// Forum content format enumeration
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(from = "u8", into = "u8")]
 #[repr(u8)]
 pub enum Format {
     /// Plain text format
@@ -13,7 +14,16 @@ pub enum Format {
     Markdown = 3,
     /// JSON format
     Json = 4,
+    /// Unknown format value
+    Unknown(u8),
 }
+
+wire_enum!(Format, u8, Unknown, {
+    PlainText = 1,
+    Html = 2,
+    Markdown = 3,
+    Json = 4,
+});
 
 /// Text element structure
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
