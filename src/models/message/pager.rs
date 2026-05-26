@@ -1,6 +1,16 @@
 use crate::models::Pager;
 use serde::{Deserialize, Serialize};
 
+fn insert_query_param(
+    query: &mut std::collections::HashMap<String, String>,
+    key: &str,
+    value: &Option<String>,
+) {
+    if let Some(value) = value.as_ref().filter(|value| !value.is_empty()) {
+        query.insert(key.to_string(), value.clone());
+    }
+}
+
 /// Message list pagination mode.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -62,11 +72,9 @@ impl MessagesPager {
     /// Converts the pager to query parameters.
     pub fn query_params(&self) -> std::collections::HashMap<String, String> {
         let mut query = std::collections::HashMap::new();
-        if let Some(limit) = &self.limit {
-            query.insert("limit".to_string(), limit.clone());
-        }
-        if let (Some(pager_type), Some(id)) = (self.pager_type, &self.id) {
-            query.insert(pager_type.as_str().to_string(), id.clone());
+        insert_query_param(&mut query, "limit", &self.limit);
+        if let Some(pager_type) = self.pager_type {
+            insert_query_param(&mut query, pager_type.as_str(), &self.id);
         }
         query
     }

@@ -143,3 +143,9 @@ fn reaction_pager_query_params() {
     assert_eq!(query.get("cookie").map(String::as_str), Some("cursor-1"));
     assert_eq!(query.get("limit").map(String::as_str), Some("20"));
 }
+
+#[test]
+fn reaction_pager_omits_empty_query_params() {
+    let pager = MessageReactionPager::new(Some(""), Some(""));
+    assert!(pager.QueryParams().is_empty());
+}

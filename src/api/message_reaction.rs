@@ -6,6 +6,18 @@ use crate::token::Token;
 use std::collections::HashMap;
 use tracing::debug;
 
+fn reaction_users_query_params(
+    cookie: Option<&str>,
+    limit: Option<u32>,
+) -> HashMap<&'static str, String> {
+    let mut params = HashMap::new();
+    params.insert("limit", limit.unwrap_or(20).to_string());
+    if let Some(cookie) = cookie.filter(|cookie| !cookie.is_empty()) {
+        params.insert("cookie", cookie.to_string());
+    }
+    params
+}
+
 impl BotApi {
     /// Adds a reaction to a message using raw emoji type and ID values.
     pub async fn put_reaction(
@@ -88,11 +100,7 @@ impl BotApi {
             message_id, emoji_id
         );
 
-        let mut params = HashMap::new();
-        params.insert("limit", limit.unwrap_or(20).to_string());
-        if let Some(cookie) = cookie {
-            params.insert("cookie", cookie.to_string());
-        }
+        let params = reaction_users_query_params(cookie, limit);
 
         let path =
             resource::message_reaction(channel_id, message_id, u8::from(emoji_type), emoji_id);
@@ -128,5 +136,26 @@ impl BotApi {
             )
             .await?;
         Self::decode_json(response)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::reaction_users_query_params;
+
+    #[test]
+    fn reaction_users_query_omits_empty_cookie() {
+        let params = reaction_users_query_params(Some(""), None);
+
+        assert_eq!(params.get("limit").map(String::as_str), Some("20"));
+        assert!(!params.contains_key("cookie"));
+    }
+
+    #[test]
+    fn reaction_users_query_keeps_non_empty_cookie() {
+        let params = reaction_users_query_params(Some("cursor-1"), Some(50));
+
+        assert_eq!(params.get("limit").map(String::as_str), Some("50"));
+        assert_eq!(params.get("cookie").map(String::as_str), Some("cursor-1"));
     }
 }

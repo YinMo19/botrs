@@ -1,6 +1,16 @@
 use crate::models::Pager;
 use serde::{Deserialize, Serialize};
 
+fn insert_query_param(
+    query: &mut std::collections::HashMap<String, String>,
+    key: &str,
+    value: &Option<String>,
+) {
+    if let Some(value) = value.as_ref().filter(|value| !value.is_empty()) {
+        query.insert(key.to_string(), value.clone());
+    }
+}
+
 /// Pager for message reaction users.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct MessageReactionPager {
@@ -24,12 +34,8 @@ impl MessageReactionPager {
     /// Converts the pager to query parameters.
     pub fn query_params(&self) -> std::collections::HashMap<String, String> {
         let mut query = std::collections::HashMap::new();
-        if let Some(limit) = &self.limit {
-            query.insert("limit".to_string(), limit.clone());
-        }
-        if let Some(cookie) = &self.cookie {
-            query.insert("cookie".to_string(), cookie.clone());
-        }
+        insert_query_param(&mut query, "limit", &self.limit);
+        insert_query_param(&mut query, "cookie", &self.cookie);
         query
     }
 

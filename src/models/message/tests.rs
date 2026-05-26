@@ -529,6 +529,12 @@ mod tests {
     }
 
     #[test]
+    fn messages_pager_omits_empty_query_params() {
+        let pager = MessagesPager::new(Some(MPTBefore), Some(""), Some(""));
+        assert!(pager.QueryParams().is_empty());
+    }
+
+    #[test]
     fn test_message_creation() {
         let message = Message::new();
         assert!(message.id.is_none());
