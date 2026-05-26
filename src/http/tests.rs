@@ -31,8 +31,29 @@ fn test_api_error_parsing() {
         .parse_api_error(StatusCode::NOT_FOUND, &json)
         .unwrap();
     assert_eq!(error.code, 404);
+    assert_eq!(error.err_code, None);
     assert_eq!(error.message, "Not found");
     assert_eq!(error.trace_id, Some("test-trace".to_string()));
+}
+
+#[test]
+fn api_error_parsing_prefers_official_err_code() {
+    let client = HttpClient::new(30, false).unwrap();
+
+    let json = serde_json::json!({
+        "code": 0,
+        "err_code": 11244,
+        "message": "token expired",
+        "trace_id": "trace-err-code"
+    });
+
+    let error = client
+        .parse_api_error(StatusCode::UNAUTHORIZED, &json)
+        .unwrap();
+    assert_eq!(error.code, 11244);
+    assert_eq!(error.err_code, Some(11244));
+    assert_eq!(error.message, "token expired");
+    assert_eq!(error.trace_id, Some("trace-err-code".to_string()));
 }
 
 #[tokio::test]

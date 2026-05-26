@@ -42,6 +42,7 @@ fn test_rate_limit() {
 #[test]
 fn test_api_error() {
     let error = ApiError::new(429, "Rate limited");
+    assert_eq!(error.err_code, None);
     assert!(error.is_rate_limit());
     assert!(!error.is_auth_error());
     assert!(!error.is_not_found());
@@ -49,6 +50,21 @@ fn test_api_error() {
 
     let auth_error = ApiError::new(401, "Unauthorized");
     assert!(auth_error.is_auth_error());
+}
+
+#[test]
+fn api_error_accepts_current_err_code_field() {
+    let error: ApiError = serde_json::from_value(serde_json::json!({
+        "err_code": 11244,
+        "message": "token expired",
+        "trace_id": "trace-err-code"
+    }))
+    .unwrap();
+
+    assert_eq!(error.code, 11244);
+    assert_eq!(error.err_code, Some(11244));
+    assert_eq!(error.message, "token expired");
+    assert_eq!(error.trace_id.as_deref(), Some("trace-err-code"));
 }
 
 #[test]

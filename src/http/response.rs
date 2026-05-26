@@ -125,10 +125,15 @@ impl HttpClient {
         }
 
         let code = json
-            .get("code")
+            .get("err_code")
+            .or_else(|| json.get("code"))
             .and_then(|c| c.as_u64())
             .map(|c| c as u32)
             .unwrap_or(status.as_u16() as u32);
+        let err_code = json
+            .get("err_code")
+            .and_then(|c| c.as_u64())
+            .map(|c| c as u32);
 
         let message = json
             .get("message")
@@ -144,6 +149,7 @@ impl HttpClient {
 
         Ok(ApiError {
             code,
+            err_code,
             message,
             errors: Some(json.clone()),
             trace_id,
