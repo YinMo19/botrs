@@ -58,3 +58,26 @@ fn websocket_payload_keeps_session_out_of_json() {
     assert_eq!(value["t"], EventMessageCreate);
     assert_eq!(value["id"], "event-id");
 }
+
+#[test]
+fn gateway_event_omits_absent_wire_fields() {
+    let event = GatewayEvent {
+        id: None,
+        event_type: None,
+        data: Some(serde_json::json!({
+            "token": "QQBot token",
+            "intents": crate::intents::IntentGroupMessages,
+            "shard": [0, 1],
+        })),
+        sequence: None,
+        opcode: WSIdentity,
+    };
+
+    let value = serde_json::to_value(&event).unwrap();
+
+    assert_eq!(value["op"], WSIdentity);
+    assert!(value.get("d").is_some());
+    assert!(value.get("id").is_none());
+    assert!(value.get("t").is_none());
+    assert!(value.get("s").is_none());
+}
