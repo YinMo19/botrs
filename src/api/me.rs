@@ -35,6 +35,17 @@ impl BotApi {
         self.get_guilds_with_pager(token, &pager).await
     }
 
+    /// Botpy-compatible current bot guild list API.
+    pub async fn me_guilds(
+        &self,
+        token: &Token,
+        guild_id: Option<&str>,
+        limit: Option<u32>,
+        desc: Option<bool>,
+    ) -> Result<Vec<Guild>> {
+        self.get_guilds(token, guild_id, limit, desc).await
+    }
+
     /// Lists guilds visible to the current bot using a pre-built pager.
     pub async fn get_guilds_with_pager(
         &self,
@@ -122,6 +133,21 @@ mod tests {
         let api = test_api(base_url).await;
         let guilds = api
             .get_guilds(api.token_required().unwrap(), None, None, None)
+            .await
+            .unwrap();
+
+        assert_eq!(guilds[0].id, "guild-1");
+        let request = request.await.unwrap();
+        assert!(request.starts_with("GET /users/@me/guilds?limit=100 HTTP/1.1"));
+        server.await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn me_guilds_alias_matches_botpy_default_limit() {
+        let (base_url, request, server) = spawn_capture_server().await;
+        let api = test_api(base_url).await;
+        let guilds = api
+            .me_guilds(api.token_required().unwrap(), None, None, None)
             .await
             .unwrap();
 

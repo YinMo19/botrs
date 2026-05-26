@@ -124,6 +124,25 @@ impl BotApi {
             .await
     }
 
+    /// Botpy-compatible member delete API.
+    pub async fn get_delete_member(
+        &self,
+        token: &Token,
+        guild_id: &str,
+        user_id: &str,
+        add_blacklist: Option<bool>,
+        delete_history_msg_days: Option<i32>,
+    ) -> Result<()> {
+        self.delete_member(
+            token,
+            guild_id,
+            user_id,
+            add_blacklist,
+            delete_history_msg_days,
+        )
+        .await
+    }
+
     /// Removes a member from a guild using explicit delete options.
     pub async fn delete_member_with_options(
         &self,
@@ -233,6 +252,62 @@ mod tests {
         (format!("http://{addr}"), rx, handle)
     }
 
+    async fn spawn_empty_response_capture_server() -> (
+        String,
+        oneshot::Receiver<String>,
+        tokio::task::JoinHandle<()>,
+    ) {
+        let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let addr = listener.local_addr().unwrap();
+        let (tx, rx) = oneshot::channel();
+
+        let handle = tokio::spawn(async move {
+            let (mut stream, _) = listener.accept().await.unwrap();
+            let mut request_bytes = Vec::new();
+            let mut buffer = [0_u8; 4096];
+            loop {
+                let n = stream.read(&mut buffer).await.unwrap();
+                request_bytes.extend_from_slice(&buffer[..n]);
+
+                let request = String::from_utf8_lossy(&request_bytes);
+                let Some(header_end) = request.find("\r\n\r\n") else {
+                    continue;
+                };
+                let content_length = request
+                    .lines()
+                    .find_map(|line| {
+                        let (name, value) = line.split_once(':')?;
+                        name.eq_ignore_ascii_case("content-length")
+                            .then(|| value.trim().parse::<usize>().ok())
+                            .flatten()
+                    })
+                    .unwrap_or(0);
+                let body_start = header_end + 4;
+                if request_bytes.len().saturating_sub(body_start) >= content_length {
+                    break;
+                }
+            }
+
+            let request = String::from_utf8_lossy(&request_bytes).to_string();
+            let _ = tx.send(request);
+
+            let body = r#"{}"#;
+            let response = format!(
+                "HTTP/1.1 200 OK\r\ncontent-type: application/json\r\ncontent-length: {}\r\nconnection: close\r\n\r\n{}",
+                body.len(),
+                body
+            );
+            stream.write_all(response.as_bytes()).await.unwrap();
+        });
+
+        (format!("http://{addr}"), rx, handle)
+    }
+
+    fn request_body(request: &str) -> serde_json::Value {
+        let body = request.split("\r\n\r\n").nth(1).unwrap_or_default();
+        serde_json::from_str(body).unwrap()
+    }
+
     #[tokio::test]
     async fn get_voice_members_matches_botpy_path() {
         let (base_url, request, server) = spawn_capture_server().await;
@@ -247,6 +322,33 @@ mod tests {
         let request = request.await.unwrap();
         assert!(request.starts_with("GET /channels/channel-1/voice/members HTTP/1.1"));
         assert!(request.ends_with("\r\n\r\n"));
+        server.await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn get_delete_member_alias_matches_botpy_default_body() {
+        let (base_url, request, server) = spawn_empty_response_capture_server().await;
+        let api = test_api(base_url).await;
+
+        api.get_delete_member(
+            api.token_required().unwrap(),
+            "guild-1",
+            "user-1",
+            None,
+            Some(42),
+        )
+        .await
+        .unwrap();
+
+        let request = request.await.unwrap();
+        assert!(request.starts_with("DELETE /guilds/guild-1/members/user-1 HTTP/1.1"));
+        assert_eq!(
+            request_body(&request),
+            serde_json::json!({
+                "add_blacklist": false,
+                "delete_history_msg_days": 0
+            })
+        );
         server.await.unwrap();
     }
 }

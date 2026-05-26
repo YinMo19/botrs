@@ -8,6 +8,7 @@ mod files;
 mod forum;
 mod guild;
 mod interaction;
+mod me;
 mod message;
 mod pins;
 mod reaction;
