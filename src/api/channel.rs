@@ -1,9 +1,7 @@
 use super::{BotApi, resource};
 use crate::error::Result;
 use crate::models::{
-    channel::{
-        Channel, ChannelSubType, ChannelType, ChannelValueObject, PrivateType, SpeakPermission,
-    },
+    channel::{Channel, ChannelSubType, ChannelType, ChannelValueObject, PrivateType},
     guild::Member,
 };
 use crate::token::Token;
@@ -58,6 +56,38 @@ impl BotpyCreateChannel {
             application_id: application_id
                 .filter(|value| !value.is_empty())
                 .map(ToOwned::to_owned),
+        }
+    }
+}
+
+#[derive(Debug, Serialize)]
+struct BotpyUpdateChannel {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    position: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    parent_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    private_type: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    speak_permission: Option<u32>,
+}
+
+impl BotpyUpdateChannel {
+    fn new(
+        name: Option<&str>,
+        position: Option<u32>,
+        parent_id: Option<&str>,
+        private_type: Option<u32>,
+        speak_permission: Option<u32>,
+    ) -> Self {
+        Self {
+            name: name.map(ToOwned::to_owned),
+            position,
+            parent_id: parent_id.map(ToOwned::to_owned),
+            private_type,
+            speak_permission,
         }
     }
 }
@@ -164,16 +194,15 @@ impl BotApi {
         private_type: Option<u32>,
         speak_permission: Option<u32>,
     ) -> Result<Channel> {
-        let value = ChannelValueObject {
-            name: name.map(String::from),
-            position: position.map(i64::from),
-            parent_id: parent_id.map(String::from),
-            private_type: private_type.map(|value| PrivateType::from(value as u8)),
-            speak_permission: speak_permission.map(|value| SpeakPermission::from(value as u8)),
-            ..Default::default()
-        };
-
-        self.patch_channel(token, channel_id, &value).await
+        debug!("Updating channel {}", channel_id);
+        let body =
+            BotpyUpdateChannel::new(name, position, parent_id, private_type, speak_permission);
+        let path = resource::channel(channel_id);
+        let response = self
+            .http
+            .patch(token, &path, None::<&()>, Some(&body))
+            .await?;
+        Self::decode_json(response)
     }
 
     /// Updates a channel from a structured channel body.
@@ -306,6 +335,32 @@ mod tests {
         let request = request.await.unwrap();
         assert!(request.starts_with("POST /guilds/guild-1/channels HTTP/1.1"));
         assert!(request.ends_with("\r\n\r\n{\"name\":\"channel_test\",\"type\":0,\"subtype\":0}"));
+        server.await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn inline_update_channel_matches_botpy_kwargs_body() {
+        let (base_url, request, server) = spawn_capture_server().await;
+        let api = test_api(base_url).await;
+        let channel = api
+            .update_channel(
+                api.token_required().unwrap(),
+                "channel-1",
+                Some(""),
+                Some(0),
+                Some(""),
+                Some(0),
+                Some(0),
+            )
+            .await
+            .unwrap();
+
+        assert_eq!(channel.id, "channel-1");
+        let request = request.await.unwrap();
+        assert!(request.starts_with("PATCH /channels/channel-1 HTTP/1.1"));
+        assert!(request.ends_with(
+            "\r\n\r\n{\"name\":\"\",\"position\":0,\"parent_id\":\"\",\"private_type\":0,\"speak_permission\":0}"
+        ));
         server.await.unwrap();
     }
 }
