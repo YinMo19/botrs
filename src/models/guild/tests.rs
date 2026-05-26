@@ -292,3 +292,21 @@ fn member_uses_required_zero_value_fields() {
     assert_eq!(value["joined_at"], "");
     assert!(value.get("op_user_id").is_none());
 }
+
+#[test]
+fn member_add_role_body_matches_botgo_json_shape() {
+    let empty = serde_json::to_value(MemberAddRoleBody::new()).unwrap();
+    assert_eq!(empty, serde_json::json!({"channel": null}));
+
+    let with_channel =
+        serde_json::to_value(MemberAddRoleBody::with_channel_id("channel-1")).unwrap();
+    assert_eq!(
+        with_channel,
+        serde_json::json!({
+            "channel": {
+                "id": "channel-1",
+                "guild_id": ""
+            }
+        })
+    );
+}
