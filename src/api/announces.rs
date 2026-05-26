@@ -1,9 +1,22 @@
 use super::{BotApi, resource};
 use crate::error::Result;
-use crate::models::announce::{Announce, AnnouncesType, GuildAnnouncesToCreate, RecommendChannel};
+use crate::models::announce::{Announce, AnnouncesType, RecommendChannel};
 use crate::token::Token;
+use serde::Serialize;
 use serde_json::{Value, json};
 use tracing::debug;
+
+#[derive(Serialize)]
+struct GuildMessageAnnounceBody<'a> {
+    channel_id: &'a str,
+    message_id: &'a str,
+}
+
+#[derive(Serialize)]
+struct GuildRecommendAnnounceBody {
+    announces_type: u32,
+    recommend_channels: Vec<RecommendChannel>,
+}
 
 impl BotApi {
     /// Sends a file message to an open-platform group conversation.
@@ -126,11 +139,9 @@ impl BotApi {
             guild_id, message_id
         );
 
-        let body = GuildAnnouncesToCreate {
-            channel_id: channel_id.to_string(),
-            message_id: message_id.to_string(),
-            announces_type: u8::from(AnnouncesType::Member) as u32,
-            recommend_channels: Vec::new(),
+        let body = GuildMessageAnnounceBody {
+            channel_id,
+            message_id,
         };
 
         let path = resource::guild_announces(guild_id);
@@ -163,9 +174,7 @@ impl BotApi {
     ) -> Result<Announce> {
         debug!("Creating recommend announcement in guild {}", guild_id);
 
-        let body = GuildAnnouncesToCreate {
-            channel_id: String::new(),
-            message_id: String::new(),
+        let body = GuildRecommendAnnounceBody {
             announces_type: u8::from(announces_type) as u32,
             recommend_channels,
         };
@@ -221,5 +230,43 @@ impl BotApi {
         let path = resource::guild_announces_all(guild_id);
         self.http.delete(token, &path, None::<&()>).await?;
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{GuildMessageAnnounceBody, GuildRecommendAnnounceBody};
+    use crate::models::announce::{AnnouncesType, RecommendChannel};
+
+    #[test]
+    fn high_level_guild_announce_body_matches_botpy_shape() {
+        let message = serde_json::to_value(GuildMessageAnnounceBody {
+            channel_id: "channel-1",
+            message_id: "message-1",
+        })
+        .unwrap();
+        assert_eq!(
+            message,
+            serde_json::json!({
+                "channel_id": "channel-1",
+                "message_id": "message-1"
+            })
+        );
+
+        let recommend = serde_json::to_value(GuildRecommendAnnounceBody {
+            announces_type: u8::from(AnnouncesType::Welcome) as u32,
+            recommend_channels: vec![RecommendChannel::new(
+                "channel-2",
+                Some("intro".to_string()),
+            )],
+        })
+        .unwrap();
+        assert_eq!(recommend["announces_type"], 1);
+        assert_eq!(
+            recommend["recommend_channels"][0]["channel_id"],
+            "channel-2"
+        );
+        assert!(recommend.get("channel_id").is_none());
+        assert!(recommend.get("message_id").is_none());
     }
 }
