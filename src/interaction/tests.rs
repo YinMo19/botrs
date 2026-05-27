@@ -91,7 +91,10 @@ fn interaction_payload_uses_expected_type_fields() {
                 "name": "search",
                 "type": 9,
                 "resolved": {
-                    "keyword": "botrs"
+                    "keyword": "botrs",
+                    "custom": {
+                        "nested": true
+                    }
                 }
             },
             "version": 1
@@ -101,6 +104,12 @@ fn interaction_payload_uses_expected_type_fields() {
     let value = serde_json::to_value(&interaction).unwrap();
     assert_eq!(value["type"], serde_json::json!(2));
     assert_eq!(value["data"]["type"], serde_json::json!(9));
+    assert_eq!(value["data"]["resolved"]["keyword"], "botrs");
+    assert_eq!(
+        value["data"]["resolved"]["custom"],
+        serde_json::json!({"nested": true})
+    );
+    assert!(value["data"]["resolved"].get("button_id").is_none());
     assert_eq!(interaction.event_id.as_deref(), Some("event-1"));
     assert!(value.get("event_id").is_none());
     assert!(value.get("interaction_type").is_none());
@@ -127,9 +136,44 @@ fn resolved_uses_required_zero_value_fields() {
     assert_eq!(resolved.checked, 1);
 
     let value = serde_json::to_value(Resolved::default()).unwrap();
-    assert_eq!(value["keyword"], "");
-    assert_eq!(value["button_id"], "");
-    assert_eq!(value["checked"], 0);
+    assert_eq!(value, serde_json::json!({}));
+
+    let value = serde_json::to_value(&resolved).unwrap();
+    assert_eq!(
+        value,
+        serde_json::json!({
+            "button_id": "btn-1",
+            "checked": 1
+        })
+    );
+}
+
+#[test]
+fn resolved_preserves_unknown_fields_like_raw_message() {
+    let resolved: Resolved = serde_json::from_value(serde_json::json!({
+        "button_id": "btn-1",
+        "unknown_object": {
+            "value": 1
+        },
+        "unknown_string": "kept"
+    }))
+    .unwrap();
+
+    assert_eq!(resolved.button_id, "btn-1");
+    assert_eq!(
+        resolved.extra.get("unknown_object"),
+        Some(&serde_json::json!({"value": 1}))
+    );
+    assert_eq!(
+        serde_json::to_value(&resolved).unwrap(),
+        serde_json::json!({
+            "button_id": "btn-1",
+            "unknown_object": {
+                "value": 1
+            },
+            "unknown_string": "kept"
+        })
+    );
 }
 
 #[test]
