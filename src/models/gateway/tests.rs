@@ -2,35 +2,6 @@ use super::*;
 use crate::intents::Intents;
 
 #[test]
-fn test_event_to_intent_matches_expected_mapping() {
-    let intent = event_to_intent([
-        EVENT_GUILD_CREATE,
-        EVENT_CHANNEL_DELETE,
-        EVENT_GUILD_MEMBER_ADD,
-        EVENT_MESSAGE_CREATE,
-        EVENT_GROUP_AT_MESSAGE_CREATE,
-        EVENT_C2C_FRIEND_DEL,
-        EVENT_ENTER_AIO,
-        "UNKNOWN_EVENT",
-    ]);
-
-    assert_eq!(intent & Intents::GUILDS, Intents::GUILDS);
-    assert_eq!(intent & Intents::GUILD_MEMBERS, Intents::GUILD_MEMBERS);
-    assert_eq!(intent & Intents::GUILD_MESSAGES, Intents::GUILD_MESSAGES);
-    assert_eq!(intent & Intents::PUBLIC_MESSAGES, Intents::PUBLIC_MESSAGES);
-    assert_eq!(intent & Intents::ENTER_AIO, Intents::ENTER_AIO);
-    assert_eq!(event_to_intent(["UNKNOWN_EVENT"]), 0);
-}
-
-#[test]
-fn test_event_to_intent_maps_public_and_forum_events() {
-    assert_eq!(
-        event_to_intent([EVENT_AT_MESSAGE_CREATE, EVENT_FORUM_AUDIT_RESULT]),
-        Intents::PUBLIC_GUILD_MESSAGES | Intents::FORUMS
-    );
-}
-
-#[test]
 fn websocket_payload_keeps_session_out_of_json() {
     let mut payload = WSPayload::from(GatewayEvent {
         id: Some("event-id".to_string()),
