@@ -662,28 +662,6 @@ fn embed_keeps_prompt_field() {
 }
 
 #[test]
-fn test_message_attachment_types() {
-    let mut attachment = MessageAttachment {
-        id: Some("123".to_string()),
-        filename: Some("image.png".to_string()),
-        content_type: Some("image/png".to_string()),
-        size: Some(1024),
-        url: Some("https://example.com/image.png".to_string()),
-        width: Some(800),
-        height: Some(600),
-    };
-
-    assert!(attachment.is_image());
-    assert!(!attachment.is_video());
-    assert!(!attachment.is_audio());
-
-    attachment.content_type = Some("video/mp4".to_string());
-    assert!(!attachment.is_image());
-    assert!(attachment.is_video());
-    assert!(!attachment.is_audio());
-}
-
-#[test]
 fn message_attachment_omits_go_zero_values() {
     let attachment = MessageAttachment {
         id: Some(String::new()),

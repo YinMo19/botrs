@@ -27,26 +27,3 @@ pub struct MessageAttachment {
     #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub height: Option<u32>,
 }
-
-impl MessageAttachment {
-    /// Returns true if this attachment is an image.
-    pub fn is_image(&self) -> bool {
-        self.content_type
-            .as_ref()
-            .is_some_and(|ct| ct.starts_with("image/"))
-    }
-
-    /// Returns true if this attachment is a video.
-    pub fn is_video(&self) -> bool {
-        self.content_type
-            .as_ref()
-            .is_some_and(|ct| ct.starts_with("video/"))
-    }
-
-    /// Returns true if this attachment is an audio file.
-    pub fn is_audio(&self) -> bool {
-        self.content_type
-            .as_ref()
-            .is_some_and(|ct| ct.starts_with("audio/"))
-    }
-}
