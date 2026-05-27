@@ -16,13 +16,6 @@ pub struct ChannelPermissions {
     pub permissions: String,
 }
 
-impl ChannelPermissions {
-    /// Creates new channel permissions.
-    pub fn new() -> Self {
-        Self::default()
-    }
-}
-
 /// Channel role permissions response.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct ChannelRolesPermissions {
