@@ -2,7 +2,7 @@ use super::*;
 
 #[test]
 fn test_channel_creation() {
-    let channel = Channel::new();
+    let channel = Channel::default();
     assert!(channel.id.is_empty());
     assert!(channel.name.is_empty());
     assert_eq!(channel.private_type, PrivateType::Public);
@@ -10,9 +10,10 @@ fn test_channel_creation() {
 
 #[test]
 fn test_channel_types() {
-    let mut channel = Channel::new();
-
-    channel.channel_type = ChannelType::Text;
+    let mut channel = Channel {
+        channel_type: ChannelType::Text,
+        ..Default::default()
+    };
     assert_eq!(channel.channel_type, ChannelType::Text);
 
     channel.channel_type = ChannelType::Voice;
@@ -36,9 +37,10 @@ fn test_channel_type_conversion() {
 
 #[test]
 fn test_private_types() {
-    let mut channel = Channel::new();
-
-    channel.private_type = PrivateType::Public;
+    let mut channel = Channel {
+        private_type: PrivateType::Public,
+        ..Default::default()
+    };
     assert_eq!(channel.private_type, PrivateType::Public);
 
     channel.private_type = PrivateType::OnlyAdmin;
@@ -50,9 +52,10 @@ fn test_private_types() {
 
 #[test]
 fn test_speak_permissions() {
-    let mut channel = Channel::new();
-
-    channel.speak_permission = SpeakPermission::Public;
+    let mut channel = Channel {
+        speak_permission: SpeakPermission::Public,
+        ..Default::default()
+    };
     assert_eq!(channel.speak_permission, SpeakPermission::Public);
 
     channel.speak_permission = SpeakPermission::AdminAndMember;

@@ -22,8 +22,10 @@ pub struct MemberAddRoleBody {
 impl MemberAddRoleBody {
     /// Creates a body for a channel-specific role.
     pub fn with_channel_id(channel_id: impl Into<String>) -> Self {
-        let mut channel = Channel::new();
-        channel.id = channel_id.into();
+        let channel = Channel {
+            id: channel_id.into(),
+            ..Default::default()
+        };
         Self {
             channel: Some(channel),
         }

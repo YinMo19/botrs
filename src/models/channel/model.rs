@@ -50,13 +50,6 @@ pub struct Channel {
     pub op_user_id: Snowflake,
 }
 
-impl Channel {
-    /// Creates a new channel.
-    pub fn new() -> Self {
-        Self::default()
-    }
-}
-
 impl HasId for Channel {
     fn id(&self) -> Option<&Snowflake> {
         (!self.id.is_empty()).then_some(&self.id)
