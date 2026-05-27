@@ -32,16 +32,6 @@ impl EmojiType {
             EmojiType::Unknown(_) => "Unknown emoji type",
         }
     }
-
-    /// Returns true if this is a system emoji.
-    pub fn is_system(&self) -> bool {
-        matches!(self, EmojiType::System)
-    }
-
-    /// Returns true if this is a custom emoji.
-    pub fn is_custom(&self) -> bool {
-        matches!(self, EmojiType::Custom)
-    }
 }
 
 impl std::fmt::Display for EmojiType {
@@ -103,21 +93,6 @@ impl Emoji {
         self.url = Some(url.into());
         self
     }
-
-    /// Returns true if this is a system emoji.
-    pub fn is_system(&self) -> bool {
-        self.emoji_type.is_system()
-    }
-
-    /// Returns true if this is a custom emoji.
-    pub fn is_custom(&self) -> bool {
-        self.emoji_type.is_custom()
-    }
-
-    /// Gets the display name of the emoji.
-    pub fn display_name(&self) -> &str {
-        self.name.as_deref().unwrap_or(&self.id)
-    }
 }
 
 impl HasId for Emoji {
@@ -159,21 +134,12 @@ mod tests {
     }
 
     #[test]
-    fn test_emoji_type_checks() {
-        assert!(EmojiType::System.is_system());
-        assert!(!EmojiType::System.is_custom());
-        assert!(!EmojiType::Custom.is_system());
-        assert!(EmojiType::Custom.is_custom());
-    }
-
-    #[test]
     fn test_emoji_creation() {
         let emoji = Emoji::new("123", EmojiType::System);
         assert_eq!(emoji.id, "123");
         assert_eq!(emoji.emoji_type, EmojiType::System);
         assert_eq!(emoji.name, None);
         assert_eq!(emoji.url, None);
-        assert!(emoji.is_system());
     }
 
     #[test]
@@ -207,8 +173,7 @@ mod tests {
     fn test_system_emoji() {
         let emoji = Emoji::system("456");
         assert_eq!(emoji.id, "456");
-        assert!(emoji.is_system());
-        assert!(!emoji.is_custom());
+        assert_eq!(emoji.emoji_type, EmojiType::System);
     }
 
     #[test]
@@ -219,10 +184,9 @@ mod tests {
             Some("https://example.com/happy.png".to_string()),
         );
         assert_eq!(emoji.id, "789");
+        assert_eq!(emoji.emoji_type, EmojiType::Custom);
         assert_eq!(emoji.name, Some("happy".to_string()));
         assert_eq!(emoji.url, Some("https://example.com/happy.png".to_string()));
-        assert!(emoji.is_custom());
-        assert!(!emoji.is_system());
     }
 
     #[test]
@@ -233,15 +197,6 @@ mod tests {
 
         assert_eq!(emoji.name, Some("smile".to_string()));
         assert_eq!(emoji.url, Some("https://example.com/smile.png".to_string()));
-    }
-
-    #[test]
-    fn test_emoji_display_name() {
-        let emoji_with_name = Emoji::custom("123", Some("test".to_string()), None);
-        assert_eq!(emoji_with_name.display_name(), "test");
-
-        let emoji_without_name = Emoji::system("456");
-        assert_eq!(emoji_without_name.display_name(), "456");
     }
 
     #[test]
