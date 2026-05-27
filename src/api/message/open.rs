@@ -3,8 +3,8 @@ use crate::error::Result;
 use crate::models::{
     api::MessageResponse,
     message::{
-        ApiMessage, Ark, C2CMessageParams, Embed, GroupMessageParams, KeyboardPayload,
-        MarkdownPayload, Media, Message, MessageToCreate, Reference, RichMediaMessage, SendType,
+        ApiMessage, C2CMessageParams, GroupMessageParams, Message, MessageToCreate,
+        RichMediaMessage, SendType,
     },
 };
 use crate::token::Token;
@@ -103,43 +103,6 @@ impl BotApi {
         .await
     }
 
-    /// Sends a group message (legacy API for backward compatibility).
-    #[deprecated(since = "0.1.0", note = "Use post_group_message_with_params instead")]
-    #[allow(clippy::too_many_arguments)]
-    pub async fn post_group_message(
-        &self,
-        token: &Token,
-        group_openid: &str,
-        msg_type: Option<u32>,
-        content: Option<&str>,
-        embed: Option<&Embed>,
-        ark: Option<&Ark>,
-        message_reference: Option<&Reference>,
-        media: Option<&Media>,
-        msg_id: Option<&str>,
-        msg_seq: Option<u32>,
-        event_id: Option<&str>,
-        markdown: Option<&MarkdownPayload>,
-        keyboard: Option<&KeyboardPayload>,
-    ) -> Result<MessageResponse> {
-        let params = GroupMessageParams {
-            msg_type: msg_type.unwrap_or(0),
-            content: content.map(ToOwned::to_owned),
-            embed: embed.cloned(),
-            ark: ark.cloned(),
-            message_reference: message_reference.cloned(),
-            media: media.cloned(),
-            msg_id: msg_id.map(ToOwned::to_owned),
-            msg_seq,
-            event_id: event_id.map(ToOwned::to_owned),
-            markdown: markdown.cloned(),
-            keyboard: keyboard.cloned(),
-            ..Default::default()
-        };
-        self.post_group_message_with_params(token, group_openid, params)
-            .await
-    }
-
     /// Sends a C2C (client-to-client) message using C2CMessageParams.
     pub async fn post_c2c_message_with_params(
         &self,
@@ -184,43 +147,6 @@ impl BotApi {
         msg: &RichMediaMessage,
     ) -> Result<Message> {
         self.post_open_api_payload(token, OpenMessageTarget::C2c(openid), msg.send_type(), msg)
-            .await
-    }
-
-    /// Sends a C2C (client-to-client) message (legacy API for backward compatibility).
-    #[deprecated(since = "0.1.0", note = "Use post_c2c_message_with_params instead")]
-    #[allow(clippy::too_many_arguments)]
-    pub async fn post_c2c_message(
-        &self,
-        token: &Token,
-        openid: &str,
-        msg_type: Option<u32>,
-        content: Option<&str>,
-        embed: Option<&Embed>,
-        ark: Option<&Ark>,
-        message_reference: Option<&Reference>,
-        media: Option<&Media>,
-        msg_id: Option<&str>,
-        msg_seq: Option<u32>,
-        event_id: Option<&str>,
-        markdown: Option<&MarkdownPayload>,
-        keyboard: Option<&KeyboardPayload>,
-    ) -> Result<MessageResponse> {
-        let params = C2CMessageParams {
-            msg_type: msg_type.unwrap_or(0),
-            content: content.map(ToOwned::to_owned),
-            embed: embed.cloned(),
-            ark: ark.cloned(),
-            message_reference: message_reference.cloned(),
-            media: media.cloned(),
-            msg_id: msg_id.map(ToOwned::to_owned),
-            msg_seq,
-            event_id: event_id.map(ToOwned::to_owned),
-            markdown: markdown.cloned(),
-            keyboard: keyboard.cloned(),
-            ..Default::default()
-        };
-        self.post_c2c_message_with_params(token, openid, params)
             .await
     }
 
@@ -325,45 +251,9 @@ mod tests {
         let api = test_api(base_url).await;
         let response = api
             .post_group_message_with_params(
-                api.token_required().unwrap(),
+                api.token().unwrap(),
                 "group-openid-1",
                 GroupMessageParams::new_text("hello"),
-            )
-            .await
-            .unwrap();
-
-        assert_eq!(response.id.as_deref(), Some("message-1"));
-        let request = request.await.unwrap();
-        assert!(request.starts_with("POST /v2/groups/group-openid-1/messages HTTP/1.1"));
-        assert_eq!(
-            request_body(&request),
-            serde_json::json!({
-                "content": "hello"
-            })
-        );
-        server.await.unwrap();
-    }
-
-    #[allow(deprecated)]
-    #[tokio::test]
-    async fn legacy_group_message_matches_botgo_body() {
-        let (base_url, request, server) = spawn_capture_server().await;
-        let api = test_api(base_url).await;
-        let response = api
-            .post_group_message(
-                api.token_required().unwrap(),
-                "group-openid-1",
-                None,
-                Some("hello"),
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
             )
             .await
             .unwrap();
@@ -386,45 +276,9 @@ mod tests {
         let api = test_api(base_url).await;
         let response = api
             .post_c2c_message_with_params(
-                api.token_required().unwrap(),
+                api.token().unwrap(),
                 "openid-1",
                 C2CMessageParams::new_text("hello"),
-            )
-            .await
-            .unwrap();
-
-        assert_eq!(response.id.as_deref(), Some("message-1"));
-        let request = request.await.unwrap();
-        assert!(request.starts_with("POST /v2/users/openid-1/messages HTTP/1.1"));
-        assert_eq!(
-            request_body(&request),
-            serde_json::json!({
-                "content": "hello"
-            })
-        );
-        server.await.unwrap();
-    }
-
-    #[allow(deprecated)]
-    #[tokio::test]
-    async fn legacy_c2c_message_matches_botgo_body() {
-        let (base_url, request, server) = spawn_capture_server().await;
-        let api = test_api(base_url).await;
-        let response = api
-            .post_c2c_message(
-                api.token_required().unwrap(),
-                "openid-1",
-                None,
-                Some("hello"),
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
             )
             .await
             .unwrap();

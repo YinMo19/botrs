@@ -2,13 +2,9 @@ use crate::api::{BotApi, resource};
 use crate::error::Result;
 use crate::models::{
     api::MessageResponse,
-    message::{
-        Ark, DirectMessageParams, Embed, Keyboard, MarkdownPayload, Message, MessageToCreate,
-        Reference,
-    },
+    message::{DirectMessageParams, Message, MessageToCreate},
 };
 use crate::token::Token;
-use base64::Engine;
 use reqwest::Method;
 use tracing::debug;
 
@@ -38,41 +34,6 @@ impl BotApi {
         let path = resource::dms_messages(guild_id);
         self.request_json(token, Method::POST, &path, None::<&()>, Some(msg))
             .await
-    }
-
-    /// Sends a direct message (legacy API for backward compatibility).
-    #[deprecated(since = "0.1.0", note = "Use post_dms_with_params instead")]
-    #[allow(clippy::too_many_arguments)]
-    pub async fn post_dms(
-        &self,
-        token: &Token,
-        guild_id: &str,
-        content: Option<&str>,
-        embed: Option<&Embed>,
-        ark: Option<&Ark>,
-        message_reference: Option<&Reference>,
-        image: Option<&str>,
-        file_image: Option<&[u8]>,
-        msg_id: Option<&str>,
-        event_id: Option<&str>,
-        markdown: Option<&MarkdownPayload>,
-        keyboard: Option<&Keyboard>,
-    ) -> Result<MessageResponse> {
-        let params = DirectMessageParams {
-            content: content.map(ToOwned::to_owned),
-            embed: embed.cloned(),
-            ark: ark.cloned(),
-            message_reference: message_reference.cloned(),
-            image: image.map(ToOwned::to_owned),
-            file_image: file_image
-                .map(|data| base64::engine::general_purpose::STANDARD.encode(data)),
-            msg_id: msg_id.map(ToOwned::to_owned),
-            event_id: event_id.map(ToOwned::to_owned),
-            markdown: markdown.cloned(),
-            keyboard: keyboard.cloned(),
-            ..Default::default()
-        };
-        self.post_dms_with_params(token, guild_id, params).await
     }
 }
 
@@ -172,44 +133,9 @@ mod tests {
         let api = test_api(base_url).await;
         let response = api
             .post_dms_with_params(
-                api.token_required().unwrap(),
+                api.token().unwrap(),
                 "guild-1",
                 DirectMessageParams::new_text("hello"),
-            )
-            .await
-            .unwrap();
-
-        assert_eq!(response.id.as_deref(), Some("message-1"));
-        let request = request.await.unwrap();
-        assert!(request.starts_with("POST /dms/guild-1/messages HTTP/1.1"));
-        assert_eq!(
-            request_body(&request),
-            serde_json::json!({
-                "content": "hello"
-            })
-        );
-        server.await.unwrap();
-    }
-
-    #[allow(deprecated)]
-    #[tokio::test]
-    async fn legacy_post_dms_matches_botgo_body() {
-        let (base_url, request, server) = spawn_capture_server().await;
-        let api = test_api(base_url).await;
-        let response = api
-            .post_dms(
-                api.token_required().unwrap(),
-                "guild-1",
-                Some("hello"),
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
             )
             .await
             .unwrap();
@@ -232,7 +158,7 @@ mod tests {
         let api = test_api(base_url).await;
         let response = api
             .post_dms_with_params(
-                api.token_required().unwrap(),
+                api.token().unwrap(),
                 "guild-1",
                 DirectMessageParams::new_text("hello")
                     .with_file_image(b"image-bytes")

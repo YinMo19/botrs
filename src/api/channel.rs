@@ -345,7 +345,7 @@ mod tests {
         let api = test_api(base_url).await;
         let channel = api
             .create_channel(
-                api.token_required().unwrap(),
+                api.token().unwrap(),
                 "guild-1",
                 "channel_test",
                 ChannelType::Text,
@@ -373,7 +373,7 @@ mod tests {
         let api = test_api(base_url).await;
         let channel = api
             .update_channel(
-                api.token_required().unwrap(),
+                api.token().unwrap(),
                 "channel-1",
                 Some(""),
                 Some(0),
@@ -398,7 +398,7 @@ mod tests {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
         let channel = api
-            .delete_channel(api.token_required().unwrap(), "channel-1")
+            .delete_channel(api.token().unwrap(), "channel-1")
             .await
             .unwrap();
 
@@ -417,7 +417,7 @@ mod tests {
             spawn_capture_server_with_response("204 No Content", None).await;
         let api = test_api(base_url).await;
         let channel = api
-            .delete_channel(api.token_required().unwrap(), "channel-1")
+            .delete_channel(api.token().unwrap(), "channel-1")
             .await
             .unwrap();
 

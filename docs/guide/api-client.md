@@ -54,9 +54,7 @@ When you need to share one client across tasks, wrap it in an `Arc` (the `Client
 - Channels: `get_channel`, `get_channels`, `create_channel`, `update_channel`, `delete_channel`, `create_private_channel`.
 - Members and roles: `get_guild_member`, `get_guild_members`, `delete_member`, `get_guild_roles`, `create_guild_role`, `update_guild_role`, `delete_guild_role`, `create_guild_role_member`, `delete_guild_role_member`.
 - Messages: `post_message_with_params`, `patch_message_with_params`, `recall_message`, `get_message`, `get_messages`, `get_messages_with_params`, plus the `_group_`, `_c2c_`, `_dms_` variants.
-- Reactions, pins, announcements, schedules, mute, audio (`PostAudio`, `PutMic`, `DeleteMic`), forum threads (`get_threads`, `create_thread`, `delete_thread`, `get_thread`).
-
-The crate also re-exports a `PascalCase` facade (`api.PostMessage`, `api.Channels`, etc.) on top of the same HTTP layer, useful when you want method names that match the published QQ Bot API documentation rather than Rust's snake_case convention.
+- Reactions, pins, announcements, schedules, mute, audio (`post_audio`, `on_microphone`, `off_microphone`), forum threads (`get_threads`, `create_thread`, `delete_thread`, `get_thread`).
 
 ## Errors
 

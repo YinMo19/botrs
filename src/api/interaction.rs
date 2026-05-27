@@ -124,7 +124,7 @@ mod tests {
     async fn on_interaction_result_uses_json_body() {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
-        api.on_interaction_result(api.token_required().unwrap(), "interaction-1", 0)
+        api.on_interaction_result(api.token().unwrap(), "interaction-1", 0)
             .await
             .unwrap();
 
@@ -139,13 +139,9 @@ mod tests {
     async fn put_interaction_keeps_botgo_callback_header_and_raw_body() {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
-        api.put_interaction(
-            api.token_required().unwrap(),
-            "interaction-1",
-            r#"{"code":0}"#,
-        )
-        .await
-        .unwrap();
+        api.put_interaction(api.token().unwrap(), "interaction-1", r#"{"code":0}"#)
+            .await
+            .unwrap();
 
         let request = request.await.unwrap();
         assert!(request.starts_with("PUT /interactions/interaction-1 HTTP/1.1"));

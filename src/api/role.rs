@@ -193,7 +193,7 @@ mod tests {
         let api = test_api(base_url).await;
         let result = api
             .create_guild_role(
-                api.token_required().unwrap(),
+                api.token().unwrap(),
                 "guild-1",
                 Some("Test Role"),
                 Some(4_278_245_297),
@@ -219,7 +219,7 @@ mod tests {
         let api = test_api(base_url).await;
         let result = api
             .update_guild_role(
-                api.token_required().unwrap(),
+                api.token().unwrap(),
                 "guild-1",
                 "role-1",
                 Some("Test Role"),

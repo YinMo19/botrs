@@ -122,8 +122,8 @@ mod tests {
 
         let token = Token::new("app", "secret");
         let api = NewSandboxOpenAPI("app", token);
-        assert_eq!(api.Version(), APIv1);
-        assert_eq!(api.GetAppID(), "app");
+        assert_eq!(api.version(), APIv1);
+        assert_eq!(api.get_app_id(), "app");
         assert!(api.token().is_some());
     }
 
@@ -131,7 +131,7 @@ mod tests {
     fn openapi_client_registry_controls_version_selection() {
         let _guard = OPENAPI_REGISTRY_TEST_LOCK.lock().unwrap();
         let custom_version = 42;
-        let template = BotApi::new(HttpClient::new(9, false).unwrap()).SetDebug(true);
+        let template = BotApi::new(HttpClient::new(9, false).unwrap()).set_debug(true);
         SetOpenAPIClient(custom_version, template);
         SelectOpenAPIVersion(custom_version).unwrap();
 

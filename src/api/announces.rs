@@ -372,7 +372,7 @@ mod tests {
         let api = test_api(base_url).await;
         let response = api
             .post_group_file(
-                api.token_required().unwrap(),
+                api.token().unwrap(),
                 "group-openid-1",
                 1,
                 "https://example.com/a.png",
@@ -404,7 +404,7 @@ mod tests {
         let api = test_api(base_url).await;
         let response = api
             .post_c2c_file(
-                api.token_required().unwrap(),
+                api.token().unwrap(),
                 "openid-1",
                 1,
                 "https://example.com/a.png",
@@ -436,7 +436,7 @@ mod tests {
         let api = test_api(base_url).await;
 
         let response = api
-            .delete_announce(api.token_required().unwrap(), "guild-1", None::<&str>)
+            .delete_announce(api.token().unwrap(), "guild-1", None::<&str>)
             .await
             .unwrap();
 

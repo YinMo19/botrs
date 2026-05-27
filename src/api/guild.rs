@@ -314,7 +314,7 @@ mod tests {
         let api = test_api(base_url).await;
 
         let members = api
-            .get_voice_members(api.token_required().unwrap(), "channel-1")
+            .get_voice_members(api.token().unwrap(), "channel-1")
             .await
             .unwrap();
 
@@ -330,15 +330,9 @@ mod tests {
         let (base_url, request, server) = spawn_empty_response_capture_server().await;
         let api = test_api(base_url).await;
 
-        api.get_delete_member(
-            api.token_required().unwrap(),
-            "guild-1",
-            "user-1",
-            None,
-            Some(42),
-        )
-        .await
-        .unwrap();
+        api.get_delete_member(api.token().unwrap(), "guild-1", "user-1", None, Some(42))
+            .await
+            .unwrap();
 
         let request = request.await.unwrap();
         assert!(request.starts_with("DELETE /guilds/guild-1/members/user-1 HTTP/1.1"));

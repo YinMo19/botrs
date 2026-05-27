@@ -81,7 +81,7 @@ mod tests {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
 
-        let gateway = api.get_ws_url(api.token_required().unwrap()).await.unwrap();
+        let gateway = api.get_ws_url(api.token().unwrap()).await.unwrap();
 
         assert_eq!(gateway.url, "wss://example.com/websocket");
         let request = request.await.unwrap();

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+- Removed the `src/api/compat` PascalCase `BotApi` facade (`PostMessage`, `Channels`, `PostAudio`, etc.). Use the native snake_case `BotApi` methods instead.
+- Removed the deprecated multi-`Option` message sending methods (`post_message`, `post_group_message`, `post_c2c_message`, `post_dms`) and their `Context` wrappers. Use the `*_with_params` methods instead.
+
 ## [0.11.0] - 2026-05-25
 
 ### Changed
@@ -281,16 +285,12 @@ api.post_message_with_params(token, "channel_id", params).await?;
 - **Affected Versions**: 0.1.0, 0.1.1
 - **Fixed In**: 0.1.2+
 
-## Deprecation Notice
+## Removed APIs
 
-### v0.1.x Message API (Deprecated in 0.2.0)
-The old message API with multiple `None` parameters is deprecated and will be removed in v0.3.0. Please migrate to the new structured parameter API.
+### v0.1.x Message API
+The old message API with multiple `None` parameters has been removed. Use the structured parameter API.
 
 ```rust
-// ❌ Deprecated - will be removed in v0.3.0
-api.post_message(token, channel, Some(content), None, None, None, None, None, None, None, None, None).await?;
-
-// ✅ New API - recommended
 let params = MessageParams::new_text(content);
 api.post_message_with_params(token, channel, params).await?;
 ```

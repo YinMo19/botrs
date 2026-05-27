@@ -2,10 +2,10 @@
 //!
 //! This module contains message types for the QQ Bot Open API.
 //!
-//! # Migration Guide: New Message Parameter API
+//! # Message Parameter API
 //!
-//! Starting from version 0.2.0, this module introduces cleaner parameter structs for message sending
-//! to replace functions with many `Option<T>` parameters.
+//! Message sending uses parameter structs instead of functions with many
+//! `Option<T>` parameters.
 //!
 //! ## Benefits
 //!
@@ -15,33 +15,8 @@
 //! - **Extensibility**: Easy to add new fields without breaking existing code
 //! - **Builder patterns**: Convenient methods for common operations
 //!
-//! ## Migration Examples
-//!
 //! ### Channel Messages
 //!
-//! **Old API (deprecated):**
-//! ```rust,no_run
-//! # use botrs::*;
-//! # async fn example(api: &BotApi, token: &Token, channel_id: &str) -> Result<()> {
-//! api.post_message(
-//!     token,
-//!     channel_id,
-//!     Some("Hello!"),    // content
-//!     None,              // embed
-//!     None,              // ark
-//!     None,              // message_reference
-//!     None,              // image
-//!     None,              // file_image
-//!     None,              // msg_id
-//!     None,              // event_id
-//!     None,              // markdown
-//!     None,              // keyboard
-//! ).await?;
-//! # Ok(())
-//! # }
-//! ```
-//!
-//! **New API:**
 //! ```rust,no_run
 //! # use botrs::*;
 //! # use botrs::models::message::MessageParams;
@@ -70,30 +45,6 @@
 //!
 //! ### Group Messages
 //!
-//! **Old API (deprecated):**
-//! ```rust,no_run
-//! # use botrs::*;
-//! # async fn example(api: &BotApi, token: &Token, group_openid: &str) -> Result<()> {
-//! api.post_group_message(
-//!     token,
-//!     group_openid,
-//!     Some(0),           // msg_type
-//!     Some("Hello!"),    // content
-//!     None,              // embed
-//!     None,              // ark
-//!     None,              // message_reference
-//!     None,              // media
-//!     None,              // msg_id
-//!     None,              // msg_seq
-//!     None,              // event_id
-//!     None,              // markdown
-//!     None,              // keyboard
-//! ).await?;
-//! # Ok(())
-//! # }
-//! ```
-//!
-//! **New API:**
 //! ```rust,no_run
 //! # use botrs::*;
 //! # use botrs::models::message::GroupMessageParams;
@@ -116,12 +67,6 @@
 //! - `with_reply(message_id)` - Add reply reference
 //! - `with_file_image(&bytes)` - Add file attachment (MessageParams/DirectMessageParams only)
 //! - `Default` implementation for easy struct building
-//!
-//! ## Breaking Changes
-//!
-//! - Old message sending functions are **deprecated** but still functional
-//! - They will be removed in version 1.0.0
-//! - No immediate breaking changes - old code compiles with warnings
 //!
 //! See the examples in `/examples` directory for comprehensive usage patterns.
 

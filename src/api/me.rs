@@ -148,7 +148,7 @@ mod tests {
         )
         .await;
         let api = test_api(base_url).await;
-        let bot = api.me(api.token_required().unwrap()).await.unwrap();
+        let bot = api.me(api.token().unwrap()).await.unwrap();
 
         assert_eq!(bot.id, "bot-1");
         assert_eq!(bot.username, "Bot");
@@ -163,7 +163,7 @@ mod tests {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
         let guilds = api
-            .get_guilds(api.token_required().unwrap(), None, None, None)
+            .get_guilds(api.token().unwrap(), None, None, None)
             .await
             .unwrap();
 
@@ -178,7 +178,7 @@ mod tests {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
         let guilds = api
-            .me_guilds(api.token_required().unwrap(), None, None, None)
+            .me_guilds(api.token().unwrap(), None, None, None)
             .await
             .unwrap();
 
@@ -194,7 +194,7 @@ mod tests {
         let api = test_api(base_url).await;
         let guilds = api
             .get_guilds(
-                api.token_required().unwrap(),
+                api.token().unwrap(),
                 Some("guild-cursor-1"),
                 Some(20),
                 Some(true),

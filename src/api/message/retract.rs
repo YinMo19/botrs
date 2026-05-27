@@ -119,14 +119,9 @@ mod tests {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
 
-        api.recall_message(
-            api.token_required().unwrap(),
-            "channel-1",
-            "message-1",
-            None,
-        )
-        .await
-        .unwrap();
+        api.recall_message(api.token().unwrap(), "channel-1", "message-1", None)
+            .await
+            .unwrap();
 
         let request = request.await.unwrap();
         assert!(request.starts_with("DELETE /channels/channel-1/messages/message-1 HTTP/1.1"));
@@ -138,14 +133,9 @@ mod tests {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
 
-        api.recall_message(
-            api.token_required().unwrap(),
-            "channel-1",
-            "message-1",
-            Some(true),
-        )
-        .await
-        .unwrap();
+        api.recall_message(api.token().unwrap(), "channel-1", "message-1", Some(true))
+            .await
+            .unwrap();
 
         let request = request.await.unwrap();
         assert!(

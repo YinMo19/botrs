@@ -1,7 +1,6 @@
 use super::{APIVersion, APIv1, BotApi};
 use crate::error::Result;
 use crate::http::HttpClient;
-use crate::options::{OpenApiOption, Options};
 use crate::token::Token;
 use reqwest::Method;
 use serde::Serialize;
@@ -105,25 +104,6 @@ impl BotApi {
         &self.app_id
     }
 
-    pub(crate) fn token_required(&self) -> Result<&Token> {
-        self.token.as_ref().ok_or_else(|| {
-            crate::BotError::config(
-                "BotApi has no stored token; use NewOpenAPI/NewSandboxOpenAPI or explicit-token methods",
-            )
-        })
-    }
-
-    pub(crate) fn url_with_options(&self, path: &str, options: &Options) -> String {
-        options
-            .url
-            .clone()
-            .unwrap_or_else(|| format!("{}{}", self.http.base_url(), path))
-    }
-
-    pub(crate) fn no_options() -> Vec<OpenApiOption> {
-        Vec::new()
-    }
-
     pub(crate) fn decode_json<T>(response: Value) -> Result<T>
     where
         T: serde::de::DeserializeOwned,
@@ -166,24 +146,6 @@ impl BotApi {
     {
         let url = format!("{}{}", self.http.base_url(), path);
         self.request_url_json(token, method, &url, query, body)
-            .await
-    }
-
-    pub(crate) async fn request_options_json<T, Q, B>(
-        &self,
-        options: &Options,
-        method: Method,
-        path: &str,
-        query: Option<&Q>,
-        body: Option<&B>,
-    ) -> Result<T>
-    where
-        T: serde::de::DeserializeOwned,
-        Q: Serialize + ?Sized,
-        B: Serialize + ?Sized,
-    {
-        let url = self.url_with_options(path, options);
-        self.request_url_json(self.token_required()?, method, &url, query, body)
             .await
     }
 

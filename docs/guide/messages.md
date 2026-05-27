@@ -66,6 +66,6 @@ For anything beyond plain text, build a `MessageParams` and call `ctx.api.post_m
 - `retract_c2c_message`, `retract_group_message`, `retract_dm_message` are the recall variants for the other surfaces.
 - Audit events are surfaced via `EventHandler::message_audit_pass` / `message_audit_reject` and carry a `MessageAudit` payload; you do not have to ack them.
 
-## Legacy API
+## Removed Legacy API
 
-The pre-0.2 multi-`Option` methods (`post_message`, `post_group_message`, `post_c2c_message`, `post_dms`) still compile but emit `#[deprecated]` warnings. New code should always use the `*_with_params` variants. See [v0.2.0 migration](/guide/migration-v0.2.0) for the rewrite recipe.
+The pre-0.2 multi-`Option` methods (`post_message`, `post_group_message`, `post_c2c_message`, `post_dms`) have been removed. Use the `*_with_params` variants shown above. See [v0.2.0 migration](/guide/migration-v0.2.0) for the rewrite recipe.

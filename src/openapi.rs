@@ -192,7 +192,7 @@ mod tests {
                 .timeout(),
             std::time::Duration::from_secs(11)
         );
-        assert_eq!(DefaultImpl().Version(), crate::api::APIv1);
+        assert_eq!(DefaultImpl().version(), crate::api::APIv1);
     }
 
     #[test]

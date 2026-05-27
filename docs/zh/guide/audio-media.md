@@ -35,8 +35,6 @@ ctx.api.post_audio(&ctx.token, &channel_id, &control).await?;
 - `BotApi::on_microphone(&token, channel_id)` —— 上麦。
 - `BotApi::off_microphone(&token, channel_id)` —— 下麦。
 
-PascalCase 别名 `PostAudio`、`PutMic`、`DeleteMic` 也可用，调用的是同一组接口。
-
 ## 富媒体上传
 
 群／C2C 消息可以先上传媒体，再发送引用该媒体的消息：

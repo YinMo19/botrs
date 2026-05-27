@@ -54,9 +54,7 @@ let guilds = api.get_guilds(&token, None, None, None).await?;
 - 子频道：`get_channel`、`get_channels`、`create_channel`、`update_channel`、`delete_channel`、`create_private_channel`。
 - 成员与角色：`get_guild_member`、`get_guild_members`、`delete_member`、`get_guild_roles`、`create_guild_role`、`update_guild_role`、`delete_guild_role`、`create_guild_role_member`、`delete_guild_role_member`。
 - 消息：`post_message_with_params`、`patch_message_with_params`、`recall_message`、`get_message`、`get_messages`、`get_messages_with_params`，以及 `_group_`、`_c2c_`、`_dms_` 等变体。
-- 表情、置顶、公告、日程、禁言、音频（`PostAudio`、`PutMic`、`DeleteMic`），以及论坛主题（`get_threads`、`create_thread`、`delete_thread`、`get_thread`）。
-
-crate 还在同一 HTTP 层之上导出了 `PascalCase` 入口（`api.PostMessage`、`api.Channels` 等），方便你直接对照 QQ Bot API 文档中的方法名，而不是 Rust 习惯的 snake_case。
+- 表情、置顶、公告、日程、禁言、音频（`post_audio`、`on_microphone`、`off_microphone`），以及论坛主题（`get_threads`、`create_thread`、`delete_thread`、`get_thread`）。
 
 ## 错误
 

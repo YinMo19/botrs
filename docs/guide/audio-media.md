@@ -35,8 +35,6 @@ Mic control on a voice channel:
 - `BotApi::on_microphone(&token, channel_id)` — bot joins the mic.
 - `BotApi::off_microphone(&token, channel_id)` — bot leaves.
 
-PascalCase aliases `PostAudio`, `PutMic`, `DeleteMic` are also exposed and call the same endpoints.
-
 ## Uploading rich media
 
 For group and C2C messages you can upload media first, then send a message that references it.

@@ -66,6 +66,6 @@ async fn message_create(&self, ctx: Context, message: Message) {
 - `retract_c2c_message`、`retract_group_message`、`retract_dm_message` 是另外三种场景的撤回。
 - 审核结果通过 `EventHandler::message_audit_pass` / `message_audit_reject` 投递，载荷为 `MessageAudit`，无需主动 ACK。
 
-## 旧 API
+## 已移除的旧 API
 
-0.2 之前的多 `Option` 接口（`post_message`、`post_group_message`、`post_c2c_message`、`post_dms`）仍可编译但带 `#[deprecated]` 警告。新代码应一律使用 `*_with_params` 形式，迁移步骤见 [v0.2.0 迁移](/zh/guide/migration-v0.2.0)。
+0.2 之前的多 `Option` 接口（`post_message`、`post_group_message`、`post_c2c_message`、`post_dms`）已经移除。请使用上文展示的 `*_with_params` 形式，迁移步骤见 [v0.2.0 迁移](/zh/guide/migration-v0.2.0)。

@@ -7,6 +7,10 @@ BotRS 的所有重要更改都将记录在此文件中。
 
 ## [未发布]
 
+### 移除
+- 移除 `src/api/compat` 下的 `BotApi` PascalCase 门面（`PostMessage`、`Channels`、`PostAudio` 等）。请使用原生 snake_case `BotApi` 方法。
+- 移除已弃用的多 `Option` 消息发送方法（`post_message`、`post_group_message`、`post_c2c_message`、`post_dms`）及其 `Context` wrapper。请使用 `*_with_params` 方法。
+
 ## [0.11.0] - 2026-05-25
 
 ### 更改
@@ -281,16 +285,12 @@ api.post_message_with_params(token, "channel_id", params).await?;
 - **影响版本**：0.1.0、0.1.1
 - **修复版本**：0.1.2+
 
-## 弃用通知
+## 已移除 API
 
-### v0.1.x 消息 API（在 0.2.0 中弃用）
-具有多个 `None` 参数的旧消息 API 已弃用，将在 v0.3.0 中删除。请迁移到新的结构化参数 API。
+### v0.1.x 消息 API
+具有多个 `None` 参数的旧消息 API 已移除。请使用新的结构化参数 API。
 
 ```rust
-// ❌ 已弃用 - 将在 v0.3.0 中删除
-api.post_message(token, channel, Some(content), None, None, None, None, None, None, None, None, None).await?;
-
-// ✅ 新 API - 推荐
 let params = MessageParams::new_text(content);
 api.post_message_with_params(token, channel, params).await?;
 ```

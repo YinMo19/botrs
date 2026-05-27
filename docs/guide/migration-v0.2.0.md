@@ -1,6 +1,6 @@
 # v0.2.0 message API migration
 
-The only breaking change in `botrs` 0.2.0 is the message-sending surface. Five `BotApi` methods used to take 10+ positional `Option` arguments; they're now `*_with_params` methods that take a typed builder. The old methods are kept with `#[deprecated]` and will be removed in 0.3.
+The message-sending surface moved from positional `Option` arguments to typed builders. The legacy methods have since been removed; use the `*_with_params` methods below.
 
 ## What changed
 
@@ -54,6 +54,6 @@ Group / C2C / DM follow the same shape with the corresponding `*Params` and `*_w
 
 The old API was a documented footgun: the order and meaning of the `Option` arguments was easy to misremember, and a misplaced `Some` or `None` produced a syntactically valid but semantically wrong call. The struct version makes the field name explicit at every call site, allows `..Default::default()` for the common case, and lets the compiler help you when fields are added or renamed.
 
-## Deprecation timeline
+## Removal timeline
 
-The old methods compile in 0.2.x with `#[deprecated]` warnings. They'll be removed entirely in 0.3.0 — once your project compiles cleanly with `-W deprecated`, you're done migrating.
+The old methods compiled in 0.2.x with `#[deprecated]` warnings and have now been removed. Once your project only calls the `*_with_params` methods, the migration is complete.

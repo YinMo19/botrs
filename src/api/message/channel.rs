@@ -3,12 +3,11 @@ use crate::error::Result;
 use crate::models::{
     api::MessageResponse,
     message::{
-        Ark, Embed, Keyboard, MarkdownPayload, Message, MessagePagerType, MessageParams,
-        MessageToCreate, MessagesPager, Reference,
+        Keyboard, MarkdownPayload, Message, MessagePagerType, MessageParams, MessageToCreate,
+        MessagesPager,
     },
 };
 use crate::token::Token;
-use base64::Engine;
 use reqwest::Method;
 use tracing::debug;
 
@@ -198,42 +197,6 @@ impl BotApi {
         self.request_message_response_body(token, Method::PATCH, &path, &body)
             .await
     }
-
-    /// Sends a message to a channel (legacy API for backward compatibility).
-    #[deprecated(since = "0.1.0", note = "Use post_message_with_params instead")]
-    #[allow(clippy::too_many_arguments)]
-    pub async fn post_message(
-        &self,
-        token: &Token,
-        channel_id: &str,
-        content: Option<&str>,
-        embed: Option<&Embed>,
-        ark: Option<&Ark>,
-        message_reference: Option<&Reference>,
-        image: Option<&str>,
-        file_image: Option<&[u8]>,
-        msg_id: Option<&str>,
-        event_id: Option<&str>,
-        markdown: Option<&MarkdownPayload>,
-        keyboard: Option<&Keyboard>,
-    ) -> Result<MessageResponse> {
-        let params = MessageParams {
-            content: content.map(ToOwned::to_owned),
-            embed: embed.cloned(),
-            ark: ark.cloned(),
-            message_reference: message_reference.cloned(),
-            image: image.map(ToOwned::to_owned),
-            file_image: file_image
-                .map(|data| base64::engine::general_purpose::STANDARD.encode(data)),
-            msg_id: msg_id.map(ToOwned::to_owned),
-            event_id: event_id.map(ToOwned::to_owned),
-            markdown: markdown.cloned(),
-            keyboard: keyboard.cloned(),
-            ..Default::default()
-        };
-        self.post_message_with_params(token, channel_id, params)
-            .await
-    }
 }
 
 #[cfg(test)]
@@ -332,44 +295,9 @@ mod tests {
         let api = test_api(base_url).await;
         let response = api
             .post_message_with_params(
-                api.token_required().unwrap(),
+                api.token().unwrap(),
                 "channel-1",
                 MessageParams::new_text("hello"),
-            )
-            .await
-            .unwrap();
-
-        assert_eq!(response.id.as_deref(), Some("message-1"));
-        let request = request.await.unwrap();
-        assert!(request.starts_with("POST /channels/channel-1/messages HTTP/1.1"));
-        assert_eq!(
-            request_body(&request),
-            serde_json::json!({
-                "content": "hello"
-            })
-        );
-        server.await.unwrap();
-    }
-
-    #[allow(deprecated)]
-    #[tokio::test]
-    async fn legacy_post_message_matches_botgo_body() {
-        let (base_url, request, server) = spawn_capture_server().await;
-        let api = test_api(base_url).await;
-        let response = api
-            .post_message(
-                api.token_required().unwrap(),
-                "channel-1",
-                Some("hello"),
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
             )
             .await
             .unwrap();
@@ -392,7 +320,7 @@ mod tests {
         let api = test_api(base_url).await;
         let response = api
             .post_message_with_params(
-                api.token_required().unwrap(),
+                api.token().unwrap(),
                 "channel-1",
                 MessageParams::new_text("hello")
                     .with_file_image(b"image-bytes")
@@ -420,7 +348,7 @@ mod tests {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
         let response = api
-            .post_keyboard_message(api.token_required().unwrap(), "channel-1", None, None)
+            .post_keyboard_message(api.token().unwrap(), "channel-1", None, None)
             .await
             .unwrap();
 
@@ -437,7 +365,7 @@ mod tests {
         let api = test_api(base_url).await;
         let response = api
             .patch_guild_message(
-                api.token_required().unwrap(),
+                api.token().unwrap(),
                 "channel-1",
                 "message-1",
                 None,

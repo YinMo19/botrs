@@ -323,7 +323,7 @@ mod tests {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
         let schedules = api
-            .get_schedules(api.token_required().unwrap(), "channel-1", None)
+            .get_schedules(api.token().unwrap(), "channel-1", None)
             .await
             .unwrap();
 
@@ -339,7 +339,7 @@ mod tests {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
         let schedules = api
-            .list_schedules_with_query(api.token_required().unwrap(), "channel-1", Some("0"))
+            .list_schedules_with_query(api.token().unwrap(), "channel-1", Some("0"))
             .await
             .unwrap();
 

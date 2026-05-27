@@ -9,41 +9,6 @@ impl Context {
             .await
     }
 
-    /// Sends a channel message using the legacy positional argument API.
-    #[allow(deprecated)]
-    #[allow(clippy::too_many_arguments)]
-    pub async fn post_message(
-        &self,
-        channel_id: &str,
-        content: Option<&str>,
-        embed: Option<&Embed>,
-        ark: Option<&Ark>,
-        message_reference: Option<&Reference>,
-        image: Option<&str>,
-        file_image: Option<&[u8]>,
-        msg_id: Option<&str>,
-        event_id: Option<&str>,
-        markdown: Option<&MarkdownPayload>,
-        keyboard: Option<&Keyboard>,
-    ) -> Result<MessageResponse> {
-        self.api
-            .post_message(
-                &self.token,
-                channel_id,
-                content,
-                embed,
-                ark,
-                message_reference,
-                image,
-                file_image,
-                msg_id,
-                event_id,
-                markdown,
-                keyboard,
-            )
-            .await
-    }
-
     /// Sends a channel message using MessageParams.
     pub async fn post_message_with_params(
         &self,
@@ -78,43 +43,6 @@ impl Context {
             .await
     }
 
-    /// Sends a group message using the legacy positional argument API.
-    #[allow(deprecated)]
-    #[allow(clippy::too_many_arguments)]
-    pub async fn post_group_message(
-        &self,
-        group_openid: &str,
-        msg_type: Option<u32>,
-        content: Option<&str>,
-        embed: Option<&Embed>,
-        ark: Option<&Ark>,
-        message_reference: Option<&Reference>,
-        media: Option<&Media>,
-        msg_id: Option<&str>,
-        msg_seq: Option<u32>,
-        event_id: Option<&str>,
-        markdown: Option<&MarkdownPayload>,
-        keyboard: Option<&KeyboardPayload>,
-    ) -> Result<MessageResponse> {
-        self.api
-            .post_group_message(
-                &self.token,
-                group_openid,
-                msg_type,
-                content,
-                embed,
-                ark,
-                message_reference,
-                media,
-                msg_id,
-                msg_seq,
-                event_id,
-                markdown,
-                keyboard,
-            )
-            .await
-    }
-
     /// Sends a text message to an open-platform group conversation.
     pub async fn send_group_message(
         &self,
@@ -135,43 +63,6 @@ impl Context {
     ) -> Result<MessageResponse> {
         self.api
             .post_c2c_message_with_params(&self.token, openid, params)
-            .await
-    }
-
-    /// Sends a C2C message using the legacy positional argument API.
-    #[allow(deprecated)]
-    #[allow(clippy::too_many_arguments)]
-    pub async fn post_c2c_message(
-        &self,
-        openid: &str,
-        msg_type: Option<u32>,
-        content: Option<&str>,
-        embed: Option<&Embed>,
-        ark: Option<&Ark>,
-        message_reference: Option<&Reference>,
-        media: Option<&Media>,
-        msg_id: Option<&str>,
-        msg_seq: Option<u32>,
-        event_id: Option<&str>,
-        markdown: Option<&MarkdownPayload>,
-        keyboard: Option<&KeyboardPayload>,
-    ) -> Result<MessageResponse> {
-        self.api
-            .post_c2c_message(
-                &self.token,
-                openid,
-                msg_type,
-                content,
-                embed,
-                ark,
-                message_reference,
-                media,
-                msg_id,
-                msg_seq,
-                event_id,
-                markdown,
-                keyboard,
-            )
             .await
     }
 

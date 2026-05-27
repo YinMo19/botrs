@@ -119,10 +119,6 @@ impl NewApiDemoHandler {
     }
 
     async fn demo_text_message(&self, ctx: &botrs::Context, channel_id: &str) {
-        // Old way (still works but deprecated):
-        // ctx.api.post_message(&ctx.token, channel_id, Some("Hello!"), None, None, ...).await
-
-        // New way - much cleaner!
         let params = MessageParams::new_text("🚀 This is a simple text message using the new API!");
 
         match ctx

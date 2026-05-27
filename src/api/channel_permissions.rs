@@ -196,7 +196,7 @@ mod tests {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
         api.update_channel_user_permissions(
-            api.token_required().unwrap(),
+            api.token().unwrap(),
             "channel-1",
             "user-1",
             Some("2"),
@@ -216,7 +216,7 @@ mod tests {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
         api.update_channel_role_permissions(
-            api.token_required().unwrap(),
+            api.token().unwrap(),
             "channel-1",
             "role-1",
             None,

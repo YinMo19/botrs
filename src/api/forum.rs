@@ -149,7 +149,7 @@ mod tests {
         let api = test_api(base_url).await;
         let rsp = api
             .post_thread(
-                api.token_required().unwrap(),
+                api.token().unwrap(),
                 "channel-1",
                 "Title",
                 "Content",

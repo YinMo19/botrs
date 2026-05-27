@@ -235,15 +235,9 @@ mod tests {
     async fn inline_add_role_member_matches_botgo_empty_channel() {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
-        api.create_guild_role_member(
-            api.token_required().unwrap(),
-            "guild-1",
-            "role-1",
-            "user-1",
-            None,
-        )
-        .await
-        .unwrap();
+        api.create_guild_role_member(api.token().unwrap(), "guild-1", "role-1", "user-1", None)
+            .await
+            .unwrap();
 
         let request = request.await.unwrap();
         assert!(request.starts_with("PUT /guilds/guild-1/members/user-1/roles/role-1 HTTP/1.1"));
@@ -256,7 +250,7 @@ mod tests {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
         api.delete_guild_role_member(
-            api.token_required().unwrap(),
+            api.token().unwrap(),
             "guild-1",
             "role-1",
             "user-1",
@@ -277,15 +271,9 @@ mod tests {
     async fn inline_mute_member_matches_botgo_omitempty_body() {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
-        api.mute_member(
-            api.token_required().unwrap(),
-            "guild-1",
-            "user-1",
-            None,
-            Some("20"),
-        )
-        .await
-        .unwrap();
+        api.mute_member(api.token().unwrap(), "guild-1", "user-1", None, Some("20"))
+            .await
+            .unwrap();
 
         let request = request.await.unwrap();
         assert!(request.starts_with("PATCH /guilds/guild-1/members/user-1/mute HTTP/1.1"));
