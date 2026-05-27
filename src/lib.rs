@@ -50,9 +50,8 @@ pub use reaction::{
     ReactionTargetType, ReactionUsers,
 };
 pub use session_manager::{
-    CANNOT_IDENTIFY_ERROR_CODES, CANNOT_RESUME_ERROR_CODES, ChanManager, Session, SessionManager,
-    can_not_identify, can_not_resume, check_session_limit, new_session_manager,
-    set_session_manager_factory,
+    ChanManager, Session, SessionManager, can_not_identify, can_not_resume, check_session_limit,
+    new_session_manager, set_session_manager_factory,
 };
 pub use signature::{HEADER_SIGNATURE, HEADER_TIMESTAMP, generate, verify};
 pub use token::{Token, start_access_token_refresh};

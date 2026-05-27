@@ -8,9 +8,7 @@ mod session;
 mod traits;
 
 pub use channel::ChanManager;
-pub use errors::{
-    CANNOT_IDENTIFY_ERROR_CODES, CANNOT_RESUME_ERROR_CODES, can_not_identify, can_not_resume,
-};
+pub use errors::{can_not_identify, can_not_resume};
 pub use factory::{new_session_manager, set_session_manager_factory};
 pub use limit::check_session_limit;
 pub use session::Session;
