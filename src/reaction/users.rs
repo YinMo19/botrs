@@ -1,6 +1,5 @@
 use crate::models::user::User;
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 
 /// Reaction users response structure
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -17,11 +16,6 @@ pub struct ReactionUsers {
 }
 
 impl ReactionUsers {
-    /// Create a new ReactionUsers instance from JSON data
-    pub fn new(data: &Value) -> crate::Result<Self> {
-        Ok(serde_json::from_value(data.clone())?)
-    }
-
     /// Check if there are more pages available
     pub fn has_more_pages(&self) -> bool {
         !self.is_end
