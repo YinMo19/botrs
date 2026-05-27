@@ -341,10 +341,10 @@ fn member_add_role_body_matches_json_shape() {
 
 #[test]
 fn member_delete_options_match_query_shape() {
-    let options = MemberDeleteOptions::new()
-        .with_delete_history_msg_days(99)
-        .with_add_blacklist(true)
-        .with_delete_history_msg_days(42);
+    let options = MemberDeleteOptions {
+        add_blacklist: true,
+        delete_history_msg_days: 42,
+    };
 
     assert_eq!(options.delete_history_msg_days, 42);
     assert_eq!(

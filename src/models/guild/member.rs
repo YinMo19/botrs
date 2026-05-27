@@ -49,25 +49,6 @@ pub struct MemberDeleteOptions {
     pub delete_history_msg_days: DeleteHistoryMsgDay,
 }
 
-impl MemberDeleteOptions {
-    /// Creates delete options with official defaults.
-    pub fn new() -> Self {
-        Self::default()
-    }
-
-    /// Sets whether the member should also be added to the blacklist.
-    pub fn with_add_blacklist(mut self, add_blacklist: bool) -> Self {
-        self.add_blacklist = add_blacklist;
-        self
-    }
-
-    /// Sets the history deletion window.
-    pub fn with_delete_history_msg_days(mut self, days: DeleteHistoryMsgDay) -> Self {
-        self.delete_history_msg_days = days;
-        self
-    }
-}
-
 impl Default for MemberDeleteOptions {
     fn default() -> Self {
         Self {
