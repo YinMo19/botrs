@@ -16,17 +16,6 @@ pub struct GuildRoles {
     pub num_limit: String,
 }
 
-impl GuildRoles {
-    /// Creates a new guild roles wrapper.
-    pub fn new(roles: Vec<GuildRole>) -> Self {
-        Self {
-            guild_id: String::new(),
-            roles,
-            num_limit: String::new(),
-        }
-    }
-}
-
 /// Default role color used when creating or updating roles.
 pub const DEFAULT_ROLE_COLOR: u32 = 4_278_245_297;
 
