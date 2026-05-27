@@ -23,18 +23,6 @@ pub struct Member {
 }
 
 impl Member {
-    /// Creates a new member from a user.
-    pub fn new(user: User, joined_at: Timestamp) -> Self {
-        Self {
-            user,
-            nick: None,
-            roles: Vec::new(),
-            joined_at,
-            deaf: false,
-            mute: false,
-        }
-    }
-
     /// Gets the member's mention string.
     pub fn mention(&self) -> String {
         self.user.mention()

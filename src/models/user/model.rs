@@ -26,18 +26,6 @@ pub struct User {
 }
 
 impl User {
-    /// Creates a new user.
-    pub fn new(id: impl Into<Snowflake>, username: impl Into<String>) -> Self {
-        Self {
-            id: id.into(),
-            username: username.into(),
-            avatar: String::new(),
-            bot: false,
-            union_openid: String::new(),
-            union_user_account: String::new(),
-        }
-    }
-
     /// Gets the user's avatar URL if they have one.
     ///
     /// Returns the full URL to the user's avatar image.

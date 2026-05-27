@@ -1,8 +1,19 @@
 use super::*;
 
+fn test_user(id: &str, username: &str) -> User {
+    User {
+        id: id.to_string(),
+        username: username.to_string(),
+        avatar: String::new(),
+        bot: false,
+        union_openid: String::new(),
+        union_user_account: String::new(),
+    }
+}
+
 #[test]
 fn test_user_creation() {
-    let user = User::new("123456789", "TestUser");
+    let user = test_user("123456789", "TestUser");
     assert_eq!(user.id, "123456789");
     assert_eq!(user.username, "TestUser");
     assert_eq!(user.avatar, "");
@@ -68,14 +79,21 @@ fn user_from_bot_info_preserves_union_fields() {
 
 #[test]
 fn test_user_mention() {
-    let user = User::new("123456789", "TestUser");
+    let user = test_user("123456789", "TestUser");
     assert_eq!(user.mention(), "<@!123456789>");
 }
 
 #[test]
 fn test_member_name_fallback() {
-    let user = User::new("123456789", "TestUser");
-    let mut member = Member::new(user, "2024-01-01T00:00:00Z".to_string());
+    let user = test_user("123456789", "TestUser");
+    let mut member = Member {
+        user,
+        nick: None,
+        roles: Vec::new(),
+        joined_at: "2024-01-01T00:00:00Z".to_string(),
+        deaf: false,
+        mute: false,
+    };
 
     assert_eq!(
         member.nick.as_deref().unwrap_or(&member.user.username),
@@ -91,8 +109,15 @@ fn test_member_name_fallback() {
 
 #[test]
 fn test_member_roles() {
-    let user = User::new("123456789", "TestUser");
-    let mut member = Member::new(user, "2024-01-01T00:00:00Z".to_string());
+    let user = test_user("123456789", "TestUser");
+    let mut member = Member {
+        user,
+        nick: None,
+        roles: Vec::new(),
+        joined_at: "2024-01-01T00:00:00Z".to_string(),
+        deaf: false,
+        mute: false,
+    };
 
     member.roles = vec!["role1".to_string(), "role2".to_string()];
 
