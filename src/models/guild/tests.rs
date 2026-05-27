@@ -6,9 +6,9 @@ fn test_guild_creation() {
     let guild = Guild::new();
     assert_eq!(guild.id, "");
     assert_eq!(guild.name, "");
-    assert!(!guild.is_owned_by_current_user());
-    assert_eq!(guild.get_member_count(), 0);
-    assert_eq!(guild.get_max_members(), 0);
+    assert!(!guild.is_owner);
+    assert_eq!(guild.member_count, 0);
+    assert_eq!(guild.max_members, 0);
 }
 
 #[test]
@@ -23,12 +23,11 @@ fn test_guild_with_data() {
 
     assert_eq!(guild.id(), Some(&"123456789".to_string()));
     assert_eq!(guild.name(), "Test Guild");
-    assert!(guild.is_owned_by_current_user());
-    assert_eq!(guild.get_member_count(), 100);
-    assert_eq!(guild.get_max_members(), 500);
-    assert!(!guild.is_at_member_limit());
-    assert!(guild.has_description());
-    assert_eq!(guild.display_name(), Some("Test Guild"));
+    assert!(guild.is_owner);
+    assert_eq!(guild.member_count, 100);
+    assert_eq!(guild.max_members, 500);
+    assert!(i64::from(guild.member_count) < guild.max_members);
+    assert!(!guild.description.is_empty());
 }
 
 #[test]
@@ -103,13 +102,13 @@ fn test_member_limit() {
     let mut guild = Guild::new();
     guild.member_count = 500;
     guild.max_members = 500;
-    assert!(guild.is_at_member_limit());
+    assert!(i64::from(guild.member_count) >= guild.max_members);
 
     guild.member_count = 499;
-    assert!(!guild.is_at_member_limit());
+    assert!(i64::from(guild.member_count) < guild.max_members);
 
     guild.member_count = 501;
-    assert!(guild.is_at_member_limit());
+    assert!(i64::from(guild.member_count) >= guild.max_members);
 }
 
 #[test]

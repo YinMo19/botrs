@@ -61,36 +61,6 @@ impl Guild {
             )
         })
     }
-
-    /// Returns true if the current user owns this guild.
-    pub fn is_owned_by_current_user(&self) -> bool {
-        self.is_owner
-    }
-
-    /// Gets the guild's member count.
-    pub fn get_member_count(&self) -> i32 {
-        self.member_count
-    }
-
-    /// Gets the guild's maximum member count.
-    pub fn get_max_members(&self) -> i64 {
-        self.max_members
-    }
-
-    /// Returns true if the guild has reached its member limit.
-    pub fn is_at_member_limit(&self) -> bool {
-        self.max_members > 0 && i64::from(self.member_count) >= self.max_members
-    }
-
-    /// Gets the guild's display name (same as name for guilds).
-    pub fn display_name(&self) -> Option<&str> {
-        (!self.name.is_empty()).then_some(self.name.as_str())
-    }
-
-    /// Returns true if the guild has a description.
-    pub fn has_description(&self) -> bool {
-        !self.description.is_empty()
-    }
 }
 
 impl HasId for Guild {
