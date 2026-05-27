@@ -100,7 +100,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn high_level_put_pin_matches_botpy_empty_json_body() {
+    async fn high_level_put_pin_uses_empty_json_body() {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
         let pins = api

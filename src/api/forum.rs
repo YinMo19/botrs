@@ -144,7 +144,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn post_thread_matches_botpy_put_body() {
+    async fn post_thread_uses_put_body() {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
         let rsp = api

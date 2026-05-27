@@ -6,7 +6,7 @@ impl Context {
         self.api.put_pin(&self.token, channel_id, message_id).await
     }
 
-    /// Pins one message using botpy's method name.
+    /// Pins one message.
     pub async fn put_pin(&self, channel_id: &str, message_id: &str) -> Result<PinsMessage> {
         self.api.put_pin(&self.token, channel_id, message_id).await
     }
@@ -18,7 +18,7 @@ impl Context {
             .await
     }
 
-    /// Unpins one message using botpy's method name.
+    /// Unpins one message.
     pub async fn delete_pin(&self, channel_id: &str, message_id: &str) -> Result<()> {
         self.api
             .delete_pin(&self.token, channel_id, message_id)

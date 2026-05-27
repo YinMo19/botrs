@@ -10,11 +10,11 @@ use serde_json::Value;
 use tracing::debug;
 
 #[derive(Debug, Serialize)]
-struct BotpyCreateChannel {
+struct CreateChannelBody {
     name: String,
     #[serde(rename = "type")]
     channel_type: ChannelType,
-    #[serde(rename = "subtype")]
+    #[serde(rename = "sub_type")]
     sub_type: ChannelSubType,
     #[serde(skip_serializing_if = "Option::is_none")]
     position: Option<u32>,
@@ -30,7 +30,7 @@ struct BotpyCreateChannel {
     application_id: Option<String>,
 }
 
-impl BotpyCreateChannel {
+impl CreateChannelBody {
     #[allow(clippy::too_many_arguments)]
     fn new(
         name: &str,
@@ -62,7 +62,7 @@ impl BotpyCreateChannel {
 }
 
 #[derive(Debug, Serialize)]
-struct BotpyUpdateChannel {
+struct UpdateChannelBody {
     #[serde(skip_serializing_if = "Option::is_none")]
     name: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -75,7 +75,7 @@ struct BotpyUpdateChannel {
     speak_permission: Option<u32>,
 }
 
-impl BotpyUpdateChannel {
+impl UpdateChannelBody {
     fn new(
         name: Option<&str>,
         position: Option<u32>,
@@ -144,7 +144,7 @@ impl BotApi {
         application_id: Option<&str>,
     ) -> Result<Channel> {
         debug!("Creating channel in guild {}", guild_id);
-        let body = BotpyCreateChannel::new(
+        let body = CreateChannelBody::new(
             name,
             channel_type,
             sub_type,
@@ -197,7 +197,7 @@ impl BotApi {
     ) -> Result<Channel> {
         debug!("Updating channel {}", channel_id);
         let body =
-            BotpyUpdateChannel::new(name, position, parent_id, private_type, speak_permission);
+            UpdateChannelBody::new(name, position, parent_id, private_type, speak_permission);
         let path = resource::channel(channel_id);
         let response = self
             .http
@@ -340,7 +340,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn inline_create_channel_matches_botpy_subtype_body() {
+    async fn inline_create_channel_matches_botgo_sub_type_body() {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
         let channel = api
@@ -363,12 +363,12 @@ mod tests {
         assert_eq!(channel.id, "channel-1");
         let request = request.await.unwrap();
         assert!(request.starts_with("POST /guilds/guild-1/channels HTTP/1.1"));
-        assert!(request.ends_with("\r\n\r\n{\"name\":\"channel_test\",\"type\":0,\"subtype\":0}"));
+        assert!(request.ends_with("\r\n\r\n{\"name\":\"channel_test\",\"type\":0,\"sub_type\":0}"));
         server.await.unwrap();
     }
 
     #[tokio::test]
-    async fn inline_update_channel_matches_botpy_kwargs_body() {
+    async fn inline_update_channel_uses_provided_fields() {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
         let channel = api

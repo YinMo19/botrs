@@ -260,7 +260,7 @@ mod tests {
     }
 
     #[test]
-    fn open_forum_parsers_match_botpy_shape() {
+    fn open_forum_parsers_match_platform_shape() {
         let state = test_state();
         let payload = serde_json::json!({
             "id": "event-1",

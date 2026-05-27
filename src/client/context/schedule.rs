@@ -225,7 +225,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn get_schedules_uses_botpy_body_shape() {
+    async fn get_schedules_uses_query_parameters() {
         let (base_url, request, server) =
             spawn_capture_server(r#"[{"id":"schedule-1","name":"meeting"}]"#).await;
         let ctx = test_context(base_url).await;
@@ -233,8 +233,8 @@ mod tests {
 
         assert_eq!(schedules[0].id, "schedule-1");
         let request = request.await.unwrap();
-        assert!(request.starts_with("GET /channels/channel-1/schedules HTTP/1.1"));
-        assert_eq!(request_body(&request), serde_json::json!({"since": null}));
+        assert!(request.starts_with("GET /channels/channel-1/schedules?since=0 HTTP/1.1"));
+        assert!(request.ends_with("\r\n\r\n"));
         server.await.unwrap();
     }
 

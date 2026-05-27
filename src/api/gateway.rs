@@ -15,7 +15,7 @@ impl BotApi {
         Self::decode_json(response)
     }
 
-    /// Botpy-compatible websocket gateway URL API.
+    /// Alias for fetching websocket gateway startup data.
     pub async fn get_ws_url(&self, token: &Token) -> Result<GatewayResponse> {
         self.get_gateway(token).await
     }
@@ -77,7 +77,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn get_ws_url_alias_matches_botpy_path() {
+    async fn get_ws_url_alias_uses_gateway_path() {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
 

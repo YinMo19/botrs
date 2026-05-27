@@ -1,8 +1,8 @@
 use super::{BotApi, resource};
 use crate::error::Result;
 use crate::models::guild::{
-    BotpyUpdateGuildMute, Guild, GuildMembersPager, GuildRoleMembers, GuildRoleMembersPager,
-    Member, MemberDeleteOptions, UpdateGuildMute, normalize_delete_history_msg_days,
+    Guild, GuildMembersPager, GuildRoleMembers, GuildRoleMembersPager, Member, MemberDeleteOptions,
+    UpdateGuildMute, normalize_delete_history_msg_days,
 };
 use crate::token::Token;
 use tracing::debug;
@@ -124,7 +124,7 @@ impl BotApi {
             .await
     }
 
-    /// Botpy-compatible member delete API.
+    /// Removes a member using inline delete options.
     pub async fn get_delete_member(
         &self,
         token: &Token,
@@ -174,7 +174,7 @@ impl BotApi {
     ) -> Result<()> {
         debug!("Muting all members in guild {}", guild_id);
 
-        let body = BotpyUpdateGuildMute::new(mute_end_timestamp, mute_seconds);
+        let body = UpdateGuildMute::new(mute_end_timestamp, mute_seconds);
 
         let path = resource::guild_mute(guild_id);
         self.http
@@ -309,7 +309,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn get_voice_members_matches_botpy_path() {
+    async fn get_voice_members_uses_voice_path() {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
 
@@ -326,7 +326,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn get_delete_member_alias_matches_botpy_default_body() {
+    async fn get_delete_member_alias_uses_default_body() {
         let (base_url, request, server) = spawn_empty_response_capture_server().await;
         let api = test_api(base_url).await;
 

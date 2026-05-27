@@ -21,7 +21,7 @@ fn test_manage_event_type_as_str() {
 }
 
 #[test]
-fn manage_event_type_serializes_as_botpy_event_name() {
+fn manage_event_type_serializes_as_event_name() {
     assert_eq!(
         serde_json::to_value(ManageEventType::GroupMsgReceive).unwrap(),
         serde_json::json!("group_msg_receive")

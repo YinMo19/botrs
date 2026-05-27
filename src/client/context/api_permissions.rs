@@ -7,7 +7,7 @@ impl Context {
         self.api.get_api_permissions(&self.token, guild_id).await
     }
 
-    /// Lists the inner API permission records, matching botpy's return shape.
+    /// Lists the inner API permission records.
     pub async fn get_permissions(&self, guild_id: &str) -> Result<Vec<APIPermission>> {
         self.api.get_permissions(&self.token, guild_id).await
     }
@@ -129,7 +129,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn post_permission_demand_uses_botpy_body_shape() {
+    async fn post_permission_demand_uses_platform_body_shape() {
         let (base_url, request, server) = spawn_capture_server(
             r#"{"guild_id":"guild-1","channel_id":"channel-1","api_identify":{"path":"/channels/{channel_id}/messages","method":"POST"},"title":"Send","desc":"Need to send"}"#,
         )

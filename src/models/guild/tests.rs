@@ -263,29 +263,6 @@ fn update_guild_mute_response_omits_empty_user_ids() {
 }
 
 #[test]
-fn botpy_update_guild_mute_keeps_null_inline_fields() {
-    let single = BotpyUpdateGuildMute::new(None, Some("20"));
-    assert_eq!(
-        serde_json::to_value(&single).unwrap(),
-        serde_json::json!({
-            "mute_end_timestamp": null,
-            "mute_seconds": "20"
-        })
-    );
-
-    let multi =
-        BotpyUpdateGuildMute::new_multi(vec!["user-1".to_string()], Some("1710000000"), None);
-    assert_eq!(
-        serde_json::to_value(&multi).unwrap(),
-        serde_json::json!({
-            "mute_end_timestamp": "1710000000",
-            "mute_seconds": null,
-            "user_ids": ["user-1"]
-        })
-    );
-}
-
-#[test]
 fn pager_query_params_match_official_priority() {
     let members = GuildMembersPager::new("user-1", 100);
     assert_eq!(

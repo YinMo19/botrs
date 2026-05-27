@@ -4,23 +4,7 @@ use crate::models::channel::{
     ChannelPermissions, ChannelRolesPermissions, UpdateChannelPermissions,
 };
 use crate::token::Token;
-use serde::Serialize;
 use tracing::debug;
-
-#[derive(Debug, Serialize)]
-struct BotpyUpdateChannelPermissions {
-    add: Option<String>,
-    remove: Option<String>,
-}
-
-impl BotpyUpdateChannelPermissions {
-    fn new(add: Option<&str>, remove: Option<&str>) -> Self {
-        Self {
-            add: add.map(ToOwned::to_owned),
-            remove: remove.map(ToOwned::to_owned),
-        }
-    }
-}
 
 impl BotApi {
     /// Fetches channel permissions for one user.
@@ -68,8 +52,8 @@ impl BotApi {
         add: Option<&str>,
         remove: Option<&str>,
     ) -> Result<()> {
-        UpdateChannelPermissions::new(add, remove).validate()?;
-        let permissions = BotpyUpdateChannelPermissions::new(add, remove);
+        let permissions = UpdateChannelPermissions::new(add, remove);
+        permissions.validate()?;
         debug!(
             "Updating channel permissions for user {} in channel {}",
             user_id, channel_id
@@ -126,8 +110,8 @@ impl BotApi {
         add: Option<&str>,
         remove: Option<&str>,
     ) -> Result<()> {
-        UpdateChannelPermissions::new(add, remove).validate()?;
-        let permissions = BotpyUpdateChannelPermissions::new(add, remove);
+        let permissions = UpdateChannelPermissions::new(add, remove);
+        permissions.validate()?;
         debug!(
             "Updating channel permissions for role {} in channel {}",
             role_id, channel_id
@@ -208,7 +192,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn inline_user_permission_update_matches_botpy_null_fields() {
+    async fn inline_user_permission_update_matches_botgo_omitempty_body() {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
         api.update_channel_user_permissions(
@@ -223,12 +207,12 @@ mod tests {
 
         let request = request.await.unwrap();
         assert!(request.starts_with("PUT /channels/channel-1/members/user-1/permissions HTTP/1.1"));
-        assert!(request.ends_with("\r\n\r\n{\"add\":\"2\",\"remove\":null}"));
+        assert!(request.ends_with("\r\n\r\n{\"add\":\"2\"}"));
         server.await.unwrap();
     }
 
     #[tokio::test]
-    async fn inline_role_permission_update_matches_botpy_null_fields() {
+    async fn inline_role_permission_update_matches_botgo_omitempty_body() {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
         api.update_channel_role_permissions(
@@ -243,7 +227,7 @@ mod tests {
 
         let request = request.await.unwrap();
         assert!(request.starts_with("PUT /channels/channel-1/roles/role-1/permissions HTTP/1.1"));
-        assert!(request.ends_with("\r\n\r\n{\"add\":null,\"remove\":\"4\"}"));
+        assert!(request.ends_with("\r\n\r\n{\"remove\":\"4\"}"));
         server.await.unwrap();
     }
 }

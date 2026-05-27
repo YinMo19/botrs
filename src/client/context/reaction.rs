@@ -14,7 +14,7 @@ impl Context {
             .await
     }
 
-    /// Adds a reaction using botpy's method name.
+    /// Adds a reaction.
     pub async fn put_reaction(
         &self,
         channel_id: &str,
@@ -52,7 +52,7 @@ impl Context {
             .await
     }
 
-    /// Removes the bot's reaction using botpy's method name.
+    /// Removes the bot's reaction.
     pub async fn delete_reaction(
         &self,
         channel_id: &str,
@@ -90,7 +90,7 @@ impl Context {
             .await
     }
 
-    /// Lists users that reacted with a specific emoji using botpy's method name.
+    /// Lists users that reacted with a specific emoji.
     pub async fn get_reaction_users(
         &self,
         channel_id: &str,

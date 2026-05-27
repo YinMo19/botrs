@@ -8,7 +8,7 @@ use serde_json::{Value, json};
 use tracing::debug;
 
 #[derive(Serialize)]
-struct BotpyGroupFileBody<'a> {
+struct GroupFileBody<'a> {
     group_openid: &'a str,
     file_type: u32,
     url: &'a str,
@@ -16,7 +16,7 @@ struct BotpyGroupFileBody<'a> {
 }
 
 #[derive(Serialize)]
-struct BotpyC2cFileBody<'a> {
+struct C2cFileBody<'a> {
     openid: &'a str,
     file_type: u32,
     url: &'a str,
@@ -50,7 +50,7 @@ impl BotApi {
     ) -> Result<Media> {
         debug!("Uploading group file to {}", group_openid);
 
-        let body = BotpyGroupFileBody {
+        let body = GroupFileBody {
             group_openid,
             file_type,
             url,
@@ -79,7 +79,7 @@ impl BotApi {
     ) -> Result<Media> {
         debug!("Uploading C2C file to {}", openid);
 
-        let body = BotpyC2cFileBody {
+        let body = C2cFileBody {
             openid,
             file_type,
             url,
@@ -220,7 +220,7 @@ impl BotApi {
 
     /// Deletes a guild announcement by message ID and returns the raw response.
     ///
-    /// Passing `None::<&str>` matches botpy's default `message_id="all"`.
+    /// Passing `None::<&str>` deletes all guild announcements.
     pub async fn delete_announce<'a>(
         &self,
         token: &Token,
@@ -257,9 +257,7 @@ impl BotApi {
 
 #[cfg(test)]
 mod tests {
-    use super::{
-        BotpyC2cFileBody, BotpyGroupFileBody, GuildMessageAnnounceBody, GuildRecommendAnnounceBody,
-    };
+    use super::{C2cFileBody, GroupFileBody, GuildMessageAnnounceBody, GuildRecommendAnnounceBody};
     use crate::models::announce::{AnnouncesType, RecommendChannel};
     use tokio::io::{AsyncReadExt, AsyncWriteExt};
     use tokio::net::TcpListener;
@@ -332,8 +330,8 @@ mod tests {
     }
 
     #[test]
-    fn botpy_open_file_bodies_match_locals_shape() {
-        let group = serde_json::to_value(BotpyGroupFileBody {
+    fn open_file_bodies_use_platform_shape() {
+        let group = serde_json::to_value(GroupFileBody {
             group_openid: "group-openid-1",
             file_type: 1,
             url: "https://example.com/a.png",
@@ -350,7 +348,7 @@ mod tests {
             })
         );
 
-        let c2c = serde_json::to_value(BotpyC2cFileBody {
+        let c2c = serde_json::to_value(C2cFileBody {
             openid: "openid-1",
             file_type: 1,
             url: "https://example.com/a.png",
@@ -369,7 +367,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn post_group_file_matches_botpy_request() {
+    async fn post_group_file_uses_platform_request() {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
         let response = api
@@ -401,7 +399,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn post_c2c_file_matches_botpy_request() {
+    async fn post_c2c_file_uses_platform_request() {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
         let response = api
@@ -433,7 +431,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn delete_announce_defaults_to_all_like_botpy() {
+    async fn delete_announce_defaults_to_all() {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
 
@@ -449,7 +447,7 @@ mod tests {
     }
 
     #[test]
-    fn high_level_guild_announce_body_matches_botpy_shape() {
+    fn high_level_guild_announce_body_uses_platform_shape() {
         let message = serde_json::to_value(GuildMessageAnnounceBody {
             channel_id: "channel-1",
             message_id: "message-1",

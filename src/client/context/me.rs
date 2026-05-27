@@ -7,7 +7,7 @@ impl Context {
         self.api.get_bot_info(&self.token).await
     }
 
-    /// Botpy-compatible current bot guild list API.
+    /// Lists guilds visible to the current bot.
     pub async fn me_guilds(
         &self,
         guild_id: Option<&str>,
@@ -17,7 +17,7 @@ impl Context {
         self.api.me_guilds(&self.token, guild_id, limit, desc).await
     }
 
-    /// Botpy-compatible websocket gateway URL API.
+    /// Fetches websocket gateway startup data.
     pub async fn get_ws_url(&self) -> Result<GatewayResponse> {
         self.api.get_ws_url(&self.token).await
     }

@@ -49,7 +49,7 @@ fn test_display() {
 }
 
 #[test]
-fn default_intents_match_botpy_default_bits() {
+fn default_intents_match_default_bits() {
     let intents = Intents::default();
 
     assert_eq!(intents.bits(), 1_846_285_315);

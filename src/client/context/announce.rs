@@ -13,7 +13,6 @@ impl Context {
     }
 
     /// Deletes a channel announcement.
-
     pub async fn delete_channel_announce(&self, channel_id: &str, message_id: &str) -> Result<()> {
         self.api
             .delete_channel_announce(&self.token, channel_id, message_id)
@@ -21,7 +20,6 @@ impl Context {
     }
 
     /// Clears all channel announcements.
-
     pub async fn clean_channel_announces(&self, channel_id: &str) -> Result<()> {
         self.api
             .clean_channel_announces(&self.token, channel_id)
@@ -29,7 +27,6 @@ impl Context {
     }
 
     /// Creates a message-type guild announcement.
-
     pub async fn create_guild_announce(
         &self,
         guild_id: &str,
@@ -41,7 +38,7 @@ impl Context {
             .await
     }
 
-    /// Creates a message-type guild announcement using botpy's method name.
+    /// Creates a message-type guild announcement.
     pub async fn create_announce(
         &self,
         guild_id: &str,
@@ -54,7 +51,6 @@ impl Context {
     }
 
     /// Creates a recommended channel guild announcement.
-
     pub async fn create_guild_recommend_announce(
         &self,
         guild_id: &str,
@@ -71,7 +67,7 @@ impl Context {
             .await
     }
 
-    /// Creates a recommended-channel guild announcement using botpy's method name.
+    /// Creates a recommended-channel guild announcement.
     pub async fn create_recommend_announce(
         &self,
         guild_id: &str,
@@ -84,14 +80,13 @@ impl Context {
     }
 
     /// Deletes a guild announcement.
-
     pub async fn delete_guild_announce(&self, guild_id: &str, message_id: &str) -> Result<()> {
         self.api
             .delete_guild_announce(&self.token, guild_id, message_id)
             .await
     }
 
-    /// Deletes a guild announcement using botpy's method name.
+    /// Deletes a guild announcement.
     pub async fn delete_announce(&self, guild_id: &str, message_id: &str) -> Result<()> {
         self.api
             .delete_announce(&self.token, guild_id, message_id)
@@ -100,7 +95,6 @@ impl Context {
     }
 
     /// Clears all guild announcements.
-
     pub async fn clean_guild_announces(&self, guild_id: &str) -> Result<()> {
         self.api.clean_guild_announces(&self.token, guild_id).await
     }

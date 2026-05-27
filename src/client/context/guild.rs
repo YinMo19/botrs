@@ -103,7 +103,7 @@ impl Context {
             .await
     }
 
-    /// Adds a role to a guild member using botpy's argument order.
+    /// Adds a role to a guild member.
     pub async fn create_guild_role_member(
         &self,
         guild_id: &str,
@@ -142,7 +142,7 @@ impl Context {
             .await
     }
 
-    /// Removes a role from a guild member using botpy's argument order.
+    /// Removes a role from a guild member.
     pub async fn delete_guild_role_member(
         &self,
         guild_id: &str,
@@ -249,7 +249,7 @@ impl Context {
             .await
     }
 
-    /// Botpy-compatible member delete API.
+    /// Alias for deleting a guild member.
     pub async fn get_delete_member(
         &self,
         guild_id: &str,

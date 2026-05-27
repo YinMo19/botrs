@@ -1,31 +1,8 @@
 use super::{BotApi, resource};
 use crate::error::Result;
-use crate::models::guild::{
-    BotpyUpdateGuildMute, MemberAddRoleBody, UpdateGuildMute, UpdateGuildMuteResponse,
-};
+use crate::models::guild::{MemberAddRoleBody, UpdateGuildMute, UpdateGuildMuteResponse};
 use crate::token::Token;
-use serde::Serialize;
 use tracing::debug;
-
-#[derive(Debug, Serialize)]
-struct BotpyMemberRoleBody {
-    channel: BotpyMemberRoleChannel,
-}
-
-#[derive(Debug, Serialize)]
-struct BotpyMemberRoleChannel {
-    id: Option<String>,
-}
-
-impl BotpyMemberRoleBody {
-    fn new(channel_id: Option<&str>) -> Self {
-        Self {
-            channel: BotpyMemberRoleChannel {
-                id: channel_id.map(ToOwned::to_owned),
-            },
-        }
-    }
-}
 
 impl BotApi {
     /// Adds a role to a guild member, optionally scoped to a channel.
@@ -42,7 +19,9 @@ impl BotApi {
             user_id, role_id, guild_id
         );
 
-        let body = BotpyMemberRoleBody::new(channel_id);
+        let body = channel_id
+            .map(MemberAddRoleBody::with_channel_id)
+            .unwrap_or_default();
         let path = resource::guild_member_role(guild_id, user_id, role_id);
         self.http
             .put(token, &path, None::<&()>, Some(&body))
@@ -78,7 +57,9 @@ impl BotApi {
             user_id, role_id, guild_id
         );
 
-        let body = BotpyMemberRoleBody::new(channel_id);
+        let body = channel_id
+            .map(MemberAddRoleBody::with_channel_id)
+            .unwrap_or_default();
         let path = resource::guild_member_role(guild_id, user_id, role_id);
         self.http
             .delete_with_body(token, &path, None::<&()>, Some(&body))
@@ -115,7 +96,7 @@ impl BotApi {
     ) -> Result<()> {
         debug!("Muting member {} in guild {}", user_id, guild_id);
 
-        let body = BotpyUpdateGuildMute::new(mute_end_timestamp, mute_seconds);
+        let body = UpdateGuildMute::new(mute_end_timestamp, mute_seconds);
 
         let path = resource::guild_member_mute(guild_id, user_id);
         self.http
@@ -137,7 +118,7 @@ impl BotApi {
             return Err(crate::error::BotError::invalid_data("no user id param"));
         }
 
-        let body = BotpyUpdateGuildMute::new_multi(user_ids, mute_end_timestamp, mute_seconds);
+        let body = UpdateGuildMute::new_multi(user_ids, mute_end_timestamp, mute_seconds);
         debug!("Muting multiple members in guild {}", guild_id);
         let path = resource::guild_mute(guild_id);
         let response = self
@@ -251,7 +232,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn inline_add_role_member_matches_botpy_null_channel_id() {
+    async fn inline_add_role_member_matches_botgo_empty_channel() {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
         api.create_guild_role_member(
@@ -266,12 +247,12 @@ mod tests {
 
         let request = request.await.unwrap();
         assert!(request.starts_with("PUT /guilds/guild-1/members/user-1/roles/role-1 HTTP/1.1"));
-        assert!(request.ends_with("\r\n\r\n{\"channel\":{\"id\":null}}"));
+        assert!(request.ends_with("\r\n\r\n{\"channel\":null}"));
         server.await.unwrap();
     }
 
     #[tokio::test]
-    async fn inline_delete_role_member_matches_botpy_channel_id_only() {
+    async fn inline_delete_role_member_matches_botgo_channel_body() {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
         api.delete_guild_role_member(
@@ -286,12 +267,14 @@ mod tests {
 
         let request = request.await.unwrap();
         assert!(request.starts_with("DELETE /guilds/guild-1/members/user-1/roles/role-1 HTTP/1.1"));
-        assert!(request.ends_with("\r\n\r\n{\"channel\":{\"id\":\"channel-1\"}}"));
+        assert!(
+            request.ends_with("\r\n\r\n{\"channel\":{\"id\":\"channel-1\",\"guild_id\":\"\"}}")
+        );
         server.await.unwrap();
     }
 
     #[tokio::test]
-    async fn inline_mute_member_matches_botpy_null_fields() {
+    async fn inline_mute_member_matches_botgo_omitempty_body() {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
         api.mute_member(
@@ -306,7 +289,7 @@ mod tests {
 
         let request = request.await.unwrap();
         assert!(request.starts_with("PATCH /guilds/guild-1/members/user-1/mute HTTP/1.1"));
-        assert!(request.ends_with("\r\n\r\n{\"mute_end_timestamp\":null,\"mute_seconds\":\"20\"}"));
+        assert!(request.ends_with("\r\n\r\n{\"mute_seconds\":\"20\"}"));
         server.await.unwrap();
     }
 }

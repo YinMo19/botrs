@@ -13,11 +13,6 @@ fn schedule_query(since: Option<&str>) -> ScheduleQuery<'_> {
 }
 
 #[derive(Serialize)]
-struct BotpyScheduleQuery<'a> {
-    since: Option<&'a str>,
-}
-
-#[derive(Serialize)]
 struct ScheduleQuery<'a> {
     since: &'a str,
 }
@@ -48,12 +43,8 @@ impl BotApi {
     ) -> Result<Vec<Schedule>> {
         debug!("Getting schedules for channel {}", channel_id);
 
-        let body = BotpyScheduleQuery { since };
-        let path = resource::channel_schedules(channel_id);
-        let response = self
-            .request_json(token, reqwest::Method::GET, &path, None::<&()>, Some(&body))
-            .await?;
-        Ok(response)
+        self.list_schedules_with_query(token, channel_id, since)
+            .await
     }
 
     /// Lists schedules using botgo's query-parameter request shape.
@@ -252,7 +243,7 @@ impl BotApi {
 
 #[cfg(test)]
 mod tests {
-    use super::{BotpyScheduleQuery, InlineScheduleBody, InlineScheduleWrapper, schedule_query};
+    use super::{InlineScheduleBody, InlineScheduleWrapper, schedule_query};
     use tokio::io::{AsyncReadExt, AsyncWriteExt};
     use tokio::net::TcpListener;
     use tokio::sync::oneshot;
@@ -318,11 +309,6 @@ mod tests {
         (format!("http://{addr}"), rx, handle)
     }
 
-    fn request_body(request: &str) -> serde_json::Value {
-        let body = request.split("\r\n\r\n").nth(1).unwrap_or_default();
-        serde_json::from_str(body).unwrap()
-    }
-
     #[test]
     fn schedule_query_defaults_since_to_zero() {
         let value = serde_json::to_value(schedule_query(None)).unwrap();
@@ -332,20 +318,8 @@ mod tests {
         assert_eq!(value["since"], "1710000000");
     }
 
-    #[test]
-    fn botpy_schedule_query_keeps_null_since() {
-        let value = serde_json::to_value(BotpyScheduleQuery { since: None }).unwrap();
-        assert_eq!(value, serde_json::json!({"since": null}));
-
-        let value = serde_json::to_value(BotpyScheduleQuery {
-            since: Some("1710000000"),
-        })
-        .unwrap();
-        assert_eq!(value, serde_json::json!({"since": "1710000000"}));
-    }
-
     #[tokio::test]
-    async fn get_schedules_matches_botpy_get_json_body() {
+    async fn get_schedules_uses_query_parameters() {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
         let schedules = api
@@ -355,8 +329,8 @@ mod tests {
 
         assert_eq!(schedules[0].id, "schedule-1");
         let request = request.await.unwrap();
-        assert!(request.starts_with("GET /channels/channel-1/schedules HTTP/1.1"));
-        assert_eq!(request_body(&request), serde_json::json!({"since": null}));
+        assert!(request.starts_with("GET /channels/channel-1/schedules?since=0 HTTP/1.1"));
+        assert!(request.ends_with("\r\n\r\n"));
         server.await.unwrap();
     }
 
@@ -377,7 +351,7 @@ mod tests {
     }
 
     #[test]
-    fn inline_schedule_body_matches_botpy_shape() {
+    fn inline_schedule_body_uses_schedule_wrapper() {
         let value = serde_json::to_value(InlineScheduleWrapper {
             schedule: InlineScheduleBody {
                 name: "meeting",

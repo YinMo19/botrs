@@ -11,7 +11,7 @@ struct InteractionResultBody {
 }
 
 impl BotApi {
-    /// Sends a botpy-style interaction result code.
+    /// Sends an interaction result code.
     pub async fn on_interaction_result(
         &self,
         token: &Token,
@@ -121,7 +121,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn on_interaction_result_matches_botpy_json_body() {
+    async fn on_interaction_result_uses_json_body() {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
         api.on_interaction_result(api.token_required().unwrap(), "interaction-1", 0)

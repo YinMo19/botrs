@@ -15,7 +15,7 @@ impl BotApi {
         Self::decode_json(response)
     }
 
-    /// Botpy-compatible current bot user API.
+    /// Alias for fetching information about the current bot.
     pub async fn me(&self, token: &Token) -> Result<BotInfo> {
         self.get_bot_info(token).await
     }
@@ -40,7 +40,7 @@ impl BotApi {
         self.get_guilds_with_pager(token, &pager).await
     }
 
-    /// Botpy-compatible current bot guild list API.
+    /// Alias for listing guilds visible to the current bot.
     pub async fn me_guilds(
         &self,
         token: &Token,
@@ -142,7 +142,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn me_alias_matches_botpy_current_user_route() {
+    async fn me_alias_uses_current_user_route() {
         let (base_url, request, server) = spawn_capture_server_with_body(
             r#"{"id":"bot-1","username":"Bot","avatar":"avatar-url","share_url":"https://example.test/share"}"#,
         )
@@ -159,7 +159,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn get_guilds_matches_botpy_default_limit() {
+    async fn get_guilds_uses_default_limit() {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
         let guilds = api
@@ -174,7 +174,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn me_guilds_alias_matches_botpy_default_limit() {
+    async fn me_guilds_alias_uses_default_limit() {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
         let guilds = api
@@ -189,7 +189,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn get_guilds_matches_botpy_desc_cursor() {
+    async fn get_guilds_uses_desc_cursor() {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
         let guilds = api

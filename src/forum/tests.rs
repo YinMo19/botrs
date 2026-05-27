@@ -51,7 +51,7 @@ fn thread_info_keeps_title_and_content_as_strings() {
 }
 
 #[test]
-fn forum_rest_models_match_botpy_shapes() {
+fn forum_rest_models_match_platform_shapes() {
     let body = ThreadToCreate::new("Title", "Content", Format::Markdown);
     assert_eq!(
         serde_json::to_value(&body).unwrap(),
@@ -194,7 +194,7 @@ fn forum_wrapper_event_ids_are_internal_only() {
 }
 
 #[test]
-fn open_forum_event_matches_botpy_shape() {
+fn open_forum_event_matches_platform_shape() {
     let http = crate::http::HttpClient::new(30, false).unwrap();
     let api = BotApi::new(http);
     let data = serde_json::json!({

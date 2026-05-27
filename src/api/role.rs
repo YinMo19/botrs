@@ -2,28 +2,7 @@ use super::{BotApi, resource};
 use crate::error::Result;
 use crate::models::guild::{GuildRole, GuildRoles, UpdateResult, UpdateRole};
 use crate::token::Token;
-use serde::Serialize;
 use tracing::debug;
-
-#[derive(Debug, Serialize)]
-struct BotpyRoleFields {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    name: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    color: Option<u32>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    hoist: Option<u32>,
-}
-
-impl BotpyRoleFields {
-    fn new(name: Option<&str>, color: Option<u32>, hoist: Option<bool>) -> Self {
-        Self {
-            name: name.map(ToOwned::to_owned),
-            color,
-            hoist: hoist.map(u32::from),
-        }
-    }
-}
 
 impl BotApi {
     // Guild Role APIs
@@ -62,7 +41,13 @@ impl BotApi {
         hoist: Option<bool>,
     ) -> Result<UpdateResult> {
         debug!("Creating guild role in {}", guild_id);
-        let body = BotpyRoleFields::new(name, color, hoist);
+        let role = GuildRole {
+            name: name.unwrap_or_default().to_string(),
+            color: color.unwrap_or_default(),
+            hoist: hoist.map(u32::from).unwrap_or_default(),
+            ..Default::default()
+        };
+        let body = UpdateRole::new(guild_id, role);
         let path = resource::guild_roles(guild_id);
         self.request_json(
             token,
@@ -102,7 +87,13 @@ impl BotApi {
         hoist: Option<bool>,
     ) -> Result<UpdateResult> {
         debug!("Updating guild role {} in {}", role_id, guild_id);
-        let body = BotpyRoleFields::new(name, color, hoist);
+        let role = GuildRole {
+            name: name.unwrap_or_default().to_string(),
+            color: color.unwrap_or_default(),
+            hoist: hoist.map(u32::from).unwrap_or_default(),
+            ..Default::default()
+        };
+        let body = UpdateRole::new(guild_id, role);
         let path = resource::guild_role(guild_id, role_id);
         self.request_json(
             token,
@@ -197,7 +188,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn inline_create_role_matches_botpy_flat_body() {
+    async fn inline_create_role_matches_botgo_update_body() {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
         let result = api
@@ -216,12 +207,14 @@ mod tests {
         assert_eq!(result.role.as_ref().unwrap().id, "role-1");
         let request = request.await.unwrap();
         assert!(request.starts_with("POST /guilds/guild-1/roles HTTP/1.1"));
-        assert!(request.ends_with("\r\n\r\n{\"name\":\"Test Role\",\"color\":4278245297}"));
+        assert!(request.ends_with(
+            "\r\n\r\n{\"guild_id\":\"guild-1\",\"filter\":{\"name\":1,\"color\":1,\"hoist\":1},\"info\":{\"name\":\"Test Role\",\"color\":4278245297,\"hoist\":0}}"
+        ));
         server.await.unwrap();
     }
 
     #[tokio::test]
-    async fn inline_update_role_returns_botpy_update_result() {
+    async fn inline_update_role_matches_botgo_update_body() {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
         let result = api
@@ -241,7 +234,9 @@ mod tests {
         assert_eq!(result.role.as_ref().unwrap().name, "Test Role");
         let request = request.await.unwrap();
         assert!(request.starts_with("PATCH /guilds/guild-1/roles/role-1 HTTP/1.1"));
-        assert!(request.ends_with("\r\n\r\n{\"name\":\"Test Role\",\"color\":0,\"hoist\":0}"));
+        assert!(request.ends_with(
+            "\r\n\r\n{\"guild_id\":\"guild-1\",\"filter\":{\"name\":1,\"color\":1,\"hoist\":1},\"info\":{\"name\":\"Test Role\",\"color\":4278245297,\"hoist\":0}}"
+        ));
         server.await.unwrap();
     }
 }
