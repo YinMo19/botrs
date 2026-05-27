@@ -36,7 +36,7 @@ pub type Result<T> = std::result::Result<T, BotError>;
 | `Io(std::io::Error)`                          | 本地 I/O，例如文件上传。                                |
 | `NotImplemented(String)`                      | 接口可达，但尚未在框架里实现。                          |
 
-`Sdk` 包装的是框架内部的错误码载体 `SdkError`，其方法包括 `code()`、`message()`、`trace_id()`。框架将 QQ 定义的所有数值错误码（例如 9999、`CodeNeedReConnect`、`CodeConnCloseCantResume` 等）经 `Sdk` 派发。
+`Sdk` 包装的是框架内部的错误码载体 `SdkError`，其方法包括 `code()`、`message()`、`trace_id()`。框架将 QQ 定义的所有数值错误码（例如 9999、`CODE_NEED_RECONNECT`、`CODE_CONN_CLOSE_CANT_RESUME` 等）经 `Sdk` 派发。
 
 ## 构造辅助
 

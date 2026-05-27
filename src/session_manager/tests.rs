@@ -5,7 +5,7 @@ use tokio::sync::mpsc;
 
 use super::*;
 use crate::error::{
-    CodeConnCloseCantIdentify, CodeConnCloseCantResume, CodeNeedReConnect, sdk_error,
+    CODE_CONN_CLOSE_CANT_IDENTIFY, CODE_CONN_CLOSE_CANT_RESUME, CODE_NEED_RECONNECT, sdk_error,
 };
 use crate::intents::Intents;
 use crate::models::api::{GatewayResponse, SessionStartLimit};
@@ -43,9 +43,9 @@ fn check_session_limit_matches_expected() {
 
 #[test]
 fn resume_and_identify_error_sets_match_expected() {
-    let resume = sdk_error(CodeConnCloseCantResume, "invalid session");
-    let identify = sdk_error(CodeConnCloseCantIdentify, "bot banned");
-    let reconnect = sdk_error(CodeNeedReConnect, "need reconnect");
+    let resume = sdk_error(CODE_CONN_CLOSE_CANT_RESUME, "invalid session");
+    let identify = sdk_error(CODE_CONN_CLOSE_CANT_IDENTIFY, "bot banned");
+    let reconnect = sdk_error(CODE_NEED_RECONNECT, "need reconnect");
 
     assert!(can_not_resume(&resume));
     assert!(!can_not_resume(&identify));
@@ -87,7 +87,7 @@ async fn non_resumable_error_clears_session_before_requeue() {
             next.last_seq = 42;
             (
                 next,
-                Err(sdk_error(CodeConnCloseCantResume, "invalid session").into()),
+                Err(sdk_error(CODE_CONN_CLOSE_CANT_RESUME, "invalid session").into()),
             )
         })
     });

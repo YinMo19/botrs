@@ -1,8 +1,8 @@
 use std::fmt;
 
 use super::{
-    BotError, CodeConnCloseCantIdentify, CodeConnCloseCantResume, CodeNeedReConnect,
-    CodeNotFoundOpenAPI, CodePagerIsNil,
+    BotError, CODE_CONN_CLOSE_CANT_IDENTIFY, CODE_CONN_CLOSE_CANT_RESUME, CODE_NEED_RECONNECT,
+    CODE_NOT_FOUND_OPEN_API, CODE_PAGER_IS_NIL,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -69,16 +69,20 @@ pub fn sdk_error_from_error(err: &(dyn std::error::Error + 'static)) -> SdkError
 }
 
 pub fn need_reconnect_error() -> SdkError {
-    SdkError::new(CodeNeedReConnect, "need reconnect", None::<String>)
+    SdkError::new(CODE_NEED_RECONNECT, "need reconnect", None::<String>)
 }
 
 pub fn invalid_session_error() -> SdkError {
-    SdkError::new(CodeConnCloseCantResume, "invalid session", None::<String>)
+    SdkError::new(
+        CODE_CONN_CLOSE_CANT_RESUME,
+        "invalid session",
+        None::<String>,
+    )
 }
 
 pub fn invalid_url_error() -> SdkError {
     SdkError::new(
-        CodeConnCloseCantIdentify,
+        CODE_CONN_CLOSE_CANT_IDENTIFY,
         "ws ap url is invalid",
         None::<String>,
     )
@@ -86,7 +90,7 @@ pub fn invalid_url_error() -> SdkError {
 
 pub fn session_limit_error() -> SdkError {
     SdkError::new(
-        CodeConnCloseCantIdentify,
+        CODE_CONN_CLOSE_CANT_IDENTIFY,
         "session num limit",
         None::<String>,
     )
@@ -94,12 +98,12 @@ pub fn session_limit_error() -> SdkError {
 
 pub fn openapi_not_found_error() -> SdkError {
     SdkError::new(
-        CodeNotFoundOpenAPI,
+        CODE_NOT_FOUND_OPEN_API,
         "not found openapi version",
         None::<String>,
     )
 }
 
 pub fn missing_pager_error() -> SdkError {
-    SdkError::new(CodePagerIsNil, "pager is nil", None::<String>)
+    SdkError::new(CODE_PAGER_IS_NIL, "pager is nil", None::<String>)
 }

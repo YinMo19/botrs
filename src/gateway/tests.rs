@@ -1,7 +1,7 @@
 use super::*;
 use crate::error::{
-    WSCodeBackendAuthenticationFail, WSCodeBackendBotBanned, WSCodeBackendBotOffline,
-    WSCodeBackendInvalidSeq, WSCodeBackendSessionNoLongerValid,
+    WS_CODE_BACKEND_AUTHENTICATION_FAIL, WS_CODE_BACKEND_BOT_BANNED, WS_CODE_BACKEND_BOT_OFFLINE,
+    WS_CODE_BACKEND_INVALID_SEQ, WS_CODE_BACKEND_SESSION_NO_LONGER_VALID,
 };
 use crate::intents::Intents;
 use crate::token::Token;
@@ -70,12 +70,18 @@ fn heartbeat_interval_uses_hello_millis_with_minimum() {
 #[test]
 fn test_close_code_classification() {
     assert!(Gateway::cannot_resume_close_code(
-        WSCodeBackendSessionNoLongerValid
+        WS_CODE_BACKEND_SESSION_NO_LONGER_VALID
     ));
-    assert!(Gateway::cannot_resume_close_code(WSCodeBackendInvalidSeq));
-    assert!(Gateway::cannot_identify_close_code(WSCodeBackendBotOffline));
-    assert!(Gateway::cannot_identify_close_code(WSCodeBackendBotBanned));
+    assert!(Gateway::cannot_resume_close_code(
+        WS_CODE_BACKEND_INVALID_SEQ
+    ));
+    assert!(Gateway::cannot_identify_close_code(
+        WS_CODE_BACKEND_BOT_OFFLINE
+    ));
+    assert!(Gateway::cannot_identify_close_code(
+        WS_CODE_BACKEND_BOT_BANNED
+    ));
     assert!(!Gateway::cannot_resume_close_code(
-        WSCodeBackendAuthenticationFail
+        WS_CODE_BACKEND_AUTHENTICATION_FAIL
     ));
 }
