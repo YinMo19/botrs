@@ -189,8 +189,8 @@ fn search_dtos_keep_official_json_shape() {
 
     let response = SearchRsp {
         layouts: vec![SearchLayout {
-            layout_type: LayoutTypeImageText,
-            action_type: ActionTypeSendARK,
+            layout_type: LAYOUT_TYPE_IMAGE_TEXT,
+            action_type: ACTION_TYPE_SEND_ARK,
             title: "docs".to_string(),
             records: vec![SearchRecord {
                 cover: "https://example.com/cover.png".to_string(),

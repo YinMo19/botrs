@@ -14,11 +14,6 @@ pub enum InteractionType {
     InlineKeyboard = 11,
 }
 
-#[allow(non_upper_case_globals)]
-pub const InteractionTypePing: InteractionType = InteractionType::Ping;
-#[allow(non_upper_case_globals)]
-pub const InteractionTypeCommand: InteractionType = InteractionType::ApplicationCommand;
-
 wire_enum_with_default!(InteractionType, u8, Ping, {
     Ping = 1,
     ApplicationCommand = 2,
@@ -62,29 +57,10 @@ pub enum InteractionDataType {
     ClearSessionClick = 14,
 }
 
-#[allow(non_upper_case_globals)]
-pub const InteractionDataTypeChatSearch: InteractionDataType = InteractionDataType::ChatInputSearch;
-#[allow(non_upper_case_globals)]
-pub const InteractionDataTypeInlineKeyboardClick: InteractionDataType =
-    InteractionDataType::InlineKeyboardButtonClick;
-#[allow(non_upper_case_globals)]
-pub const InteractionDataTypeCallbackCommandClick: InteractionDataType =
-    InteractionDataType::CallbackCommandClick;
-#[allow(non_upper_case_globals)]
-pub const InteractionDataTypeMessageFeedbackClick: InteractionDataType =
-    InteractionDataType::MessageFeedbackClick;
-#[allow(non_upper_case_globals)]
-pub const InteractionDataTypeClearSessionClick: InteractionDataType =
-    InteractionDataType::ClearSessionClick;
-
 pub type LayoutType = u32;
 pub const LAYOUT_TYPE_IMAGE_TEXT: LayoutType = 0;
-#[allow(non_upper_case_globals)]
-pub const LayoutTypeImageText: LayoutType = LAYOUT_TYPE_IMAGE_TEXT;
 pub type ActionType = u32;
 pub const ACTION_TYPE_SEND_ARK: ActionType = 0;
-#[allow(non_upper_case_globals)]
-pub const ActionTypeSendARK: ActionType = ACTION_TYPE_SEND_ARK;
 
 wire_enum_with_default!(InteractionDataType, u8, ChatInputSearch, {
     ChatInputSearch = 9,
