@@ -121,21 +121,6 @@ impl Announce {
             recommend_channels,
         }
     }
-
-    /// Returns true if this is a message-type announcement.
-    pub fn is_message_type(&self) -> bool {
-        !self.message_id.is_empty()
-    }
-
-    /// Returns true if this is a recommended channel announcement.
-    pub fn is_recommend_type(&self) -> bool {
-        !self.recommend_channels.is_empty()
-    }
-
-    /// Gets the number of recommended channels.
-    pub fn recommend_channel_count(&self) -> usize {
-        self.recommend_channels.len()
-    }
 }
 
 impl HasId for Announce {
@@ -146,7 +131,7 @@ impl HasId for Announce {
 
 impl std::fmt::Display for Announce {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if self.is_message_type() {
+        if !self.message_id.is_empty() {
             write!(
                 f,
                 "MessageAnnounce {{ guild_id: {:?}, channel_id: {:?}, message_id: {:?} }}",
@@ -158,7 +143,7 @@ impl std::fmt::Display for Announce {
                 "RecommendAnnounce {{ guild_id: {:?}, type: {:?}, channels: {} }}",
                 self.guild_id,
                 self.announces_type,
-                self.recommend_channel_count()
+                self.recommend_channels.len()
             )
         }
     }
@@ -195,8 +180,7 @@ mod tests {
         assert_eq!(announce.guild_id, "guild123");
         assert_eq!(announce.channel_id, "channel456");
         assert_eq!(announce.message_id, "message789");
-        assert!(announce.is_message_type());
-        assert!(!announce.is_recommend_type());
+        assert!(announce.recommend_channels.is_empty());
     }
 
     #[test]
@@ -208,9 +192,8 @@ mod tests {
         let announce = Announce::new_recommend("guild123", AnnouncesType::Welcome, channels);
         assert_eq!(announce.guild_id, "guild123");
         assert_eq!(announce.announces_type, 1);
-        assert!(!announce.is_message_type());
-        assert!(announce.is_recommend_type());
-        assert_eq!(announce.recommend_channel_count(), 2);
+        assert_eq!(announce.message_id, "");
+        assert_eq!(announce.recommend_channels.len(), 2);
     }
 
     #[test]
