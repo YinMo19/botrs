@@ -132,7 +132,7 @@ fn c2c_friend_data_uses_required_zero_value_fields() {
 #[test]
 fn manage_event_ids_are_internal_only() {
     let http = crate::http::HttpClient::new(30, false).unwrap();
-    let api = BotApi::new(http);
+    let api = BotApi::new_for_test(http);
     let group = GroupManageEvent::new(
         api.clone(),
         Some("event-1".to_string()),

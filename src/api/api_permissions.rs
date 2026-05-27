@@ -3,29 +3,23 @@ use crate::error::Result;
 use crate::models::permission::{
     APIPermissionDemand, APIPermissionDemandIdentify, APIPermissionDemandToCreate, APIPermissions,
 };
-use crate::token::Token;
 use tracing::debug;
 
 impl BotApi {
     // Permission APIs
 
     /// Lists API permissions available in a guild.
-    pub async fn get_api_permissions(
-        &self,
-        token: &Token,
-        guild_id: &str,
-    ) -> Result<APIPermissions> {
+    pub async fn get_api_permissions(&self, guild_id: &str) -> Result<APIPermissions> {
         debug!("Getting permissions for guild {}", guild_id);
 
         let path = resource::api_permission(guild_id);
-        let response = self.http.get(token, &path, None::<&()>).await?;
+        let response = self.http.get(self.token(), &path, None::<&()>).await?;
         Self::decode_json(response)
     }
 
     /// Creates an API permission demand request with a structured body.
     pub async fn require_api_permissions(
         &self,
-        token: &Token,
         guild_id: &str,
         demand: &APIPermissionDemandToCreate,
     ) -> Result<APIPermissionDemand> {
@@ -34,7 +28,7 @@ impl BotApi {
         let path = resource::api_permission_demand(guild_id);
         let response = self
             .http
-            .post(token, &path, None::<&()>, Some(demand))
+            .post(self.token(), &path, None::<&()>, Some(demand))
             .await?;
         Self::decode_json(response)
     }
@@ -42,7 +36,6 @@ impl BotApi {
     /// Creates an API permission demand request from inline fields.
     pub async fn post_permission_demand(
         &self,
-        token: &Token,
         guild_id: &str,
         channel_id: &str,
         api_identify: APIPermissionDemandIdentify,
@@ -51,6 +44,6 @@ impl BotApi {
         debug!("Creating permission demand in guild {}", guild_id);
 
         let demand = APIPermissionDemandToCreate::new(channel_id, api_identify, desc);
-        self.require_api_permissions(token, guild_id, &demand).await
+        self.require_api_permissions(guild_id, &demand).await
     }
 }

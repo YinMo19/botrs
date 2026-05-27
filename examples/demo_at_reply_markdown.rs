@@ -52,11 +52,7 @@ impl MarkdownReplyHandler {
             ..Default::default()
         };
 
-        match ctx
-            .api
-            .post_message_with_params(&ctx.token, channel_id, params)
-            .await
-        {
+        match ctx.send_message(channel_id, params).await {
             Ok(_) => info!("Successfully sent markdown message by template"),
             Err(e) => warn!("Failed to send markdown message by template: {}", e),
         }
@@ -80,11 +76,7 @@ impl MarkdownReplyHandler {
             ..Default::default()
         };
 
-        match ctx
-            .api
-            .post_message_with_params(&ctx.token, channel_id, params)
-            .await
-        {
+        match ctx.send_message(channel_id, params).await {
             Ok(_) => info!("Successfully sent markdown message by content"),
             Err(e) => warn!("Failed to send markdown message by content: {}", e),
         }
@@ -118,7 +110,7 @@ impl EventHandler for MarkdownReplyHandler {
         let reply_content = format!("机器人{bot_name}收到你的@消息了: {content}");
 
         // First send a regular reply.
-        match message.reply(&ctx.api, &ctx.token, &reply_content).await {
+        match message.reply(&ctx, &reply_content).await {
             Ok(_) => info!("Successfully sent regular reply"),
             Err(e) => warn!("Failed to send regular reply: {}", e),
         }

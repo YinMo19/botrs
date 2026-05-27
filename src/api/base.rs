@@ -9,7 +9,7 @@ use std::collections::HashMap;
 use std::time::Duration;
 
 impl BotApi {
-    /// Creates a Bot API client backed by the provided HTTP client.
+    /// Creates a Bot API client backed by the provided HTTP client and token.
     ///
     /// # Examples
     ///
@@ -18,57 +18,45 @@ impl BotApi {
     /// use botrs::http::HttpClient;
     ///
     /// let http = HttpClient::new(30, false).unwrap();
-    /// let api = BotApi::new(http);
+    /// let token = botrs::Token::new("app_id", "secret");
+    /// let api = BotApi::new(http, token);
     /// ```
-    pub fn new(http: HttpClient) -> Self {
-        Self {
-            http,
-            app_id: String::new(),
-            token: None,
-        }
-    }
-
-    /// Creates a Bot API client that carries its own token.
-    pub fn with_token(http: HttpClient, token: Token) -> Self {
+    pub fn new(http: HttpClient, token: Token) -> Self {
         let app_id = token.app_id().to_string();
         Self {
             http: http.with_union_app_id(&app_id),
             app_id,
-            token: Some(token),
+            token,
         }
     }
 
+    #[cfg(test)]
+    pub(crate) fn new_for_test(http: HttpClient) -> Self {
+        Self::new(http, Token::new("APPID_XXXXXX", "SECRET_XXXXXX"))
+    }
+
     /// Creates a new instance from this client as an OpenAPI template.
-    pub fn setup_from_template(
-        &self,
-        bot_app_id: impl Into<String>,
-        token: Token,
-        in_sandbox: bool,
-    ) -> Result<Self> {
-        let app_id = bot_app_id.into();
+    pub fn setup_from_template(&self, token: Token, in_sandbox: bool) -> Result<Self> {
+        let app_id = token.app_id().to_string();
         Ok(Self {
             http: self
                 .http
                 .with_sandbox(in_sandbox)?
                 .with_union_app_id(&app_id),
             app_id,
-            token: Some(token),
+            token,
         })
     }
 
-    /// Creates a configured API client and token in one step.
+    /// Creates a configured API client in one step.
     pub fn setup(
         bot_app_id: impl Into<String>,
         secret: impl Into<String>,
         in_sandbox: bool,
-    ) -> Result<(Self, Token)> {
+    ) -> Result<Self> {
         let token = Token::new(bot_app_id, secret);
-        let api = Self::new(HttpClient::new(crate::DEFAULT_TIMEOUT, in_sandbox)?);
-        let app_id = token.app_id().to_string();
-        Ok((
-            api.setup_from_template(app_id, token.clone(), in_sandbox)?,
-            token,
-        ))
+        let http = HttpClient::new(crate::DEFAULT_TIMEOUT, in_sandbox)?;
+        Ok(Self::new(http, token))
     }
 
     /// Returns the OpenAPI version implemented by this client.
@@ -95,8 +83,8 @@ impl BotApi {
     }
 
     /// Returns the token stored for OpenAPI calls.
-    pub fn token(&self) -> Option<&Token> {
-        self.token.as_ref()
+    pub fn token(&self) -> &Token {
+        &self.token
     }
 
     /// Returns the bot app ID stored on this OpenAPI instance.
@@ -113,7 +101,6 @@ impl BotApi {
 
     pub(crate) async fn request_url_json<T, Q, B>(
         &self,
-        token: &Token,
         method: Method,
         url: &str,
         query: Option<&Q>,
@@ -126,14 +113,13 @@ impl BotApi {
     {
         let response = self
             .http
-            .request_json_url(token, method, url, query, body)
+            .request_json_url(self.token(), method, url, query, body)
             .await?;
         Self::decode_json(response)
     }
 
     pub(crate) async fn request_json<T, Q, B>(
         &self,
-        token: &Token,
         method: Method,
         path: &str,
         query: Option<&Q>,
@@ -145,8 +131,7 @@ impl BotApi {
         B: Serialize + ?Sized,
     {
         let url = format!("{}{}", self.http.base_url(), path);
-        self.request_url_json(token, method, &url, query, body)
-            .await
+        self.request_url_json(method, &url, query, body).await
     }
 
     pub(crate) fn hide_tip_query(hide_tip: bool) -> Option<HashMap<&'static str, String>> {
@@ -154,17 +139,11 @@ impl BotApi {
     }
 
     /// Passes through an arbitrary request to a full URL.
-    pub async fn transport<B>(
-        &self,
-        token: &Token,
-        method: Method,
-        url: &str,
-        body: Option<&B>,
-    ) -> Result<Vec<u8>>
+    pub async fn transport<B>(&self, method: Method, url: &str, body: Option<&B>) -> Result<Vec<u8>>
     where
         B: Serialize + ?Sized,
     {
-        self.http.transport(token, method, url, body).await
+        self.http.transport(self.token(), method, url, body).await
     }
 
     /// Returns the last OpenAPI trace ID observed by the underlying HTTP client.

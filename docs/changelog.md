@@ -24,11 +24,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Renamed Go-style error code constants (`CodeNeedReConnect`, `WSCodeBackendAuthenticationFail`, `APICodeTokenExpireOrNotExist`, etc.) to Rust-style `CODE_*`, `WS_CODE_*`, and `API_CODE_*` names.
 - Removed Go-style channel enum aliases and duplicate enum-value constants (`ChannelTypeText`, `ChannelSubTypeChat`, `ChannelPrivateTypePublic`, `SpeakPermissionTypePublic`, `CHANNEL_TYPE_TEXT`, etc.); use enum variants such as `ChannelType::Text`.
 - Removed Go-style gateway opcode/event aliases (`OPCode`, `WSDispatchEvent`, `WSIdentity`, `HTTPCallbackAck`, `EventMessageCreate`, `OPMeans`, etc.); use `OpCode`, `WS_DISPATCH_EVENT`, `WS_IDENTIFY`, `HTTP_CALLBACK_ACK`, `EVENT_MESSAGE_CREATE`, and `op_meaning`.
-- Removed redundant Rust alias methods (`BotApi::me`, `BotApi::me_guilds`, `BotApi::get_ws_url`, `BotApi::get_permissions`, `BotApi::patch_message`, and matching `Context` wrappers); use `get_bot_info`, `get_guilds`, `get_gateway`, `get_api_permissions`, and `patch_message_with_params`.
+- Removed redundant Rust alias methods (`BotApi::me`, `BotApi::me_guilds`, `BotApi::get_ws_url`, `BotApi::get_permissions`, `BotApi::patch_message`, and matching `Context` wrappers); use `get_bot_info`, `get_guilds`, `get_gateway`, `get_api_permissions`, and `edit_message`.
 - Removed botpy-style duplicate methods (`BotApi::create_dms`, `Context::create_dms`, `BotApi::get_delete_member`, and `Context::get_delete_member`); use `create_direct_message` and `delete_member`.
 - Removed redundant `Context` alias methods (`add_reaction`, `remove_reaction`, `pin_message`, `unpin_message`, `add_guild_role_member`, and `remove_guild_role_member`); use `put_reaction`, `delete_reaction`, `put_pin`, `delete_pin`, `create_guild_role_member`, and `delete_guild_role_member`.
 - Removed compatibility type aliases (`WebsocketAP`, `DirectMessageSession`, `ReactionUser`, `MessageReactionUsers`, `Announces`, `EnterAIO`, `HTTPIdentity`, `HTTPReady`, `HTTPSession`, `WHValidationReq`, `WHValidationRsp`, `RoleID`, and `Roles`) and the Go-style `SessionManager::Start` / `DefaultColor` aliases; use the concrete Rust types and `SessionManager::start` / `DEFAULT_ROLE_COLOR`.
-- Removed the deprecated multi-`Option` message sending methods (`post_message`, `post_group_message`, `post_c2c_message`, `post_dms`) and their `Context` wrappers. Use the `*_with_params` methods instead.
+- Removed the deprecated multi-`Option` message sending methods (`post_message`, `post_group_message`, `post_c2c_message`, `post_dms`), the `*_with_params` compatibility names, and their `Context` wrappers. Use `send_message`, `send_group_message`, `send_c2c_message`, and `send_direct_message`.
 - Removed the redundant `post_message_api` and `patch_message_api` aliases.
 
 ## [0.11.0] - 2026-05-25
@@ -67,7 +67,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Aligned `DirectMessage` with the QQ Bot Open API's direct-message session DTO.
 - `direct_message_create` now receives a regular `Message`, matching the documented `WSDirectMessageData`.
-- Updated direct-message examples and API docs to use `DirectMessageParams` with `post_dms_with_params`.
+- Updated direct-message examples and API docs to use `DirectMessageParams` with `send_direct_message`.
 
 ### Fixed
 - Completed DTO parity with the QQ Bot Open API for message, guild, and interaction wire formats.
@@ -136,7 +136,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `GroupMessageParams` for group messages
 - `C2CMessageParams` for private messages
 - `DirectMessageParams` for direct messages
-- New methods: `post_message_with_params`, `post_group_message_with_params`, `post_c2c_message_with_params`, `post_dms_with_params`
+- New methods: `send_message`, `send_group_message`, `send_c2c_message`, `send_direct_message`
 - Comprehensive support for all QQ Guild message types (text, embeds, files, markdown, keyboards, ARK messages)
 - Enhanced file upload capabilities with proper MIME type detection
 - Message reference and reply functionality
@@ -280,14 +280,14 @@ use botrs::models::message::MessageParams;
 let params = MessageParams::new_text("Hello!")
     .with_reply("message_id")
     .with_markdown(true);
-api.post_message_with_params(token, "channel_id", params).await?;
+api.send_message("channel_id", params).await?;
 ```
 
 #### Method Mappings
-- `post_message` → `post_message_with_params`
-- `post_group_message` → `post_group_message_with_params`
-- `post_c2c_message` → `post_c2c_message_with_params`
-- `post_dms` → `post_dms_with_params`
+- `post_message` → `send_message`
+- `post_group_message` → `send_group_message`
+- `post_c2c_message` → `send_c2c_message`
+- `post_dms` → `send_direct_message`
 
 ### Breaking Changes in 0.2.0
 
@@ -312,7 +312,7 @@ The old message API with multiple `None` parameters has been removed. Use the st
 
 ```rust
 let params = MessageParams::new_text(content);
-api.post_message_with_params(token, channel, params).await?;
+api.send_message(channel, params).await?;
 ```
 
 ## Version Support

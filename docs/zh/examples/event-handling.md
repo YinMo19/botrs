@@ -20,7 +20,7 @@ let intents = Intents::default()
     .with_public_messages();              // c2c/group 管理事件
 ```
 
-handler 内部，`Context` 参数携带 `ctx.api` 和 `ctx.token`，可以直接回调 API（例如 `ctx.api.create_direct_message` + `post_dms_with_params` 欢迎新成员；或 `post_group_message_with_params` 配合 `event_id: event.event_id.clone()` 来回应机器人入群事件——这些用法都在对应 demo 里）。
+handler 内部，`Context` 会解引用到 `BotApi`，可以直接在 `ctx` 上回调 API（例如 `ctx.create_direct_message` + `ctx.send_direct_message` 欢迎新成员；或 `ctx.send_group_message` 配合 `event_id: event.event_id.clone()` 来回应机器人入群事件——这些用法都在对应 demo 里）。
 
 ## 参见
 

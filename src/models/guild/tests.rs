@@ -34,7 +34,7 @@ fn test_guild_with_data() {
 #[test]
 fn guild_fields_use_official_json_names() {
     let guild = Guild::from_data(
-        crate::api::BotApi::new(crate::http::HttpClient::new(30, false).unwrap()),
+        crate::api::BotApi::new_for_test(crate::http::HttpClient::new(30, false).unwrap()),
         "event-1".to_string(),
         serde_json::json!({
             "id": "guild-1",
@@ -72,7 +72,7 @@ fn guild_fields_use_official_json_names() {
 #[test]
 fn guild_from_data_does_not_use_gateway_event_id_as_guild_id() {
     let guild = Guild::from_data(
-        crate::api::BotApi::new(crate::http::HttpClient::new(30, false).unwrap()),
+        crate::api::BotApi::new_for_test(crate::http::HttpClient::new(30, false).unwrap()),
         "event-1".to_string(),
         serde_json::json!({
             "name": "Guild"

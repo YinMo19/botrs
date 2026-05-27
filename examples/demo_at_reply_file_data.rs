@@ -116,9 +116,7 @@ impl FileReplyHandler {
         let params =
             botrs::models::message::MessageParams::new_text(content).with_file_image(&img_bytes);
 
-        ctx.api
-            .post_message_with_params(&ctx.token, channel_id, params)
-            .await?;
+        ctx.send_message(channel_id, params).await?;
 
         Ok(())
     }
@@ -150,9 +148,7 @@ impl FileReplyHandler {
         let params =
             botrs::models::message::MessageParams::new_text(content).with_file_image(&img_bytes);
 
-        ctx.api
-            .post_message_with_params(&ctx.token, channel_id, params)
-            .await?;
+        ctx.send_message(channel_id, params).await?;
 
         Ok(())
     }
@@ -187,9 +183,7 @@ impl FileReplyHandler {
         let params =
             botrs::models::message::MessageParams::new_text(content).with_file_image(&img_bytes);
 
-        ctx.api
-            .post_message_with_params(&ctx.token, channel_id, params)
-            .await?;
+        ctx.send_message(channel_id, params).await?;
 
         Ok(())
     }

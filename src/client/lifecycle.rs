@@ -35,10 +35,10 @@ impl<H: EventHandler + 'static> Client<H> {
         let timeout = crate::DEFAULT_TIMEOUT;
 
         let http = HttpClient::new(timeout, is_sandbox)?;
-        let api = Arc::new(BotApi::new(http.clone()));
+        token.validate()?;
+        let api = Arc::new(BotApi::new(http.clone(), token));
 
         Ok(Self {
-            token,
             intents,
             http,
             api,
@@ -57,10 +57,10 @@ impl<H: EventHandler + 'static> Client<H> {
         is_sandbox: bool,
     ) -> Result<Self> {
         let http = HttpClient::new(timeout, is_sandbox)?;
-        let api = Arc::new(BotApi::new(http.clone()));
+        token.validate()?;
+        let api = Arc::new(BotApi::new(http.clone(), token));
 
         Ok(Self {
-            token,
             intents,
             http,
             api,
@@ -98,21 +98,18 @@ impl<H: EventHandler + 'static> Client<H> {
     pub async fn start(&mut self) -> Result<()> {
         info!("Starting bot client");
 
-        // Validate token
-        self.token.validate()?;
-
         // Get bot information
-        let bot_info = self.api.get_bot_info(&self.token).await?;
+        let bot_info = self.api.get_bot_info().await?;
         info!("Bot info: {} ({})", bot_info.username, bot_info.id);
 
         // Get gateway information
-        let gateway_info = self.api.get_gateway(&self.token).await?;
+        let gateway_info = self.api.get_gateway().await?;
         info!("Gateway URL: {}", gateway_info.url);
 
         check_session_limit(&gateway_info)?;
 
         // Create context
-        let ctx = Context::new(self.api.clone(), self.token.clone()).with_bot_info(bot_info);
+        let ctx = Context::new(self.api.clone()).with_bot_info(bot_info);
 
         // Set up event channel
         let (event_sender, mut event_receiver) = mpsc::unbounded_channel();
@@ -131,7 +128,7 @@ impl<H: EventHandler + 'static> Client<H> {
         let mut session_manager = new_session_manager();
         tokio::spawn({
             let gateway_info = gateway_info.clone();
-            let token = self.token.clone();
+            let token = self.api.token().clone();
             let intents = self.intents;
             let event_sender = event_sender.clone();
             async move {

@@ -1,45 +1,43 @@
 use super::prelude::*;
-
-mod announce;
-mod api_permissions;
-mod audio;
-mod channel;
-mod direct_message;
-mod files;
-mod forum;
-mod guild;
-mod interaction;
-mod me;
-mod message;
-mod pins;
-mod reaction;
-mod schedule;
-mod webhook;
+use std::ops::Deref;
 
 /// Context passed to event handlers containing API access and bot information.
 #[derive(Clone)]
 pub struct Context {
     /// API client for making requests
-    pub api: Arc<BotApi>,
-    /// Authentication token
-    pub token: Token,
+    api: Arc<BotApi>,
     /// Bot information
     pub bot_info: Option<BotInfo>,
 }
 
 impl Context {
-    pub fn new(api: Arc<BotApi>, token: Token) -> Self {
+    pub fn new(api: Arc<BotApi>) -> Self {
         Self {
             api,
-            token,
             bot_info: None,
         }
     }
 
-    /// Sets the bot information.
+    /// Returns the shared API client.
+    pub fn api(&self) -> &BotApi {
+        &self.api
+    }
 
+    pub(crate) fn api_clone(&self) -> BotApi {
+        self.api.as_ref().clone()
+    }
+
+    /// Sets the bot information.
     pub fn with_bot_info(mut self, bot_info: BotInfo) -> Self {
         self.bot_info = Some(bot_info);
         self
+    }
+}
+
+impl Deref for Context {
+    type Target = BotApi;
+
+    fn deref(&self) -> &Self::Target {
+        self.api()
     }
 }

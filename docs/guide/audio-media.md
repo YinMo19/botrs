@@ -17,7 +17,7 @@ For voice / live-channel member traffic, enable `Intents::AUDIO_OR_LIVE_CHANNEL_
 
 ## Controlling playback
 
-`BotApi::post_audio(&token, channel_id, &AudioControl)` updates an audio session in a voice channel. `AudioControl` is the request body:
+`BotApi::post_audio(channel_id, &AudioControl)` updates an audio session in a voice channel. `AudioControl` is the request body:
 
 ```rust
 use botrs::audio::{AudioControl, AudioStatus};
@@ -27,13 +27,13 @@ let control = AudioControl {
     text: "now playing".into(),
     status: AudioStatus::Start,   // Start | Pause | Resume | Stop
 };
-ctx.api.post_audio(&ctx.token, &channel_id, &control).await?;
+ctx.post_audio(&channel_id, &control).await?;
 ```
 
 Mic control on a voice channel:
 
-- `BotApi::on_microphone(&token, channel_id)` — bot joins the mic.
-- `BotApi::off_microphone(&token, channel_id)` — bot leaves.
+- `BotApi::on_microphone(channel_id)` — bot joins the mic.
+- `BotApi::off_microphone(channel_id)` — bot leaves.
 
 ## Uploading rich media
 
@@ -43,8 +43,8 @@ For group and C2C messages you can upload media first, then send a message that 
 use botrs::models::message::GroupMessageParams;
 
 // 1 = image, 2 = video, 3 = audio (voice), 4 = file
-let media = ctx.api
-    .post_group_file(&ctx.token, &group_openid, 1, image_url, None)
+let media = ctx
+    .post_group_file(&group_openid, 1, image_url, None)
     .await?;
 
 let params = GroupMessageParams {
@@ -52,9 +52,9 @@ let params = GroupMessageParams {
     media: Some(media),
     ..Default::default()
 };
-ctx.api.post_group_message_with_params(&ctx.token, &group_openid, params).await?;
+ctx.send_group_message(&group_openid, params).await?;
 ```
 
-The C2C surface mirrors this with `post_c2c_file(&token, openid, file_type, url, srv_send_msg)`. Pass `srv_send_msg = Some(true)` to have the platform forward the upload as a message immediately, otherwise reuse the returned `Media` descriptor in your own `*MessageParams`.
+The C2C surface mirrors this with `post_c2c_file(openid, file_type, url, srv_send_msg)`. Pass `srv_send_msg = Some(true)` to have the platform forward the upload as a message immediately, otherwise reuse the returned `Media` descriptor in your own `*MessageParams`.
 
 For guild channel messages with raw image bytes already in memory, prefer `MessageParams::with_file_image(&bytes)` — the framework base64-encodes them into the `file_image` field for you.

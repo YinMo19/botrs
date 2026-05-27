@@ -64,11 +64,7 @@ impl EventHandler for EmbedReplyHandler {
             ..Default::default()
         };
 
-        match ctx
-            .api
-            .post_message_with_params(&ctx.token, channel_id, params)
-            .await
-        {
+        match ctx.send_message(channel_id, params).await {
             Ok(_) => info!("Successfully sent embed message"),
             Err(e) => warn!("Failed to send embed message: {}", e),
         }

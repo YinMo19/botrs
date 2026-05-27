@@ -60,7 +60,6 @@ impl GroupMessage {
     pub async fn reply(
         &self,
         api: &crate::api::BotApi,
-        token: &crate::token::Token,
         content: &str,
     ) -> Result<crate::models::api::MessageResponse, crate::error::BotError> {
         if let (Some(group_openid), Some(msg_id)) = (&self.group_openid, &self.id) {
@@ -71,8 +70,7 @@ impl GroupMessage {
                 event_id: self.event_id.clone(),
                 ..Default::default()
             };
-            api.post_group_message_with_params(token, group_openid, params)
-                .await
+            api.send_group_message(group_openid, params).await
         } else {
             Err(crate::error::BotError::InvalidData(
                 "Missing group_openid or message_id for reply".to_string(),

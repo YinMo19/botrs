@@ -39,9 +39,7 @@ impl EventHandler for GetReactionUsersHandler {
             };
 
             match ctx
-                .api
                 .get_reaction_users(
-                    &ctx.token,
                     channel_id,
                     message_id,
                     reaction_type,

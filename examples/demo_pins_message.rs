@@ -55,7 +55,7 @@ impl EventHandler for PinsMessageHandler {
         let reply_content = format!("机器人{bot_name}收到你的@消息了: {content}");
 
         // Reply to the message first
-        match message.reply(&ctx.api, &ctx.token, &reply_content).await {
+        match message.reply(&ctx, &reply_content).await {
             Ok(_) => info!("Successfully replied to message"),
             Err(e) => warn!("Failed to reply to message: {}", e),
         }
@@ -63,7 +63,7 @@ impl EventHandler for PinsMessageHandler {
         // Handle different pin-related commands
         if content.contains("/获取精华列表") {
             // Get pins message list (equivalent to self.api.get_pins)
-            match ctx.api.get_pins(&ctx.token, channel_id).await {
+            match ctx.get_pins(channel_id).await {
                 Ok(pins_message) => {
                     info!("Pins message list: {:?}", pins_message);
                 }
@@ -75,7 +75,7 @@ impl EventHandler for PinsMessageHandler {
 
         if content.contains("/创建精华消息") {
             // Create pin message (equivalent to self.api.put_pin)
-            match ctx.api.put_pin(&ctx.token, channel_id, message_id).await {
+            match ctx.put_pin(channel_id, message_id).await {
                 Ok(pins_message) => {
                     info!("Created pin message: {:?}", pins_message);
                 }
@@ -87,7 +87,7 @@ impl EventHandler for PinsMessageHandler {
 
         if content.contains("/删除精华消息") {
             // Delete pin message (equivalent to self.api.delete_pin)
-            match ctx.api.delete_pin(&ctx.token, channel_id, message_id).await {
+            match ctx.delete_pin(channel_id, message_id).await {
                 Ok(result) => {
                     info!("Deleted pin message: {:?}", result);
                 }

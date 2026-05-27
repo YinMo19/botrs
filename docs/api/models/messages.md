@@ -80,16 +80,16 @@ Send-side payloads use builder structs to avoid the long `Option<...>` argument 
 
 | Struct                  | Used by                                    |
 |-------------------------|--------------------------------------------|
-| `MessageParams`         | `BotApi::post_message_with_params`         |
-| `DirectMessageParams`   | `BotApi::post_direct_message_with_params`  |
-| `GroupMessageParams`    | `BotApi::post_group_message_with_params`   |
-| `C2CMessageParams`      | `BotApi::post_c2c_message_with_params`     |
+| `MessageParams`         | `BotApi::send_message`         |
+| `DirectMessageParams`   | `BotApi::send_direct_message`  |
+| `GroupMessageParams`    | `BotApi::send_group_message`   |
+| `C2CMessageParams`      | `BotApi::send_c2c_message`     |
 
-Each exposes `new_text(content)` and reply/file helpers where they apply. For embed, markdown, ark, keyboard, media, and other optional payloads, set the corresponding field on the params struct and pass it to the matching `post_*_with_params` method.
+Each exposes `new_text(content)` and reply/file helpers where they apply. For embed, markdown, ark, keyboard, media, and other optional payloads, set the corresponding field on the params struct and pass it to the matching send method.
 
 ```rust
 let params = MessageParams::new_text("Pong!").with_reply(message_id);
-api.post_message_with_params(&token, &channel_id, params).await?;
+api.send_message(&channel_id, params).await?;
 ```
 
 ## Supporting types
@@ -113,5 +113,5 @@ See [Users and Members](./users-members.md#message-author-types) for `MessageUse
 ## See also
 
 - [Messages guide](../../guide/messages.md) — task-oriented usage.
-- [Bot API](../bot-api.md) — every `post_*_with_params` route.
+- [Bot API](../bot-api.md) — every message route.
 - [Other types](./other-types.md) — embeds, keyboards, ark, attachments.

@@ -87,7 +87,7 @@ fn forum_rest_models_match_platform_shapes() {
 #[test]
 fn forum_events_use_required_zero_value_fields() {
     let thread = serde_json::to_value(Thread::new(
-        BotApi::new(crate::http::HttpClient::new(30, false).unwrap()),
+        BotApi::new_for_test(crate::http::HttpClient::new(30, false).unwrap()),
         Some("event-1".to_string()),
         &serde_json::json!({}),
     ))
@@ -153,7 +153,7 @@ fn forum_audit_result_serializes_zero_value_strings() {
 #[test]
 fn forum_wrapper_event_ids_are_internal_only() {
     let http = crate::http::HttpClient::new(30, false).unwrap();
-    let api = BotApi::new(http);
+    let api = BotApi::new_for_test(http);
     let data = serde_json::json!({
         "guild_id": "guild-1",
         "channel_id": "channel-1",
@@ -196,7 +196,7 @@ fn forum_wrapper_event_ids_are_internal_only() {
 #[test]
 fn open_forum_event_matches_platform_shape() {
     let http = crate::http::HttpClient::new(30, false).unwrap();
-    let api = BotApi::new(http);
+    let api = BotApi::new_for_test(http);
     let data = serde_json::json!({
         "guild_id": "guild-1",
         "channel_id": "channel-1",

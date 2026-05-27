@@ -258,7 +258,7 @@ mod tests {
     #[test]
     fn audio_event_helper_hides_empty_zero_values() {
         let http = crate::http::HttpClient::new(30, false).unwrap();
-        let api = BotApi::new(http);
+        let api = BotApi::new_for_test(http);
         let audio = Audio::new(api, None, AudioAction::default());
 
         assert!(audio.guild_id.is_none());
@@ -270,7 +270,7 @@ mod tests {
     #[test]
     fn audio_event_id_is_internal_only() {
         let http = crate::http::HttpClient::new(30, false).unwrap();
-        let api = BotApi::new(http);
+        let api = BotApi::new_for_test(http);
         let audio = Audio::new(
             api,
             Some("event-1".to_string()),

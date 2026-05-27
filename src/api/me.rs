@@ -4,21 +4,22 @@ use crate::models::{
     api::BotInfo,
     guild::{Guild, GuildPager},
 };
-use crate::token::Token;
 use tracing::debug;
 
 impl BotApi {
     /// Fetches information about the current bot.
-    pub async fn get_bot_info(&self, token: &Token) -> Result<BotInfo> {
+    pub async fn get_bot_info(&self) -> Result<BotInfo> {
         debug!("Getting bot info");
-        let response = self.http.get(token, resource::USER_ME, None::<&()>).await?;
+        let response = self
+            .http
+            .get(self.token(), resource::USER_ME, None::<&()>)
+            .await?;
         Self::decode_json(response)
     }
 
     /// Lists guilds visible to the current bot using inline pagination parameters.
     pub async fn get_guilds(
         &self,
-        token: &Token,
         guild_id: Option<&str>,
         limit: Option<u32>,
         desc: Option<bool>,
@@ -32,15 +33,11 @@ impl BotApi {
                 pager.with_after(guild_id)
             };
         }
-        self.get_guilds_with_pager(token, &pager).await
+        self.get_guilds_with_pager(&pager).await
     }
 
     /// Lists guilds visible to the current bot using a pre-built pager.
-    pub async fn get_guilds_with_pager(
-        &self,
-        token: &Token,
-        pager: &GuildPager,
-    ) -> Result<Vec<Guild>> {
+    pub async fn get_guilds_with_pager(&self, pager: &GuildPager) -> Result<Vec<Guild>> {
         debug!("Getting guilds");
 
         let params = pager.query_params();
@@ -48,7 +45,7 @@ impl BotApi {
         let response = self
             .http
             .get(
-                token,
+                self.token(),
                 resource::USER_ME_GUILDS,
                 if params.is_empty() {
                     None
@@ -75,7 +72,7 @@ mod tests {
             .await;
         let mut http = crate::http::HttpClient::new(30, false).unwrap();
         http.base_url = base_url;
-        BotApi::with_token(http, token)
+        BotApi::new(http, token)
     }
 
     async fn spawn_capture_server() -> (
@@ -132,7 +129,7 @@ mod tests {
         )
         .await;
         let api = test_api(base_url).await;
-        let bot = api.get_bot_info(api.token().unwrap()).await.unwrap();
+        let bot = api.get_bot_info().await.unwrap();
 
         assert_eq!(bot.id, "bot-1");
         assert_eq!(bot.username, "Bot");
@@ -146,10 +143,7 @@ mod tests {
     async fn get_guilds_uses_default_limit() {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
-        let guilds = api
-            .get_guilds(api.token().unwrap(), None, None, None)
-            .await
-            .unwrap();
+        let guilds = api.get_guilds(None, None, None).await.unwrap();
 
         assert_eq!(guilds[0].id, "guild-1");
         let request = request.await.unwrap();
@@ -162,12 +156,7 @@ mod tests {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
         let guilds = api
-            .get_guilds(
-                api.token().unwrap(),
-                Some("guild-cursor-1"),
-                Some(20),
-                Some(true),
-            )
+            .get_guilds(Some("guild-cursor-1"), Some(20), Some(true))
             .await
             .unwrap();
 

@@ -37,7 +37,7 @@ impl EventHandler for MyBot {
     async fn message_create(&self, ctx: Context, message: Message) {
         if message.is_from_bot() { return; }
         if message.content.as_deref() == Some("!ping") {
-            let _ = message.reply(&ctx.api, &ctx.token, "pong").await;
+            let _ = message.reply(&ctx, "pong").await;
         }
     }
 }
@@ -66,15 +66,14 @@ impl EventHandler for MyBot {
 
 ```rust
 pub struct Context {
-    pub api: Arc<BotApi>,
-    pub token: Token,
+    api: Arc<BotApi>,
     pub bot_info: Option<BotInfo>,
 }
 ```
 
-`api` 与客户端持有的是同一个 `BotApi`，克隆 `Arc` 开销极小，是把它传入 `tokio::spawn` 任务的推荐方式。`token` 与启动客户端时使用的是同一份。`bot_info` 在客户端启动时通过 `/users/@me` 获取并填入。
+内部 API 客户端与 `Client` 持有的是同一个 `BotApi`。`Context` 会解引用到 `BotApi`，所以可以直接调用 `ctx.send_message(...)`、`ctx.get_guild(...)`。`bot_info` 在客户端启动时通过 `/users/@me` 获取并填入。
 
-`Context` 还提供少量便捷方法（`ctx.send_message(channel_id, text)`、`ctx.reply_message(...)`、`ctx.send_group_message(...)` 等）封装了常见的 `BotApi` 调用，其余功能直接使用 `ctx.api`。
+如果需要显式拿到 API 引用，调用 `ctx.api()`。事件回复中 `message.reply(&ctx, "pong")` 也能工作，因为 `Context` 会解引用到 `BotApi`。
 
 ## 错误回调
 
@@ -82,14 +81,14 @@ pub struct Context {
 
 ## 在处理器中派发任务
 
-回调应尽快返回，避免阻塞下一个事件。处理耗时任务时，可以从 `Context` 中克隆 `Arc<BotApi>` 与 `Token`，再 `tokio::spawn`：
+回调应尽快返回，避免阻塞下一个事件。处理耗时任务时，克隆 `Context` 并移动到 `tokio::spawn`：
 
 ```rust
 async fn message_create(&self, ctx: Context, message: Message) {
-    let api = ctx.api.clone();
-    let token = ctx.token.clone();
+    let context = ctx.clone();
     tokio::spawn(async move {
-        // 耗时任务，再调用 api.post_message_with_params(...).await
+        let params = MessageParams::new_text("done");
+        let _ = context.send_message("channel", params).await;
     });
 }
 ```

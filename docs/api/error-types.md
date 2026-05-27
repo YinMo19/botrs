@@ -50,7 +50,7 @@ A few short constructors live on `BotError` for code that builds errors locally:
 ```rust
 use botrs::BotError;
 
-match api.get_guild(&token, "guild_id").await {
+match api.get_guild("guild_id").await {
     Ok(guild) => println!("{}", guild.name),
     Err(BotError::Http(e)) if e.is_timeout() => warn!("timed out"),
     Err(BotError::RateLimit { retry_after }) => {

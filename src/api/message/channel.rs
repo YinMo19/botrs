@@ -7,28 +7,21 @@ use crate::models::{
         MessagesPager,
     },
 };
-use crate::token::Token;
 use reqwest::Method;
 use tracing::debug;
 
 impl BotApi {
     /// Gets a specific message.
-    pub async fn get_message(
-        &self,
-        token: &Token,
-        channel_id: &str,
-        message_id: &str,
-    ) -> Result<Message> {
+    pub async fn get_message(&self, channel_id: &str, message_id: &str) -> Result<Message> {
         debug!("Getting message {} in channel {}", message_id, channel_id);
         let path = resource::channel_message(channel_id, message_id);
-        let response = self.http.get(token, &path, None::<&()>).await?;
+        let response = self.http.get(self.token(), &path, None::<&()>).await?;
         Self::parse_message_response(response)
     }
 
     /// Gets channel messages using paginated requests.
     pub async fn get_messages(
         &self,
-        token: &Token,
         channel_id: &str,
         pager: &MessagesPager,
     ) -> Result<Vec<Message>> {
@@ -36,7 +29,6 @@ impl BotApi {
         let params = pager.query_params();
         let path = resource::channel_messages(channel_id);
         self.request_json(
-            token,
             Method::GET,
             &path,
             if params.is_empty() {
@@ -52,61 +44,56 @@ impl BotApi {
     /// Gets channel messages using simple pagination parameters.
     pub async fn get_messages_with_params(
         &self,
-        token: &Token,
         channel_id: &str,
         pager_type: Option<MessagePagerType>,
         message_id: Option<&str>,
         limit: Option<u32>,
     ) -> Result<Vec<Message>> {
         let pager = MessagesPager::new(pager_type, message_id, limit);
-        self.get_messages(token, channel_id, &pager).await
+        self.get_messages(channel_id, &pager).await
     }
 
     /// Sends a channel message using the structured message create payload.
     pub async fn post_message_to_create(
         &self,
-        token: &Token,
         channel_id: &str,
         msg: &MessageToCreate,
     ) -> Result<Message> {
         debug!("Sending message to channel {}", channel_id);
         let path = resource::channel_messages(channel_id);
-        self.request_json(token, Method::POST, &path, None::<&()>, Some(msg))
+        self.request_json(Method::POST, &path, None::<&()>, Some(msg))
             .await
     }
 
     /// Edits a channel message using the structured message create payload.
     pub async fn patch_message_to_create(
         &self,
-        token: &Token,
         channel_id: &str,
         message_id: &str,
         msg: &MessageToCreate,
     ) -> Result<Message> {
         debug!("Editing message {} in channel {}", message_id, channel_id);
         let path = resource::channel_message(channel_id, message_id);
-        self.request_json(token, Method::PATCH, &path, None::<&()>, Some(msg))
+        self.request_json(Method::PATCH, &path, None::<&()>, Some(msg))
             .await
     }
 
     /// Sends a message to a channel using MessageParams.
-    pub async fn post_message_with_params(
+    pub async fn send_message(
         &self,
-        token: &Token,
         channel_id: &str,
         params: MessageParams,
     ) -> Result<MessageResponse> {
         debug!("Sending message to channel {}", channel_id);
         let body = MessageToCreate::from(params);
         let path = resource::channel_messages(channel_id);
-        self.request_message_response_body(token, Method::POST, &path, &body)
+        self.request_message_response_body(Method::POST, &path, &body)
             .await
     }
 
     /// Edits a channel message using MessageParams.
-    pub async fn patch_message_with_params(
+    pub async fn edit_message(
         &self,
-        token: &Token,
         channel_id: &str,
         message_id: &str,
         params: MessageParams,
@@ -114,14 +101,13 @@ impl BotApi {
         debug!("Editing message {} in channel {}", message_id, channel_id);
         let body = MessageToCreate::from(params);
         let path = resource::channel_message(channel_id, message_id);
-        self.request_message_response_body(token, Method::PATCH, &path, &body)
+        self.request_message_response_body(Method::PATCH, &path, &body)
             .await
     }
 
     /// Sends an inline keyboard message body.
     pub async fn post_keyboard_message(
         &self,
-        token: &Token,
         channel_id: &str,
         keyboard: Option<&Keyboard>,
         markdown: Option<&MarkdownPayload>,
@@ -133,14 +119,13 @@ impl BotApi {
             ..Default::default()
         };
         let path = resource::channel_messages(channel_id);
-        self.request_message_response_body(token, Method::POST, &path, &body)
+        self.request_message_response_body(Method::POST, &path, &body)
             .await
     }
 
     /// Edits a guild message with inline markdown or keyboard content.
     pub async fn patch_guild_message(
         &self,
-        token: &Token,
         channel_id: &str,
         patch_msg_id: &str,
         msg_id: Option<&str>,
@@ -160,7 +145,7 @@ impl BotApi {
             ..Default::default()
         };
         let path = resource::channel_message(channel_id, patch_msg_id);
-        self.request_message_response_body(token, Method::PATCH, &path, &body)
+        self.request_message_response_body(Method::PATCH, &path, &body)
             .await
     }
 }
@@ -179,7 +164,7 @@ mod tests {
             .await;
         let mut http = crate::http::HttpClient::new(30, false).unwrap();
         http.base_url = base_url;
-        BotApi::with_token(http, token)
+        BotApi::new(http, token)
     }
 
     async fn spawn_capture_server() -> (
@@ -256,15 +241,11 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn post_message_with_params_sends_botgo_body() {
+    async fn send_message_sends_botgo_body() {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
         let response = api
-            .post_message_with_params(
-                api.token().unwrap(),
-                "channel-1",
-                MessageParams::new_text("hello"),
-            )
+            .send_message("channel-1", MessageParams::new_text("hello"))
             .await
             .unwrap();
 
@@ -281,12 +262,11 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn post_message_with_params_file_image_uses_json_body() {
+    async fn send_message_file_image_uses_json_body() {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
         let response = api
-            .post_message_with_params(
-                api.token().unwrap(),
+            .send_message(
                 "channel-1",
                 MessageParams::new_text("hello")
                     .with_file_image(b"image-bytes")
@@ -314,7 +294,7 @@ mod tests {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
         let response = api
-            .post_keyboard_message(api.token().unwrap(), "channel-1", None, None)
+            .post_keyboard_message("channel-1", None, None)
             .await
             .unwrap();
 
@@ -330,15 +310,7 @@ mod tests {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
         let response = api
-            .patch_guild_message(
-                api.token().unwrap(),
-                "channel-1",
-                "message-1",
-                None,
-                None,
-                None,
-                None,
-            )
+            .patch_guild_message("channel-1", "message-1", None, None, None, None)
             .await
             .unwrap();
 

@@ -24,11 +24,11 @@ BotRS 的所有重要更改都将记录在此文件中。
 - 将 Go 风格错误码常量（`CodeNeedReConnect`、`WSCodeBackendAuthenticationFail`、`APICodeTokenExpireOrNotExist` 等）改名为 Rust 风格 `CODE_*`、`WS_CODE_*` 和 `API_CODE_*`。
 - 移除 Go 风格 channel enum 别名和重复 enum-value 常量（`ChannelTypeText`、`ChannelSubTypeChat`、`ChannelPrivateTypePublic`、`SpeakPermissionTypePublic`、`CHANNEL_TYPE_TEXT` 等）；请使用 `ChannelType::Text` 这类枚举 variant。
 - 移除 Go 风格 gateway opcode/event 别名（`OPCode`、`WSDispatchEvent`、`WSIdentity`、`HTTPCallbackAck`、`EventMessageCreate`、`OPMeans` 等）；请使用 `OpCode`、`WS_DISPATCH_EVENT`、`WS_IDENTIFY`、`HTTP_CALLBACK_ACK`、`EVENT_MESSAGE_CREATE` 和 `op_meaning`。
-- 移除冗余 Rust 方法别名（`BotApi::me`、`BotApi::me_guilds`、`BotApi::get_ws_url`、`BotApi::get_permissions`、`BotApi::patch_message` 及对应 `Context` wrapper）；请使用 `get_bot_info`、`get_guilds`、`get_gateway`、`get_api_permissions` 和 `patch_message_with_params`。
+- 移除冗余 Rust 方法别名（`BotApi::me`、`BotApi::me_guilds`、`BotApi::get_ws_url`、`BotApi::get_permissions`、`BotApi::patch_message` 及对应 `Context` wrapper）；请使用 `get_bot_info`、`get_guilds`、`get_gateway`、`get_api_permissions` 和 `edit_message`。
 - 移除 botpy 风格重复方法（`BotApi::create_dms`、`Context::create_dms`、`BotApi::get_delete_member` 和 `Context::get_delete_member`）；请使用 `create_direct_message` 和 `delete_member`。
 - 移除冗余 `Context` 方法别名（`add_reaction`、`remove_reaction`、`pin_message`、`unpin_message`、`add_guild_role_member` 和 `remove_guild_role_member`）；请使用 `put_reaction`、`delete_reaction`、`put_pin`、`delete_pin`、`create_guild_role_member` 和 `delete_guild_role_member`。
 - 移除兼容类型别名（`WebsocketAP`、`DirectMessageSession`、`ReactionUser`、`MessageReactionUsers`、`Announces`、`EnterAIO`、`HTTPIdentity`、`HTTPReady`、`HTTPSession`、`WHValidationReq`、`WHValidationRsp`、`RoleID` 和 `Roles`）以及 Go 风格的 `SessionManager::Start` / `DefaultColor` 别名；请使用具体 Rust 类型和 `SessionManager::start` / `DEFAULT_ROLE_COLOR`。
-- 移除已弃用的多 `Option` 消息发送方法（`post_message`、`post_group_message`、`post_c2c_message`、`post_dms`）及其 `Context` wrapper。请使用 `*_with_params` 方法。
+- 移除已弃用的多 `Option` 消息发送方法（`post_message`、`post_group_message`、`post_c2c_message`、`post_dms`）、`*_with_params` 兼容名及其 `Context` wrapper。请使用 `send_message`、`send_group_message`、`send_c2c_message` 和 `send_direct_message`。
 - 移除冗余的 `post_message_api` 和 `patch_message_api` 别名。
 
 ## [0.11.0] - 2026-05-25
@@ -67,7 +67,7 @@ BotRS 的所有重要更改都将记录在此文件中。
 ### 更改
 - `DirectMessage` 对齐为 QQ 机器人开放接口的私信会话 DTO。
 - `direct_message_create` 现在接收普通 `Message`,与协议定义的 `WSDirectMessageData` 保持一致。
-- 私信示例和 API 文档改为使用 `DirectMessageParams` 与 `post_dms_with_params`。
+- 私信示例和 API 文档改为使用 `DirectMessageParams` 与 `send_direct_message`。
 
 ### 修复
 - 补齐 message、guild 和 interaction wire format 的 DTO 对齐，与 QQ 机器人开放接口一致。
@@ -136,7 +136,7 @@ BotRS 的所有重要更改都将记录在此文件中。
 - 群消息 `GroupMessageParams`
 - 私聊消息 `C2CMessageParams`
 - 私信 `DirectMessageParams`
-- 新方法：`post_message_with_params`、`post_group_message_with_params`、`post_c2c_message_with_params`、`post_dms_with_params`
+- 新方法：`send_message`、`send_group_message`、`send_c2c_message`、`send_direct_message`
 - 全面支持所有 QQ 频道消息类型（文本、嵌入内容、文件、Markdown、键盘、ARK 消息）
 - 增强的文件上传功能，具有适当的 MIME 类型检测
 - 消息引用和回复功能
@@ -280,14 +280,14 @@ use botrs::models::message::MessageParams;
 let params = MessageParams::new_text("你好！")
     .with_reply("message_id")
     .with_markdown(true);
-api.post_message_with_params(token, "channel_id", params).await?;
+api.send_message("channel_id", params).await?;
 ```
 
 #### 方法映射
-- `post_message` → `post_message_with_params`
-- `post_group_message` → `post_group_message_with_params`
-- `post_c2c_message` → `post_c2c_message_with_params`
-- `post_dms` → `post_dms_with_params`
+- `post_message` → `send_message`
+- `post_group_message` → `send_group_message`
+- `post_c2c_message` → `send_c2c_message`
+- `post_dms` → `send_direct_message`
 
 ### 0.2.0 中的破坏性变更
 
@@ -312,7 +312,7 @@ api.post_message_with_params(token, "channel_id", params).await?;
 
 ```rust
 let params = MessageParams::new_text(content);
-api.post_message_with_params(token, channel, params).await?;
+api.send_message(channel, params).await?;
 ```
 
 ## 版本支持

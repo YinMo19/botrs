@@ -34,7 +34,7 @@ impl EventHandler for MyBot {
         }
         let Some(content) = message.content.as_deref() else { return };
         if content.trim() == "!ping" {
-            let _ = message.reply(&ctx.api, &ctx.token, "pong").await;
+            let _ = message.reply(&ctx, "pong").await;
         }
     }
 }
@@ -62,7 +62,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 - `Token` carries the App ID and Secret. `Token::from_env()` is also available; it reads `QQ_BOT_APP_ID` and `QQ_BOT_SECRET`.
 - `Intents` is a bitflag set. `Intents::default()` is empty; chain `with_*` methods for the categories you need. The bot receives only events you opted into.
 - `Client::new(token, intents, handler, is_sandbox)` — pass `true` for the sandbox base URL while developing, `false` for production.
-- `Message::reply(&api, &token, text)` is the convenience for replying to the same channel; for richer payloads use `BotApi::post_message_with_params` (see [Messages](/guide/messages)).
+- `Message::reply(&api, text)` is the convenience for replying to the same channel; for richer payloads use `BotApi::send_message` (see [Messages](/guide/messages)).
 
 ## Next
 

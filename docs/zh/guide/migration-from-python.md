@@ -18,7 +18,7 @@ impl EventHandler for MyBot {
     async fn at_message_create(&self, ctx: Context, msg: Message) {
         if let Some(content) = msg.content.as_deref() {
             if content.contains("ping") {
-                let _ = msg.reply(&ctx.api, &ctx.token, "pong").await;
+                let _ = msg.reply(&ctx, "pong").await;
             }
         }
     }
@@ -59,10 +59,10 @@ Python 的 `await api.post_message(channel_id, content="hi", msg_id=...)` 对应
 use botrs::models::message::MessageParams;
 
 let params = MessageParams::new_text("hi").with_reply(&msg_id);
-ctx.api.post_message_with_params(&ctx.token, &channel_id, params).await?;
+ctx.send_message(&channel_id, params).await?;
 ```
 
-群、C2C、私信的形态相同：`GroupMessageParams` → `post_group_message_with_params`、`C2CMessageParams` → `post_c2c_message_with_params`、`DirectMessageParams` → `post_dms_with_params`。
+群、C2C、私信的形态相同：`GroupMessageParams` → `send_group_message`、`C2CMessageParams` → `send_c2c_message`、`DirectMessageParams` → `send_direct_message`。
 
 复杂载荷（embed、ark、markdown、keyboard）直接 `..Default::default()` 初始化字段即可 —— 不会出现一长串 kwargs，每种场景只有一个构建器类型。
 

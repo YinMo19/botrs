@@ -17,7 +17,7 @@
 
 ## 控制播放
 
-`BotApi::post_audio(&token, channel_id, &AudioControl)` 用于更新某语音子频道的音频会话，`AudioControl` 即请求体：
+`BotApi::post_audio(channel_id, &AudioControl)` 用于更新某语音子频道的音频会话，`AudioControl` 即请求体：
 
 ```rust
 use botrs::audio::{AudioControl, AudioStatus};
@@ -27,13 +27,13 @@ let control = AudioControl {
     text: "正在播放".into(),
     status: AudioStatus::Start, // Start | Pause | Resume | Stop
 };
-ctx.api.post_audio(&ctx.token, &channel_id, &control).await?;
+ctx.post_audio(&channel_id, &control).await?;
 ```
 
 麦位控制：
 
-- `BotApi::on_microphone(&token, channel_id)` —— 上麦。
-- `BotApi::off_microphone(&token, channel_id)` —— 下麦。
+- `BotApi::on_microphone(channel_id)` —— 上麦。
+- `BotApi::off_microphone(channel_id)` —— 下麦。
 
 ## 富媒体上传
 
@@ -43,8 +43,8 @@ ctx.api.post_audio(&ctx.token, &channel_id, &control).await?;
 use botrs::models::message::GroupMessageParams;
 
 // 1=图片 2=视频 3=语音 4=文件
-let media = ctx.api
-    .post_group_file(&ctx.token, &group_openid, 1, image_url, None)
+let media = ctx
+    .post_group_file(&group_openid, 1, image_url, None)
     .await?;
 
 let params = GroupMessageParams {
@@ -52,9 +52,9 @@ let params = GroupMessageParams {
     media: Some(media),
     ..Default::default()
 };
-ctx.api.post_group_message_with_params(&ctx.token, &group_openid, params).await?;
+ctx.send_group_message(&group_openid, params).await?;
 ```
 
-C2C 与之对应的方法是 `post_c2c_file(&token, openid, file_type, url, srv_send_msg)`。传入 `srv_send_msg = Some(true)` 时平台会直接转发为消息，否则把返回的 `Media` 描述塞进自己的 `*MessageParams`。
+C2C 与之对应的方法是 `post_c2c_file(openid, file_type, url, srv_send_msg)`。传入 `srv_send_msg = Some(true)` 时平台会直接转发为消息，否则把返回的 `Media` 描述塞进自己的 `*MessageParams`。
 
 频道消息若手上已有图片字节，使用 `MessageParams::with_file_image(&bytes)` 最方便 —— 框架会自动 base64 编码到 `file_image` 字段。

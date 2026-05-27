@@ -52,11 +52,7 @@ impl EventHandler for AnnounceHandler {
             ..Default::default()
         };
 
-        match ctx
-            .api
-            .post_message_with_params(&ctx.token, channel_id, params)
-            .await
-        {
+        match ctx.send_message(channel_id, params).await {
             Ok(_) => info!("Successfully sent acknowledgment message"),
             Err(e) => warn!("Failed to send acknowledgment message: {}", e),
         }
@@ -89,8 +85,7 @@ impl EventHandler for AnnounceHandler {
         if content.contains("/建公告") {
             // Create announcement (equivalent to self.api.create_announce)
             match ctx
-                .api
-                .create_announce(&ctx.token, _guild_id, channel_id, _referenced_message_id)
+                .create_announce(_guild_id, channel_id, _referenced_message_id)
                 .await
             {
                 Ok(result) => {
@@ -103,8 +98,7 @@ impl EventHandler for AnnounceHandler {
         } else if content.contains("/删公告") {
             // Delete announcement (equivalent to self.api.delete_announce)
             match ctx
-                .api
-                .delete_announce(&ctx.token, _guild_id, Some(_referenced_message_id.as_str()))
+                .delete_announce(_guild_id, Some(_referenced_message_id.as_str()))
                 .await
             {
                 Ok(result) => {
@@ -122,9 +116,7 @@ impl EventHandler for AnnounceHandler {
             )];
 
             match ctx
-                .api
                 .create_recommend_announce(
-                    &ctx.token,
                     _guild_id,
                     botrs::models::announce::AnnouncesType::Member,
                     channel_list,

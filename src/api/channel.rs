@@ -4,7 +4,6 @@ use crate::models::{
     channel::{Channel, ChannelSubType, ChannelType, ChannelValueObject, PrivateType},
     guild::Member,
 };
-use crate::token::Token;
 use serde::Serialize;
 use serde_json::Value;
 use tracing::debug;
@@ -97,25 +96,24 @@ impl BotApi {
     // Channel APIs
 
     /// Fetches one channel by ID.
-    pub async fn get_channel(&self, token: &Token, channel_id: &str) -> Result<Channel> {
+    pub async fn get_channel(&self, channel_id: &str) -> Result<Channel> {
         debug!("Getting channel {}", channel_id);
         let path = resource::channel(channel_id);
-        let response = self.http.get(token, &path, None::<&()>).await?;
+        let response = self.http.get(self.token(), &path, None::<&()>).await?;
         Self::decode_json(response)
     }
 
     /// Lists channels in a guild.
-    pub async fn get_channels(&self, token: &Token, guild_id: &str) -> Result<Vec<Channel>> {
+    pub async fn get_channels(&self, guild_id: &str) -> Result<Vec<Channel>> {
         debug!("Getting channels for guild {}", guild_id);
         let path = resource::guild_channels(guild_id);
-        let response = self.http.get(token, &path, None::<&()>).await?;
+        let response = self.http.get(self.token(), &path, None::<&()>).await?;
         Self::decode_json(response)
     }
 
     /// Creates a guild channel from a structured channel body.
     pub async fn post_channel(
         &self,
-        token: &Token,
         guild_id: &str,
         value: &ChannelValueObject,
     ) -> Result<Channel> {
@@ -123,7 +121,7 @@ impl BotApi {
         let path = resource::guild_channels(guild_id);
         let response = self
             .http
-            .post(token, &path, None::<&()>, Some(value))
+            .post(self.token(), &path, None::<&()>, Some(value))
             .await?;
         Self::decode_json(response)
     }
@@ -131,7 +129,6 @@ impl BotApi {
     /// Creates a guild channel from inline fields.
     pub async fn create_channel(
         &self,
-        token: &Token,
         guild_id: &str,
         name: &str,
         channel_type: ChannelType,
@@ -158,7 +155,7 @@ impl BotApi {
         let path = resource::guild_channels(guild_id);
         let response = self
             .http
-            .post(token, &path, None::<&()>, Some(&body))
+            .post(self.token(), &path, None::<&()>, Some(&body))
             .await?;
         Self::decode_json(response)
     }
@@ -170,7 +167,6 @@ impl BotApi {
     /// members are added through `private_user_ids`.
     pub async fn create_private_channel(
         &self,
-        token: &Token,
         guild_id: &str,
         value: &ChannelValueObject,
         user_ids: Vec<String>,
@@ -181,13 +177,12 @@ impl BotApi {
             value.private_user_ids = Some(user_ids);
             value.private_type = Some(PrivateType::OnlyAdmin);
         }
-        self.post_channel(token, guild_id, &value).await
+        self.post_channel(guild_id, &value).await
     }
 
     /// Updates a channel from inline fields.
     pub async fn update_channel(
         &self,
-        token: &Token,
         channel_id: &str,
         name: Option<&str>,
         position: Option<u32>,
@@ -201,7 +196,7 @@ impl BotApi {
         let path = resource::channel(channel_id);
         let response = self
             .http
-            .patch(token, &path, None::<&()>, Some(&body))
+            .patch(self.token(), &path, None::<&()>, Some(&body))
             .await?;
         Self::decode_json(response)
     }
@@ -209,7 +204,6 @@ impl BotApi {
     /// Updates a channel from a structured channel body.
     pub async fn patch_channel(
         &self,
-        token: &Token,
         channel_id: &str,
         value: &ChannelValueObject,
     ) -> Result<Channel> {
@@ -217,7 +211,7 @@ impl BotApi {
         let path = resource::channel(channel_id);
         let response = self
             .http
-            .patch(token, &path, None::<&()>, Some(value))
+            .patch(self.token(), &path, None::<&()>, Some(value))
             .await?;
         Self::decode_json(response)
     }
@@ -226,10 +220,10 @@ impl BotApi {
     ///
     /// The platform may return the deleted channel object or an empty success
     /// response. Empty responses are represented as `None`.
-    pub async fn delete_channel(&self, token: &Token, channel_id: &str) -> Result<Option<Channel>> {
+    pub async fn delete_channel(&self, channel_id: &str) -> Result<Option<Channel>> {
         debug!("Deleting channel {}", channel_id);
         let path = resource::channel(channel_id);
-        let response = self.http.delete(token, &path, None::<&()>).await?;
+        let response = self.http.delete(self.token(), &path, None::<&()>).await?;
         if response == Value::Null {
             Ok(None)
         } else {
@@ -238,14 +232,10 @@ impl BotApi {
     }
 
     /// Lists members currently present in a voice channel.
-    pub async fn list_voice_channel_members(
-        &self,
-        token: &Token,
-        channel_id: &str,
-    ) -> Result<Vec<Member>> {
+    pub async fn list_voice_channel_members(&self, channel_id: &str) -> Result<Vec<Member>> {
         debug!("Listing voice channel members for channel {}", channel_id);
         let path = resource::voice_channel_members(channel_id);
-        let response = self.http.get(token, &path, None::<&()>).await?;
+        let response = self.http.get(self.token(), &path, None::<&()>).await?;
         Self::decode_json(response)
     }
 }
@@ -264,7 +254,7 @@ mod tests {
             .await;
         let mut http = crate::http::HttpClient::new(30, false).unwrap();
         http.base_url = base_url;
-        BotApi::with_token(http, token)
+        BotApi::new(http, token)
     }
 
     async fn spawn_capture_server() -> (
@@ -345,7 +335,6 @@ mod tests {
         let api = test_api(base_url).await;
         let channel = api
             .create_channel(
-                api.token().unwrap(),
                 "guild-1",
                 "channel_test",
                 ChannelType::Text,
@@ -372,15 +361,7 @@ mod tests {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
         let channel = api
-            .update_channel(
-                api.token().unwrap(),
-                "channel-1",
-                Some(""),
-                Some(0),
-                Some(""),
-                Some(0),
-                Some(0),
-            )
+            .update_channel("channel-1", Some(""), Some(0), Some(""), Some(0), Some(0))
             .await
             .unwrap();
 
@@ -397,10 +378,7 @@ mod tests {
     async fn delete_channel_keeps_deleted_channel_when_returned() {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
-        let channel = api
-            .delete_channel(api.token().unwrap(), "channel-1")
-            .await
-            .unwrap();
+        let channel = api.delete_channel("channel-1").await.unwrap();
 
         assert_eq!(
             channel.as_ref().map(|channel| channel.id.as_str()),
@@ -416,10 +394,7 @@ mod tests {
         let (base_url, request, server) =
             spawn_capture_server_with_response("204 No Content", None).await;
         let api = test_api(base_url).await;
-        let channel = api
-            .delete_channel(api.token().unwrap(), "channel-1")
-            .await
-            .unwrap();
+        let channel = api.delete_channel("channel-1").await.unwrap();
 
         assert!(channel.is_none());
         let request = request.await.unwrap();

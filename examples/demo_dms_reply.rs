@@ -56,11 +56,7 @@ impl EventHandler for DmsReplyHandler {
             ..Default::default()
         };
 
-        match ctx
-            .api
-            .post_dms_with_params(&ctx.token, guild_id, params)
-            .await
-        {
+        match ctx.send_direct_message(guild_id, params).await {
             Ok(_) => info!("Successfully replied to direct message"),
             Err(e) => warn!("Failed to reply to direct message: {}", e),
         }
@@ -107,7 +103,7 @@ impl EventHandler for DmsReplyHandler {
             );
 
             let dm = DirectMessageToCreate::new(guild_id, user_id);
-            match ctx.api.create_direct_message(&ctx.token, &dm).await {
+            match ctx.create_direct_message(&dm).await {
                 Ok(dms_payload) => {
                     info!("Successfully created DM session");
                     info!("DMS Payload: {:?}", dms_payload);
@@ -121,11 +117,7 @@ impl EventHandler for DmsReplyHandler {
                     // Send a DM using the created session
                     let params = botrs::models::message::DirectMessageParams::new_text("hello");
 
-                    match ctx
-                        .api
-                        .post_dms_with_params(&ctx.token, dm_guild_id, params)
-                        .await
-                    {
+                    match ctx.send_direct_message(dm_guild_id, params).await {
                         Ok(_) => info!("Successfully sent DM via created session"),
                         Err(e) => warn!("Failed to send DM via created session: {}", e),
                     }

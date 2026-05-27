@@ -40,11 +40,7 @@ impl EventHandler for C2CManageEventHandler {
             ..Default::default()
         };
 
-        match ctx
-            .api
-            .post_c2c_message_with_params(&ctx.token, openid, params)
-            .await
-        {
+        match ctx.send_c2c_message(openid, params).await {
             Ok(response) => {
                 info!("Successfully sent welcome message");
                 info!("Response: {:?}", response);

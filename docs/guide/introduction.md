@@ -20,7 +20,7 @@ Every send method takes a typed `*Params` builder rather than a long list of `Op
 let params = MessageParams::new_text("hello")
     .with_reply(message_id)
     .with_markdown(true);
-ctx.api.post_message_with_params(&ctx.token, "channel_id", params).await?;
+ctx.send_message("channel_id", params).await?;
 ```
 
 The same shape applies to `GroupMessageParams`, `C2CMessageParams`, `DirectMessageParams`, etc. See the messages guide for the full set.

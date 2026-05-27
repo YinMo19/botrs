@@ -111,7 +111,7 @@ impl EventHandler for AtReplyCommandHandler {
         // Try to execute commands
         if let Some(response) = self.registry.try_execute(content) {
             // Send a reply through the message helper.
-            match message.reply(&ctx.api, &ctx.token, &response).await {
+            match message.reply(&ctx, &response).await {
                 Ok(_) => info!("Successfully sent reply via message.reply"),
                 Err(e) => warn!("Failed to send reply via message.reply: {}", e),
             }
@@ -124,9 +124,7 @@ impl EventHandler for AtReplyCommandHandler {
             };
 
             match ctx
-                .api
-                .post_message_with_params(
-                    &ctx.token,
+                .send_message(
                     message.channel_id.as_ref().unwrap_or(&String::new()),
                     params,
                 )
@@ -139,7 +137,7 @@ impl EventHandler for AtReplyCommandHandler {
             // No command matched, send a default response
             let default_response = "收到消息，但没有匹配的命令。可用命令: 你好/hello, 晚安";
 
-            match message.reply(&ctx.api, &ctx.token, default_response).await {
+            match message.reply(&ctx, default_response).await {
                 Ok(_) => info!("Successfully sent default reply"),
                 Err(e) => warn!("Failed to send default reply: {}", e),
             }

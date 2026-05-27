@@ -4,13 +4,13 @@
 
 ## 唯一需要记住的调用
 
-`Message::reply(&ctx.api, &ctx.token, &reply_content)` 会发送一条自动关联到原始消息的回复。简单场景下没有 builder——传三个参数即可。
+`Message::reply(&ctx, &reply_content)` 会发送一条自动关联到原始消息的回复。简单场景下没有 builder——传三个参数即可。
 
 ```rust
 async fn message_create(&self, ctx: Context, message: Message) {
     let Some(content) = &message.content else { return };
     let reply = format!("echo: {content}");
-    if let Err(e) = message.reply(&ctx.api, &ctx.token, &reply).await {
+    if let Err(e) = message.reply(&ctx, &reply).await {
         tracing::warn!("reply failed: {e}");
     }
 }

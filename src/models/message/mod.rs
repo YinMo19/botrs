@@ -20,12 +20,11 @@
 //! ```rust,no_run
 //! # use botrs::*;
 //! # use botrs::models::message::MessageParams;
-//! # async fn example(api: &BotApi, token: &Token, channel_id: &str) -> Result<()> {
+//! # async fn example(api: &BotApi, channel_id: &str) -> Result<()> {
 //! // Simple text message
 //! let params = MessageParams::new_text("Hello!");
-//! api.post_message_with_params(token, channel_id, params).await?;
+//! api.send_message(channel_id, params).await?;
 //!
-//! // Message with embed
 //! // Message with embed
 //! # let my_embed = Default::default();
 //! let params = MessageParams {
@@ -33,12 +32,12 @@
 //!     embed: Some(my_embed),
 //!     ..Default::default()
 //! };
-//! api.post_message_with_params(token, channel_id, params).await?;
+//! api.send_message(channel_id, params).await?;
 //!
 //! // Reply to a message
 //! # let message_id = "123456";
 //! let params = MessageParams::new_text("Reply content").with_reply(message_id);
-//! api.post_message_with_params(token, channel_id, params).await?;
+//! api.send_message(channel_id, params).await?;
 //! # Ok(())
 //! # }
 //! ```
@@ -48,9 +47,9 @@
 //! ```rust,no_run
 //! # use botrs::*;
 //! # use botrs::models::message::GroupMessageParams;
-//! # async fn example(api: &BotApi, token: &Token, group_openid: &str) -> Result<()> {
+//! # async fn example(api: &BotApi, group_openid: &str) -> Result<()> {
 //! let params = GroupMessageParams::new_text("Hello!");
-//! api.post_group_message_with_params(token, group_openid, params).await?;
+//! api.send_group_message(group_openid, params).await?;
 //! # Ok(())
 //! # }
 //! ```

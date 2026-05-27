@@ -40,7 +40,7 @@ impl EventHandler for RecallHandler {
         let reply_content = format!("机器人{bot_name}收到你的@消息了: {content}");
 
         // Send a reply message first.
-        let reply_result = message.reply(&ctx.api, &ctx.token, &reply_content).await;
+        let reply_result = message.reply(&ctx, &reply_content).await;
 
         match reply_result {
             Ok(response) => {
@@ -64,7 +64,7 @@ impl EventHandler for RecallHandler {
 
                     // Recall (delete) the message we just sent (equivalent to api.recall_message)
                     match ctx
-                        .recall_message(channel_id, &message_id, true) // hidetip=True
+                        .recall_message(channel_id, &message_id, Some(true)) // hidetip=True
                         .await
                     {
                         Ok(_) => info!("Successfully recalled message"),

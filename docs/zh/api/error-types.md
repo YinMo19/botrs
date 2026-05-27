@@ -50,7 +50,7 @@ pub type Result<T> = std::result::Result<T, BotError>;
 ```rust
 use botrs::BotError;
 
-match api.get_guild(&token, "guild_id").await {
+match api.get_guild("guild_id").await {
     Ok(guild) => println!("{}", guild.name),
     Err(BotError::Http(e)) if e.is_timeout() => warn!("timed out"),
     Err(BotError::RateLimit { retry_after }) => {

@@ -8,7 +8,7 @@ Embed、Markdown、ARK 模板都通过同一个 `MessageParams` 发送——填�
 
 ## 套路
 
-用结构体初始化的方式构造 payload（`Embed`、`MarkdownPayload`、`Ark`），塞进 `MessageParams` 对应字段，再调用 `BotApi::post_message_with_params(&token, channel_id, params)`。
+用结构体初始化的方式构造 payload（`Embed`、`MarkdownPayload`、`Ark`），塞进 `MessageParams` 对应字段，再调用 `ctx.send_message(channel_id, params)`。
 
 ```rust
 use botrs::models::message::{Embed, EmbedField, MessageParams};
@@ -20,7 +20,7 @@ let embed = Embed {
     ..Default::default()
 };
 let params = MessageParams { embed: Some(embed), ..Default::default() };
-ctx.api.post_message_with_params(&ctx.token, channel_id, params).await?;
+ctx.send_message(channel_id, params).await?;
 ```
 
 `markdown: Some(MarkdownPayload { ... })` 和 `ark: Some(Ark { template_id: Some(37), kv: Some(vec![ArkKv { ... }]) })` 的写法完全一样。Markdown 支持两种形态：`custom_template_id` + `params`（模板）和直接 `content: Some("# 标题 …".into())`（自由格式），两者在 `demo_at_reply_markdown.rs` 中并排出现。

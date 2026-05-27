@@ -108,11 +108,7 @@ impl NewApiDemoHandler {
 
         let params = MessageParams::new_text(help_text);
 
-        match ctx
-            .api
-            .post_message_with_params(&ctx.token, channel_id, params)
-            .await
-        {
+        match ctx.send_message(channel_id, params).await {
             Ok(_) => info!("Sent help message"),
             Err(e) => warn!("Failed to send help message: {}", e),
         }
@@ -121,11 +117,7 @@ impl NewApiDemoHandler {
     async fn demo_text_message(&self, ctx: &botrs::Context, channel_id: &str) {
         let params = MessageParams::new_text("🚀 This is a simple text message using the new API!");
 
-        match ctx
-            .api
-            .post_message_with_params(&ctx.token, channel_id, params)
-            .await
-        {
+        match ctx.send_message(channel_id, params).await {
             Ok(_) => info!("Sent text message using new API"),
             Err(e) => warn!("Failed to send text message: {}", e),
         }
@@ -156,11 +148,7 @@ impl NewApiDemoHandler {
             ..Default::default()
         };
 
-        match ctx
-            .api
-            .post_message_with_params(&ctx.token, channel_id, params)
-            .await
-        {
+        match ctx.send_message(channel_id, params).await {
             Ok(_) => info!("Sent embed message using new API"),
             Err(e) => warn!("Failed to send embed message: {}", e),
         }
@@ -177,11 +165,7 @@ impl NewApiDemoHandler {
             let params =
                 MessageParams::new_text("This is a reply using the new API! 💬").with_reply(msg_id);
 
-            match ctx
-                .api
-                .post_message_with_params(&ctx.token, channel_id, params)
-                .await
-            {
+            match ctx.send_message(channel_id, params).await {
                 Ok(_) => info!("Sent reply message using new API"),
                 Err(e) => warn!("Failed to send reply message: {}", e),
             }
@@ -202,11 +186,7 @@ impl NewApiDemoHandler {
             ..Default::default()
         };
 
-        match ctx
-            .api
-            .post_message_with_params(&ctx.token, channel_id, params)
-            .await
-        {
+        match ctx.send_message(channel_id, params).await {
             Ok(_) => info!("Sent markdown message using new API"),
             Err(e) => warn!("Failed to send markdown message: {}", e),
         }
@@ -226,11 +206,7 @@ impl NewApiDemoHandler {
         let params = MessageParams::new_text("Here's a file sent with the new API! 📎")
             .with_file_image(&png_data);
 
-        match ctx
-            .api
-            .post_message_with_params(&ctx.token, channel_id, params)
-            .await
-        {
+        match ctx.send_message(channel_id, params).await {
             Ok(_) => info!("Sent file message using new API"),
             Err(e) => warn!("Failed to send file message: {}", e),
         }
@@ -240,11 +216,7 @@ impl NewApiDemoHandler {
         // Group messages use GroupMessageParams
         let params = GroupMessageParams::new_text("Hello from the new Group Message API! 👥");
 
-        match ctx
-            .api
-            .post_group_message_with_params(&ctx.token, group_openid, params)
-            .await
-        {
+        match ctx.send_group_message(group_openid, params).await {
             Ok(_) => info!("Sent group message using new API"),
             Err(e) => warn!("Failed to send group message: {}", e),
         }
@@ -255,11 +227,7 @@ impl NewApiDemoHandler {
             // C2C messages use C2CMessageParams
             let params = C2CMessageParams::new_text("Hello from the new C2C Message API! 💬");
 
-            match ctx
-                .api
-                .post_c2c_message_with_params(&ctx.token, user_openid, params)
-                .await
-            {
+            match ctx.send_c2c_message(user_openid, params).await {
                 Ok(_) => info!("Sent C2C message using new API"),
                 Err(e) => warn!("Failed to send C2C message: {}", e),
             }
@@ -271,11 +239,7 @@ impl NewApiDemoHandler {
             // Direct messages use DirectMessageParams
             let params = DirectMessageParams::new_text("Hello from the new Direct Message API! 📧");
 
-            match ctx
-                .api
-                .post_dms_with_params(&ctx.token, guild_id, params)
-                .await
-            {
+            match ctx.send_direct_message(guild_id, params).await {
                 Ok(_) => info!("Sent direct message using new API"),
                 Err(e) => warn!("Failed to send direct message: {}", e),
             }

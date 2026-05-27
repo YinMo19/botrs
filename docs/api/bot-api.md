@@ -8,17 +8,17 @@
 use botrs::{BotApi, http::HttpClient, Token};
 
 let http = HttpClient::new(/* timeout secs */ 30, /* sandbox */ false)?;
-let api = BotApi::new(http);
 let token = Token::new("app_id", "secret");
+let api = BotApi::new(http, token);
 
-let me = api.get_bot_info(&token).await?;
+let me = api.get_bot_info().await?;
 ```
 
-`BotApi` is `Clone` and cheap to clone; the inner HTTP client is reference-counted. For a bot client driven by `Client`, the same `BotApi` is exposed through `Context::api`.
+`BotApi` is `Clone` and cheap to clone; the inner HTTP client is reference-counted. For a bot client driven by `Client`, `Context` dereferences to the same `BotApi`, so handler code can call `ctx.send_message(...)` directly.
 
 ## Method index
 
-Every method takes `&self, token: &Token, …` and returns `Result<…>`. The lists below group the 100+ routes by domain. Look up parameter and response types in [Models](./models/messages.md), [Guilds & Channels](./models/guilds-channels.md), and [Other Types](./models/other-types.md).
+Every method takes `&self` plus endpoint-specific arguments and returns `Result<…>`. The token is stored on `BotApi`. The lists below group the 100+ routes by domain. Look up parameter and response types in [Models](./models/messages.md), [Guilds & Channels](./models/guilds-channels.md), and [Other Types](./models/other-types.md).
 
 ### Bot identity
 
@@ -47,20 +47,20 @@ Every method takes `&self, token: &Token, …` and returns `Result<…>`. The li
 ### Messages (channel)
 
 - `get_message`, `get_messages`, `get_messages_with_params`
-- send: `post_message_with_params`, `post_message_to_create`.
-- edit: `patch_message_with_params`, `patch_message_to_create`.
+- send: `send_message`, `post_message_to_create`.
+- edit: `edit_message`, `patch_message_to_create`.
 - recall: `recall_message`.
 
 ### Direct messages
 
 - create session: `create_direct_message`.
-- send: `post_dms_with_params`, `post_direct_message`.
+- send: `send_direct_message`, `post_direct_message`.
 - recall: `retract_dm_message`.
 - setting guide: `post_dm_setting_guide`, `post_dm_setting_guide_message`.
 
 ### Group / C2C messages
 
-- send: `post_group_message_with_params`, `post_c2c_message_with_params`, `post_group_message_to_create`, `post_c2c_message_to_create`, `post_group_api_message`, `post_c2c_api_message`, `post_group_rich_media_message`, `post_c2c_rich_media_message`.
+- send: `send_group_message`, `send_c2c_message`, `post_group_message_to_create`, `post_c2c_message_to_create`, `post_group_api_message`, `post_c2c_api_message`, `post_group_rich_media_message`, `post_c2c_rich_media_message`.
 - recall: `retract_group_message`, `retract_c2c_message`.
 - file upload: `post_group_file`, `post_c2c_file`.
 
@@ -115,7 +115,7 @@ Every method takes `&self, token: &Token, …` and returns `Result<…>`. The li
 
 ## Worked examples
 
-**Reply to an @-mention with a keyboard.** Build the keyboard once, attach to `MessageParams`, and dispatch with the `_with_params` helper.
+**Reply to an @-mention with a keyboard.** Build the keyboard once, attach to `MessageParams`, and dispatch with `send_message`.
 
 ```rust
 let keyboard = Keyboard {
@@ -149,15 +149,15 @@ let mut params = MessageParams::new_text("Choose:")
     .with_reply(message.id.as_deref().unwrap_or(""));
 params.keyboard = Some(keyboard);
 
-api.post_message_with_params(&token, &channel_id, params).await?;
+api.send_message(&channel_id, params).await?;
 ```
 
 **Paginated member listing.** Use the pager helper to avoid manually threading `after`.
 
 ```rust
-let pager = ctx.api.get_guild_members_with_pager(
-    &ctx.token, &guild_id, GuildMembersPager::default(),
-).await?;
+let pager = ctx
+    .get_guild_members_with_pager(&guild_id, &GuildMembersPager::default())
+    .await?;
 for member in pager.items {
     /* ... */
 }
@@ -168,7 +168,7 @@ for member in pager.items {
 ```rust
 let body = UpdateChannelPermissions::new(Some("1024"), Some("0"));
 body.validate()?;
-api.update_channel_user_permissions(&token, &channel_id, &user_id, &body).await?;
+api.update_channel_user_permissions(&channel_id, &user_id, &body).await?;
 ```
 
 ## Error handling

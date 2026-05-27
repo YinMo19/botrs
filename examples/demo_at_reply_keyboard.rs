@@ -38,11 +38,7 @@ impl KeyboardReplyHandler {
             ..Default::default()
         };
 
-        match ctx
-            .api
-            .post_message_with_params(&ctx.token, channel_id, params)
-            .await
-        {
+        match ctx.send_message(channel_id, params).await {
             Ok(_) => info!("Successfully sent template keyboard message"),
             Err(e) => warn!("Failed to send template keyboard message: {}", e),
         }
@@ -68,11 +64,7 @@ impl KeyboardReplyHandler {
             ..Default::default()
         };
 
-        match ctx
-            .api
-            .post_message_with_params(&ctx.token, channel_id, params)
-            .await
-        {
+        match ctx.send_message(channel_id, params).await {
             Ok(_) => info!("Successfully sent self-defined keyboard message"),
             Err(e) => warn!("Failed to send self-defined keyboard message: {}", e),
         }

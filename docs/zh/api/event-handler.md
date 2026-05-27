@@ -98,7 +98,7 @@ impl EventHandler for MyBot {
         if message.is_from_bot() { return; }
         if let Some(content) = &message.content {
             if content.trim() == "!ping" {
-                let _ = message.reply(&ctx.api, &ctx.token, "Pong!").await;
+                let _ = message.reply(&ctx, "Pong!").await;
             }
         }
     }

@@ -1,6 +1,7 @@
 use crate::api::BotApi;
 use crate::http::HttpClient;
 use crate::models::gateway::*;
+use crate::token::Token;
 use serde::de::DeserializeOwned;
 
 pub fn parse_data<T: DeserializeOwned>(message: &[u8]) -> crate::Result<T> {
@@ -32,7 +33,10 @@ fn payload_event_id(payload: &WSPayload) -> Option<String> {
 }
 
 fn event_api() -> BotApi {
-    BotApi::new(HttpClient::new(crate::DEFAULT_TIMEOUT, false).expect("valid default api client"))
+    BotApi::new(
+        HttpClient::new(crate::DEFAULT_TIMEOUT, false).expect("valid default api client"),
+        Token::new("event_app", "event_secret"),
+    )
 }
 
 macro_rules! impl_constructed_payload_data {

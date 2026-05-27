@@ -27,7 +27,7 @@ REST calls (`BotApi::*`) return the error directly. Inside a handler, you decide
 ```rust
 async fn message_create(&self, ctx: Context, msg: Message) {
     let params = MessageParams::new_text("hi");
-    if let Err(e) = ctx.api.post_message_with_params(&ctx.token, "channel", params).await {
+    if let Err(e) = ctx.send_message("channel", params).await {
         match e {
             BotError::RateLimit { retry_after } => {
                 tracing::warn!(retry_after, "rate limited; dropping reply");
@@ -51,7 +51,7 @@ These are advisory. The framework itself does not retry on your behalf — every
 
 ```rust
 loop {
-    match ctx.api.post_message_with_params(&ctx.token, channel, params.clone()).await {
+    match ctx.send_message(channel, params.clone()).await {
         Ok(resp) => break Ok(resp),
         Err(e) if e.is_retryable() => {
             if let Some(secs) = e.retry_after() {

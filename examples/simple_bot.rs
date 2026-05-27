@@ -65,7 +65,7 @@ impl EventHandler for SimpleHandler {
         // Send response if we have one
         if let Some(response_text) = response {
             // Try to reply using the message's reply method
-            match message.reply(&ctx.api, &ctx.token, &response_text).await {
+            match message.reply(&ctx, &response_text).await {
                 Ok(_) => info!("Successfully sent reply"),
                 Err(e) => warn!("Failed to send reply: {}", e),
             }
@@ -115,7 +115,7 @@ impl EventHandler for SimpleHandler {
         // Send response if we have one
         if let Some(response_text) = response {
             // Use the reply method to properly respond to the group message
-            match message.reply(&ctx.api, &ctx.token, &response_text).await {
+            match message.reply(&ctx, &response_text).await {
                 Ok(_) => info!("Successfully sent group message reply"),
                 Err(e) => warn!("Failed to send group message reply: {}", e),
             }

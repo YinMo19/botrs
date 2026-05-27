@@ -1,6 +1,6 @@
 # Text Messages
 
-Plain text replies cover four destinations in BotRS, each backed by its own `*Params` struct and `post_*_with_params` API call. The destination demos:
+Plain text replies cover four destinations in BotRS, each backed by its own `*Params` struct and send API call. The destination demos:
 
 - Channel @-mentions: [`demo_at_reply.rs`](https://github.com/YinMo19/botrs/blob/main/examples/demo_at_reply.rs)
 - Channel reply with quoted reference: [`demo_at_reply_reference.rs`](https://github.com/YinMo19/botrs/blob/main/examples/demo_at_reply_reference.rs)
@@ -14,10 +14,10 @@ For a guild channel reply, `Message::reply` is the shortest path. For everything
 
 | Destination       | Params                | API method                          |
 |-------------------|----------------------|-------------------------------------|
-| Channel           | `MessageParams`       | `post_message_with_params`          |
-| Direct message    | `DirectMessageParams` | `post_dms_with_params`              |
-| Group             | `GroupMessageParams`  | `post_group_message_with_params`    |
-| C2C               | `C2CMessageParams`    | `post_c2c_message_with_params`      |
+| Channel           | `MessageParams`       | `send_message`          |
+| Direct message    | `DirectMessageParams` | `send_direct_message`              |
+| Group             | `GroupMessageParams`  | `send_group_message`    |
+| C2C               | `C2CMessageParams`    | `send_c2c_message`      |
 
 ```rust
 // Quoted reply (channel) — see demo_at_reply_reference.rs
@@ -26,7 +26,7 @@ let params = MessageParams {
     message_reference: Some(Reference { message_id: Some(message_id.clone()), ignore_get_message_error: None }),
     ..Default::default()
 };
-ctx.api.post_message_with_params(&ctx.token, channel_id, params).await?;
+ctx.send_message(channel_id, params).await?;
 ```
 
 For groups and C2C, remember to set `msg_type: 0` for plain text and pass `msg_id: message.id.clone()` so the platform threads the reply correctly (see `demo_group_reply_text.rs` and `demo_c2c_reply_text.rs`). DMS additionally needs `guild_id` from the inbound `Message` or a session created with `BotApi::create_direct_message`.

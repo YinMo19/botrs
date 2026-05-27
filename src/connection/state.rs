@@ -256,7 +256,7 @@ mod tests {
 
     fn test_state() -> ConnectionState {
         let http = crate::http::HttpClient::new(30, false).unwrap();
-        ConnectionState::new(BotApi::new(http))
+        ConnectionState::new(BotApi::new_for_test(http))
     }
 
     #[test]

@@ -1,6 +1,6 @@
 # 文本消息
 
-纯文本回复在 BotRS 中覆盖四种目的地，每种都有自己的 `*Params` 结构体和 `post_*_with_params` API。对应 demo：
+纯文本回复在 BotRS 中覆盖四种目的地，每种都有自己的 `*Params` 结构体和发送 API。对应 demo：
 
 - 频道 @ 回复：[`demo_at_reply.rs`](https://github.com/YinMo19/botrs/blob/main/examples/demo_at_reply.rs)
 - 带引用块的频道回复：[`demo_at_reply_reference.rs`](https://github.com/YinMo19/botrs/blob/main/examples/demo_at_reply_reference.rs)
@@ -14,10 +14,10 @@
 
 | 目的地       | Params                | API 方法                              |
 |--------------|-----------------------|---------------------------------------|
-| 频道         | `MessageParams`       | `post_message_with_params`            |
-| 私信         | `DirectMessageParams` | `post_dms_with_params`                |
-| 群           | `GroupMessageParams`  | `post_group_message_with_params`      |
-| C2C          | `C2CMessageParams`    | `post_c2c_message_with_params`        |
+| 频道         | `MessageParams`       | `send_message`            |
+| 私信         | `DirectMessageParams` | `send_direct_message`                |
+| 群           | `GroupMessageParams`  | `send_group_message`      |
+| C2C          | `C2CMessageParams`    | `send_c2c_message`        |
 
 ```rust
 // 引用回复（频道）— 见 demo_at_reply_reference.rs
@@ -26,7 +26,7 @@ let params = MessageParams {
     message_reference: Some(Reference { message_id: Some(message_id.clone()), ignore_get_message_error: None }),
     ..Default::default()
 };
-ctx.api.post_message_with_params(&ctx.token, channel_id, params).await?;
+ctx.send_message(channel_id, params).await?;
 ```
 
 群与 C2C 记得把 `msg_type` 设为 `0`（纯文本），并把 `msg_id: message.id.clone()` 一起传给平台，这样回复才能正确串起会话（见 `demo_group_reply_text.rs`、`demo_c2c_reply_text.rs`）。私信还需要从入站 `Message` 拿 `guild_id`，或使用 `BotApi::create_direct_message` 创建会话。

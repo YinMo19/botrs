@@ -2,7 +2,6 @@ use super::{BotApi, resource};
 use crate::error::Result;
 use crate::models::emoji::EmojiType;
 use crate::reaction::{Emoji as ReactionEmoji, MessageReactionPager, ReactionUsers};
-use crate::token::Token;
 use std::collections::HashMap;
 use tracing::debug;
 
@@ -22,7 +21,6 @@ impl BotApi {
     /// Adds a reaction to a message using raw emoji type and ID values.
     pub async fn put_reaction(
         &self,
-        token: &Token,
         channel_id: &str,
         message_id: &str,
         emoji_type: i32,
@@ -34,7 +32,7 @@ impl BotApi {
         );
         let path = resource::message_reaction(channel_id, message_id, emoji_type, emoji_id);
         self.http
-            .put(token, &path, None::<&()>, None::<&()>)
+            .put(self.token(), &path, None::<&()>, None::<&()>)
             .await?;
         Ok(())
     }
@@ -42,19 +40,17 @@ impl BotApi {
     /// Adds a reaction to a message using a structured emoji value.
     pub async fn create_message_reaction(
         &self,
-        token: &Token,
         channel_id: &str,
         message_id: &str,
         emoji: &ReactionEmoji,
     ) -> Result<()> {
-        self.put_reaction(token, channel_id, message_id, emoji.emoji_type, &emoji.id)
+        self.put_reaction(channel_id, message_id, emoji.emoji_type, &emoji.id)
             .await
     }
 
     /// Removes the bot's reaction using raw emoji type and ID values.
     pub async fn delete_reaction(
         &self,
-        token: &Token,
         channel_id: &str,
         message_id: &str,
         emoji_type: i32,
@@ -65,19 +61,18 @@ impl BotApi {
             message_id, channel_id
         );
         let path = resource::message_reaction(channel_id, message_id, emoji_type, emoji_id);
-        self.http.delete(token, &path, None::<&()>).await?;
+        self.http.delete(self.token(), &path, None::<&()>).await?;
         Ok(())
     }
 
     /// Removes the bot's reaction using a structured emoji value.
     pub async fn delete_own_message_reaction(
         &self,
-        token: &Token,
         channel_id: &str,
         message_id: &str,
         emoji: &ReactionEmoji,
     ) -> Result<()> {
-        self.delete_reaction(token, channel_id, message_id, emoji.emoji_type, &emoji.id)
+        self.delete_reaction(channel_id, message_id, emoji.emoji_type, &emoji.id)
             .await
     }
 
@@ -87,7 +82,6 @@ impl BotApi {
     /// to the platform default when omitted.
     pub async fn get_reaction_users(
         &self,
-        token: &Token,
         channel_id: &str,
         message_id: &str,
         emoji_type: EmojiType,
@@ -104,14 +98,13 @@ impl BotApi {
 
         let path =
             resource::message_reaction(channel_id, message_id, u8::from(emoji_type), emoji_id);
-        let response = self.http.get(token, &path, Some(&params)).await?;
+        let response = self.http.get(self.token(), &path, Some(&params)).await?;
         Self::decode_json(response)
     }
 
     /// Lists users that reacted with a specific emoji using structured options.
     pub async fn get_message_reaction_users(
         &self,
-        token: &Token,
         channel_id: &str,
         message_id: &str,
         emoji: &ReactionEmoji,
@@ -126,7 +119,7 @@ impl BotApi {
         let response = self
             .http
             .get(
-                token,
+                self.token(),
                 &path,
                 if params.is_empty() {
                     None

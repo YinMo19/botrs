@@ -27,7 +27,7 @@ REST 调用（`BotApi::*`）直接返回错误。处理器内部由你决定如�
 ```rust
 async fn message_create(&self, ctx: Context, msg: Message) {
     let params = MessageParams::new_text("你好");
-    if let Err(e) = ctx.api.post_message_with_params(&ctx.token, "channel", params).await {
+    if let Err(e) = ctx.send_message("channel", params).await {
         match e {
             BotError::RateLimit { retry_after } => {
                 tracing::warn!(retry_after, "限流，放弃回复");
@@ -51,7 +51,7 @@ async fn message_create(&self, ctx: Context, msg: Message) {
 
 ```rust
 loop {
-    match ctx.api.post_message_with_params(&ctx.token, channel, params.clone()).await {
+    match ctx.send_message(channel, params.clone()).await {
         Ok(resp) => break Ok(resp),
         Err(e) if e.is_retryable() => {
             if let Some(secs) = e.retry_after() {

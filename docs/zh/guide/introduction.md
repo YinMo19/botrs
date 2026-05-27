@@ -20,7 +20,7 @@ BotRS 是一个用 Rust 构建 QQ 频道机器人的异步框架。它将 QQ 频
 let params = MessageParams::new_text("你好")
     .with_reply(message_id)
     .with_markdown(true);
-ctx.api.post_message_with_params(&ctx.token, "channel_id", params).await?;
+ctx.send_message("channel_id", params).await?;
 ```
 
 `GroupMessageParams`、`C2CMessageParams`、`DirectMessageParams` 等的形态与之相同，完整集合见消息指南。

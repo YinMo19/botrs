@@ -8,17 +8,17 @@
 use botrs::{BotApi, http::HttpClient, Token};
 
 let http = HttpClient::new(/* 超时秒 */ 30, /* 是否沙箱 */ false)?;
-let api = BotApi::new(http);
 let token = Token::new("app_id", "secret");
+let api = BotApi::new(http, token);
 
-let me = api.get_bot_info(&token).await?;
+let me = api.get_bot_info().await?;
 ```
 
-`BotApi` 实现了 `Clone`，开销很小（内部 HTTP 客户端是引用计数的）。当 bot 通过 `Client` 驱动时，同一个 `BotApi` 实例会通过 `Context::api` 暴露给事件处理器。
+`BotApi` 实现了 `Clone`，开销很小（内部 HTTP 客户端是引用计数的）。当 bot 通过 `Client` 驱动时，`Context` 会解引用到同一个 `BotApi`，所以事件处理器里可以直接调用 `ctx.send_message(...)`。
 
 ## 方法目录
 
-每个方法的签名都是 `&self, token: &Token, …`，返回 `Result<…>`。下面按业务域归类列出全部 100+ 路由。具体的参数与响应结构请查阅 [消息模型](./models/messages.md)、[频道与子频道](./models/guilds-channels.md)、[其他类型](./models/other-types.md)。
+每个方法的签名都是 `&self` 加上端点自己的参数，返回 `Result<…>`；token 存在 `BotApi` 内部。下面按业务域归类列出全部 100+ 路由。具体的参数与响应结构请查阅 [消息模型](./models/messages.md)、[频道与子频道](./models/guilds-channels.md)、[其他类型](./models/other-types.md)。
 
 ### 机器人身份
 
@@ -47,20 +47,20 @@ let me = api.get_bot_info(&token).await?;
 ### 频道消息
 
 - `get_message`、`get_messages`、`get_messages_with_params`
-- 发送：`post_message_with_params`、`post_message_to_create`。
-- 编辑：`patch_message_with_params`、`patch_message_to_create`。
+- 发送：`send_message`、`post_message_to_create`。
+- 编辑：`edit_message`、`patch_message_to_create`。
 - 撤回：`recall_message`。
 
 ### 私信
 
 - 创建会话：`create_direct_message`。
-- 发送：`post_dms_with_params`、`post_direct_message`。
+- 发送：`send_direct_message`、`post_direct_message`。
 - 撤回：`retract_dm_message`。
 - 设置引导：`post_dm_setting_guide`、`post_dm_setting_guide_message`。
 
 ### 群 / C2C 消息
 
-- 发送：`post_group_message_with_params`、`post_c2c_message_with_params`、`post_group_message_to_create`、`post_c2c_message_to_create`、`post_group_api_message`、`post_c2c_api_message`、`post_group_rich_media_message`、`post_c2c_rich_media_message`。
+- 发送：`send_group_message`、`send_c2c_message`、`post_group_message_to_create`、`post_c2c_message_to_create`、`post_group_api_message`、`post_c2c_api_message`、`post_group_rich_media_message`、`post_c2c_rich_media_message`。
 - 撤回：`retract_group_message`、`retract_c2c_message`。
 - 文件上传：`post_group_file`、`post_c2c_file`。
 
@@ -115,7 +115,7 @@ let me = api.get_bot_info(&token).await?;
 
 ## 完整示例
 
-**回应 @ 提及，并附带按钮键盘。** 一次构建键盘，挂到 `MessageParams` 上，再交给 `_with_params` 系列方法。
+**回应 @ 提及，并附带按钮键盘。** 一次构建键盘，挂到 `MessageParams` 上，再交给 `send_message`。
 
 ```rust
 let keyboard = Keyboard {
@@ -149,15 +149,15 @@ let mut params = MessageParams::new_text("Choose:")
     .with_reply(message.id.as_deref().unwrap_or(""));
 params.keyboard = Some(keyboard);
 
-api.post_message_with_params(&token, &channel_id, params).await?;
+api.send_message(&channel_id, params).await?;
 ```
 
 **分页拉取成员列表。** 用 pager 辅助方法，避免手动维护 `after` 游标。
 
 ```rust
-let pager = ctx.api.get_guild_members_with_pager(
-    &ctx.token, &guild_id, GuildMembersPager::default(),
-).await?;
+let pager = ctx
+    .get_guild_members_with_pager(&guild_id, &GuildMembersPager::default())
+    .await?;
 for member in pager.items {
     /* ... */
 }
@@ -168,7 +168,7 @@ for member in pager.items {
 ```rust
 let body = UpdateChannelPermissions::new(Some("1024"), Some("0"));
 body.validate()?;
-api.update_channel_user_permissions(&token, &channel_id, &user_id, &body).await?;
+api.update_channel_user_permissions(&channel_id, &user_id, &body).await?;
 ```
 
 ## 错误处理

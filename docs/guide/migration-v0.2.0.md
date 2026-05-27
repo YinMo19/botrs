@@ -1,16 +1,16 @@
 # v0.2.0 message API migration
 
-The message-sending surface moved from positional `Option` arguments to typed builders. The legacy methods have since been removed; use the `*_with_params` methods below.
+The message-sending surface moved from positional `Option` arguments to typed builders. The legacy methods and the intermediate `*_with_params` names have since been removed; use the short send methods below.
 
 ## What changed
 
 | Old method                      | New method                                 | Builder                |
 |---------------------------------|--------------------------------------------|------------------------|
-| `post_message`                  | `post_message_with_params`                 | `MessageParams`        |
-| `post_group_message`            | `post_group_message_with_params`           | `GroupMessageParams`   |
-| `post_c2c_message`              | `post_c2c_message_with_params`             | `C2CMessageParams`     |
-| `post_dms`                      | `post_dms_with_params`                     | `DirectMessageParams`  |
-| `patch_message` (legacy)        | `patch_message_with_params`                | `MessageParams`        |
+| `post_message`                  | `send_message`                 | `MessageParams`        |
+| `post_group_message`            | `send_group_message`           | `GroupMessageParams`   |
+| `post_c2c_message`              | `send_c2c_message`             | `C2CMessageParams`     |
+| `post_dms`                      | `send_direct_message`                     | `DirectMessageParams`  |
+| `patch_message` (legacy)        | `edit_message`                | `MessageParams`        |
 
 All builders provide `new_text(content)` and `with_reply(message_id)`. `MessageParams` and `DirectMessageParams` additionally have `with_file_image(&bytes)`. Anything else (embed, ark, markdown, keyboard, media, etc.) is set with struct-update syntax.
 
@@ -33,7 +33,7 @@ After:
 
 ```rust
 let params = MessageParams::new_text("Hello!").with_reply(&message_id);
-api.post_message_with_params(&token, "channel_id", params).await?;
+api.send_message("channel_id", params).await?;
 ```
 
 Anywhere you previously had a non-`None` argument, set the matching field on the builder:
@@ -45,10 +45,10 @@ let params = MessageParams {
     msg_id: Some(reply_to.into()),
     ..Default::default()
 };
-api.post_message_with_params(&token, channel_id, params).await?;
+api.send_message(channel_id, params).await?;
 ```
 
-Group / C2C / DM follow the same shape with the corresponding `*Params` and `*_with_params` method names.
+Group / C2C / DM follow the same shape with the corresponding `*Params` and short send method names.
 
 ## Why
 
@@ -56,4 +56,4 @@ The old API was a documented footgun: the order and meaning of the `Option` argu
 
 ## Removal timeline
 
-The old methods compiled in 0.2.x with `#[deprecated]` warnings and have now been removed. Once your project only calls the `*_with_params` methods, the migration is complete.
+The old methods compiled in 0.2.x with `#[deprecated]` warnings and have now been removed, along with the later `*_with_params` compatibility names. Once your project only calls the short send/edit methods, the migration is complete.

@@ -1,6 +1,5 @@
 use super::{BotApi, HEADER_CALLBACK_APP_ID, resource};
 use crate::error::Result;
-use crate::token::Token;
 use reqwest::header::{HeaderMap, HeaderValue};
 use serde::Serialize;
 use tracing::debug;
@@ -12,32 +11,22 @@ struct InteractionResultBody {
 
 impl BotApi {
     /// Sends an interaction result code.
-    pub async fn on_interaction_result(
-        &self,
-        token: &Token,
-        interaction_id: &str,
-        code: i32,
-    ) -> Result<()> {
+    pub async fn on_interaction_result(&self, interaction_id: &str, code: i32) -> Result<()> {
         debug!("Sending interaction result {} for {}", code, interaction_id);
         let path = resource::interaction(interaction_id);
         let body = InteractionResultBody { code };
         self.http
-            .put(token, &path, None::<&()>, Some(&body))
+            .put(self.token(), &path, None::<&()>, Some(&body))
             .await?;
         Ok(())
     }
 
     /// Sends a raw interaction response body with the callback app ID header.
-    pub async fn put_interaction(
-        &self,
-        token: &Token,
-        interaction_id: &str,
-        body: &str,
-    ) -> Result<()> {
+    pub async fn put_interaction(&self, interaction_id: &str, body: &str) -> Result<()> {
         debug!("Updating interaction {}", interaction_id);
         let mut headers = HeaderMap::new();
         let app_id = if self.app_id.is_empty() {
-            token.app_id()
+            self.token().app_id()
         } else {
             &self.app_id
         };
@@ -47,7 +36,7 @@ impl BotApi {
 
         let path = resource::interaction(interaction_id);
         self.http
-            .put_raw_with_headers(token, &path, None::<&()>, body, headers)
+            .put_raw_with_headers(self.token(), &path, None::<&()>, body, headers)
             .await?;
         Ok(())
     }
@@ -67,7 +56,7 @@ mod tests {
             .await;
         let mut http = crate::http::HttpClient::new(30, false).unwrap();
         http.base_url = base_url;
-        BotApi::with_token(http, token)
+        BotApi::new(http, token)
     }
 
     async fn spawn_capture_server() -> (
@@ -124,9 +113,7 @@ mod tests {
     async fn on_interaction_result_uses_json_body() {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
-        api.on_interaction_result(api.token().unwrap(), "interaction-1", 0)
-            .await
-            .unwrap();
+        api.on_interaction_result("interaction-1", 0).await.unwrap();
 
         let request = request.await.unwrap();
         assert!(request.starts_with("PUT /interactions/interaction-1 HTTP/1.1"));
@@ -139,7 +126,7 @@ mod tests {
     async fn put_interaction_keeps_botgo_callback_header_and_raw_body() {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
-        api.put_interaction(api.token().unwrap(), "interaction-1", r#"{"code":0}"#)
+        api.put_interaction("interaction-1", r#"{"code":0}"#)
             .await
             .unwrap();
 

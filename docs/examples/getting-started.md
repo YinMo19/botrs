@@ -19,7 +19,7 @@ impl EventHandler for Handler {
 
     async fn message_create(&self, ctx: Context, message: Message) {
         if message.is_from_bot() { return; }
-        let _ = message.reply(&ctx.api, &ctx.token, "pong").await;
+        let _ = message.reply(&ctx, "pong").await;
     }
 }
 

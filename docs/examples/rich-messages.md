@@ -8,7 +8,7 @@ Embeds, Markdown, and ARK templates are all sent through the same `MessageParams
 
 ## Pattern
 
-Build a payload (`Embed`, `MarkdownPayload`, `Ark`) using its struct-init form, drop it into the matching `MessageParams` field, then call `BotApi::post_message_with_params(&token, channel_id, params)`.
+Build a payload (`Embed`, `MarkdownPayload`, `Ark`) using its struct-init form, drop it into the matching `MessageParams` field, then call `ctx.send_message(channel_id, params)`.
 
 ```rust
 use botrs::models::message::{Embed, EmbedField, MessageParams};
@@ -20,7 +20,7 @@ let embed = Embed {
     ..Default::default()
 };
 let params = MessageParams { embed: Some(embed), ..Default::default() };
-ctx.api.post_message_with_params(&ctx.token, channel_id, params).await?;
+ctx.send_message(channel_id, params).await?;
 ```
 
 The same shape works for `markdown: Some(MarkdownPayload { ... })` and `ark: Some(Ark { template_id: Some(37), kv: Some(vec![ArkKv { ... }]) })`. Markdown supports both `custom_template_id` + `params` (template form) and a raw `content: Some("# title …".into())` (free form); both styles appear side-by-side in `demo_at_reply_markdown.rs`.

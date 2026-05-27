@@ -1,51 +1,43 @@
 use super::{BotApi, resource};
 use crate::error::Result;
 use crate::forum::{Format, ForumRsp, PostThreadRsp, ThreadInfo, ThreadToCreate};
-use crate::token::Token;
 use tracing::debug;
 
 impl BotApi {
     /// Lists forum threads in a channel.
-    pub async fn get_threads(&self, token: &Token, channel_id: &str) -> Result<ForumRsp> {
+    pub async fn get_threads(&self, channel_id: &str) -> Result<ForumRsp> {
         debug!("Getting forum threads for channel {}", channel_id);
         let path = resource::channel_threads(channel_id);
-        let response = self.http.get(token, &path, None::<&()>).await?;
+        let response = self.http.get(self.token(), &path, None::<&()>).await?;
         Self::decode_json(response)
     }
 
     /// Gets one forum thread's detail.
-    pub async fn get_thread_detail(
-        &self,
-        token: &Token,
-        channel_id: &str,
-        thread_id: &str,
-    ) -> Result<ThreadInfo> {
+    pub async fn get_thread_detail(&self, channel_id: &str, thread_id: &str) -> Result<ThreadInfo> {
         debug!(
             "Getting forum thread {} detail for channel {}",
             thread_id, channel_id
         );
         let path = resource::channel_thread(channel_id, thread_id);
-        let response = self.http.get(token, &path, None::<&()>).await?;
+        let response = self.http.get(self.token(), &path, None::<&()>).await?;
         Self::decode_json(response)
     }
 
     /// Creates a forum thread from inline fields.
     pub async fn post_thread(
         &self,
-        token: &Token,
         channel_id: &str,
         title: &str,
         content: &str,
         format: Format,
     ) -> Result<PostThreadRsp> {
         let body = ThreadToCreate::new(title, content, format);
-        self.put_thread(token, channel_id, &body).await
+        self.put_thread(channel_id, &body).await
     }
 
     /// Creates a forum thread from a structured body.
     pub async fn put_thread(
         &self,
-        token: &Token,
         channel_id: &str,
         thread: &ThreadToCreate,
     ) -> Result<PostThreadRsp> {
@@ -53,24 +45,19 @@ impl BotApi {
         let path = resource::channel_threads(channel_id);
         let response = self
             .http
-            .put(token, &path, None::<&()>, Some(thread))
+            .put(self.token(), &path, None::<&()>, Some(thread))
             .await?;
         Self::decode_json(response)
     }
 
     /// Deletes one forum thread.
-    pub async fn delete_thread(
-        &self,
-        token: &Token,
-        channel_id: &str,
-        thread_id: &str,
-    ) -> Result<()> {
+    pub async fn delete_thread(&self, channel_id: &str, thread_id: &str) -> Result<()> {
         debug!(
             "Deleting forum thread {} in channel {}",
             thread_id, channel_id
         );
         let path = resource::channel_thread(channel_id, thread_id);
-        self.http.delete(token, &path, None::<&()>).await?;
+        self.http.delete(self.token(), &path, None::<&()>).await?;
         Ok(())
     }
 }
@@ -89,7 +76,7 @@ mod tests {
             .await;
         let mut http = crate::http::HttpClient::new(30, false).unwrap();
         http.base_url = base_url;
-        BotApi::with_token(http, token)
+        BotApi::new(http, token)
     }
 
     async fn spawn_capture_server() -> (
@@ -148,13 +135,7 @@ mod tests {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
         let rsp = api
-            .post_thread(
-                api.token().unwrap(),
-                "channel-1",
-                "Title",
-                "Content",
-                Format::Markdown,
-            )
+            .post_thread("channel-1", "Title", "Content", Format::Markdown)
             .await
             .unwrap();
 

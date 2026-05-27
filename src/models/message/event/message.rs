@@ -100,7 +100,6 @@ impl Message {
     pub async fn reply(
         &self,
         api: &crate::api::BotApi,
-        token: &crate::token::Token,
         content: &str,
     ) -> Result<crate::models::api::MessageResponse, crate::error::BotError> {
         if let (Some(channel_id), Some(msg_id)) = (&self.channel_id, &self.id) {
@@ -110,8 +109,7 @@ impl Message {
                 event_id: self.event_id.clone(),
                 ..Default::default()
             };
-            api.post_message_with_params(token, channel_id, params)
-                .await
+            api.send_message(channel_id, params).await
         } else {
             Err(crate::error::BotError::InvalidData(
                 "Missing channel_id or message_id for reply".to_string(),

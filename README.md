@@ -53,7 +53,7 @@ impl EventHandler for MyBot {
                 // 使用新的参数结构 API
                 let params = MessageParams::new_text("Pong! 🏓");
                 if let Some(channel_id) = &message.channel_id {
-                    if let Err(e) = ctx.api.post_message_with_params(&ctx.token, channel_id, params).await {
+                    if let Err(e) = ctx.send_message(channel_id, params).await {
                         info!("Failed to reply: {}", e);
                     }
                 }

@@ -1,24 +1,22 @@
 use super::{BotApi, resource};
 use crate::error::Result;
 use crate::models::guild::{GuildRole, GuildRoles, UpdateResult, UpdateRole};
-use crate::token::Token;
 use tracing::debug;
 
 impl BotApi {
     // Guild Role APIs
 
     /// Lists roles configured in a guild.
-    pub async fn get_guild_roles(&self, token: &Token, guild_id: &str) -> Result<GuildRoles> {
+    pub async fn get_guild_roles(&self, guild_id: &str) -> Result<GuildRoles> {
         debug!("Getting guild roles for {}", guild_id);
         let path = resource::guild_roles(guild_id);
-        let response = self.http.get(token, &path, None::<&()>).await?;
+        let response = self.http.get(self.token(), &path, None::<&()>).await?;
         Self::decode_json(response)
     }
 
     /// Creates a guild role from a structured role body.
     pub async fn create_guild_role_with_update(
         &self,
-        token: &Token,
         guild_id: &str,
         role: GuildRole,
     ) -> Result<UpdateResult> {
@@ -27,14 +25,13 @@ impl BotApi {
         let path = resource::guild_roles(guild_id);
         let response = self
             .http
-            .post(token, &path, None::<&()>, Some(&body))
+            .post(self.token(), &path, None::<&()>, Some(&body))
             .await?;
         Self::decode_json(response)
     }
 
     pub async fn create_guild_role(
         &self,
-        token: &Token,
         guild_id: &str,
         name: Option<&str>,
         color: Option<u32>,
@@ -49,20 +46,13 @@ impl BotApi {
         };
         let body = UpdateRole::new(guild_id, role);
         let path = resource::guild_roles(guild_id);
-        self.request_json(
-            token,
-            reqwest::Method::POST,
-            &path,
-            None::<&()>,
-            Some(&body),
-        )
-        .await
+        self.request_json(reqwest::Method::POST, &path, None::<&()>, Some(&body))
+            .await
     }
 
     /// Updates a guild role from a structured role body.
     pub async fn update_guild_role_with_update(
         &self,
-        token: &Token,
         guild_id: &str,
         role_id: &str,
         role: GuildRole,
@@ -72,14 +62,13 @@ impl BotApi {
         let path = resource::guild_role(guild_id, role_id);
         let response = self
             .http
-            .patch(token, &path, None::<&()>, Some(&body))
+            .patch(self.token(), &path, None::<&()>, Some(&body))
             .await?;
         Self::decode_json(response)
     }
 
     pub async fn update_guild_role(
         &self,
-        token: &Token,
         guild_id: &str,
         role_id: &str,
         name: Option<&str>,
@@ -95,26 +84,15 @@ impl BotApi {
         };
         let body = UpdateRole::new(guild_id, role);
         let path = resource::guild_role(guild_id, role_id);
-        self.request_json(
-            token,
-            reqwest::Method::PATCH,
-            &path,
-            None::<&()>,
-            Some(&body),
-        )
-        .await
+        self.request_json(reqwest::Method::PATCH, &path, None::<&()>, Some(&body))
+            .await
     }
 
     /// Deletes a guild role.
-    pub async fn delete_guild_role(
-        &self,
-        token: &Token,
-        guild_id: &str,
-        role_id: &str,
-    ) -> Result<()> {
+    pub async fn delete_guild_role(&self, guild_id: &str, role_id: &str) -> Result<()> {
         debug!("Deleting guild role {} in {}", role_id, guild_id);
         let path = resource::guild_role(guild_id, role_id);
-        self.http.delete(token, &path, None::<&()>).await?;
+        self.http.delete(self.token(), &path, None::<&()>).await?;
         Ok(())
     }
 }
@@ -133,7 +111,7 @@ mod tests {
             .await;
         let mut http = crate::http::HttpClient::new(30, false).unwrap();
         http.base_url = base_url;
-        BotApi::with_token(http, token)
+        BotApi::new(http, token)
     }
 
     async fn spawn_capture_server() -> (
@@ -192,13 +170,7 @@ mod tests {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
         let result = api
-            .create_guild_role(
-                api.token().unwrap(),
-                "guild-1",
-                Some("Test Role"),
-                Some(4_278_245_297),
-                None,
-            )
+            .create_guild_role("guild-1", Some("Test Role"), Some(4_278_245_297), None)
             .await
             .unwrap();
 
@@ -218,14 +190,7 @@ mod tests {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
         let result = api
-            .update_guild_role(
-                api.token().unwrap(),
-                "guild-1",
-                "role-1",
-                Some("Test Role"),
-                Some(0),
-                Some(false),
-            )
+            .update_guild_role("guild-1", "role-1", Some("Test Role"), Some(0), Some(false))
             .await
             .unwrap();
 

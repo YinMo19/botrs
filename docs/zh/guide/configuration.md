@@ -55,7 +55,7 @@ let client = Client::with_config(token, intents, MyBot, 60, false)?;
 
 ```rust
 let http = botrs::http::HttpClient::new(60, false)?;
-let api = botrs::BotApi::new(http);
+let api = botrs::BotApi::new(http, token);
 ```
 
 ## 日志

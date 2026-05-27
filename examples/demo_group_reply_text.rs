@@ -52,11 +52,7 @@ impl EventHandler for GroupReplyHandler {
             ..Default::default()
         };
 
-        match ctx
-            .api
-            .post_group_message_with_params(&ctx.token, group_openid, params)
-            .await
-        {
+        match ctx.send_group_message(group_openid, params).await {
             Ok(response) => {
                 info!("Successfully sent group message reply");
                 info!("Response: {:?}", response);

@@ -4,13 +4,13 @@ The plain "@-me, I reply" pattern is implemented in [`examples/demo_at_reply.rs`
 
 ## The one call you need
 
-`Message::reply(&ctx.api, &ctx.token, &reply_content)` posts a reply that is automatically threaded to the inbound message. There is no builder for the simple case — pass three arguments and you are done.
+`Message::reply(&ctx, &reply_content)` posts a reply that is automatically threaded to the inbound message. There is no builder for the simple case — pass three arguments and you are done.
 
 ```rust
 async fn message_create(&self, ctx: Context, message: Message) {
     let Some(content) = &message.content else { return };
     let reply = format!("echo: {content}");
-    if let Err(e) = message.reply(&ctx.api, &ctx.token, &reply).await {
+    if let Err(e) = message.reply(&ctx, &reply).await {
         tracing::warn!("reply failed: {e}");
     }
 }

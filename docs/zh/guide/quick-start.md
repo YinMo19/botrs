@@ -34,7 +34,7 @@ impl EventHandler for MyBot {
         }
         let Some(content) = message.content.as_deref() else { return };
         if content.trim() == "!ping" {
-            let _ = message.reply(&ctx.api, &ctx.token, "pong").await;
+            let _ = message.reply(&ctx, "pong").await;
         }
     }
 }
@@ -62,7 +62,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 - `Token` 保存 App ID 与 Secret。也可以用 `Token::from_env()`，它会读取 `QQ_BOT_APP_ID` 和 `QQ_BOT_SECRET`。
 - `Intents` 是位标志集合，`Intents::default()` 为空，按需链式调用 `with_*` 方法订阅事件类别，机器人只会收到你显式订阅的事件。
 - `Client::new(token, intents, handler, is_sandbox)` —— 开发期传 `true` 走沙箱地址，正式环境传 `false`。
-- `Message::reply(&api, &token, text)` 是回复同频道的便捷方法；要发送更复杂的内容，使用 `BotApi::post_message_with_params`（详见 [消息](/zh/guide/messages)）。
+- `Message::reply(&api, text)` 是回复同频道的便捷方法；要发送更复杂的内容，使用 `BotApi::send_message`（详见 [消息](/zh/guide/messages)）。
 
 ## 接下来
 

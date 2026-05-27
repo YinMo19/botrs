@@ -4,35 +4,32 @@ use crate::models::{
     api::MessageResponse,
     message::{DirectMessageParams, Message, MessageToCreate},
 };
-use crate::token::Token;
 use reqwest::Method;
 use tracing::debug;
 
 impl BotApi {
     /// Sends a direct message using DirectMessageParams.
-    pub async fn post_dms_with_params(
+    pub async fn send_direct_message(
         &self,
-        token: &Token,
         guild_id: &str,
         params: DirectMessageParams,
     ) -> Result<MessageResponse> {
         debug!("Sending direct message to guild session {}", guild_id);
         let body = MessageToCreate::from(params);
         let path = resource::dms_messages(guild_id);
-        self.request_message_response_body(token, Method::POST, &path, &body)
+        self.request_message_response_body(Method::POST, &path, &body)
             .await
     }
 
     /// Sends a direct message using the structured message create payload.
     pub async fn post_direct_message(
         &self,
-        token: &Token,
         guild_id: &str,
         msg: &MessageToCreate,
     ) -> Result<Message> {
         debug!("Sending direct message to guild {}", guild_id);
         let path = resource::dms_messages(guild_id);
-        self.request_json(token, Method::POST, &path, None::<&()>, Some(msg))
+        self.request_json(Method::POST, &path, None::<&()>, Some(msg))
             .await
     }
 }
@@ -51,7 +48,7 @@ mod tests {
             .await;
         let mut http = crate::http::HttpClient::new(30, false).unwrap();
         http.base_url = base_url;
-        BotApi::with_token(http, token)
+        BotApi::new(http, token)
     }
 
     async fn spawn_capture_server() -> (
@@ -128,15 +125,11 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn post_dms_with_params_sends_botgo_body() {
+    async fn send_direct_message_sends_botgo_body() {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
         let response = api
-            .post_dms_with_params(
-                api.token().unwrap(),
-                "guild-1",
-                DirectMessageParams::new_text("hello"),
-            )
+            .send_direct_message("guild-1", DirectMessageParams::new_text("hello"))
             .await
             .unwrap();
 
@@ -153,12 +146,11 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn post_dms_with_params_file_image_uses_json_body() {
+    async fn send_direct_message_file_image_uses_json_body() {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
         let response = api
-            .post_dms_with_params(
-                api.token().unwrap(),
+            .send_direct_message(
                 "guild-1",
                 DirectMessageParams::new_text("hello")
                     .with_file_image(b"image-bytes")

@@ -37,7 +37,7 @@ impl EventHandler for MyBot {
     async fn message_create(&self, ctx: Context, message: Message) {
         if message.is_from_bot() { return; }
         if message.content.as_deref() == Some("!ping") {
-            let _ = message.reply(&ctx.api, &ctx.token, "pong").await;
+            let _ = message.reply(&ctx, "pong").await;
         }
     }
 }
@@ -66,15 +66,14 @@ Every callback receives a `Context`:
 
 ```rust
 pub struct Context {
-    pub api: Arc<BotApi>,
-    pub token: Token,
+    api: Arc<BotApi>,
     pub bot_info: Option<BotInfo>,
 }
 ```
 
-`api` is the same `BotApi` the client built; cloning the `Arc` is cheap and the recommended way to hand it to spawned tasks. `token` is the same token the client started with. `bot_info` is filled in from `/users/@me` once the client starts.
+The inner API client is the same `BotApi` the client built. `Context` dereferences to `BotApi`, so calls such as `ctx.send_message(...)` and `ctx.get_guild(...)` work directly. `bot_info` is filled in from `/users/@me` once the client starts.
 
-`Context` also exposes a small set of high-level convenience methods (`ctx.send_message(channel_id, text)`, `ctx.reply_message(...)`, `ctx.send_group_message(...)`, etc.) that wrap `BotApi` calls. For everything else, go through `ctx.api`.
+If you need an explicit API reference, call `ctx.api()`. For event replies, `message.reply(&ctx, "pong")` accepts the context because it dereferences to `BotApi`.
 
 ## The error callback
 
@@ -82,14 +81,14 @@ If event dispatch fails, the framework calls `EventHandler::error(&self, error: 
 
 ## Spawning work from a handler
 
-A handler call should return promptly so the next event can be dispatched. For long-running work, clone the `Arc<BotApi>` and `Token` out of `Context` and `tokio::spawn`:
+A handler call should return promptly so the next event can be dispatched. For long-running work, clone `Context` and move it into `tokio::spawn`:
 
 ```rust
 async fn message_create(&self, ctx: Context, message: Message) {
-    let api = ctx.api.clone();
-    let token = ctx.token.clone();
+    let context = ctx.clone();
     tokio::spawn(async move {
-        // long-running work, then api.post_message_with_params(...).await
+        let params = MessageParams::new_text("done");
+        let _ = context.send_message("channel", params).await;
     });
 }
 ```

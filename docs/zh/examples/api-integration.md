@@ -13,11 +13,11 @@
 
 ## 套路
 
-所有调用都经由 `ctx.api`（一个 `Arc<BotApi>`），第一个参数固定是 `&ctx.token`。错误以 `botrs::BotError` 返回，框架不会自动重试，请就地处理。
+所有 REST 调用都可以直接写在 `ctx` 上，因为 `Context` 会解引用到 `BotApi`；token 存在 `BotApi` 内部。错误以 `botrs::BotError` 返回，框架不会自动重试，请就地处理。
 
 ```rust
 // demo_recall.rs —— 发完立即撤回
-let resp = message.reply(&ctx.api, &ctx.token, "this will vanish").await?;
+let resp = message.reply(&ctx, "this will vanish").await?;
 if let Some(message_id) = resp.id {
     ctx.recall_message(channel_id, &message_id, /* hidetip */ true).await?;
 }

@@ -10,23 +10,23 @@
 ```rust
 let bytes = std::fs::read("examples/resource/test.png")?;
 let params = MessageParams::new_text("here you go").with_file_image(&bytes);
-ctx.api.post_message_with_params(&ctx.token, channel_id, params).await?;
+ctx.send_message(channel_id, params).await?;
 ```
 
 ## 群 / C2C 两步走
 
 ```rust
-let media = ctx.api.post_group_file(&ctx.token, group_openid, /* file_type */ 1, file_url, None).await?;
+let media = ctx.post_group_file(group_openid, /* file_type */ 1, file_url, None).await?;
 let params = botrs::models::message::GroupMessageParams {
     msg_type: 7, // 富媒体
     msg_id: message.id.clone(),
     media: Some(media),
     ..Default::default()
 };
-ctx.api.post_group_message_with_params(&ctx.token, group_openid, params).await?;
+ctx.send_group_message(group_openid, params).await?;
 ```
 
-`post_c2c_file` + `post_c2c_message_with_params` 模式完全一致。`file_type` 为 `1` 表示图片，其他取值见 demo。
+`post_c2c_file` + `send_c2c_message` 模式完全一致。`file_type` 为 `1` 表示图片，其他取值见 demo。
 
 ## 参见
 

@@ -80,16 +80,16 @@ pub struct DirectMessage {
 
 | 结构体                  | 对应接口                                   |
 |-------------------------|--------------------------------------------|
-| `MessageParams`         | `BotApi::post_message_with_params`         |
-| `DirectMessageParams`   | `BotApi::post_direct_message_with_params`  |
-| `GroupMessageParams`    | `BotApi::post_group_message_with_params`   |
-| `C2CMessageParams`      | `BotApi::post_c2c_message_with_params`     |
+| `MessageParams`         | `BotApi::send_message`         |
+| `DirectMessageParams`   | `BotApi::send_direct_message`  |
+| `GroupMessageParams`    | `BotApi::send_group_message`   |
+| `C2CMessageParams`      | `BotApi::send_c2c_message`     |
 
-每个结构体都暴露 `new_text(content)`，并在适用场景提供回复和文件辅助方法。embed、markdown、ark、keyboard、media 等可选载荷请直接设置参数结构体里的对应字段，然后交给对应的 `post_*_with_params` 方法。
+每个结构体都暴露 `new_text(content)`，并在适用场景提供回复和文件辅助方法。embed、markdown、ark、keyboard、media 等可选载荷请直接设置参数结构体里的对应字段，然后交给对应的发送方法。
 
 ```rust
 let params = MessageParams::new_text("Pong!").with_reply(message_id);
-api.post_message_with_params(&token, &channel_id, params).await?;
+api.send_message(&channel_id, params).await?;
 ```
 
 ## 配套类型
@@ -113,5 +113,5 @@ api.post_message_with_params(&token, &channel_id, params).await?;
 ## 参见
 
 - [消息指南](../../guide/messages.md) —— 任务导向的使用说明。
-- [Bot API](../bot-api.md) —— 全部 `post_*_with_params` 路由。
+- [Bot API](../bot-api.md) —— 全部消息路由。
 - [其他类型](./other-types.md) —— 嵌入、键盘、Ark、附件等附属结构。

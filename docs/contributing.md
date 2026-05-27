@@ -281,7 +281,7 @@ Examples:
 [feature] add structured message parameters API
 
 - models/message.rs: add MessageParams, GroupMessageParams, C2CMessageParams, DirectMessageParams structs.
-- api.rs: add post_*_with_params methods for structured parameter sending.
+- api.rs: add short send methods for structured parameter sending.
 - examples/: add demo_new_message_api.rs showing the new API usage.
 - deprecate old multi-parameter API methods but keep backward compatibility.
 ```

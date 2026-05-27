@@ -1,6 +1,6 @@
 # 性能
 
-框架本身只是 `reqwest` 与 `tokio-tungstenite` 之上的薄层；真正影响性能的是网关侧的几个调节项（shard 数与 intents），以及任务之间如何共享 `BotApi` 与 `Token`。通用 Rust 性能建议不在此处展开。
+框架本身只是 `reqwest` 与 `tokio-tungstenite` 之上的薄层；真正影响性能的是网关侧的几个调节项（shard 数与 intents），以及任务之间如何共享 `Context` / `BotApi`。通用 Rust 性能建议不在此处展开。
 
 ## 收紧 Intents
 
@@ -22,21 +22,20 @@ let intents = Intents::none()
 
 重连节流实现为 `round(2 / max_concurrency)`，下限 1 秒，请不要绕过。详见 [网关](/zh/guide/gateway)。
 
-## 用 `Arc` 共享 `BotApi`
+## 共享 `Context` 或 `BotApi`
 
-`Context::api` 已经是 `Arc<BotApi>`。在处理器里 `tokio::spawn` 时，克隆 `Arc`（以及 `Token`），而不是把 `Context` 整体移动进去：
+`Context` 内部持有 `Arc<BotApi>`，所以 clone 成本很低。在处理器里 `tokio::spawn` 时，克隆 `Context` 并移动进任务即可：
 
 ```rust
 async fn message_create(&self, ctx: Context, msg: Message) {
-    let api = ctx.api.clone();
-    let token = ctx.token.clone();
+    let context = ctx.clone();
     tokio::spawn(async move {
-        let _ = api.post_message_with_params(&token, "channel", params).await;
+        let _ = context.send_message("channel", params).await;
     });
 }
 ```
 
-`Arc<BotApi>` 的克隆只是一次原子加 1，`Token` 的克隆只复制两段短字符串，相对一次 HTTP 请求开销可以忽略。不要在每次调用里新建 `BotApi` —— 内部 `reqwest::Client` 维护连接池，重新构造会丢掉连接复用。
+这次 clone 相对一次 HTTP 请求开销可以忽略。不要在每次调用里新建 `BotApi` —— 内部 `reqwest::Client` 维护连接池，重新构造会丢掉连接复用。
 
 ## 保持处理器非阻塞
 

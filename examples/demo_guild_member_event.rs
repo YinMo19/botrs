@@ -44,7 +44,7 @@ impl EventHandler for GuildMemberEventHandler {
         let guild_id = "placeholder_guild_id"; // This should come from event context
 
         let dm = DirectMessageToCreate::new(guild_id, user_id);
-        match ctx.api.create_direct_message(&ctx.token, &dm).await {
+        match ctx.create_direct_message(&dm).await {
             Ok(_dms_payload) => {
                 info!("发送私信");
 
@@ -55,11 +55,7 @@ impl EventHandler for GuildMemberEventHandler {
                     ..Default::default()
                 };
 
-                match ctx
-                    .api
-                    .post_dms_with_params(&ctx.token, guild_id, params)
-                    .await
-                {
+                match ctx.send_direct_message(guild_id, params).await {
                     Ok(_) => info!("Successfully sent welcome DM"),
                     Err(e) => warn!("Failed to send welcome DM: {}", e),
                 }

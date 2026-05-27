@@ -37,7 +37,7 @@ impl EventHandler for ApiPermissionHandler {
         let reply_content = format!("机器人{bot_name}创建日程{content}");
 
         // Reply to the message first
-        match message.reply(&ctx.api, &ctx.token, &reply_content).await {
+        match message.reply(&ctx, &reply_content).await {
             Ok(_) => info!("Successfully replied to message"),
             Err(e) => warn!("Failed to reply to message: {}", e),
         }
@@ -62,7 +62,7 @@ impl EventHandler for ApiPermissionHandler {
 
         // Handle different permission commands
         if content.contains("/权限列表") {
-            match ctx.api.get_api_permissions(&ctx.token, _guild_id).await {
+            match ctx.get_api_permissions(_guild_id).await {
                 Ok(permissions) => {
                     for api in permissions.api_list {
                         info!("api: {}, status: {}", api.desc, api.auth_status);
@@ -80,9 +80,7 @@ impl EventHandler for ApiPermissionHandler {
                 botrs::models::permission::APIPermissionDemandIdentify::guild_members();
 
             match ctx
-                .api
                 .post_permission_demand(
-                    &ctx.token,
                     _guild_id,
                     _channel_id,
                     demand_identity,

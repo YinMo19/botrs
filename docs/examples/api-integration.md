@@ -13,11 +13,11 @@ These demos show how to use `BotApi` for resources beyond plain message posting.
 
 ## Pattern
 
-Every call goes through `ctx.api` (an `Arc<BotApi>`) and takes `&ctx.token` as the first argument. Errors come back as `botrs::BotError`. Handle them locally — the framework does not wrap calls in retries.
+Every REST call is available directly on `ctx` because `Context` dereferences to `BotApi`; the token is stored inside `BotApi`. Errors come back as `botrs::BotError`. Handle them locally — the framework does not wrap calls in retries.
 
 ```rust
 // demo_recall.rs — send, then immediately delete
-let resp = message.reply(&ctx.api, &ctx.token, "this will vanish").await?;
+let resp = message.reply(&ctx, "this will vanish").await?;
 if let Some(message_id) = resp.id {
     ctx.recall_message(channel_id, &message_id, /* hidetip */ true).await?;
 }

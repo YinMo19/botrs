@@ -1,14 +1,12 @@
 use super::{BotApi, resource};
 use crate::error::Result;
 use crate::models::guild::{MemberAddRoleBody, UpdateGuildMute, UpdateGuildMuteResponse};
-use crate::token::Token;
 use tracing::debug;
 
 impl BotApi {
     /// Adds a role to a guild member, optionally scoped to a channel.
     pub async fn create_guild_role_member(
         &self,
-        token: &Token,
         guild_id: &str,
         role_id: &str,
         user_id: &str,
@@ -24,7 +22,7 @@ impl BotApi {
             .unwrap_or_default();
         let path = resource::guild_member_role(guild_id, user_id, role_id);
         self.http
-            .put(token, &path, None::<&()>, Some(&body))
+            .put(self.token(), &path, None::<&()>, Some(&body))
             .await?;
         Ok(())
     }
@@ -32,21 +30,21 @@ impl BotApi {
     /// Adds a role to a guild member using a structured body.
     pub async fn member_add_role(
         &self,
-        token: &Token,
         guild_id: &str,
         role_id: &str,
         user_id: &str,
         body: &MemberAddRoleBody,
     ) -> Result<()> {
         let path = resource::guild_member_role(guild_id, user_id, role_id);
-        self.http.put(token, &path, None::<&()>, Some(body)).await?;
+        self.http
+            .put(self.token(), &path, None::<&()>, Some(body))
+            .await?;
         Ok(())
     }
 
     /// Removes a role from a guild member, optionally scoped to a channel.
     pub async fn delete_guild_role_member(
         &self,
-        token: &Token,
         guild_id: &str,
         role_id: &str,
         user_id: &str,
@@ -62,7 +60,7 @@ impl BotApi {
             .unwrap_or_default();
         let path = resource::guild_member_role(guild_id, user_id, role_id);
         self.http
-            .delete_with_body(token, &path, None::<&()>, Some(&body))
+            .delete_with_body(self.token(), &path, None::<&()>, Some(&body))
             .await?;
         Ok(())
     }
@@ -70,7 +68,6 @@ impl BotApi {
     /// Removes a role from a guild member using a structured body.
     pub async fn member_delete_role(
         &self,
-        token: &Token,
         guild_id: &str,
         role_id: &str,
         user_id: &str,
@@ -78,7 +75,7 @@ impl BotApi {
     ) -> Result<()> {
         let path = resource::guild_member_role(guild_id, user_id, role_id);
         self.http
-            .delete_with_body(token, &path, None::<&()>, Some(body))
+            .delete_with_body(self.token(), &path, None::<&()>, Some(body))
             .await?;
         Ok(())
     }
@@ -88,7 +85,6 @@ impl BotApi {
     /// The platform accepts either an end timestamp or a duration in seconds.
     pub async fn mute_member(
         &self,
-        token: &Token,
         guild_id: &str,
         user_id: &str,
         mute_end_timestamp: Option<&str>,
@@ -100,7 +96,7 @@ impl BotApi {
 
         let path = resource::guild_member_mute(guild_id, user_id);
         self.http
-            .patch(token, &path, None::<&()>, Some(&body))
+            .patch(self.token(), &path, None::<&()>, Some(&body))
             .await?;
         Ok(())
     }
@@ -108,7 +104,6 @@ impl BotApi {
     /// Mutes several guild members with inline parameters.
     pub async fn mute_multi_member(
         &self,
-        token: &Token,
         guild_id: &str,
         user_ids: Vec<String>,
         mute_end_timestamp: Option<&str>,
@@ -123,7 +118,7 @@ impl BotApi {
         let path = resource::guild_mute(guild_id);
         let response = self
             .http
-            .patch(token, &path, None::<&()>, Some(&body))
+            .patch(self.token(), &path, None::<&()>, Some(&body))
             .await?;
         Self::decode_json(response)
     }
@@ -131,7 +126,6 @@ impl BotApi {
     /// Cancels mute for several guild members.
     pub async fn cancel_mute_multi_member(
         &self,
-        token: &Token,
         guild_id: &str,
         user_ids: Vec<String>,
     ) -> Result<UpdateGuildMuteResponse> {
@@ -140,13 +134,12 @@ impl BotApi {
         }
 
         let body = UpdateGuildMute::cancel_multi(user_ids);
-        self.multi_member_mute(token, guild_id, &body).await
+        self.multi_member_mute(guild_id, &body).await
     }
 
     /// Mutes several guild members using a structured request body.
     pub async fn multi_member_mute(
         &self,
-        token: &Token,
         guild_id: &str,
         mute: &UpdateGuildMute,
     ) -> Result<UpdateGuildMuteResponse> {
@@ -158,7 +151,7 @@ impl BotApi {
         let path = resource::guild_mute(guild_id);
         let response = self
             .http
-            .patch(token, &path, None::<&()>, Some(mute))
+            .patch(self.token(), &path, None::<&()>, Some(mute))
             .await?;
         Self::decode_json(response)
     }
@@ -178,7 +171,7 @@ mod tests {
             .await;
         let mut http = crate::http::HttpClient::new(30, false).unwrap();
         http.base_url = base_url;
-        BotApi::with_token(http, token)
+        BotApi::new(http, token)
     }
 
     async fn spawn_capture_server() -> (
@@ -235,7 +228,7 @@ mod tests {
     async fn inline_add_role_member_matches_botgo_empty_channel() {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
-        api.create_guild_role_member(api.token().unwrap(), "guild-1", "role-1", "user-1", None)
+        api.create_guild_role_member("guild-1", "role-1", "user-1", None)
             .await
             .unwrap();
 
@@ -249,15 +242,9 @@ mod tests {
     async fn inline_delete_role_member_matches_botgo_channel_body() {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
-        api.delete_guild_role_member(
-            api.token().unwrap(),
-            "guild-1",
-            "role-1",
-            "user-1",
-            Some("channel-1"),
-        )
-        .await
-        .unwrap();
+        api.delete_guild_role_member("guild-1", "role-1", "user-1", Some("channel-1"))
+            .await
+            .unwrap();
 
         let request = request.await.unwrap();
         assert!(request.starts_with("DELETE /guilds/guild-1/members/user-1/roles/role-1 HTTP/1.1"));
@@ -271,7 +258,7 @@ mod tests {
     async fn inline_mute_member_matches_botgo_omitempty_body() {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
-        api.mute_member(api.token().unwrap(), "guild-1", "user-1", None, Some("20"))
+        api.mute_member("guild-1", "user-1", None, Some("20"))
             .await
             .unwrap();
 

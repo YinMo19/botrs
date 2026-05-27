@@ -74,13 +74,13 @@ The high-traffic operations live on `BotApi` / `Context`:
 - `get_guild_member(guild_id, user_id)` — fetch a single member.
 - `get_guild_members(guild_id, limit, after)` — paginated listing; pass the previous page's last `user.id` as `after`.
 - `create_guild_role_member` / `delete_guild_role_member` — role assignment.
-- `kick_member` — accepts blacklist days and a reason.
+- `delete_member` — removes a member, with optional blacklist and history-delete settings.
 - `mute_member`, `mute_all`, `cancel_mute_all`, `on_microphone`, `off_microphone` — voice controls.
 
 Each method returns `Result<T>` and propagates QQ API errors as `BotError`.
 
 ```rust
-let member = ctx.api.get_guild_member(&ctx.token, guild_id, user_id).await?;
+let member = ctx.get_guild_member(guild_id, user_id).await?;
 if member.has_role(&moderator_role_id) {
     // perform privileged action
 }

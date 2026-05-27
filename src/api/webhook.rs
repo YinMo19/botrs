@@ -3,22 +3,17 @@ use crate::error::Result;
 use crate::models::webhook::{
     HttpIdentity, HttpReady, HttpSession, WebhookValidationRequest, WebhookValidationResponse,
 };
-use crate::token::Token;
 use std::collections::HashMap;
 use tracing::debug;
 
 impl BotApi {
     /// Creates a new HTTP webhook session.
-    pub async fn create_session(
-        &self,
-        token: &Token,
-        identity: &HttpIdentity,
-    ) -> Result<HttpReady> {
+    pub async fn create_session(&self, identity: &HttpIdentity) -> Result<HttpReady> {
         debug!("Creating HTTP webhook session");
         let response = self
             .http
             .post(
-                token,
+                self.token(),
                 resource::WEBHOOK_SESSIONS,
                 None::<&()>,
                 Some(identity),
@@ -28,14 +23,14 @@ impl BotApi {
     }
 
     /// Checks HTTP webhook session health.
-    pub async fn check_sessions(&self, token: &Token) -> Result<Vec<HttpSession>> {
+    pub async fn check_sessions(&self) -> Result<Vec<HttpSession>> {
         debug!("Checking HTTP webhook sessions");
         let mut params = HashMap::new();
         params.insert("action", "check");
         let response = self
             .http
             .patch(
-                token,
+                self.token(),
                 resource::WEBHOOK_SESSIONS,
                 Some(&params),
                 None::<&()>,
@@ -45,20 +40,20 @@ impl BotApi {
     }
 
     /// Lists active HTTP webhook sessions.
-    pub async fn session_list(&self, token: &Token) -> Result<Vec<HttpSession>> {
+    pub async fn session_list(&self) -> Result<Vec<HttpSession>> {
         debug!("Listing HTTP webhook sessions");
         let response = self
             .http
-            .get(token, resource::WEBHOOK_SESSIONS, None::<&()>)
+            .get(self.token(), resource::WEBHOOK_SESSIONS, None::<&()>)
             .await?;
         Self::decode_json(response)
     }
 
     /// Removes an HTTP webhook session.
-    pub async fn remove_session(&self, token: &Token, session_id: &str) -> Result<()> {
+    pub async fn remove_session(&self, session_id: &str) -> Result<()> {
         debug!("Removing HTTP webhook session {}", session_id);
         let path = resource::webhook_session(session_id);
-        self.http.delete(token, &path, None::<&()>).await?;
+        self.http.delete(self.token(), &path, None::<&()>).await?;
         Ok(())
     }
 

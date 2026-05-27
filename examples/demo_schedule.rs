@@ -45,7 +45,7 @@ impl EventHandler for ScheduleHandler {
         let reply_content = format!("机器人{bot_name}收到你的@消息了: {content}");
 
         // Reply to the message first
-        match message.reply(&ctx.api, &ctx.token, &reply_content).await {
+        match message.reply(&ctx, &reply_content).await {
             Ok(_) => info!("Successfully replied to message"),
             Err(e) => warn!("Failed to reply to message: {}", e),
         }
@@ -63,9 +63,7 @@ impl EventHandler for ScheduleHandler {
         if content.contains("/创建日程") {
             // Create schedule.
             match ctx
-                .api
                 .create_schedule(
-                    &ctx.token,
                     _CHANNEL_SCHEDULE_ID,
                     "test",
                     &start_time.to_string(),
@@ -88,11 +86,7 @@ impl EventHandler for ScheduleHandler {
         } else if content.contains("/查询日程") {
             // Get schedule.
             if !schedule_id.is_empty() {
-                match ctx
-                    .api
-                    .get_schedule(&ctx.token, _CHANNEL_SCHEDULE_ID, &schedule_id)
-                    .await
-                {
+                match ctx.get_schedule(_CHANNEL_SCHEDULE_ID, &schedule_id).await {
                     Ok(schedule) => {
                         info!("Schedule details: {:?}", schedule);
                     }
@@ -107,9 +101,7 @@ impl EventHandler for ScheduleHandler {
             // Update schedule (equivalent to self.api.update_schedule)
             if !schedule_id.is_empty() {
                 match ctx
-                    .api
                     .update_schedule(
-                        &ctx.token,
                         _CHANNEL_SCHEDULE_ID,
                         &schedule_id,
                         "update",
@@ -134,8 +126,7 @@ impl EventHandler for ScheduleHandler {
             // Delete schedule (equivalent to self.api.delete_schedule)
             if !schedule_id.is_empty() {
                 match ctx
-                    .api
-                    .delete_schedule(&ctx.token, _CHANNEL_SCHEDULE_ID, &schedule_id)
+                    .delete_schedule(_CHANNEL_SCHEDULE_ID, &schedule_id)
                     .await
                 {
                     Ok(result) => {

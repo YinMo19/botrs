@@ -55,7 +55,7 @@ If you build your own `HttpClient`, the same timeout argument applies:
 
 ```rust
 let http = botrs::http::HttpClient::new(60, false)?;
-let api = botrs::BotApi::new(http);
+let api = botrs::BotApi::new(http, token);
 ```
 
 ## Logging

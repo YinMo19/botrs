@@ -3,17 +3,17 @@
 //! This module provides the main typed REST client. Message sending uses explicit
 //! parameter structs instead of positional `Option` lists:
 //!
-//! - [`BotApi::post_message_with_params`] with [`MessageParams`] for guild channels.
-//! - [`BotApi::post_group_message_with_params`] with [`GroupMessageParams`] for groups.
-//! - [`BotApi::post_c2c_message_with_params`] with [`C2CMessageParams`] for C2C chats.
-//! - [`BotApi::post_dms_with_params`] with [`DirectMessageParams`] for DMs.
+//! - [`BotApi::send_message`] with [`MessageParams`] for guild channels.
+//! - [`BotApi::send_group_message`] with [`GroupMessageParams`] for groups.
+//! - [`BotApi::send_c2c_message`] with [`C2CMessageParams`] for C2C chats.
+//! - [`BotApi::send_direct_message`] with [`DirectMessageParams`] for DMs.
 //!
 //! ```rust,no_run
 //! # use botrs::*;
 //! # use botrs::models::message::MessageParams;
-//! # async fn example(api: &BotApi, token: &Token) -> Result<()> {
+//! # async fn example(api: &BotApi) -> Result<()> {
 //! let params = MessageParams::new_text("Hello!");
-//! api.post_message_with_params(token, "channel_id", params).await?;
+//! api.send_message("channel_id", params).await?;
 //! # Ok(())
 //! # }
 //! ```
@@ -46,8 +46,8 @@ pub struct BotApi {
     http: HttpClient,
     /// Bot application ID stored on the OpenAPI instance.
     app_id: String,
-    /// Optional token stored for OpenAPI calls.
-    token: Option<Token>,
+    /// Token used for OpenAPI calls.
+    token: Token,
 }
 
 mod announces;
@@ -87,17 +87,18 @@ mod tests {
 
     #[test]
     fn test_api_creation() {
+        let token = crate::Token::new("app-id", "secret");
         let http = HttpClient::new(30, false).unwrap();
-        let api = BotApi::new(http);
+        let api = BotApi::new(http, token);
         assert!(!api.http().is_sandbox());
     }
 
     #[test]
     fn test_base_helpers() {
-        let (api, token) = BotApi::setup("app-id", "secret", true).unwrap();
+        let api = BotApi::setup("app-id", "secret", true).unwrap();
         assert_eq!(api.version(), API_V1);
         assert_eq!(api_version_string(api.version()), "v1");
-        assert_eq!(token.app_id(), "app-id");
+        assert_eq!(api.token().app_id(), "app-id");
         assert_eq!(api.get_app_id(), "app-id");
         assert_eq!(api.http().union_app_id(), Some("app-id"));
         assert!(api.http().is_sandbox());

@@ -58,11 +58,7 @@ impl EventHandler for C2CReplyHandler {
             ..Default::default()
         };
 
-        match ctx
-            .api
-            .post_c2c_message_with_params(&ctx.token, user_openid, params)
-            .await
-        {
+        match ctx.send_c2c_message(user_openid, params).await {
             Ok(response) => {
                 info!("Successfully sent C2C message reply");
                 info!("Response: {:?}", response);

@@ -61,7 +61,6 @@ impl C2CMessage {
     pub async fn reply(
         &self,
         api: &crate::api::BotApi,
-        token: &crate::token::Token,
         content: &str,
     ) -> Result<crate::models::api::MessageResponse, crate::error::BotError> {
         if let (Some(user_openid), Some(msg_id)) = (
@@ -76,8 +75,7 @@ impl C2CMessage {
                 event_id: self.event_id.clone(),
                 ..Default::default()
             };
-            api.post_c2c_message_with_params(token, user_openid, params)
-                .await
+            api.send_c2c_message(user_openid, params).await
         } else {
             Err(crate::error::BotError::InvalidData(
                 "Missing user_openid or message_id for C2C reply".to_string(),

@@ -41,9 +41,7 @@ impl EventHandler for C2CReplyFileHandler {
 
         // Upload media file.
         let upload_media_result = ctx
-            .api
             .post_c2c_file(
-                &ctx.token,
                 user_openid,
                 1, // file_type: 1 for image, file type should match the actual file
                 file_url,
@@ -69,11 +67,7 @@ impl EventHandler for C2CReplyFileHandler {
             ..Default::default()
         };
 
-        match ctx
-            .api
-            .post_c2c_message_with_params(&ctx.token, user_openid, params)
-            .await
-        {
+        match ctx.send_c2c_message(user_openid, params).await {
             Ok(response) => {
                 info!("Successfully sent C2C file message");
                 info!("Response: {:?}", response);

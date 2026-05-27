@@ -1,16 +1,15 @@
 use super::{BotApi, resource};
 use crate::error::Result;
 use crate::models::api::GatewayResponse;
-use crate::token::Token;
 use tracing::debug;
 
 impl BotApi {
     /// Fetches gateway URL and session-start limits for websocket startup.
-    pub async fn get_gateway(&self, token: &Token) -> Result<GatewayResponse> {
+    pub async fn get_gateway(&self) -> Result<GatewayResponse> {
         debug!("Getting gateway URL");
         let response = self
             .http
-            .get(token, resource::GATEWAY_BOT, None::<&()>)
+            .get(self.token(), resource::GATEWAY_BOT, None::<&()>)
             .await?;
         Self::decode_json(response)
     }
@@ -30,7 +29,7 @@ mod tests {
             .await;
         let mut http = crate::http::HttpClient::new(30, false).unwrap();
         http.base_url = base_url;
-        BotApi::with_token(http, token)
+        BotApi::new(http, token)
     }
 
     async fn spawn_capture_server() -> (
@@ -76,7 +75,7 @@ mod tests {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
 
-        let gateway = api.get_gateway(api.token().unwrap()).await.unwrap();
+        let gateway = api.get_gateway().await.unwrap();
 
         assert_eq!(gateway.url, "wss://example.com/websocket");
         let request = request.await.unwrap();

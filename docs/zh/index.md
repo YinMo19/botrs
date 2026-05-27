@@ -97,7 +97,7 @@ impl EventHandler for MyBot {
     async fn message_create(&self, ctx: Context, message: Message) {
         if let Some(content) = &message.content {
             if content == "!ping" {
-                let _ = message.reply(&ctx.api, &ctx.token, "Pong!").await;
+                let _ = message.reply(&ctx, "Pong!").await;
             }
         }
     }

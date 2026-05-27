@@ -35,9 +35,7 @@ impl EventHandler for GroupReplyFileHandler {
 
         // Upload media file.
         let upload_media_result = ctx
-            .api
             .post_group_file(
-                &ctx.token,
                 group_openid,
                 1, // file_type: 1 for image, file type should match the actual file
                 file_url,
@@ -63,11 +61,7 @@ impl EventHandler for GroupReplyFileHandler {
             ..Default::default()
         };
 
-        match ctx
-            .api
-            .post_group_message_with_params(&ctx.token, group_openid, params)
-            .await
-        {
+        match ctx.send_group_message(group_openid, params).await {
             Ok(response) => {
                 info!("Successfully sent group file message");
                 info!("Response: {:?}", response);

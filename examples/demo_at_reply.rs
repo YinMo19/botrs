@@ -53,7 +53,7 @@ impl EventHandler for AtReplyHandler {
         let reply_content = format!("机器人{bot_name}收到你的@消息了: {content}");
 
         // Reply to the message
-        match message.reply(&ctx.api, &ctx.token, &reply_content).await {
+        match message.reply(&ctx, &reply_content).await {
             Ok(_) => info!("Successfully replied to message"),
             Err(e) => warn!("Failed to reply to message: {}", e),
         }

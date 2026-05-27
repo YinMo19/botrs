@@ -3,14 +3,12 @@ use crate::error::Result;
 use crate::models::channel::{
     ChannelPermissions, ChannelRolesPermissions, UpdateChannelPermissions,
 };
-use crate::token::Token;
 use tracing::debug;
 
 impl BotApi {
     /// Fetches channel permissions for one user.
     pub async fn get_channel_user_permissions(
         &self,
-        token: &Token,
         channel_id: &str,
         user_id: &str,
     ) -> Result<ChannelPermissions> {
@@ -19,14 +17,13 @@ impl BotApi {
             user_id, channel_id
         );
         let path = resource::channel_member_permissions(channel_id, user_id);
-        let response = self.http.get(token, &path, None::<&()>).await?;
+        let response = self.http.get(self.token(), &path, None::<&()>).await?;
         Self::decode_json(response)
     }
 
     /// Updates channel permissions for one user using a structured body.
     pub async fn put_channel_permissions(
         &self,
-        token: &Token,
         channel_id: &str,
         user_id: &str,
         permissions: &UpdateChannelPermissions,
@@ -38,7 +35,7 @@ impl BotApi {
         );
         let path = resource::channel_member_permissions(channel_id, user_id);
         self.http
-            .put(token, &path, None::<&()>, Some(permissions))
+            .put(self.token(), &path, None::<&()>, Some(permissions))
             .await?;
         Ok(())
     }
@@ -46,7 +43,6 @@ impl BotApi {
     /// Updates channel permissions for one user using add/remove bitsets.
     pub async fn update_channel_user_permissions(
         &self,
-        token: &Token,
         channel_id: &str,
         user_id: &str,
         add: Option<&str>,
@@ -60,7 +56,7 @@ impl BotApi {
         );
         let path = resource::channel_member_permissions(channel_id, user_id);
         self.http
-            .put(token, &path, None::<&()>, Some(&permissions))
+            .put(self.token(), &path, None::<&()>, Some(&permissions))
             .await?;
         Ok(())
     }
@@ -68,7 +64,6 @@ impl BotApi {
     /// Fetches channel permissions for one role.
     pub async fn get_channel_role_permissions(
         &self,
-        token: &Token,
         channel_id: &str,
         role_id: &str,
     ) -> Result<ChannelRolesPermissions> {
@@ -77,14 +72,13 @@ impl BotApi {
             role_id, channel_id
         );
         let path = resource::channel_role_permissions(channel_id, role_id);
-        let response = self.http.get(token, &path, None::<&()>).await?;
+        let response = self.http.get(self.token(), &path, None::<&()>).await?;
         Self::decode_json(response)
     }
 
     /// Updates channel permissions for one role using a structured body.
     pub async fn put_channel_roles_permissions(
         &self,
-        token: &Token,
         channel_id: &str,
         role_id: &str,
         permissions: &UpdateChannelPermissions,
@@ -96,7 +90,7 @@ impl BotApi {
         );
         let path = resource::channel_role_permissions(channel_id, role_id);
         self.http
-            .put(token, &path, None::<&()>, Some(permissions))
+            .put(self.token(), &path, None::<&()>, Some(permissions))
             .await?;
         Ok(())
     }
@@ -104,7 +98,6 @@ impl BotApi {
     /// Updates channel permissions for one role using add/remove bitsets.
     pub async fn update_channel_role_permissions(
         &self,
-        token: &Token,
         channel_id: &str,
         role_id: &str,
         add: Option<&str>,
@@ -118,7 +111,7 @@ impl BotApi {
         );
         let path = resource::channel_role_permissions(channel_id, role_id);
         self.http
-            .put(token, &path, None::<&()>, Some(&permissions))
+            .put(self.token(), &path, None::<&()>, Some(&permissions))
             .await?;
         Ok(())
     }
@@ -138,7 +131,7 @@ mod tests {
             .await;
         let mut http = crate::http::HttpClient::new(30, false).unwrap();
         http.base_url = base_url;
-        BotApi::with_token(http, token)
+        BotApi::new(http, token)
     }
 
     async fn spawn_capture_server() -> (
@@ -195,15 +188,9 @@ mod tests {
     async fn inline_user_permission_update_matches_botgo_omitempty_body() {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
-        api.update_channel_user_permissions(
-            api.token().unwrap(),
-            "channel-1",
-            "user-1",
-            Some("2"),
-            None,
-        )
-        .await
-        .unwrap();
+        api.update_channel_user_permissions("channel-1", "user-1", Some("2"), None)
+            .await
+            .unwrap();
 
         let request = request.await.unwrap();
         assert!(request.starts_with("PUT /channels/channel-1/members/user-1/permissions HTTP/1.1"));
@@ -215,15 +202,9 @@ mod tests {
     async fn inline_role_permission_update_matches_botgo_omitempty_body() {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
-        api.update_channel_role_permissions(
-            api.token().unwrap(),
-            "channel-1",
-            "role-1",
-            None,
-            Some("4"),
-        )
-        .await
-        .unwrap();
+        api.update_channel_role_permissions("channel-1", "role-1", None, Some("4"))
+            .await
+            .unwrap();
 
         let request = request.await.unwrap();
         assert!(request.starts_with("PUT /channels/channel-1/roles/role-1/permissions HTTP/1.1"));

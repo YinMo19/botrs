@@ -1,6 +1,6 @@
 # Performance
 
-The framework is a thin layer on top of `reqwest` and `tokio-tungstenite`; the things that move the needle are gateway-side knobs (shards and intents) and how you share the `BotApi` and `Token` between tasks. Generic Rust performance advice doesn't belong here.
+The framework is a thin layer on top of `reqwest` and `tokio-tungstenite`; the things that move the needle are gateway-side knobs (shards and intents) and how you share `Context` / `BotApi` between tasks. Generic Rust performance advice doesn't belong here.
 
 ## Narrow your intents
 
@@ -22,21 +22,20 @@ For very small bots a single shard is fine and uses the least resource. For larg
 
 The reconnect throttle is implemented as `round(2 / max_concurrency)` with a 1-second floor; do not bypass it. See [gateway](/guide/gateway) for the details.
 
-## Share `BotApi` with `Arc`
+## Share `Context` or `BotApi`
 
-`Context::api` is already `Arc<BotApi>`. When you spawn work from inside a handler, clone the `Arc` (and the `Token`) instead of moving the `Context`:
+`Context` is cheap to clone because it holds an `Arc<BotApi>`. When you spawn work from inside a handler, clone the context and move it into the task:
 
 ```rust
 async fn message_create(&self, ctx: Context, msg: Message) {
-    let api = ctx.api.clone();
-    let token = ctx.token.clone();
+    let context = ctx.clone();
     tokio::spawn(async move {
-        let _ = api.post_message_with_params(&token, "channel", params).await;
+        let _ = context.send_message("channel", params).await;
     });
 }
 ```
 
-Cloning `Arc<BotApi>` is an atomic increment; cloning `Token` copies two short strings. Both are cheap relative to a single HTTP request. Don't build a new `BotApi` per call — the `reqwest::Client` it wraps maintains its own connection pool, and rebuilding it throws that pool away.
+The clone is cheap relative to a single HTTP request. Don't build a new `BotApi` per call — the `reqwest::Client` it wraps maintains its own connection pool, and rebuilding it throws that pool away.
 
 ## Keep handlers non-blocking
 

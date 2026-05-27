@@ -1,13 +1,11 @@
 use crate::api::{BotApi, resource};
 use crate::error::Result;
-use crate::token::Token;
 use tracing::debug;
 
 impl BotApi {
     /// Recalls (deletes) a message.
     pub async fn recall_message(
         &self,
-        token: &Token,
         channel_id: &str,
         message_id: &str,
         hidetip: Option<bool>,
@@ -15,27 +13,27 @@ impl BotApi {
         debug!("Recalling message {} in channel {}", message_id, channel_id);
         let params = hidetip.and_then(Self::hide_tip_query);
         let path = resource::channel_message(channel_id, message_id);
-        self.http.delete(token, &path, params.as_ref()).await?;
+        self.http
+            .delete(self.token(), &path, params.as_ref())
+            .await?;
         Ok(())
     }
 
     /// Recalls a C2C message.
     pub async fn retract_c2c_message(
         &self,
-        token: &Token,
         openid: &str,
         message_id: &str,
         hidetip: Option<bool>,
     ) -> Result<()> {
         debug!("Retracting C2C message {} for {}", message_id, openid);
-        self.retract_open_message(token, resource::c2c_message(openid, message_id), hidetip)
+        self.retract_open_message(resource::c2c_message(openid, message_id), hidetip)
             .await
     }
 
     /// Recalls a group message.
     pub async fn retract_group_message(
         &self,
-        token: &Token,
         group_openid: &str,
         message_id: &str,
         hidetip: Option<bool>,
@@ -44,22 +42,15 @@ impl BotApi {
             "Retracting group message {} for {}",
             message_id, group_openid
         );
-        self.retract_open_message(
-            token,
-            resource::group_message(group_openid, message_id),
-            hidetip,
-        )
-        .await
+        self.retract_open_message(resource::group_message(group_openid, message_id), hidetip)
+            .await
     }
 
-    pub(crate) async fn retract_open_message(
-        &self,
-        token: &Token,
-        path: String,
-        hidetip: Option<bool>,
-    ) -> Result<()> {
+    pub async fn retract_open_message(&self, path: String, hidetip: Option<bool>) -> Result<()> {
         let params = Self::hide_tip_query(hidetip.unwrap_or(false));
-        self.http.delete(token, &path, params.as_ref()).await?;
+        self.http
+            .delete(self.token(), &path, params.as_ref())
+            .await?;
         Ok(())
     }
 }
@@ -78,7 +69,7 @@ mod tests {
             .await;
         let mut http = crate::http::HttpClient::new(30, false).unwrap();
         http.base_url = base_url;
-        BotApi::with_token(http, token)
+        BotApi::new(http, token)
     }
 
     async fn spawn_capture_server() -> (
@@ -119,7 +110,7 @@ mod tests {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
 
-        api.recall_message(api.token().unwrap(), "channel-1", "message-1", None)
+        api.recall_message("channel-1", "message-1", None)
             .await
             .unwrap();
 
@@ -133,7 +124,7 @@ mod tests {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
 
-        api.recall_message(api.token().unwrap(), "channel-1", "message-1", Some(true))
+        api.recall_message("channel-1", "message-1", Some(true))
             .await
             .unwrap();
 

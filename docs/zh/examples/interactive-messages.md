@@ -29,7 +29,7 @@ let params = MessageParams {
     keyboard: Some(keyboard),
     ..Default::default()
 };
-ctx.api.post_message_with_params(&ctx.token, channel_id, params).await?;
+ctx.send_message(channel_id, params).await?;
 ```
 
 ## 命令分发
