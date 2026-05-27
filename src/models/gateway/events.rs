@@ -82,27 +82,3 @@ fn event_intent(event: &str) -> crate::intents::Intent {
         _ => 0,
     }
 }
-
-/// Gateway event payload aliases.
-pub type WSGuildData = crate::models::guild::Guild;
-pub type WSGuildMemberData = crate::models::guild::Member;
-pub type WSChannelData = crate::models::channel::Channel;
-pub type WSMessageData = crate::models::message::Message;
-pub type WSATMessageData = crate::models::message::Message;
-pub type WSDirectMessageData = crate::models::message::Message;
-pub type WSMessageDeleteData = crate::models::message::MessageDelete;
-pub type WSPublicMessageDeleteData = crate::models::message::MessageDelete;
-pub type WSDirectMessageDeleteData = crate::models::message::MessageDelete;
-pub type WSAudioData = crate::models::api::AudioAction;
-pub type WSMessageReactionData = crate::reaction::MessageReaction;
-pub type WSMessageAuditData = crate::models::message::MessageAudit;
-pub type WSThreadData = crate::forum::Thread;
-pub type WSPostData = crate::forum::Post;
-pub type WSReplyData = crate::forum::Reply;
-pub type WSForumAuditData = crate::forum::ForumAuditResult;
-pub type WSInteractionData = crate::interaction::Interaction;
-pub type WSGroupATMessageData = crate::models::message::Message;
-pub type WSC2CMessageData = crate::models::message::Message;
-pub type WSC2CFriendData = crate::manage::C2CFriendData;
-pub type WSSubscribeMsgStatus = crate::manage::SubscribeMessageStatusData;
-pub type WSEnterAIOData = crate::manage::EnterAioEvent;

@@ -1,4 +1,14 @@
-use crate::models::gateway::*;
+use crate::forum::{ForumAuditResult, Post, Reply, Thread};
+use crate::interaction::Interaction;
+use crate::manage::{C2CFriendData, EnterAioEvent, SubscribeMessageStatusData};
+use crate::models::{
+    api::AudioAction,
+    channel::Channel,
+    gateway::{WSPayload, WSReadyData},
+    guild::{Guild, Member},
+    message::{Message, MessageAudit, MessageDelete},
+};
+use crate::reaction::MessageReaction;
 use std::sync::{LazyLock, RwLock};
 
 pub type EventParseFn = fn(&mut WSPayload, &[u8]) -> crate::Result<()>;
@@ -13,28 +23,28 @@ macro_rules! handler_type {
     };
 }
 
-handler_type!(GuildEventHandler, WSGuildData);
-handler_type!(GuildMemberEventHandler, WSGuildMemberData);
-handler_type!(ChannelEventHandler, WSChannelData);
-handler_type!(MessageEventHandler, WSMessageData);
-handler_type!(MessageDeleteEventHandler, WSMessageDeleteData);
-handler_type!(PublicMessageDeleteEventHandler, WSPublicMessageDeleteData);
-handler_type!(DirectMessageDeleteEventHandler, WSDirectMessageDeleteData);
-handler_type!(MessageReactionEventHandler, WSMessageReactionData);
-handler_type!(ATMessageEventHandler, WSATMessageData);
-handler_type!(DirectMessageEventHandler, WSDirectMessageData);
-handler_type!(AudioEventHandler, WSAudioData);
-handler_type!(MessageAuditEventHandler, WSMessageAuditData);
-handler_type!(ThreadEventHandler, WSThreadData);
-handler_type!(PostEventHandler, WSPostData);
-handler_type!(ReplyEventHandler, WSReplyData);
-handler_type!(ForumAuditEventHandler, WSForumAuditData);
-handler_type!(InteractionEventHandler, WSInteractionData);
-handler_type!(GroupATMessageEventHandler, WSGroupATMessageData);
-handler_type!(C2CMessageEventHandler, WSC2CMessageData);
-handler_type!(C2CFriendEventHandler, WSC2CFriendData);
-handler_type!(SubscribeMsgStatusEventHandler, WSSubscribeMsgStatus);
-handler_type!(EnterAIOEventHandler, WSEnterAIOData);
+handler_type!(GuildEventHandler, Guild);
+handler_type!(GuildMemberEventHandler, Member);
+handler_type!(ChannelEventHandler, Channel);
+handler_type!(MessageEventHandler, Message);
+handler_type!(MessageDeleteEventHandler, MessageDelete);
+handler_type!(PublicMessageDeleteEventHandler, MessageDelete);
+handler_type!(DirectMessageDeleteEventHandler, MessageDelete);
+handler_type!(MessageReactionEventHandler, MessageReaction);
+handler_type!(ATMessageEventHandler, Message);
+handler_type!(DirectMessageEventHandler, Message);
+handler_type!(AudioEventHandler, AudioAction);
+handler_type!(MessageAuditEventHandler, MessageAudit);
+handler_type!(ThreadEventHandler, Thread);
+handler_type!(PostEventHandler, Post);
+handler_type!(ReplyEventHandler, Reply);
+handler_type!(ForumAuditEventHandler, ForumAuditResult);
+handler_type!(InteractionEventHandler, Interaction);
+handler_type!(GroupATMessageEventHandler, Message);
+handler_type!(C2CMessageEventHandler, Message);
+handler_type!(C2CFriendEventHandler, C2CFriendData);
+handler_type!(SubscribeMsgStatusEventHandler, SubscribeMessageStatusData);
+handler_type!(EnterAIOEventHandler, EnterAioEvent);
 
 #[derive(Default, Clone)]
 pub struct HandlerRegistry {

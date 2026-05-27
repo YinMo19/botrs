@@ -23,7 +23,7 @@ pub struct Identify {
 }
 
 /// Properties for identify payload.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct IdentifyProperties {
     /// Operating system
     #[serde(rename = "$os", default, skip_serializing_if = "String::is_empty")]
@@ -34,16 +34,6 @@ pub struct IdentifyProperties {
     /// Device name
     #[serde(rename = "$device", default, skip_serializing_if = "String::is_empty")]
     pub device: String,
-}
-
-impl Default for IdentifyProperties {
-    fn default() -> Self {
-        Self {
-            os: String::new(),
-            browser: String::new(),
-            device: String::new(),
-        }
-    }
 }
 
 /// Identify payload.
@@ -127,9 +117,6 @@ impl From<WSResumeData> for Resume {
         }
     }
 }
-
-/// Hello payload alias.
-pub type WSHelloData = Hello;
 
 /// Ready user object.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

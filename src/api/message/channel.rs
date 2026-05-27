@@ -2,10 +2,7 @@ use crate::api::{BotApi, resource};
 use crate::error::Result;
 use crate::models::{
     api::MessageResponse,
-    message::{
-        Keyboard, MarkdownPayload, Message, MessagePagerType, MessageParams, MessageToCreate,
-        MessagesPager,
-    },
+    message::{Message, MessageParams, MessageToCreate, MessagesPager},
 };
 use reqwest::Method;
 use tracing::debug;
@@ -39,18 +36,6 @@ impl BotApi {
             None::<&()>,
         )
         .await
-    }
-
-    /// Gets channel messages using simple pagination parameters.
-    pub async fn get_messages_with_params(
-        &self,
-        channel_id: &str,
-        pager_type: Option<MessagePagerType>,
-        message_id: Option<&str>,
-        limit: Option<u32>,
-    ) -> Result<Vec<Message>> {
-        let pager = MessagesPager::new(pager_type, message_id, limit);
-        self.get_messages(channel_id, &pager).await
     }
 
     /// Sends a channel message using the structured message create payload.
@@ -101,50 +86,6 @@ impl BotApi {
         debug!("Editing message {} in channel {}", message_id, channel_id);
         let body = MessageToCreate::from(params);
         let path = resource::channel_message(channel_id, message_id);
-        self.request_message_response_body(Method::PATCH, &path, &body)
-            .await
-    }
-
-    /// Sends an inline keyboard message body.
-    pub async fn post_keyboard_message(
-        &self,
-        channel_id: &str,
-        keyboard: Option<&Keyboard>,
-        markdown: Option<&MarkdownPayload>,
-    ) -> Result<MessageResponse> {
-        debug!("Sending keyboard message to channel {}", channel_id);
-        let body = MessageToCreate {
-            keyboard: keyboard.cloned(),
-            markdown: markdown.cloned(),
-            ..Default::default()
-        };
-        let path = resource::channel_messages(channel_id);
-        self.request_message_response_body(Method::POST, &path, &body)
-            .await
-    }
-
-    /// Edits a guild message with inline markdown or keyboard content.
-    pub async fn patch_guild_message(
-        &self,
-        channel_id: &str,
-        patch_msg_id: &str,
-        msg_id: Option<&str>,
-        event_id: Option<&str>,
-        markdown: Option<&MarkdownPayload>,
-        keyboard: Option<&Keyboard>,
-    ) -> Result<MessageResponse> {
-        debug!(
-            "Editing guild message {} in channel {}",
-            patch_msg_id, channel_id
-        );
-        let body = MessageToCreate {
-            msg_id: msg_id.map(ToOwned::to_owned),
-            event_id: event_id.map(ToOwned::to_owned),
-            markdown: markdown.cloned(),
-            keyboard: keyboard.cloned(),
-            ..Default::default()
-        };
-        let path = resource::channel_message(channel_id, patch_msg_id);
         self.request_message_response_body(Method::PATCH, &path, &body)
             .await
     }
@@ -286,38 +227,6 @@ mod tests {
                 "file_image": "aW1hZ2UtYnl0ZXM="
             })
         );
-        server.await.unwrap();
-    }
-
-    #[tokio::test]
-    async fn post_keyboard_message_omits_empty_fields() {
-        let (base_url, request, server) = spawn_capture_server().await;
-        let api = test_api(base_url).await;
-        let response = api
-            .post_keyboard_message("channel-1", None, None)
-            .await
-            .unwrap();
-
-        assert_eq!(response.id.as_deref(), Some("message-1"));
-        let request = request.await.unwrap();
-        assert!(request.starts_with("POST /channels/channel-1/messages HTTP/1.1"));
-        assert_eq!(request_body(&request), serde_json::json!({}));
-        server.await.unwrap();
-    }
-
-    #[tokio::test]
-    async fn patch_guild_message_omits_empty_fields() {
-        let (base_url, request, server) = spawn_capture_server().await;
-        let api = test_api(base_url).await;
-        let response = api
-            .patch_guild_message("channel-1", "message-1", None, None, None, None)
-            .await
-            .unwrap();
-
-        assert_eq!(response.id.as_deref(), Some("message-1"));
-        let request = request.await.unwrap();
-        assert!(request.starts_with("PATCH /channels/channel-1/messages/message-1 HTTP/1.1"));
-        assert_eq!(request_body(&request), serde_json::json!({}));
         server.await.unwrap();
     }
 }

@@ -1,10 +1,12 @@
 use super::*;
+use crate::manage::C2CFriendData;
 use crate::models::gateway::*;
+use crate::models::message::Message;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
 static MESSAGE_COUNT: AtomicUsize = AtomicUsize::new(0);
 
-fn message_handler(_: &mut WSPayload, _: &mut WSMessageData) -> crate::Result<()> {
+fn message_handler(_: &mut WSPayload, _: &mut Message) -> crate::Result<()> {
     MESSAGE_COUNT.fetch_add(1, Ordering::Relaxed);
     Ok(())
 }
@@ -42,7 +44,7 @@ fn parse_and_handle_dispatches_typed_handler() {
 fn parse_data_reads_c2c_friend_dto() {
     let body =
         br#"{"op":0,"t":"FRIEND_ADD","d":{"openid":"u1","timestamp":123,"nick":"n","avatar":"a"}}"#;
-    let data: WSC2CFriendData = parse_data(body).unwrap();
+    let data: C2CFriendData = parse_data(body).unwrap();
 
     assert_eq!(data.openid, "u1");
     assert_eq!(data.timestamp, 123);

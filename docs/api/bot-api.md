@@ -46,9 +46,9 @@ Every method takes `&self` plus endpoint-specific arguments and returns `Result<
 
 ### Messages (channel)
 
-- `get_message`, `get_messages`, `get_messages_with_params`
-- send: `send_message`, `post_message_to_create`.
-- edit: `edit_message`, `patch_message_to_create`.
+- `get_message`, `get_messages`
+- send: `send_message`.
+- edit: `edit_message`.
 - recall: `recall_message`.
 
 ### Direct messages

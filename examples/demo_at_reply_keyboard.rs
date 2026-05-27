@@ -31,7 +31,7 @@ impl KeyboardReplyHandler {
             content: serde_json::json!({"id": "62"}),
         };
 
-        // Send keyboard message using new API (equivalent to api.post_keyboard_message)
+        // Send keyboard message through the standard MessageParams API.
         let params = botrs::models::message::MessageParams {
             markdown: Some(markdown),
             keyboard: Some(self.keyboard_payload_to_keyboard(&keyboard)),

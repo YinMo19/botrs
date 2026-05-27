@@ -1,5 +1,15 @@
 use super::{DEFAULT_HANDLERS, PayloadData};
-use crate::models::gateway::*;
+use crate::forum::{ForumAuditResult, Post, Reply, Thread};
+use crate::interaction::Interaction;
+use crate::manage::{C2CFriendData, EnterAioEvent, SubscribeMessageStatusData};
+use crate::models::{
+    api::AudioAction,
+    channel::Channel,
+    gateway::WSPayload,
+    guild::{Guild, Member},
+    message::{Message, MessageAudit, MessageDelete},
+};
+use crate::reaction::MessageReaction;
 
 macro_rules! typed_handler {
     ($fn_name:ident, $field:ident, $data:ty) => {
@@ -17,45 +27,37 @@ macro_rules! typed_handler {
     };
 }
 
-typed_handler!(guild_handler, guild, WSGuildData);
-typed_handler!(guild_member_handler, guild_member, WSGuildMemberData);
-typed_handler!(channel_handler, channel, WSChannelData);
-typed_handler!(message_handler, message, WSMessageData);
-typed_handler!(message_delete_handler, message_delete, WSMessageDeleteData);
-typed_handler!(
-    message_reaction_handler,
-    message_reaction,
-    WSMessageReactionData
-);
-typed_handler!(at_message_handler, at_message, WSATMessageData);
+typed_handler!(guild_handler, guild, Guild);
+typed_handler!(guild_member_handler, guild_member, Member);
+typed_handler!(channel_handler, channel, Channel);
+typed_handler!(message_handler, message, Message);
+typed_handler!(message_delete_handler, message_delete, MessageDelete);
+typed_handler!(message_reaction_handler, message_reaction, MessageReaction);
+typed_handler!(at_message_handler, at_message, Message);
 typed_handler!(
     public_message_delete_handler,
     public_message_delete,
-    WSPublicMessageDeleteData
+    MessageDelete
 );
-typed_handler!(direct_message_handler, direct_message, WSDirectMessageData);
+typed_handler!(direct_message_handler, direct_message, Message);
 typed_handler!(
     direct_message_delete_handler,
     direct_message_delete,
-    WSDirectMessageDeleteData
+    MessageDelete
 );
-typed_handler!(audio_handler, audio, WSAudioData);
-typed_handler!(thread_handler, thread, WSThreadData);
-typed_handler!(post_handler, post, WSPostData);
-typed_handler!(reply_handler, reply, WSReplyData);
-typed_handler!(forum_audit_handler, forum_audit, WSForumAuditData);
-typed_handler!(message_audit_handler, message_audit, WSMessageAuditData);
-typed_handler!(interaction_handler, interaction, WSInteractionData);
-typed_handler!(
-    group_at_message_handler,
-    group_at_message,
-    WSGroupATMessageData
-);
-typed_handler!(c2c_message_handler, c2c_message, WSC2CMessageData);
+typed_handler!(audio_handler, audio, AudioAction);
+typed_handler!(thread_handler, thread, Thread);
+typed_handler!(post_handler, post, Post);
+typed_handler!(reply_handler, reply, Reply);
+typed_handler!(forum_audit_handler, forum_audit, ForumAuditResult);
+typed_handler!(message_audit_handler, message_audit, MessageAudit);
+typed_handler!(interaction_handler, interaction, Interaction);
+typed_handler!(group_at_message_handler, group_at_message, Message);
+typed_handler!(c2c_message_handler, c2c_message, Message);
 typed_handler!(
     subscribe_msg_status_handler,
     subscribe_msg_status,
-    WSSubscribeMsgStatus
+    SubscribeMessageStatusData
 );
-typed_handler!(c2c_friend_handler, c2c_friend, WSC2CFriendData);
-typed_handler!(enter_aio_handler, enter_aio, WSEnterAIOData);
+typed_handler!(c2c_friend_handler, c2c_friend, C2CFriendData);
+typed_handler!(enter_aio_handler, enter_aio, EnterAioEvent);

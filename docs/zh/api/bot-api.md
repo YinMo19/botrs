@@ -46,9 +46,9 @@ let me = api.get_bot_info().await?;
 
 ### 频道消息
 
-- `get_message`、`get_messages`、`get_messages_with_params`
-- 发送：`send_message`、`post_message_to_create`。
-- 编辑：`edit_message`、`patch_message_to_create`。
+- `get_message`、`get_messages`
+- 发送：`send_message`。
+- 编辑：`edit_message`。
 - 撤回：`recall_message`。
 
 ### 私信

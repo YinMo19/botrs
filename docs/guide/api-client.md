@@ -51,7 +51,7 @@ When you need to share one standalone API client across tasks, wrap `BotApi` in 
 - Guilds: `get_guild`, `get_guilds`, `get_guilds_with_pager`, `get_message_setting`.
 - Channels: `get_channel`, `get_channels`, `create_channel`, `update_channel`, `delete_channel`, `create_private_channel`.
 - Members and roles: `get_guild_member`, `get_guild_members`, `delete_member`, `get_guild_roles`, `create_guild_role`, `update_guild_role`, `delete_guild_role`, `create_guild_role_member`, `delete_guild_role_member`.
-- Messages: `send_message`, `edit_message`, `recall_message`, `get_message`, `get_messages`, `get_messages_with_params`, plus the `_group_`, `_c2c_`, `_dms_` variants.
+- Messages: `send_message`, `edit_message`, `recall_message`, `get_message`, `get_messages`, plus the `_group_`, `_c2c_`, `_dms_` variants.
 - Reactions, pins, announcements, schedules, mute, audio (`post_audio`, `on_microphone`, `off_microphone`), forum threads (`get_threads`, `create_thread`, `delete_thread`, `get_thread`).
 
 ## Errors

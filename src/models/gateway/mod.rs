@@ -6,8 +6,8 @@ mod events;
 mod payload;
 
 pub use auth::{
-    Hello, Identify, IdentifyProperties, Ready, Resume, WSHelloData, WSIdentityData, WSReadyData,
-    WSResumeData, WSUser,
+    Hello, Identify, IdentifyProperties, Ready, Resume, WSIdentityData, WSReadyData, WSResumeData,
+    WSUser,
 };
 pub use constants::*;
 pub use events::*;

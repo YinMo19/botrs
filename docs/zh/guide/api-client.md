@@ -51,7 +51,7 @@ let guilds = api.get_guilds(None, None, None).await?;
 - 频道：`get_guild`、`get_guilds`、`get_guilds_with_pager`、`get_message_setting`。
 - 子频道：`get_channel`、`get_channels`、`create_channel`、`update_channel`、`delete_channel`、`create_private_channel`。
 - 成员与角色：`get_guild_member`、`get_guild_members`、`delete_member`、`get_guild_roles`、`create_guild_role`、`update_guild_role`、`delete_guild_role`、`create_guild_role_member`、`delete_guild_role_member`。
-- 消息：`send_message`、`edit_message`、`recall_message`、`get_message`、`get_messages`、`get_messages_with_params`，以及 `_group_`、`_c2c_`、`_dms_` 等变体。
+- 消息：`send_message`、`edit_message`、`recall_message`、`get_message`、`get_messages`，以及 `_group_`、`_c2c_`、`_dms_` 等变体。
 - 表情、置顶、公告、日程、禁言、音频（`post_audio`、`on_microphone`、`off_microphone`），以及论坛主题（`get_threads`、`create_thread`、`delete_thread`、`get_thread`）。
 
 ## 错误
