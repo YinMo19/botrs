@@ -24,7 +24,6 @@ pub mod session_manager;
 pub mod signature;
 pub mod token;
 pub mod webhook;
-pub mod websocket;
 
 // Re-export main types for convenience
 pub use api::BotApi;
@@ -74,10 +73,6 @@ pub use token::{
 };
 pub use webhook::{
     DefaultGetSecretFunc, GenDispatchACK, GenHeartbeatACK, GenValidationACK, HTTPHandler,
-};
-pub use websocket::{
-    ClientImpl, DefaultQueueSize, PanicBufLen, PanicHandler, Register as RegisterWebSocket,
-    RegisterHandlers as RegisterWebSocketHandlers, RegisterResumeSignal, ResumeSignal, WebSocket,
 };
 
 /// The current version of the library
