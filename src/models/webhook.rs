@@ -13,17 +13,6 @@ pub struct HttpIdentity {
     pub callback_url: String,
 }
 
-impl HttpIdentity {
-    /// Creates a new HTTP identity payload.
-    pub fn new(intents: u32, shards: [u32; 2], callback_url: impl Into<String>) -> Self {
-        Self {
-            intents,
-            shards,
-            callback_url: callback_url.into(),
-        }
-    }
-}
-
 /// Bot information embedded in an HTTP webhook ready response.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct HttpBot {
@@ -93,7 +82,11 @@ mod tests {
 
     #[test]
     fn http_identity_keeps_official_json_shape() {
-        let identity = HttpIdentity::new(1 << 25, [0, 2], "https://example.com/callback");
+        let identity = HttpIdentity {
+            intents: 1 << 25,
+            shards: [0, 2],
+            callback_url: "https://example.com/callback".to_string(),
+        };
         let value = serde_json::to_value(&identity).unwrap();
 
         assert_eq!(value["intents"], 1 << 25);
