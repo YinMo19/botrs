@@ -26,7 +26,6 @@ pub mod webhook;
 
 // Re-export main types for convenience
 pub use api::BotApi;
-pub use audio::{Audio, AudioControl, AudioStatus, PublicAudio, PublicAudioType};
 pub use client::{Client, Context, EventHandler};
 pub use constant::*;
 pub use error::{BotError, Result};

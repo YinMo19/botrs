@@ -4,7 +4,8 @@
 
 mod common;
 
-use botrs::{Client, Context, EventHandler, Intents, PublicAudio, PublicAudioType, Ready, Token};
+use botrs::audio::{PublicAudio, PublicAudioType};
+use botrs::{Client, Context, EventHandler, Intents, Ready, Token};
 use common::{Config, init_logging};
 use std::env;
 use tracing::{info, warn};
