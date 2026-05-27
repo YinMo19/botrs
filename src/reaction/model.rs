@@ -2,7 +2,7 @@ use crate::models::Snowflake;
 use serde::Serialize;
 use serde_json::Value;
 
-use super::{Emoji, MessageReaction, ReactionTarget, ReactionTargetType};
+use super::{Emoji, MessageReaction, ReactionTarget};
 
 /// Reaction structure representing emoji reactions to messages or posts
 #[derive(Debug, Clone, Serialize)]
@@ -42,26 +42,6 @@ impl Reaction {
             emoji: message_reaction.emoji,
             target: message_reaction.target,
         }
-    }
-
-    /// Check if this is a message reaction
-    pub fn is_message_reaction(&self) -> bool {
-        self.target.target_type == ReactionTargetType::Message
-    }
-
-    /// Check if this is a post reaction
-    pub fn is_post_reaction(&self) -> bool {
-        self.target.target_type == ReactionTargetType::Post
-    }
-
-    /// Check if this is a comment reaction
-    pub fn is_comment_reaction(&self) -> bool {
-        self.target.target_type == ReactionTargetType::Comment
-    }
-
-    /// Check if this is a reply reaction
-    pub fn is_reply_reaction(&self) -> bool {
-        self.target.target_type == ReactionTargetType::Reply
     }
 }
 
