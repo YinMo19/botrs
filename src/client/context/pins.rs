@@ -2,20 +2,9 @@ use super::Context;
 use crate::client::prelude::*;
 
 impl Context {
-    pub async fn pin_message(&self, channel_id: &str, message_id: &str) -> Result<PinsMessage> {
-        self.api.put_pin(&self.token, channel_id, message_id).await
-    }
-
     /// Pins one message.
     pub async fn put_pin(&self, channel_id: &str, message_id: &str) -> Result<PinsMessage> {
         self.api.put_pin(&self.token, channel_id, message_id).await
-    }
-
-    /// Unpins one message from a channel.
-    pub async fn unpin_message(&self, channel_id: &str, message_id: &str) -> Result<()> {
-        self.api
-            .delete_pin(&self.token, channel_id, message_id)
-            .await
     }
 
     /// Unpins one message.
@@ -106,10 +95,10 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn pin_message_returns_pins_message() {
+    async fn put_pin_returns_pins_message() {
         let (base_url, request, server) = spawn_capture_server().await;
         let ctx = test_context(base_url).await;
-        let pins = ctx.pin_message("channel-1", "message-1").await.unwrap();
+        let pins = ctx.put_pin("channel-1", "message-1").await.unwrap();
 
         assert_eq!(pins.channel_id, "channel-1");
         assert_eq!(pins.message_ids, vec!["message-1"]);

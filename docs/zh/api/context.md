@@ -25,11 +25,11 @@ pub struct Context {
 
 - **发送类捷径** —— `send_message`、`send_message_with_embed`、`reply_message`、`send_group_message`、`send_c2c_message`。它们替你构建 `MessageParams`。
 - **读取类捷径** —— `get_channel(s)`、`get_guild(s)`、`get_message(s)`、`get_pins`、`get_message_setting`、`get_message_reaction_users`。
-- **成员 / 角色** —— `get_guild_member(s)`、`kick_member`、`delete_member_with_options`、`add_guild_role_member`、`remove_guild_role_member`、`member_add_role`、`member_delete_role`。
+- **成员 / 角色** —— `get_guild_member(s)`、`kick_member`、`delete_member_with_options`、`create_guild_role_member`、`delete_guild_role_member`、`member_add_role`、`member_delete_role`。
 - **子频道管理** —— `create_channel`、`create_private_channel`、`update_channel` / `patch_channel`、`delete_channel`、`put_channel_permissions`、`put_channel_roles_permissions`。
 - **角色** —— `create_guild_role`、`update_guild_role`、`delete_guild_role`。
 - **语音 / 音频** —— `update_audio`、`post_audio`、`mute_*`、`cancel_mute_*`、`on_microphone`、`off_microphone`、`list_voice_channel_members`。
-- **回应 / 精华** —— `add_reaction`、`remove_reaction`、`pin_message`、`unpin_message`、`clean_pins`、`create_message_reaction`、`delete_own_message_reaction`。
+- **回应 / 精华** —— `put_reaction`、`delete_reaction`、`put_pin`、`delete_pin`、`clean_pins`、`create_message_reaction`、`delete_own_message_reaction`。
 - **公告** —— `create_*_announce`、`delete_*_announce`、`clean_*_announces`。
 - **撤回 / 编辑** —— `recall_message`、`retract_dm_message`、`retract_c2c_message`、`retract_group_message`、`patch_message_with_params`。
 - **设置引导** —— `post_setting_guide(_message)`、`post_dm_setting_guide(_message)`。

@@ -23,7 +23,7 @@ async fn message_create(&self, ctx: Context, msg: Message) {
 - `ctx.send_group_message(group_openid, content)`
 - `ctx.send_c2c_message(openid, content)`
 - `ctx.get_guild(guild_id)`、`ctx.get_channel(channel_id)`、`ctx.get_message_setting(guild_id)`
-- `ctx.add_reaction(...)`、`ctx.remove_reaction(...)`，以及 `recall_message`、`retract_*` 等
+- `ctx.put_reaction(...)`、`ctx.delete_reaction(...)`，以及 `recall_message`、`retract_*` 等
 
 未覆盖的接口请直接走 `ctx.api`。
 

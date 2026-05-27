@@ -2,18 +2,6 @@ use super::Context;
 use crate::client::prelude::*;
 
 impl Context {
-    pub async fn add_reaction(
-        &self,
-        channel_id: &str,
-        message_id: &str,
-        emoji_type: i32,
-        emoji_id: &str,
-    ) -> Result<()> {
-        self.api
-            .put_reaction(&self.token, channel_id, message_id, emoji_type, emoji_id)
-            .await
-    }
-
     /// Adds a reaction.
     pub async fn put_reaction(
         &self,
@@ -36,19 +24,6 @@ impl Context {
     ) -> Result<()> {
         self.api
             .create_message_reaction(&self.token, channel_id, message_id, emoji)
-            .await
-    }
-
-    /// Removes the bot's reaction using raw emoji type and ID values.
-    pub async fn remove_reaction(
-        &self,
-        channel_id: &str,
-        message_id: &str,
-        emoji_type: i32,
-        emoji_id: &str,
-    ) -> Result<()> {
-        self.api
-            .delete_reaction(&self.token, channel_id, message_id, emoji_type, emoji_id)
             .await
     }
 

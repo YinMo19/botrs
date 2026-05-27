@@ -73,7 +73,7 @@ pub struct BotInfo {
 
 - `get_guild_member(guild_id, user_id)` —— 获取单个成员。
 - `get_guild_members(guild_id, limit, after)` —— 分页列表，下页传上页最后一个 `user.id` 作 `after`。
-- `add_guild_role_member` / `remove_guild_role_member` —— 角色赋予和移除。
+- `create_guild_role_member` / `delete_guild_role_member` —— 角色赋予和移除。
 - `kick_member` —— 接受拉黑天数和原因。
 - `mute_member`、`mute_all`、`cancel_mute_all`、`on_microphone`、`off_microphone` —— 语音控制。
 

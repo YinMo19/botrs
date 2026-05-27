@@ -25,11 +25,11 @@ You rarely build `Context` yourself — `Client` constructs it from the same `Bo
 
 - **Send shortcuts** — `send_message`, `send_message_with_embed`, `reply_message`, `send_group_message`, `send_c2c_message`. These wrap `MessageParams` for you.
 - **Read shortcuts** — `get_channel(s)`, `get_guild(s)`, `get_message(s)`, `get_pins`, `get_message_setting`, `get_message_reaction_users`.
-- **Member / role** — `get_guild_member(s)`, `kick_member`, `delete_member_with_options`, `add_guild_role_member`, `remove_guild_role_member`, `member_add_role`, `member_delete_role`.
+- **Member / role** — `get_guild_member(s)`, `kick_member`, `delete_member_with_options`, `create_guild_role_member`, `delete_guild_role_member`, `member_add_role`, `member_delete_role`.
 - **Channel admin** — `create_channel`, `create_private_channel`, `update_channel` / `patch_channel`, `delete_channel`, `put_channel_permissions`, `put_channel_roles_permissions`.
 - **Roles** — `create_guild_role`, `update_guild_role`, `delete_guild_role`.
 - **Voice / audio** — `update_audio`, `post_audio`, `mute_*`, `cancel_mute_*`, `on_microphone`, `off_microphone`, `list_voice_channel_members`.
-- **Reactions / pins** — `add_reaction`, `remove_reaction`, `pin_message`, `unpin_message`, `clean_pins`, `create_message_reaction`, `delete_own_message_reaction`.
+- **Reactions / pins** — `put_reaction`, `delete_reaction`, `put_pin`, `delete_pin`, `clean_pins`, `create_message_reaction`, `delete_own_message_reaction`.
 - **Announces** — `create_*_announce`, `delete_*_announce`, `clean_*_announces`.
 - **Recall / patch** — `recall_message`, `retract_dm_message`, `retract_c2c_message`, `retract_group_message`, `patch_message_with_params`.
 - **Setting guides** — `post_setting_guide(_message)`, `post_dm_setting_guide(_message)`.

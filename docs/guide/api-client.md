@@ -23,7 +23,7 @@ async fn message_create(&self, ctx: Context, msg: Message) {
 - `ctx.send_group_message(group_openid, content)`
 - `ctx.send_c2c_message(openid, content)`
 - `ctx.get_guild(guild_id)`, `ctx.get_channel(channel_id)`, `ctx.get_message_setting(guild_id)`
-- `ctx.add_reaction(...)`, `ctx.remove_reaction(...)`, plus `recall_message`, `retract_*`, etc.
+- `ctx.put_reaction(...)`, `ctx.delete_reaction(...)`, plus `recall_message`, `retract_*`, etc.
 
 For anything they don't cover, use `ctx.api` directly.
 

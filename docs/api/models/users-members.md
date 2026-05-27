@@ -73,7 +73,7 @@ The high-traffic operations live on `BotApi` / `Context`:
 
 - `get_guild_member(guild_id, user_id)` — fetch a single member.
 - `get_guild_members(guild_id, limit, after)` — paginated listing; pass the previous page's last `user.id` as `after`.
-- `add_guild_role_member` / `remove_guild_role_member` — role assignment.
+- `create_guild_role_member` / `delete_guild_role_member` — role assignment.
 - `kick_member` — accepts blacklist days and a reason.
 - `mute_member`, `mute_all`, `cancel_mute_all`, `on_microphone`, `off_microphone` — voice controls.
 

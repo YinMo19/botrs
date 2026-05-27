@@ -26,6 +26,7 @@ BotRS 的所有重要更改都将记录在此文件中。
 - 移除 Go 风格 gateway opcode/event 别名（`OPCode`、`WSDispatchEvent`、`WSIdentity`、`HTTPCallbackAck`、`EventMessageCreate`、`OPMeans` 等）；请使用 `OpCode`、`WS_DISPATCH_EVENT`、`WS_IDENTIFY`、`HTTP_CALLBACK_ACK`、`EVENT_MESSAGE_CREATE` 和 `op_meaning`。
 - 移除冗余 Rust 方法别名（`BotApi::me`、`BotApi::me_guilds`、`BotApi::get_ws_url`、`BotApi::get_permissions`、`BotApi::patch_message` 及对应 `Context` wrapper）；请使用 `get_bot_info`、`get_guilds`、`get_gateway`、`get_api_permissions` 和 `patch_message_with_params`。
 - 移除 botpy 风格重复方法（`BotApi::create_dms`、`Context::create_dms`、`BotApi::get_delete_member` 和 `Context::get_delete_member`）；请使用 `create_direct_message` 和 `delete_member`。
+- 移除冗余 `Context` 方法别名（`add_reaction`、`remove_reaction`、`pin_message`、`unpin_message`、`add_guild_role_member` 和 `remove_guild_role_member`）；请使用 `put_reaction`、`delete_reaction`、`put_pin`、`delete_pin`、`create_guild_role_member` 和 `delete_guild_role_member`。
 - 移除已弃用的多 `Option` 消息发送方法（`post_message`、`post_group_message`、`post_c2c_message`、`post_dms`）及其 `Context` wrapper。请使用 `*_with_params` 方法。
 - 移除冗余的 `post_message_api` 和 `patch_message_api` 别名。
 

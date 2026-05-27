@@ -90,19 +90,6 @@ impl Context {
             .await
     }
 
-    /// Adds a role to a guild member, optionally scoped to a channel.
-    pub async fn add_guild_role_member(
-        &self,
-        guild_id: &str,
-        user_id: &str,
-        role_id: &str,
-        channel_id: Option<&str>,
-    ) -> Result<()> {
-        self.api
-            .create_guild_role_member(&self.token, guild_id, role_id, user_id, channel_id)
-            .await
-    }
-
     /// Adds a role to a guild member.
     pub async fn create_guild_role_member(
         &self,
@@ -126,19 +113,6 @@ impl Context {
     ) -> Result<()> {
         self.api
             .member_add_role(&self.token, guild_id, role_id, user_id, body)
-            .await
-    }
-
-    /// Removes a role from a guild member, optionally scoped to a channel.
-    pub async fn remove_guild_role_member(
-        &self,
-        guild_id: &str,
-        user_id: &str,
-        role_id: &str,
-        channel_id: Option<&str>,
-    ) -> Result<()> {
-        self.api
-            .delete_guild_role_member(&self.token, guild_id, role_id, user_id, channel_id)
             .await
     }
 
