@@ -17,16 +17,12 @@ pub mod gateway;
 pub mod http;
 pub mod intents;
 pub mod interaction;
-pub mod log;
 pub mod manage;
 pub mod models;
 pub mod reaction;
-pub mod remote;
-pub mod search;
 pub mod session_manager;
 pub mod signature;
 pub mod token;
-pub mod version;
 pub mod webhook;
 pub mod websocket;
 
@@ -56,9 +52,6 @@ pub use interaction::{
     Interaction, InteractionData, InteractionDataType, InteractionType, SearchInputResolved,
     SearchLayout, SearchRecord, SearchRsp,
 };
-pub use log::{
-    Debug, Debugf, DefaultLogger, Error as LogError, Errorf, Info, Infof, Logger, Sync, Warn, Warnf,
-};
 pub use manage::{
     C2CManageEvent, EnterAioEvent, GroupManageEvent, ManageEventType, SubscribeMessageStatusData,
     SubscribeMsgTemplateResult,
@@ -69,11 +62,6 @@ pub use reaction::{
     Emoji as ReactionEmoji, MessageReaction, MessageReactionPager, MessageReactionUsers, Reaction,
     ReactionTarget, ReactionTargetType, ReactionUsers,
 };
-pub use remote::{
-    ErrGotLockFailed, ErrProduceFailed, ErrSessionMarshalFailed, ErrorNotOk, Lock,
-    Option as RemoteOption, RedisManager, WithClusterKey,
-};
-pub use search::{Config as SearchConfig, SimulateSearch};
 pub use session_manager::{
     CalcInterval, CanNotIdentify, CanNotIdentifyErrSet, CanNotResume, CanNotResumeErrSet,
     ChanManager, CheckSessionLimit, NewSessionManager, Session as ManagedSession, SessionManager,
@@ -84,7 +72,6 @@ pub use token::{
     NewQQBotTokenSource, QQBotCredentials, QQBotTokenSource, StartRefreshAccessToken, Token,
     TypeBearer, TypeQQBot,
 };
-pub use version::version_string;
 pub use webhook::{
     DefaultGetSecretFunc, GenDispatchACK, GenHeartbeatACK, GenValidationACK, HTTPHandler,
 };

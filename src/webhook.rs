@@ -99,10 +99,7 @@ pub fn HTTPHandler(
         {
             Ok(()) => Ok(Some(GenDispatchACK(true).into_bytes())),
             Err(err) => {
-                crate::log::Errorf(format_args!(
-                    "parseAndHandle failed, {}, traceID:{}",
-                    err, trace_id
-                ));
+                tracing::error!("parseAndHandle failed, {}, traceID:{}", err, trace_id);
                 Ok(Some(GenDispatchACK(false).into_bytes()))
             }
         },

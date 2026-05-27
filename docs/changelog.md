@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 - Removed the `src/api/compat` PascalCase `BotApi` facade (`PostMessage`, `Channels`, `PostAudio`, etc.). Use the native snake_case `BotApi` methods instead.
 - Removed the top-level Go-style OpenAPI compatibility modules (`facade`, `openapi`, and `options`) and the HTTP filter registry that only existed for that facade.
+- Removed standalone Botgo helper facades (`log`, `remote`, `search`, and `version`) that were not part of the REST or gateway wire behavior.
 - Removed the deprecated multi-`Option` message sending methods (`post_message`, `post_group_message`, `post_c2c_message`, `post_dms`) and their `Context` wrappers. Use the `*_with_params` methods instead.
 - Removed the redundant `post_message_api` and `patch_message_api` aliases.
 

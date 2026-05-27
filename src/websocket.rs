@@ -51,7 +51,7 @@ pub fn RegisterResumeSignal(signal: i32) {
 
 pub fn PanicHandler(error: impl std::fmt::Display, session: &Session) {
     let len = *PanicBufLen.read().expect("panic buf len lock poisoned");
-    crate::log::Errorf(format_args!(
+    tracing::error!(
         "[PANIC][ws][ID:{}][Shard:({}/{})][Intent:{}]\n{}\nstack capture len:{}",
         session.id,
         session.shards.shard_id,
@@ -59,7 +59,7 @@ pub fn PanicHandler(error: impl std::fmt::Display, session: &Session) {
         session.intent.bits,
         error,
         len
-    ));
+    );
 }
 
 pub fn RegisterHandlers<H: crate::event::RegisterableHandler>(
