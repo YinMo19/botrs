@@ -64,9 +64,6 @@ impl EventHandler for MyBot {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // 初始化日志
-    tracing_subscriber::fmt::init();
-
     // 创建令牌
     let token = Token::new("your_app_id", "your_secret");
 
