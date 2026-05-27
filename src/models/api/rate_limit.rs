@@ -14,11 +14,3 @@ pub struct RateLimit {
     /// The time after which to retry (in seconds)
     pub retry_after: Option<u64>,
 }
-
-impl RateLimit {
-    /// Returns the time until the rate limit resets (in seconds).
-    pub fn reset_in(&self) -> u64 {
-        let now = chrono::Utc::now().timestamp() as u64;
-        self.reset.saturating_sub(now)
-    }
-}

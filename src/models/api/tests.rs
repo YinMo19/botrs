@@ -11,7 +11,8 @@ fn test_rate_limit() {
     };
 
     assert_eq!(rate_limit.remaining, 0);
-    assert!(rate_limit.reset_in() > 0);
+    assert_eq!(rate_limit.retry_after, Some(60));
+    assert!(rate_limit.reset > chrono::Utc::now().timestamp() as u64);
 }
 
 #[test]
