@@ -81,7 +81,7 @@ Every method takes `&self` plus endpoint-specific arguments and returns `Result<
 
 ### Schedules
 
-- `get_schedules`, `get_schedule`, `create_schedule`, `create_schedule_with_model`, `update_schedule`, `update_schedule_with_model`, `delete_schedule`
+- `get_schedules`, `get_schedule`, `create_schedule`, `update_schedule`, `delete_schedule`
 
 ### API permissions
 

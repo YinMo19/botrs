@@ -4,7 +4,7 @@
 
 mod common;
 
-use botrs::{Client, Context, EventHandler, Intents, Message, Ready, Token};
+use botrs::{Client, Context, EventHandler, Intents, Message, Ready, Schedule, Token};
 use common::{Config, init_logging};
 use std::env;
 use tracing::{info, warn};
@@ -62,17 +62,14 @@ impl EventHandler for ScheduleHandler {
         // Handle different schedule commands
         if content.contains("/创建日程") {
             // Create schedule.
-            match ctx
-                .create_schedule(
-                    _CHANNEL_SCHEDULE_ID,
-                    "test",
-                    &start_time.to_string(),
-                    &end_time.to_string(),
-                    _CHANNEL_SCHEDULE_ID,
-                    botrs::models::schedule::RemindType::None,
-                )
-                .await
-            {
+            let schedule = Schedule::new(
+                "test",
+                start_time.to_string(),
+                end_time.to_string(),
+                Some(_CHANNEL_SCHEDULE_ID.to_string()),
+                botrs::models::schedule::RemindType::None,
+            );
+            match ctx.create_schedule(_CHANNEL_SCHEDULE_ID, &schedule).await {
                 Ok(schedule) => {
                     info!("Successfully created schedule: {:?}", schedule);
                     // if let Some(id) = &schedule.id {
@@ -100,16 +97,15 @@ impl EventHandler for ScheduleHandler {
         } else if content.contains("/更新日程") {
             // Update schedule (equivalent to self.api.update_schedule)
             if !schedule_id.is_empty() {
+                let schedule = Schedule::new(
+                    "update",
+                    start_time.to_string(),
+                    end_time.to_string(),
+                    Some(_CHANNEL_SCHEDULE_ID.to_string()),
+                    botrs::models::schedule::RemindType::None,
+                );
                 match ctx
-                    .update_schedule(
-                        _CHANNEL_SCHEDULE_ID,
-                        &schedule_id,
-                        "update",
-                        &start_time.to_string(),
-                        &end_time.to_string(),
-                        _CHANNEL_SCHEDULE_ID,
-                        botrs::models::schedule::RemindType::None,
-                    )
+                    .update_schedule(_CHANNEL_SCHEDULE_ID, &schedule_id, &schedule)
                     .await
                 {
                     Ok(result) => {

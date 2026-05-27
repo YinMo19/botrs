@@ -81,7 +81,7 @@ let me = api.get_bot_info().await?;
 
 ### 日程
 
-- `get_schedules`、`get_schedule`、`create_schedule`、`create_schedule_with_model`、`update_schedule`、`update_schedule_with_model`、`delete_schedule`
+- `get_schedules`、`get_schedule`、`create_schedule`、`update_schedule`、`delete_schedule`
 
 ### API 权限
 
