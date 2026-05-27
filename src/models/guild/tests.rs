@@ -323,7 +323,7 @@ fn member_uses_required_zero_value_fields() {
 
 #[test]
 fn member_add_role_body_matches_json_shape() {
-    let empty = serde_json::to_value(MemberAddRoleBody::new()).unwrap();
+    let empty = serde_json::to_value(MemberAddRoleBody::default()).unwrap();
     assert_eq!(empty, serde_json::json!({"channel": null}));
 
     let with_channel =

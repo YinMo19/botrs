@@ -192,7 +192,7 @@ mod tests {
     async fn inline_add_role_member_sends_empty_channel() {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
-        api.create_guild_role_member("guild-1", "role-1", "user-1", &MemberAddRoleBody::new())
+        api.create_guild_role_member("guild-1", "role-1", "user-1", &MemberAddRoleBody::default())
             .await
             .unwrap();
 

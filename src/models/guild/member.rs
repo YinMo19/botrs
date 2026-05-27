@@ -20,11 +20,6 @@ pub struct MemberAddRoleBody {
 }
 
 impl MemberAddRoleBody {
-    /// Creates a body without a channel.
-    pub fn new() -> Self {
-        Self { channel: None }
-    }
-
     /// Creates a body for a channel-specific role.
     pub fn with_channel_id(channel_id: impl Into<String>) -> Self {
         let mut channel = Channel::new();
