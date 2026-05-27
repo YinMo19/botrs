@@ -13,10 +13,7 @@ pub struct Context {
 
 ## 构造
 
-通常无需自己构造 `Context` —— `Client` 会用驱动网关的同一个 `BotApi` 帮你创建。两个公开辅助方法主要用于测试或嵌入定制：
-
-- `Context::new(api)` —— `bot_info` 为空。
-- `Context::with_bot_info(bot_info)` —— 链式 setter；框架收到网关 `READY` 后会自动填充。
+无需自行构造 `Context`。`Client` 会用驱动网关的同一个 `BotApi` 创建它，并在网关 `READY` 数据可用后填充 `bot_info`。
 
 ## 提供的能力
 

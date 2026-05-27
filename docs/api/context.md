@@ -13,10 +13,7 @@ pub struct Context {
 
 ## Construction
 
-You rarely build `Context` yourself — `Client` constructs it from the same `BotApi` it uses to drive the gateway. The two public helpers are kept for tests and custom embeddings:
-
-- `Context::new(api)` — empty `bot_info`.
-- `Context::with_bot_info(bot_info)` — builder; populated automatically once the framework receives the gateway `READY`.
+You do not build `Context` yourself. `Client` constructs it from the same `BotApi` it uses to drive the gateway and fills `bot_info` after the gateway `READY` data is available.
 
 ## What it gives you
 

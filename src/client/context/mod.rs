@@ -11,7 +11,7 @@ pub struct Context {
 }
 
 impl Context {
-    pub fn new(api: Arc<BotApi>) -> Self {
+    pub(crate) fn new(api: Arc<BotApi>) -> Self {
         Self {
             api,
             bot_info: None,
@@ -24,7 +24,7 @@ impl Context {
     }
 
     /// Sets the bot information.
-    pub fn with_bot_info(mut self, bot_info: BotInfo) -> Self {
+    pub(crate) fn with_bot_info(mut self, bot_info: BotInfo) -> Self {
         self.bot_info = Some(bot_info);
         self
     }
