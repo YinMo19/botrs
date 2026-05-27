@@ -21,15 +21,13 @@ Methods are grouped by the gateway category that produces them.
 
 - `ready(ctx, Ready)` — called once after a successful identify handshake; `ctx.bot_info` is populated.
 - `resumed(ctx)` — called after a successful resume.
-- `error_notify(ctx, BotError)` — fires when a gateway-level error is captured.
-- `plain_event(ctx, GatewayEvent)` — catch-all for raw events (only invoked when registered via `register_handlers`).
+- `unknown_event(ctx, GatewayEvent)` — catch-all for event types without a first-class callback.
 
 ### Channel messages
 
 - `message_create(ctx, Message)` — guild channel messages and `@mentions`.
 - `message_delete(ctx, MessageDelete)` — guild message removed.
 - `public_message_delete(ctx, MessageDelete)` — public-domain delete.
-- `at_message_create(ctx, Message)` — alias for the `@mention` event when configured separately.
 
 ### Direct messages
 

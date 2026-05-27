@@ -26,26 +26,6 @@ macro_rules! registerable {
     };
 }
 
-impl RegisterableHandler for ReadyHandler {
-    fn register(self) -> Intent {
-        DEFAULT_HANDLERS
-            .write()
-            .expect("default handlers lock poisoned")
-            .ready = Some(self);
-        0
-    }
-}
-
-impl RegisterableHandler for ErrorNotifyHandler {
-    fn register(self) -> Intent {
-        DEFAULT_HANDLERS
-            .write()
-            .expect("default handlers lock poisoned")
-            .error_notify = Some(self);
-        0
-    }
-}
-
 impl RegisterableHandler for PlainEventHandler {
     fn register(self) -> Intent {
         DEFAULT_HANDLERS

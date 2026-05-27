@@ -373,7 +373,7 @@ mod tests {
     struct DeleteCounters {
         message_delete: AtomicUsize,
         public_message_delete: AtomicUsize,
-        at_message_create: AtomicUsize,
+        message_create_count: AtomicUsize,
         friend_add: AtomicUsize,
         inline_event_id_seen: AtomicUsize,
         fallback_event_id_seen: AtomicUsize,
@@ -384,7 +384,7 @@ mod tests {
     #[async_trait::async_trait]
     impl EventHandler for CountingHandler {
         async fn message_create(&self, _ctx: Context, message: Message) {
-            self.0.at_message_create.fetch_add(1, Ordering::SeqCst);
+            self.0.message_create_count.fetch_add(1, Ordering::SeqCst);
             if message.event_id.as_deref() == Some("AT_MESSAGE_CREATE_42") {
                 self.0.fallback_event_id_seen.fetch_add(1, Ordering::SeqCst);
             }
@@ -491,7 +491,7 @@ mod tests {
             .await
             .expect("dispatch friend add");
 
-        assert_eq!(counters.at_message_create.load(Ordering::SeqCst), 1);
+        assert_eq!(counters.message_create_count.load(Ordering::SeqCst), 1);
         assert_eq!(counters.fallback_event_id_seen.load(Ordering::SeqCst), 1);
         assert_eq!(counters.friend_add.load(Ordering::SeqCst), 1);
         assert_eq!(counters.inline_event_id_seen.load(Ordering::SeqCst), 1);

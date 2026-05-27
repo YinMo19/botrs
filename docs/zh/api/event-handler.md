@@ -21,15 +21,13 @@ pub trait EventHandler: Send + Sync {
 
 - `ready(ctx, Ready)` —— identify 握手成功后调用一次；此时 `ctx.bot_info` 已被填充。
 - `resumed(ctx)` —— resume 成功后调用。
-- `error_notify(ctx, BotError)` —— 网关层错误被捕获时触发。
-- `plain_event(ctx, GatewayEvent)` —— 通过 `register_handlers` 注册的全量原始事件兜底回调。
+- `unknown_event(ctx, GatewayEvent)` —— 没有一等回调的事件类型会进入这个兜底方法。
 
 ### 频道消息
 
 - `message_create(ctx, Message)` —— 频道消息及 `@mention`。
 - `message_delete(ctx, MessageDelete)` —— 频道消息被删除。
 - `public_message_delete(ctx, MessageDelete)` —— 公域消息删除。
-- `at_message_create(ctx, Message)` —— 单独配置 `@mention` 时使用的别名事件。
 
 ### 私信
 

@@ -33,10 +33,10 @@ pub use error::{BotError, Result};
 pub use event::{
     ATMessageEventHandler, AudioEventHandler, C2CFriendEventHandler, C2CMessageEventHandler,
     ChannelEventHandler, DirectMessageDeleteEventHandler, DirectMessageEventHandler,
-    EnterAIOEventHandler, ErrorNotifyHandler, ForumAuditEventHandler, GroupATMessageEventHandler,
-    GuildEventHandler, GuildMemberEventHandler, InteractionEventHandler, MessageAuditEventHandler,
+    EnterAIOEventHandler, ForumAuditEventHandler, GroupATMessageEventHandler, GuildEventHandler,
+    GuildMemberEventHandler, InteractionEventHandler, MessageAuditEventHandler,
     MessageDeleteEventHandler, MessageEventHandler, MessageReactionEventHandler, PlainEventHandler,
-    PostEventHandler, PublicMessageDeleteEventHandler, ReadyHandler, ReplyEventHandler,
+    PostEventHandler, PublicMessageDeleteEventHandler, ReplyEventHandler,
     SubscribeMsgStatusEventHandler, ThreadEventHandler, parse_and_handle, parse_data,
     register_handler, register_handlers,
 };

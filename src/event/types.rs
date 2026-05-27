@@ -4,7 +4,7 @@ use crate::manage::{C2CFriendData, EnterAioEvent, SubscribeMessageStatusData};
 use crate::models::{
     api::AudioAction,
     channel::Channel,
-    gateway::{WSPayload, WSReadyData},
+    gateway::WSPayload,
     guild::{Guild, Member},
     message::{Message, MessageAudit, MessageDelete},
 };
@@ -12,8 +12,6 @@ use crate::reaction::MessageReaction;
 use std::sync::{LazyLock, RwLock};
 
 pub type EventParseFn = fn(&mut WSPayload, &[u8]) -> crate::Result<()>;
-pub type ReadyHandler = fn(&mut WSPayload, &mut WSReadyData);
-pub type ErrorNotifyHandler = fn(crate::error::SdkError);
 pub type PlainEventHandler = fn(&mut WSPayload, &[u8]) -> crate::Result<()>;
 
 macro_rules! handler_type {
@@ -48,8 +46,6 @@ handler_type!(EnterAIOEventHandler, EnterAioEvent);
 
 #[derive(Default, Clone)]
 pub struct HandlerRegistry {
-    pub ready: Option<ReadyHandler>,
-    pub error_notify: Option<ErrorNotifyHandler>,
     pub plain: Option<PlainEventHandler>,
     pub guild: Option<GuildEventHandler>,
     pub guild_member: Option<GuildMemberEventHandler>,
