@@ -91,7 +91,6 @@ mod tests {
         let api = BotApi::setup("app-id", "secret", true).unwrap();
         assert_eq!(api.token().app_id(), "app-id");
         assert_eq!(api.get_app_id(), "app-id");
-        assert_eq!(api.trace_id(), "");
     }
 
     #[test]

@@ -95,9 +95,4 @@ impl BotApi {
     pub(crate) fn hide_tip_query(hide_tip: bool) -> Option<HashMap<&'static str, String>> {
         hide_tip.then(|| HashMap::from([("hidetip", "true".to_string())]))
     }
-
-    /// Returns the last OpenAPI trace ID observed by the underlying HTTP client.
-    pub fn trace_id(&self) -> String {
-        self.http.trace_id()
-    }
 }

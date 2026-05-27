@@ -10,7 +10,6 @@ impl HttpClient {
     pub(crate) async fn handle_response(&self, response: Response) -> Result<serde_json::Value> {
         let status = response.status();
         let headers = response.headers().clone();
-        self.store_trace_id(&headers);
 
         if status == StatusCode::TOO_MANY_REQUESTS {
             let retry_after = headers
@@ -47,21 +46,6 @@ impl HttpClient {
 
         debug!("Request successful, response: {}", json);
         Ok(json)
-    }
-
-    pub(crate) fn store_trace_id(&self, headers: &reqwest::header::HeaderMap) {
-        let trace_id = headers
-            .get(crate::constant::HEADER_TRACE_ID)
-            .or_else(|| headers.get("x-tps-trace-id"))
-            .and_then(|value| value.to_str().ok())
-            .filter(|value| !value.is_empty())
-            .map(ToOwned::to_owned);
-
-        if let Some(trace_id) = trace_id
-            && let Ok(mut last_trace_id) = self.last_trace_id.write()
-        {
-            *last_trace_id = Some(trace_id);
-        }
     }
 
     /// Parses an API error from the response.

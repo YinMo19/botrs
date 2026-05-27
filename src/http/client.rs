@@ -1,6 +1,5 @@
 use crate::error::{BotError, Result};
 use reqwest::Client;
-use std::sync::{Arc, RwLock};
 use std::time::Duration;
 
 /// HTTP client for the QQ Guild Bot API.
@@ -12,8 +11,6 @@ pub struct HttpClient {
     pub(crate) base_url: String,
     /// Whether to use sandbox environment
     pub(crate) is_sandbox: bool,
-    /// Last trace ID returned by OpenAPI.
-    pub(crate) last_trace_id: Arc<RwLock<Option<String>>>,
     /// OpenAPI instance app ID used by the X-Union-Appid header.
     pub(crate) union_app_id: Option<String>,
 }
@@ -45,7 +42,6 @@ impl HttpClient {
             client,
             base_url,
             is_sandbox,
-            last_trace_id: Arc::new(RwLock::new(None)),
             union_app_id: None,
         })
     }
@@ -66,15 +62,6 @@ impl HttpClient {
     /// Returns true if this client is using the sandbox environment.
     pub fn is_sandbox(&self) -> bool {
         self.is_sandbox
-    }
-
-    /// Returns the most recent OpenAPI trace ID.
-    pub fn trace_id(&self) -> String {
-        self.last_trace_id
-            .read()
-            .ok()
-            .and_then(|trace_id| trace_id.clone())
-            .unwrap_or_default()
     }
 
     /// Returns the app ID configured for the X-Union-Appid header.

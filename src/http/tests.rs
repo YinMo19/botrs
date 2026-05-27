@@ -102,17 +102,6 @@ fn test_rate_limit_parsing() {
     assert_eq!(rate_limit.bucket, Some("global".to_string()));
 }
 
-#[test]
-fn test_trace_id_storage() {
-    let client = HttpClient::new(30, false).unwrap();
-    let mut headers = reqwest::header::HeaderMap::new();
-    headers.insert("X-Tps-trace-ID", "trace-123".parse().unwrap());
-
-    client.store_trace_id(&headers);
-
-    assert_eq!(client.trace_id(), "trace-123");
-}
-
 #[tokio::test]
 async fn authorized_headers_include_union_app_id() {
     let client = HttpClient::new(30, false)
