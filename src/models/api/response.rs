@@ -34,16 +34,6 @@ impl<T> ApiResponse<T> {
         }
     }
 
-    /// Returns true if the response indicates success.
-    pub fn is_success(&self) -> bool {
-        self.code.is_none()
-    }
-
-    /// Returns true if the response indicates an error.
-    pub fn is_error(&self) -> bool {
-        self.code.is_some()
-    }
-
     /// Converts this response into a Result.
     pub fn into_result(self) -> crate::Result<T> {
         if let Some(code) = self.code {

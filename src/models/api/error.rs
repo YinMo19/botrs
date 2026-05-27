@@ -27,26 +27,6 @@ impl ApiError {
             trace_id: None,
         }
     }
-
-    /// Checks if this is a rate limit error.
-    pub fn is_rate_limit(&self) -> bool {
-        self.code == 429
-    }
-
-    /// Checks if this is an authentication error.
-    pub fn is_auth_error(&self) -> bool {
-        self.code == 401 || self.code == 403
-    }
-
-    /// Checks if this is a not found error.
-    pub fn is_not_found(&self) -> bool {
-        self.code == 404
-    }
-
-    /// Checks if this is a server error.
-    pub fn is_server_error(&self) -> bool {
-        self.code >= 500
-    }
 }
 
 impl<'de> Deserialize<'de> for ApiError {

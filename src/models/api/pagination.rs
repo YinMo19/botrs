@@ -47,11 +47,6 @@ impl<T> PaginatedResponse<T> {
         Self { items, pagination }
     }
 
-    /// Returns true if there are more pages.
-    pub fn has_more(&self) -> bool {
-        self.pagination.has_next
-    }
-
     /// Gets the next page number if available.
     pub fn next_page(&self) -> Option<u32> {
         if self.pagination.has_next {

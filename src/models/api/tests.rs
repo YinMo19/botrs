@@ -3,13 +3,11 @@ use super::*;
 #[test]
 fn test_api_response() {
     let success: ApiResponse<String> = ApiResponse::success("test".to_string());
-    assert!(success.is_success());
-    assert!(!success.is_error());
+    assert!(success.code.is_none());
     assert!(success.into_result().is_ok());
 
     let error: ApiResponse<String> = ApiResponse::error(404, "Not found");
-    assert!(!error.is_success());
-    assert!(error.is_error());
+    assert_eq!(error.code, Some(404));
     assert!(error.into_result().is_err());
 }
 
@@ -35,7 +33,7 @@ fn test_rate_limit() {
         retry_after: Some(60),
     };
 
-    assert!(rate_limit.is_exceeded());
+    assert_eq!(rate_limit.remaining, 0);
     assert!(rate_limit.reset_in() > 0);
 }
 
@@ -43,13 +41,10 @@ fn test_rate_limit() {
 fn test_api_error() {
     let error = ApiError::new(429, "Rate limited");
     assert_eq!(error.err_code, None);
-    assert!(error.is_rate_limit());
-    assert!(!error.is_auth_error());
-    assert!(!error.is_not_found());
-    assert!(!error.is_server_error());
+    assert_eq!(error.code, 429);
 
     let auth_error = ApiError::new(401, "Unauthorized");
-    assert!(auth_error.is_auth_error());
+    assert_eq!(auth_error.code, 401);
 }
 
 #[test]

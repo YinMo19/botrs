@@ -16,11 +16,6 @@ pub struct RateLimit {
 }
 
 impl RateLimit {
-    /// Returns true if the rate limit has been exceeded.
-    pub fn is_exceeded(&self) -> bool {
-        self.remaining == 0
-    }
-
     /// Returns the time until the rate limit resets (in seconds).
     pub fn reset_in(&self) -> u64 {
         let now = chrono::Utc::now().timestamp() as u64;
