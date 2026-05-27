@@ -206,7 +206,12 @@ mod tests {
     async fn inline_delete_role_member_sends_channel_body() {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
-        let body = MemberAddRoleBody::with_channel_id("channel-1");
+        let body = MemberAddRoleBody {
+            channel: Some(crate::models::channel::Channel {
+                id: "channel-1".to_string(),
+                ..Default::default()
+            }),
+        };
         api.delete_guild_role_member("guild-1", "role-1", "user-1", &body)
             .await
             .unwrap();

@@ -19,19 +19,6 @@ pub struct MemberAddRoleBody {
     pub channel: Option<Channel>,
 }
 
-impl MemberAddRoleBody {
-    /// Creates a body for a channel-specific role.
-    pub fn with_channel_id(channel_id: impl Into<String>) -> Self {
-        let channel = Channel {
-            id: channel_id.into(),
-            ..Default::default()
-        };
-        Self {
-            channel: Some(channel),
-        }
-    }
-}
-
 /// Supported history deletion windows when removing a guild member.
 pub type DeleteHistoryMsgDay = i32;
 

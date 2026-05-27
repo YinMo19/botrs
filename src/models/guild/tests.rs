@@ -326,8 +326,13 @@ fn member_add_role_body_matches_json_shape() {
     let empty = serde_json::to_value(MemberAddRoleBody::default()).unwrap();
     assert_eq!(empty, serde_json::json!({"channel": null}));
 
-    let with_channel =
-        serde_json::to_value(MemberAddRoleBody::with_channel_id("channel-1")).unwrap();
+    let with_channel = serde_json::to_value(MemberAddRoleBody {
+        channel: Some(crate::models::channel::Channel {
+            id: "channel-1".to_string(),
+            ..Default::default()
+        }),
+    })
+    .unwrap();
     assert_eq!(
         with_channel,
         serde_json::json!({
