@@ -57,8 +57,6 @@ pub const DeleteThirtyDays: DeleteHistoryMsgDay = DELETE_THIRTY_DAYS;
 #[allow(non_upper_case_globals)]
 pub const DeleteAll: DeleteHistoryMsgDay = DELETE_ALL;
 
-pub type MemberDeleteOpts = MemberDeleteOptions;
-
 /// Additional options for deleting a guild member.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct MemberDeleteOptions {
@@ -94,22 +92,6 @@ impl Default for MemberDeleteOptions {
             delete_history_msg_days: NO_DELETE,
         }
     }
-}
-
-pub type MemberDeleteOption = Box<dyn FnOnce(&mut MemberDeleteOptions) + Send>;
-
-#[allow(non_snake_case)]
-pub fn WithAddBlackList(add_blacklist: bool) -> MemberDeleteOption {
-    Box::new(move |options| {
-        options.add_blacklist = add_blacklist;
-    })
-}
-
-#[allow(non_snake_case)]
-pub fn WithDeleteHistoryMsg(days: DeleteHistoryMsgDay) -> MemberDeleteOption {
-    Box::new(move |options| {
-        options.delete_history_msg_days = days;
-    })
 }
 
 /// Normalizes history deletion days to the official supported values.

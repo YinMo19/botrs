@@ -38,12 +38,6 @@ impl MessageReactionPager {
         insert_query_param(&mut query, "cookie", &self.cookie);
         query
     }
-
-    /// Query parameter accessor.
-    #[allow(non_snake_case)]
-    pub fn QueryParams(&self) -> std::collections::HashMap<String, String> {
-        self.query_params()
-    }
 }
 
 impl Pager for MessageReactionPager {

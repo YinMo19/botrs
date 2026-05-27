@@ -99,15 +99,8 @@ impl MessageToCreate {
         SendType::Text
     }
 
-    /// Event ID accessor.
-    #[allow(non_snake_case)]
-    pub fn GetEventID(&self) -> &str {
+    /// Returns the event ID used for passive replies.
+    pub fn event_id(&self) -> &str {
         self.event_id.as_deref().unwrap_or("")
-    }
-
-    /// Send type accessor.
-    #[allow(non_snake_case)]
-    pub const fn GetSendType(&self) -> SendType {
-        self.send_type()
     }
 }

@@ -23,13 +23,6 @@ pub enum MessagePagerType {
     After,
 }
 
-#[allow(non_upper_case_globals)]
-pub const MPTAround: MessagePagerType = MessagePagerType::Around;
-#[allow(non_upper_case_globals)]
-pub const MPTBefore: MessagePagerType = MessagePagerType::Before;
-#[allow(non_upper_case_globals)]
-pub const MPTAfter: MessagePagerType = MessagePagerType::After;
-
 impl MessagePagerType {
     /// Returns the query parameter name for this pager type.
     pub const fn as_str(self) -> &'static str {
@@ -77,12 +70,6 @@ impl MessagesPager {
             insert_query_param(&mut query, pager_type.as_str(), &self.id);
         }
         query
-    }
-
-    /// Query parameter accessor.
-    #[allow(non_snake_case)]
-    pub fn QueryParams(&self) -> std::collections::HashMap<String, String> {
-        self.query_params()
     }
 }
 

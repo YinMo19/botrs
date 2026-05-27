@@ -41,16 +41,10 @@ impl RichMediaMessage {
         SendType::RichMedia
     }
 
-    /// Event ID accessor. Botgo intentionally returns
-    /// an empty value for rich media payloads.
-    #[allow(non_snake_case)]
-    pub const fn GetEventID(&self) -> &str {
+    /// Returns the event ID used for passive replies.
+    ///
+    /// Botgo intentionally returns an empty value for rich media payloads.
+    pub const fn event_id(&self) -> &str {
         ""
-    }
-
-    /// Send type accessor.
-    #[allow(non_snake_case)]
-    pub const fn GetSendType(&self) -> SendType {
-        self.send_type()
     }
 }

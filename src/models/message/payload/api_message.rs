@@ -1,18 +1,7 @@
 use serde::Serialize;
 
 use super::{MessageToCreate, RichMediaMessage, SendType};
-use crate::models::message::{Keyboard, KeyboardPayload, Reference};
-
-/// Message interface.
-pub trait APIMessage: Serialize {
-    /// Returns the event ID used for passive replies.
-    #[allow(non_snake_case)]
-    fn GetEventID(&self) -> &str;
-
-    /// Returns the route family for this message payload.
-    #[allow(non_snake_case)]
-    fn GetSendType(&self) -> SendType;
-}
+use crate::models::message::{Keyboard, KeyboardPayload};
 
 /// API message envelope used by group and C2C message APIs.
 #[derive(Debug, Clone, PartialEq)]
@@ -32,49 +21,12 @@ impl ApiMessage {
         }
     }
 
-    /// Event ID accessor.
-    #[allow(non_snake_case)]
-    pub fn GetEventID(&self) -> &str {
+    /// Returns the event ID used for passive replies.
+    pub fn event_id(&self) -> &str {
         match self {
-            Self::Message(message) => message.GetEventID(),
-            Self::RichMedia(message) => message.GetEventID(),
+            Self::Message(message) => message.event_id(),
+            Self::RichMedia(message) => message.event_id(),
         }
-    }
-
-    /// Send type accessor.
-    #[allow(non_snake_case)]
-    pub const fn GetSendType(&self) -> SendType {
-        self.send_type()
-    }
-}
-
-impl APIMessage for MessageToCreate {
-    fn GetEventID(&self) -> &str {
-        self.GetEventID()
-    }
-
-    fn GetSendType(&self) -> SendType {
-        self.GetSendType()
-    }
-}
-
-impl APIMessage for RichMediaMessage {
-    fn GetEventID(&self) -> &str {
-        self.GetEventID()
-    }
-
-    fn GetSendType(&self) -> SendType {
-        self.GetSendType()
-    }
-}
-
-impl APIMessage for ApiMessage {
-    fn GetEventID(&self) -> &str {
-        self.GetEventID()
-    }
-
-    fn GetSendType(&self) -> SendType {
-        self.GetSendType()
     }
 }
 
@@ -99,16 +51,6 @@ impl From<MessageToCreate> for ApiMessage {
 impl From<RichMediaMessage> for ApiMessage {
     fn from(message: RichMediaMessage) -> Self {
         Self::RichMedia(message)
-    }
-}
-
-impl APIMessage for Reference {
-    fn GetEventID(&self) -> &str {
-        self.message_id.as_deref().unwrap_or("")
-    }
-
-    fn GetSendType(&self) -> SendType {
-        SendType::Text
     }
 }
 

@@ -1,13 +1,13 @@
 #[cfg(test)]
 mod tests {
     use super::super::{
-        APIMessage, ActionButton, ActionTypeSubscribe, ApiMessage, Ark, ArkKv, ArkObj, ArkObjKv,
+        ActionButton, ActionTypeSubscribe, ApiMessage, Ark, ArkKv, ArkObj, ArkObjKv,
         C2CMessageParams, DirectMessage, ETLInput, Embed, Emoji, GroupMessageParams, InputNotify,
         Keyboard, KeyboardButton, KeyboardButtonAction, KeyboardButtonPermission,
         KeyboardButtonRenderData, KeyboardContent, KeyboardModal, KeyboardRow, KeyboardStyle,
-        KeyboardSubscribeData, KeyboardTemplateId, MPTBefore, MarkdownParam, MarkdownPayload,
-        MarkdownStyle, Media, MediaInfo, MentionAllUser, MentionChannel, MentionUser, Message,
-        MessageAttachment, MessageAudit, MessageCreateType, MessageParams, MessageReference,
+        KeyboardSubscribeData, KeyboardTemplateId, MarkdownParam, MarkdownPayload, MarkdownStyle,
+        Media, MediaInfo, MentionAllUser, MentionChannel, MentionUser, Message, MessageAttachment,
+        MessageAudit, MessageCreateType, MessagePagerType, MessageParams, MessageReference,
         MessageToCreate, MessageUser, MessagesPager, ParseCommand, Reference, RichMediaMessage,
         SendType, Stream,
     };
@@ -83,16 +83,15 @@ mod tests {
             ignore_get_message_error: Some(true),
         };
 
-        assert_eq!(message.GetEventID(), "event-1");
-        assert_eq!(message.GetSendType(), SendType::Text);
-        assert_eq!(rich_media.GetEventID(), "");
-        assert_eq!(rich_media.GetSendType(), SendType::RichMedia);
-        assert_eq!(reference.GetEventID(), "message-1");
-        assert_eq!(reference.GetSendType(), SendType::Text);
+        assert_eq!(message.event_id(), "event-1");
+        assert_eq!(message.send_type(), SendType::Text);
+        assert_eq!(rich_media.event_id(), "");
+        assert_eq!(rich_media.send_type(), SendType::RichMedia);
+        assert_eq!(reference.message_id.as_deref(), Some("message-1"));
 
         let api_message = ApiMessage::from(message);
-        assert_eq!(api_message.GetEventID(), "event-1");
-        assert_eq!(api_message.GetSendType(), SendType::Text);
+        assert_eq!(api_message.event_id(), "event-1");
+        assert_eq!(api_message.send_type(), SendType::Text);
     }
 
     #[test]
@@ -577,8 +576,8 @@ mod tests {
 
     #[test]
     fn messages_pager_query_params() {
-        let pager = MessagesPager::new(Some(MPTBefore), Some("msg-1"), Some(20));
-        let query = pager.QueryParams();
+        let pager = MessagesPager::new(Some(MessagePagerType::Before), Some("msg-1"), Some(20));
+        let query = pager.query_params();
 
         assert_eq!(query.get("before").map(String::as_str), Some("msg-1"));
         assert_eq!(query.get("limit").map(String::as_str), Some("20"));
@@ -586,8 +585,8 @@ mod tests {
 
     #[test]
     fn messages_pager_omits_empty_query_params() {
-        let pager = MessagesPager::new(Some(MPTBefore), Some(""), Some(""));
-        assert!(pager.QueryParams().is_empty());
+        let pager = MessagesPager::new(Some(MessagePagerType::Before), Some(""), Some(""));
+        assert!(pager.query_params().is_empty());
     }
 
     #[test]

@@ -266,14 +266,14 @@ fn update_guild_mute_response_omits_empty_user_ids() {
 fn pager_query_params_match_official_priority() {
     let members = GuildMembersPager::new("user-1", 100);
     assert_eq!(
-        members.QueryParams().get("after").map(String::as_str),
+        members.query_params().get("after").map(String::as_str),
         Some("user-1")
     );
 
     let role_members = GuildRoleMembersPager::new("next-1", 50);
     assert_eq!(
         role_members
-            .QueryParams()
+            .query_params()
             .get("start_index")
             .map(String::as_str),
         Some("next-1")
@@ -283,7 +283,7 @@ fn pager_query_params_match_official_priority() {
         .with_before("before-1")
         .with_after("after-1")
         .with_limit(20);
-    let query = guilds.QueryParams();
+    let query = guilds.query_params();
     assert_eq!(query.get("after").map(String::as_str), Some("after-1"));
     assert!(!query.contains_key("before"));
 }
@@ -346,9 +346,10 @@ fn member_add_role_body_matches_botgo_json_shape() {
 
 #[test]
 fn member_delete_options_match_botgo_option_shape() {
-    let mut options = MemberDeleteOptions::new().with_delete_history_msg_days(99);
-    WithAddBlackList(true)(&mut options);
-    WithDeleteHistoryMsg(42)(&mut options);
+    let options = MemberDeleteOptions::new()
+        .with_delete_history_msg_days(99)
+        .with_add_blacklist(true)
+        .with_delete_history_msg_days(42);
 
     assert_eq!(options.delete_history_msg_days, 42);
     assert_eq!(
@@ -359,5 +360,5 @@ fn member_delete_options_match_botgo_option_shape() {
         })
     );
 
-    assert_eq!(normalize_delete_history_msg_days(42), NoDelete);
+    assert_eq!(normalize_delete_history_msg_days(42), NO_DELETE);
 }

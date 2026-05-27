@@ -35,12 +35,6 @@ impl GuildMembersPager {
         insert_query_param(&mut query, "after", &self.after);
         query
     }
-
-    /// Query parameter accessor.
-    #[allow(non_snake_case)]
-    pub fn QueryParams(&self) -> HashMap<String, String> {
-        self.query_params()
-    }
 }
 
 impl Pager for GuildMembersPager {
@@ -75,12 +69,6 @@ impl GuildRoleMembersPager {
         insert_query_param(&mut query, "limit", &self.limit);
         insert_query_param(&mut query, "start_index", &self.start_index);
         query
-    }
-
-    /// Query parameter accessor.
-    #[allow(non_snake_case)]
-    pub fn QueryParams(&self) -> HashMap<String, String> {
-        self.query_params()
     }
 }
 
@@ -134,12 +122,6 @@ impl GuildPager {
             insert_query_param(&mut query, "before", &self.before);
         }
         query
-    }
-
-    /// Query parameter accessor.
-    #[allow(non_snake_case)]
-    pub fn QueryParams(&self) -> HashMap<String, String> {
-        self.query_params()
     }
 }
 

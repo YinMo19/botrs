@@ -6,7 +6,7 @@ mod types;
 
 pub(crate) use types::option_message_type_is_none_or_zero;
 
-pub use api_message::{APIMessage, ApiMessage};
+pub use api_message::ApiMessage;
 pub use components::{ActionButton, InputNotify, MediaInfo, PromptKeyboard, Stream};
 pub use create::MessageToCreate;
 pub use rich_media::RichMediaMessage;
