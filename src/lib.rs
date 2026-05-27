@@ -31,10 +31,6 @@ pub use client::{Client, Context, EventHandler};
 pub use constant::*;
 pub use error::{BotError, Result};
 pub use intents::Intents;
-pub use interaction::{
-    Interaction, InteractionData, InteractionDataType, InteractionType, SearchInputResolved,
-    SearchLayout, SearchRecord, SearchRsp,
-};
 pub use models::gateway::Ready;
 pub use models::*;
 pub use signature::{HEADER_SIGNATURE, HEADER_TIMESTAMP, generate, verify};
