@@ -95,10 +95,10 @@ pub struct Interaction {
 ## Reactions
 
 ```rust
-pub struct MessageReaction { pub user_id: Snowflake, pub channel_id: Snowflake, pub guild_id: Snowflake, pub target: ReactionTarget, pub emoji: ReactionEmoji }
+pub struct MessageReaction { pub user_id: Snowflake, pub channel_id: Snowflake, pub guild_id: Snowflake, pub target: ReactionTarget, pub emoji: Emoji }
 pub struct ReactionTarget  { pub id: String, #[serde(rename = "type")] pub target_type: ReactionTargetType }
 pub enum   ReactionTargetType { Message = 0, Subject = 1, Bot = 2 }
-pub struct ReactionEmoji   { pub id: String, #[serde(rename = "type")] pub emoji_type: u32 }
+pub struct Emoji            { pub id: String, #[serde(rename = "type")] pub emoji_type: i32 }
 pub struct ReactionUsers   { pub users: Vec<User>, pub cookie: String, pub is_end: bool }
 ```
 

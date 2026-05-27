@@ -45,10 +45,6 @@ pub use manage::{
 };
 pub use models::gateway::Ready;
 pub use models::*;
-pub use reaction::{
-    Emoji as ReactionEmoji, MessageReaction, MessageReactionPager, Reaction, ReactionTarget,
-    ReactionTargetType, ReactionUsers,
-};
 pub use signature::{HEADER_SIGNATURE, HEADER_TIMESTAMP, generate, verify};
 pub use token::{Token, start_access_token_refresh};
 pub use webhook::{dispatch_ack, handle_http_callback, heartbeat_ack, validation_ack};
