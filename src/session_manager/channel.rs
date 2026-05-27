@@ -46,7 +46,7 @@ impl ChanManager {
         })
     }
 
-    pub fn with_connect_fn<F>(connect_fn: F) -> Self
+    fn with_connect_fn<F>(connect_fn: F) -> Self
     where
         F: Fn(Session, mpsc::UnboundedSender<GatewayEvent>) -> SessionFuture
             + Send
