@@ -105,6 +105,13 @@ impl Token {
         self.authorization_header().await
     }
 
+    /// Returns the raw OAuth access token without the token type prefix.
+    ///
+    /// Botgo uses the bare access token for gateway resume payloads.
+    pub(crate) async fn raw_access_token(&self) -> Result<String> {
+        self.access_token().await
+    }
+
     /// Ensures the token has a valid access token, refreshing if necessary.
     pub(super) async fn ensure_valid_token(&self) -> Result<()> {
         let current_time = SystemTime::now()
