@@ -14,7 +14,7 @@ pub use errors::{
 pub use factory::{SessionManagerFactory, new_session_manager, set_session_manager_factory};
 pub use limit::{calc_interval, check_session_limit};
 pub use session::Session;
-pub use traits::{BoxedSessionManager, SessionConnectFn, SessionFuture, SessionManager};
+pub use traits::{BoxedSessionManager, SessionManager};
 
 #[cfg(test)]
 mod tests;

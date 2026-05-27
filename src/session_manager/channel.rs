@@ -1,11 +1,12 @@
+use std::future::Future;
+use std::pin::Pin;
 use std::sync::Arc;
 
 use tokio::sync::mpsc;
 use tracing::{debug, error, info};
 
 use super::{
-    Session, SessionConnectFn, SessionFuture, SessionManager, calc_interval, can_not_identify,
-    can_not_resume, check_session_limit,
+    Session, SessionManager, calc_interval, can_not_identify, can_not_resume, check_session_limit,
 };
 use crate::error::BotError;
 use crate::gateway::Gateway;
@@ -13,6 +14,10 @@ use crate::intents::Intents;
 use crate::models::api::GatewayResponse;
 use crate::models::gateway::GatewayEvent;
 use crate::token::Token;
+
+pub(super) type SessionFuture = Pin<Box<dyn Future<Output = (Session, crate::Result<()>)> + Send>>;
+pub(super) type SessionConnectFn =
+    dyn Fn(Session, mpsc::UnboundedSender<GatewayEvent>) -> SessionFuture + Send + Sync;
 
 /// Local, channel-backed default session manager.
 #[derive(Clone)]

@@ -1,8 +1,8 @@
-use std::sync::Arc;
 use std::time::Duration;
 
 use tokio::sync::mpsc;
 
+use super::channel::SessionFuture;
 use super::*;
 use crate::error::{
     CODE_CONN_CLOSE_CANT_IDENTIFY, CODE_CONN_CLOSE_CANT_RESUME, CODE_NEED_RECONNECT, sdk_error,
@@ -80,7 +80,7 @@ fn app_id_session_matches_webhook_shape() {
 async fn non_resumable_error_clears_session_before_requeue() {
     let (session_tx, mut session_rx) = mpsc::unbounded_channel();
     let (event_tx, _event_rx) = mpsc::unbounded_channel();
-    let connect_fn: Arc<SessionConnectFn> = Arc::new(|session, _event_sender| {
+    let connect_fn = std::sync::Arc::new(|session: Session, _event_sender| -> SessionFuture {
         Box::pin(async move {
             let mut next = session;
             next.id = "stale-session".to_string();
