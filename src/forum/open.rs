@@ -44,7 +44,7 @@ pub struct ForumAuditResult {
 
 impl ForumAuditResult {
     /// Create a forum audit result from gateway data.
-    pub fn new(event_id: Option<String>, data: &Value) -> Self {
+    pub(crate) fn new(event_id: Option<String>, data: &Value) -> Self {
         let mut result = serde_json::from_value::<Self>(data.clone()).unwrap_or_default();
         result.event_id = event_id;
         result
@@ -77,7 +77,7 @@ struct OpenThreadWire {
 
 impl OpenThread {
     /// Builds an open forum event from the gateway payload.
-    pub fn new(data: &Value) -> Self {
+    pub(crate) fn new(data: &Value) -> Self {
         let wire: OpenThreadWire = serde_json::from_value(data.clone()).unwrap_or_default();
         Self {
             event_id: None,

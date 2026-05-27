@@ -132,7 +132,7 @@ struct ThreadWire {
 
 impl Thread {
     /// Builds a forum thread event from the gateway payload.
-    pub fn new(event_id: Option<String>, data: &Value) -> Self {
+    pub(crate) fn new(event_id: Option<String>, data: &Value) -> Self {
         let wire: ThreadWire = serde_json::from_value(data.clone()).unwrap_or_default();
         Self {
             thread_info: wire.thread_info,
@@ -188,7 +188,7 @@ struct PostWire {
 
 impl Post {
     /// Create a new Post instance.
-    pub fn new(event_id: Option<String>, data: &Value) -> Self {
+    pub(crate) fn new(event_id: Option<String>, data: &Value) -> Self {
         let wire: PostWire = serde_json::from_value(data.clone()).unwrap_or_default();
         Self {
             guild_id: wire.guild_id,
@@ -234,7 +234,7 @@ struct ReplyWire {
 
 impl Reply {
     /// Create a new Reply instance.
-    pub fn new(event_id: Option<String>, data: &Value) -> Self {
+    pub(crate) fn new(event_id: Option<String>, data: &Value) -> Self {
         let wire: ReplyWire = serde_json::from_value(data.clone()).unwrap_or_default();
         Self {
             guild_id: wire.guild_id,
