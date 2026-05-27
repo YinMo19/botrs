@@ -1,7 +1,8 @@
-use super::EventParseFn;
 use super::handlers::*;
 use crate::models::gateway::*;
 use std::sync::{LazyLock, RwLock};
+
+type EventParseFn = fn(&mut WSPayload, &[u8]) -> crate::Result<()>;
 
 static EVENT_PARSE_HANDLERS: LazyLock<RwLock<Vec<(OpCode, EventType, EventParseFn)>>> =
     LazyLock::new(|| RwLock::new(default_event_handlers()));
