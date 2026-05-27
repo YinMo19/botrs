@@ -1,9 +1,6 @@
 use std::fmt;
 
-use super::{
-    BotError, CODE_CONN_CLOSE_CANT_IDENTIFY, CODE_CONN_CLOSE_CANT_RESUME, CODE_NEED_RECONNECT,
-    CODE_NOT_FOUND_OPEN_API, CODE_PAGER_IS_NIL,
-};
+use super::{BotError, CODE_CONN_CLOSE_CANT_IDENTIFY, CODE_CONN_CLOSE_CANT_RESUME};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SdkError {
@@ -50,14 +47,6 @@ pub fn sdk_error(code: i32, message: impl Into<String>) -> SdkError {
     SdkError::new(code, message, None::<String>)
 }
 
-pub fn sdk_error_with_trace(
-    code: i32,
-    message: impl Into<String>,
-    trace_id: impl Into<String>,
-) -> SdkError {
-    SdkError::new(code, message, Some(trace_id))
-}
-
 pub fn sdk_error_from_error(err: &(dyn std::error::Error + 'static)) -> SdkError {
     if let Some(err) = err.downcast_ref::<SdkError>() {
         return err.clone();
@@ -68,22 +57,10 @@ pub fn sdk_error_from_error(err: &(dyn std::error::Error + 'static)) -> SdkError
     SdkError::new(9999, err.to_string(), None::<String>)
 }
 
-pub fn need_reconnect_error() -> SdkError {
-    SdkError::new(CODE_NEED_RECONNECT, "need reconnect", None::<String>)
-}
-
 pub fn invalid_session_error() -> SdkError {
     SdkError::new(
         CODE_CONN_CLOSE_CANT_RESUME,
         "invalid session",
-        None::<String>,
-    )
-}
-
-pub fn invalid_url_error() -> SdkError {
-    SdkError::new(
-        CODE_CONN_CLOSE_CANT_IDENTIFY,
-        "ws ap url is invalid",
         None::<String>,
     )
 }
@@ -94,16 +71,4 @@ pub fn session_limit_error() -> SdkError {
         "session num limit",
         None::<String>,
     )
-}
-
-pub fn openapi_not_found_error() -> SdkError {
-    SdkError::new(
-        CODE_NOT_FOUND_OPEN_API,
-        "not found openapi version",
-        None::<String>,
-    )
-}
-
-pub fn missing_pager_error() -> SdkError {
-    SdkError::new(CODE_PAGER_IS_NIL, "pager is nil", None::<String>)
 }

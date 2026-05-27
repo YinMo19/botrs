@@ -16,9 +16,7 @@ pub use bot_error::{BotError, IntoBotError};
 pub use codes::*;
 pub use http::http_error_from_status;
 pub use sdk::{
-    SdkError, invalid_session_error, invalid_url_error, missing_pager_error, need_reconnect_error,
-    openapi_not_found_error, sdk_error, sdk_error_from_error, sdk_error_with_trace,
-    session_limit_error,
+    SdkError, invalid_session_error, sdk_error, sdk_error_from_error, session_limit_error,
 };
 
 #[cfg(test)]
