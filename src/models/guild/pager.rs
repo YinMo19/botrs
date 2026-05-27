@@ -77,26 +77,6 @@ pub struct GuildPager {
 }
 
 impl GuildPager {
-    /// Creates an empty guild pager.
-    pub fn new() -> Self {
-        Self::default()
-    }
-
-    pub fn with_after(mut self, after: impl Into<String>) -> Self {
-        self.after = Some(after.into());
-        self
-    }
-
-    pub fn with_before(mut self, before: impl Into<String>) -> Self {
-        self.before = Some(before.into());
-        self
-    }
-
-    pub fn with_limit(mut self, limit: impl ToString) -> Self {
-        self.limit = Some(limit.to_string());
-        self
-    }
-
     /// Converts the pager to query parameters.
     pub fn query_params(&self) -> HashMap<String, String> {
         let mut query = HashMap::new();

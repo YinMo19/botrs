@@ -24,15 +24,16 @@ impl BotApi {
         limit: Option<u32>,
         desc: Option<bool>,
     ) -> Result<Vec<Guild>> {
-        let mut pager = GuildPager::new();
-        pager = pager.with_limit(limit.unwrap_or(100));
-        if let Some(guild_id) = guild_id {
-            pager = if desc.unwrap_or(false) {
-                pager.with_before(guild_id)
-            } else {
-                pager.with_after(guild_id)
-            };
-        }
+        let (before, after) = match (guild_id, desc.unwrap_or(false)) {
+            (Some(guild_id), true) => (Some(guild_id.to_string()), None),
+            (Some(guild_id), false) => (None, Some(guild_id.to_string())),
+            (None, _) => (None, None),
+        };
+        let pager = GuildPager {
+            before,
+            after,
+            limit: Some(limit.unwrap_or(100).to_string()),
+        };
         self.get_guilds_with_pager(&pager).await
     }
 

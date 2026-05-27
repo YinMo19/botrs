@@ -271,10 +271,11 @@ fn pager_query_params_match_official_priority() {
         Some("next-1")
     );
 
-    let guilds = GuildPager::new()
-        .with_before("before-1")
-        .with_after("after-1")
-        .with_limit(20);
+    let guilds = GuildPager {
+        before: Some("before-1".to_string()),
+        after: Some("after-1".to_string()),
+        limit: Some("20".to_string()),
+    };
     let query = guilds.query_params();
     assert_eq!(query.get("after").map(String::as_str), Some("after-1"));
     assert!(!query.contains_key("before"));
