@@ -1,4 +1,4 @@
-use super::{InteractionData, InteractionDataType, InteractionType};
+use super::{InteractionData, InteractionType};
 use crate::models::serde_helpers::{deserialize_string_or_number, is_default};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -70,33 +70,6 @@ impl Interaction {
             timestamp: wire.timestamp,
             version: wire.version,
         }
-    }
-
-    /// Check if this is a button interaction
-    pub fn is_button_interaction(&self) -> bool {
-        matches!(
-            self.data.data_type,
-            Some(InteractionDataType::InlineKeyboardButtonClick)
-        )
-    }
-
-    /// Check if this is a command interaction
-    pub fn is_command_interaction(&self) -> bool {
-        matches!(
-            self.interaction_type,
-            Some(InteractionType::ApplicationCommand)
-        )
-    }
-
-    /// Get the button ID if this is a button interaction
-    pub fn button_id(&self) -> Option<&str> {
-        (!self.data.resolved.button_id.is_empty()).then_some(self.data.resolved.button_id.as_str())
-    }
-
-    /// Get the button data if this is a button interaction
-    pub fn button_data(&self) -> Option<&str> {
-        (!self.data.resolved.button_data.is_empty())
-            .then_some(self.data.resolved.button_data.as_str())
     }
 }
 
