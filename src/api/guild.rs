@@ -42,7 +42,10 @@ impl BotApi {
         after: Option<&str>,
         limit: Option<u32>,
     ) -> Result<Vec<Member>> {
-        let pager = GuildMembersPager::new(after.unwrap_or("0"), limit.unwrap_or(1).to_string());
+        let pager = GuildMembersPager {
+            after: Some(after.unwrap_or("0").to_string()),
+            limit: Some(limit.unwrap_or(1).to_string()),
+        };
         self.get_guild_members_with_pager(guild_id, &pager).await
     }
 
@@ -69,8 +72,10 @@ impl BotApi {
         start_index: Option<&str>,
         limit: Option<u32>,
     ) -> Result<GuildRoleMembers> {
-        let pager =
-            GuildRoleMembersPager::new(start_index.unwrap_or("0"), limit.unwrap_or(1).to_string());
+        let pager = GuildRoleMembersPager {
+            start_index: Some(start_index.unwrap_or("0").to_string()),
+            limit: Some(limit.unwrap_or(1).to_string()),
+        };
         self.get_guild_role_members_with_pager(guild_id, role_id, &pager)
             .await
     }

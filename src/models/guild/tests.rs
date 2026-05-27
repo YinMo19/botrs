@@ -250,13 +250,19 @@ fn update_guild_mute_response_omits_empty_user_ids() {
 
 #[test]
 fn pager_query_params_match_official_priority() {
-    let members = GuildMembersPager::new("user-1", 100);
+    let members = GuildMembersPager {
+        after: Some("user-1".to_string()),
+        limit: Some("100".to_string()),
+    };
     assert_eq!(
         members.query_params().get("after").map(String::as_str),
         Some("user-1")
     );
 
-    let role_members = GuildRoleMembersPager::new("next-1", 50);
+    let role_members = GuildRoleMembersPager {
+        start_index: Some("next-1".to_string()),
+        limit: Some("50".to_string()),
+    };
     assert_eq!(
         role_members
             .query_params()

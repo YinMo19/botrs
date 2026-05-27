@@ -20,14 +20,6 @@ pub struct GuildMembersPager {
 }
 
 impl GuildMembersPager {
-    /// Creates a new guild members pager.
-    pub fn new(after: impl Into<String>, limit: impl ToString) -> Self {
-        Self {
-            after: Some(after.into()),
-            limit: Some(limit.to_string()),
-        }
-    }
-
     /// Converts the pager to query parameters.
     pub fn query_params(&self) -> HashMap<String, String> {
         let mut query = HashMap::new();
@@ -55,14 +47,6 @@ pub struct GuildRoleMembersPager {
 }
 
 impl GuildRoleMembersPager {
-    /// Creates a new guild role members pager.
-    pub fn new(start_index: impl Into<String>, limit: impl ToString) -> Self {
-        Self {
-            start_index: Some(start_index.into()),
-            limit: Some(limit.to_string()),
-        }
-    }
-
     /// Converts the pager to query parameters.
     pub fn query_params(&self) -> HashMap<String, String> {
         let mut query = HashMap::new();
