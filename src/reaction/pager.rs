@@ -23,14 +23,6 @@ pub struct MessageReactionPager {
 }
 
 impl MessageReactionPager {
-    /// Creates a new message reaction pager.
-    pub fn new(cookie: Option<impl Into<String>>, limit: Option<impl ToString>) -> Self {
-        Self {
-            cookie: cookie.map(Into::into),
-            limit: limit.map(|value| value.to_string()),
-        }
-    }
-
     /// Converts the pager to query parameters.
     pub fn query_params(&self) -> std::collections::HashMap<String, String> {
         let mut query = std::collections::HashMap::new();

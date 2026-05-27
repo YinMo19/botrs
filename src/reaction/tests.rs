@@ -23,14 +23,20 @@ fn test_reaction_target_type_from() {
 
 #[test]
 fn test_emoji_creation() {
-    let emoji = Emoji::new("emoji123", 1);
+    let emoji = Emoji {
+        id: "emoji123".to_string(),
+        emoji_type: 1,
+    };
     assert_eq!(emoji.id, "emoji123");
     assert_eq!(emoji.emoji_type, 1);
 }
 
 #[test]
 fn test_reaction_target_creation() {
-    let target = ReactionTarget::new("target123", ReactionTargetType::Message);
+    let target = ReactionTarget {
+        id: "target123".to_string(),
+        target_type: ReactionTargetType::Message,
+    };
     assert_eq!(target.id, "target123");
     assert_eq!(target.target_type, ReactionTargetType::Message);
 }
@@ -50,13 +56,19 @@ fn test_reaction_user_creation() {
 
 #[test]
 fn message_reaction_keeps_official_dto_shape() {
-    let reaction = MessageReaction::new(
-        "user-1",
-        "channel-1",
-        "guild-1",
-        ReactionTarget::new("message-1", ReactionTargetType::Message),
-        Emoji::new("43", 1),
-    );
+    let reaction = MessageReaction {
+        user_id: "user-1".to_string(),
+        channel_id: "channel-1".to_string(),
+        guild_id: "guild-1".to_string(),
+        target: ReactionTarget {
+            id: "message-1".to_string(),
+            target_type: ReactionTargetType::Message,
+        },
+        emoji: Emoji {
+            id: "43".to_string(),
+            emoji_type: 1,
+        },
+    };
     let value = serde_json::to_value(&reaction).unwrap();
 
     assert_eq!(value["user_id"], "user-1");
@@ -95,13 +107,19 @@ fn message_reaction_uses_required_zero_value_fields() {
 fn reaction_event_id_is_internal_only() {
     let reaction = Reaction::from_message_reaction(
         Some("event-1".to_string()),
-        MessageReaction::new(
-            "user-1",
-            "channel-1",
-            "guild-1",
-            ReactionTarget::new("message-1", ReactionTargetType::Message),
-            Emoji::new("43", 1),
-        ),
+        MessageReaction {
+            user_id: "user-1".to_string(),
+            channel_id: "channel-1".to_string(),
+            guild_id: "guild-1".to_string(),
+            target: ReactionTarget {
+                id: "message-1".to_string(),
+                target_type: ReactionTargetType::Message,
+            },
+            emoji: Emoji {
+                id: "43".to_string(),
+                emoji_type: 1,
+            },
+        },
     );
 
     assert_eq!(reaction.event_id.as_deref(), Some("event-1"));
@@ -137,7 +155,10 @@ fn reaction_users_omits_empty_response_fields() {
 
 #[test]
 fn reaction_pager_query_params() {
-    let pager = MessageReactionPager::new(Some("cursor-1"), Some(20));
+    let pager = MessageReactionPager {
+        cookie: Some("cursor-1".to_string()),
+        limit: Some("20".to_string()),
+    };
     let query = pager.query_params();
 
     assert_eq!(query.get("cookie").map(String::as_str), Some("cursor-1"));
@@ -146,6 +167,9 @@ fn reaction_pager_query_params() {
 
 #[test]
 fn reaction_pager_omits_empty_query_params() {
-    let pager = MessageReactionPager::new(Some(""), Some(""));
+    let pager = MessageReactionPager {
+        cookie: Some(String::new()),
+        limit: Some(String::new()),
+    };
     assert!(pager.query_params().is_empty());
 }

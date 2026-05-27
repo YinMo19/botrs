@@ -22,22 +22,3 @@ pub struct MessageReaction {
     #[serde(default)]
     pub emoji: Emoji,
 }
-
-impl MessageReaction {
-    /// Creates a message reaction DTO.
-    pub fn new(
-        user_id: impl Into<Snowflake>,
-        channel_id: impl Into<Snowflake>,
-        guild_id: impl Into<Snowflake>,
-        target: ReactionTarget,
-        emoji: Emoji,
-    ) -> Self {
-        Self {
-            user_id: user_id.into(),
-            channel_id: channel_id.into(),
-            guild_id: guild_id.into(),
-            target,
-            emoji,
-        }
-    }
-}

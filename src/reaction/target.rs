@@ -12,13 +12,3 @@ pub struct ReactionTarget {
     #[serde(default, rename = "type")]
     pub target_type: ReactionTargetType,
 }
-
-impl ReactionTarget {
-    /// Creates a new ReactionTarget instance.
-    pub fn new(id: impl Into<String>, target_type: ReactionTargetType) -> Self {
-        Self {
-            id: id.into(),
-            target_type,
-        }
-    }
-}
