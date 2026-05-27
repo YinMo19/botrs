@@ -110,9 +110,7 @@ pub struct ReactionUsers   { pub users: Vec<User>, pub cookie: String, pub is_en
 
 ```rust
 pub struct Ready             { pub user: User, pub session_id: String, pub shard: [u32; 2], pub version: u32 }
-pub struct ConnectionSession { /* internal: id, shard, gateway URL, last seq, … */ }
-pub enum   ConnectionState   { Disconnected, Connecting, Connected, Reconnecting, Closed }
-pub struct Session           { pub id: String, pub url: String, pub token: String, pub shards: u32, pub last_seq: u64 }
+pub struct Session           { pub id: String, pub url: String, pub token: Token, pub intent: Intents, pub last_seq: u64, /* … */ }
 pub struct SessionStartLimit { pub total: u32, pub remaining: u32, pub reset_after: u64, pub max_concurrency: u32 }
 ```
 
