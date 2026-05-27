@@ -52,7 +52,7 @@ pub struct Interaction {
 
 impl Interaction {
     /// Builds an interaction event from the gateway payload.
-    pub fn new(event_id: Option<String>, data: &Value) -> Self {
+    pub(crate) fn new(event_id: Option<String>, data: &Value) -> Self {
         let wire: InteractionWire = serde_json::from_value(data.clone()).unwrap_or_default();
         Self {
             event_id,
