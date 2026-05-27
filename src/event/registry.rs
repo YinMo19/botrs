@@ -52,6 +52,7 @@ fn default_event_handlers() -> Vec<(OpCode, EventType, EventParseFn)> {
     .collect()
 }
 
+#[cfg(test)]
 pub fn register_handler(op_code: OpCode, event_type: impl Into<EventType>, handler: EventParseFn) {
     let event_type = event_type.into();
     let mut handlers = EVENT_PARSE_HANDLERS

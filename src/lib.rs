@@ -10,7 +10,7 @@ pub mod audio;
 pub mod client;
 pub mod constant;
 pub mod error;
-pub mod event;
+mod event;
 pub mod forum;
 pub mod gateway;
 pub mod http;
@@ -30,16 +30,6 @@ pub use audio::{Audio, AudioControl, AudioStatus, PublicAudio, PublicAudioType};
 pub use client::{Client, Context, EventHandler};
 pub use constant::*;
 pub use error::{BotError, Result};
-pub use event::{
-    ATMessageEventHandler, AudioEventHandler, C2CFriendEventHandler, C2CMessageEventHandler,
-    ChannelEventHandler, DirectMessageDeleteEventHandler, DirectMessageEventHandler,
-    EnterAIOEventHandler, ForumAuditEventHandler, GroupATMessageEventHandler, GuildEventHandler,
-    GuildMemberEventHandler, InteractionEventHandler, MessageAuditEventHandler,
-    MessageDeleteEventHandler, MessageEventHandler, MessageReactionEventHandler, PlainEventHandler,
-    PostEventHandler, PublicMessageDeleteEventHandler, ReplyEventHandler,
-    SubscribeMsgStatusEventHandler, ThreadEventHandler, parse_and_handle, parse_data,
-    register_handler, register_handlers,
-};
 pub use forum::{
     Content, Format, ForumAuditResult, ForumRsp, OpenThread, Post, PostInfo, PostThreadRsp, Reply,
     ReplyInfo, Thread, ThreadInfo, ThreadToCreate, Title,
