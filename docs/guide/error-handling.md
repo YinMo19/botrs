@@ -69,7 +69,7 @@ Keep these loops bounded — there is no protection against an infinite retry in
 
 ## Status code mapping
 
-`http_error_from_status(status, message)` is the conversion the HTTP layer applies internally. It's exposed if you build your own clients on top of `HttpClient`:
+The HTTP layer maps status codes into `BotError` variants before returning from `BotApi` calls:
 
 | Status      | Variant                       |
 |-------------|-------------------------------|

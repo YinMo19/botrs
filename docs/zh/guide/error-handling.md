@@ -69,7 +69,7 @@ loop {
 
 ## 状态码映射
 
-`http_error_from_status(status, message)` 是 HTTP 层内部的转换函数，若你在 `HttpClient` 之上构建自己的客户端可以直接使用：
+HTTP 层会先把状态码映射为 `BotError` 变体，再从 `BotApi` 调用返回：
 
 | 状态码      | 变体                           |
 |-------------|--------------------------------|

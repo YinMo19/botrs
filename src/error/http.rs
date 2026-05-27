@@ -1,7 +1,7 @@
 use super::BotError;
 
 /// Maps HTTP status codes to specific error types.
-pub fn http_error_from_status(status: u16, message: String) -> BotError {
+pub(crate) fn http_error_from_status(status: u16, message: String) -> BotError {
     match status {
         401 => BotError::AuthenticationFailed(message),
         403 => BotError::Forbidden(message),
