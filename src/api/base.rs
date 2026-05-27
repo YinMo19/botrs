@@ -1,4 +1,4 @@
-use super::{API_V1, APIVersion, BotApi};
+use super::BotApi;
 use crate::error::Result;
 use crate::http::HttpClient;
 use crate::token::Token;
@@ -52,11 +52,6 @@ impl BotApi {
         let token = Token::new(bot_app_id, secret);
         let http = HttpClient::new(crate::DEFAULT_TIMEOUT, in_sandbox)?;
         Ok(Self::new(http, token))
-    }
-
-    /// Returns the OpenAPI version implemented by this client.
-    pub const fn version(&self) -> APIVersion {
-        API_V1
     }
 
     /// Returns a client configured with the given request timeout.

@@ -28,16 +28,10 @@
 use crate::http::HttpClient;
 use crate::token::Token;
 
-pub type APIVersion = u32;
-pub const API_V1: APIVersion = 1;
 /// Default idle connection count for the OpenAPI v1 client.
 pub const DEFAULT_MAX_IDLE_CONNS: usize = 3000;
 /// HTTP header carrying the bot app id for interaction callbacks.
 pub const HEADER_CALLBACK_APP_ID: &str = "X-Callback-AppID";
-
-pub fn api_version_string(version: APIVersion) -> String {
-    format!("v{version}")
-}
 
 /// Bot API client for the QQ Guild Bot API.
 #[derive(Clone)]
@@ -83,7 +77,7 @@ mod tests {
     use crate::http::HttpClient;
     use std::time::Duration;
 
-    use super::{API_V1, BotApi, api_version_string};
+    use super::BotApi;
 
     #[test]
     fn test_api_creation() {
@@ -96,8 +90,6 @@ mod tests {
     #[test]
     fn test_base_helpers() {
         let api = BotApi::setup("app-id", "secret", true).unwrap();
-        assert_eq!(api.version(), API_V1);
-        assert_eq!(api_version_string(api.version()), "v1");
         assert_eq!(api.token().app_id(), "app-id");
         assert_eq!(api.get_app_id(), "app-id");
         assert_eq!(api.http().union_app_id(), Some("app-id"));
