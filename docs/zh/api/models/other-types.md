@@ -65,7 +65,7 @@ pub struct APIPermissionDemandIdentify  { pub path: String, pub method: String }
 ## 精华、公告、推送配置
 
 - `PinsMessage { guild_id, channel_id, message_ids: Vec<Snowflake> }` —— `get_pins` 的返回值。
-- `Announce`（别名 `Announces`）—— 见 [`announce.rs`](https://github.com/YinMo19/botrs/blob/main/src/models/announce.rs)；配套有 `RecommendChannel`、`ChannelAnnouncesToCreate`、`GuildAnnouncesToCreate`。
+- `Announce` —— 见 [`announce.rs`](https://github.com/YinMo19/botrs/blob/main/src/models/announce.rs)；配套有 `RecommendChannel`、`ChannelAnnouncesToCreate`、`GuildAnnouncesToCreate`。
 - `MessageSetting { disable_create_dm: bool, disable_push_msg: bool, channel_ids: Vec<Snowflake>, channel_push_max_num: i32 }` —— 每个字段都跳过零值，与协议保持一致。
 
 ## 互动事件

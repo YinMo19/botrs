@@ -69,7 +69,7 @@ fn api_error_accepts_current_err_code_field() {
 
 #[test]
 fn websocket_ap_keeps_official_json_shape() {
-    let ap: WebsocketAP = serde_json::from_value(serde_json::json!({
+    let ap: GatewayResponse = serde_json::from_value(serde_json::json!({
         "url": "wss://api.sgroup.qq.com/websocket",
         "shards": 2,
         "session_start_limit": {

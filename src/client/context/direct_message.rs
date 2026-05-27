@@ -3,10 +3,7 @@ use crate::client::prelude::*;
 
 impl Context {
     /// Creates a direct message session.
-    pub async fn create_direct_message(
-        &self,
-        dm: &DirectMessageToCreate,
-    ) -> Result<DirectMessageSession> {
+    pub async fn create_direct_message(&self, dm: &DirectMessageToCreate) -> Result<DirectMessage> {
         self.api.create_direct_message(&self.token, dm).await
     }
 

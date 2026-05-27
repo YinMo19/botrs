@@ -4,7 +4,7 @@ use reqwest::header::HeaderMap;
 use serde::Serialize;
 
 use crate::models::gateway::{HTTP_CALLBACK_ACK, WS_HEARTBEAT_ACK};
-use crate::models::webhook::{WHValidationReq, WHValidationRsp};
+use crate::models::webhook::{WebhookValidationRequest, WebhookValidationResponse};
 
 #[derive(Debug, Clone, Copy, Serialize)]
 struct Ack {
@@ -29,7 +29,7 @@ pub fn dispatch_ack(success: bool) -> String {
 }
 
 pub fn validation_ack(
-    req: &WHValidationReq,
+    req: &WebhookValidationRequest,
     headers: &HeaderMap,
     secret: &str,
 ) -> crate::Result<Vec<u8>> {
@@ -41,7 +41,7 @@ pub fn validation_ack(
             .map_err(|_| crate::BotError::invalid_data("invalid event timestamp header"))?,
     );
     let signature = crate::signature::generate(secret, &headers, req.plain_token.as_bytes())?;
-    serde_json::to_vec(&WHValidationRsp {
+    serde_json::to_vec(&WebhookValidationResponse {
         plain_token: req.plain_token.clone(),
         signature,
         data_version: String::new(),
@@ -73,7 +73,7 @@ pub fn handle_http_callback(
             .as_ref()
             .cloned()
             .unwrap_or(serde_json::Value::Null);
-        let req: WHValidationReq = serde_json::from_value(data)?;
+        let req: WebhookValidationRequest = serde_json::from_value(data)?;
         return validation_ack(&req, headers, secret).map(Some);
     }
 
@@ -131,13 +131,13 @@ mod tests {
     fn validation_ack_contains_signature() {
         let mut headers = HeaderMap::new();
         headers.insert(crate::signature::HEADER_TIMESTAMP, "1".parse().unwrap());
-        let req = WHValidationReq {
+        let req = WebhookValidationRequest {
             plain_token: "plain".to_string(),
             event_ts: "2".to_string(),
         };
 
         let body = validation_ack(&req, &headers, "secret").unwrap();
-        let rsp: WHValidationRsp = serde_json::from_slice(&body).unwrap();
+        let rsp: WebhookValidationResponse = serde_json::from_slice(&body).unwrap();
         assert_eq!(rsp.plain_token, "plain");
         assert!(!rsp.signature.is_empty());
     }

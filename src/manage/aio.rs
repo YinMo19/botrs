@@ -14,8 +14,6 @@ pub struct EnterAioEvent {
     pub event_id: Option<String>,
 }
 
-pub type EnterAIO = EnterAioEvent;
-
 impl EnterAioEvent {
     /// Creates a new EnterAioEvent from gateway data.
     pub fn new(event_id: Option<String>, data: &serde_json::Value) -> Self {

@@ -12,8 +12,6 @@ pub struct GatewayResponse {
     pub session_start_limit: SessionStartLimit,
 }
 
-pub type WebsocketAP = GatewayResponse;
-
 /// Session start limit information.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct SessionStartLimit {

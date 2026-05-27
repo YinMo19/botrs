@@ -1,6 +1,6 @@
 use crate::api::{BotApi, resource};
 use crate::error::Result;
-use crate::models::message::{DirectMessageSession, DirectMessageToCreate};
+use crate::models::message::{DirectMessage, DirectMessageToCreate};
 use crate::token::Token;
 use tracing::debug;
 
@@ -10,7 +10,7 @@ impl BotApi {
         &self,
         token: &Token,
         dm: &DirectMessageToCreate,
-    ) -> Result<DirectMessageSession> {
+    ) -> Result<DirectMessage> {
         debug!(
             "Creating DM session for user {} from guild {}",
             dm.recipient_id, dm.source_guild_id

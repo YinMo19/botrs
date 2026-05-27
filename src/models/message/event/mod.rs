@@ -13,7 +13,7 @@ pub use attachment::MessageAttachment;
 pub use audit::MessageAudit;
 pub use c2c::C2CMessage;
 pub use delete::MessageDelete;
-pub use direct::{DirectMessage, DirectMessageSession, DirectMessageToCreate};
+pub use direct::{DirectMessage, DirectMessageToCreate};
 pub use group::GroupMessage;
 pub use message::Message;
 pub use reference::MessageReference;

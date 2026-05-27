@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed redundant Rust alias methods (`BotApi::me`, `BotApi::me_guilds`, `BotApi::get_ws_url`, `BotApi::get_permissions`, `BotApi::patch_message`, and matching `Context` wrappers); use `get_bot_info`, `get_guilds`, `get_gateway`, `get_api_permissions`, and `patch_message_with_params`.
 - Removed botpy-style duplicate methods (`BotApi::create_dms`, `Context::create_dms`, `BotApi::get_delete_member`, and `Context::get_delete_member`); use `create_direct_message` and `delete_member`.
 - Removed redundant `Context` alias methods (`add_reaction`, `remove_reaction`, `pin_message`, `unpin_message`, `add_guild_role_member`, and `remove_guild_role_member`); use `put_reaction`, `delete_reaction`, `put_pin`, `delete_pin`, `create_guild_role_member`, and `delete_guild_role_member`.
+- Removed compatibility type aliases (`WebsocketAP`, `DirectMessageSession`, `ReactionUser`, `MessageReactionUsers`, `Announces`, `EnterAIO`, `HTTPIdentity`, `HTTPReady`, `HTTPSession`, `WHValidationReq`, `WHValidationRsp`, `RoleID`, and `Roles`) and the Go-style `SessionManager::Start` / `DefaultColor` aliases; use the concrete Rust types and `SessionManager::start` / `DEFAULT_ROLE_COLOR`.
 - Removed the deprecated multi-`Option` message sending methods (`post_message`, `post_group_message`, `post_c2c_message`, `post_dms`) and their `Context` wrappers. Use the `*_with_params` methods instead.
 - Removed the redundant `post_message_api` and `patch_message_api` aliases.
 
@@ -64,7 +65,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.8.0] - 2026-05-25
 
 ### Changed
-- Aligned `DirectMessage` with the QQ Bot Open API's direct-message session DTO and made `DirectMessageSession` an alias of it.
+- Aligned `DirectMessage` with the QQ Bot Open API's direct-message session DTO.
 - `direct_message_create` now receives a regular `Message`, matching the documented `WSDirectMessageData`.
 - Updated direct-message examples and API docs to use `DirectMessageParams` with `post_dms_with_params`.
 

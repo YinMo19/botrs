@@ -21,7 +21,7 @@ pub use target_type::{
     REACTION_TARGET_TYPE_REPLY, ReactionTargetType, ReactionTargetTypeComment,
     ReactionTargetTypeFeed, ReactionTargetTypeMsg, ReactionTargetTypeReply,
 };
-pub use users::{MessageReactionUsers, ReactionUser, ReactionUsers};
+pub use users::ReactionUsers;
 
 #[cfg(test)]
 mod tests;

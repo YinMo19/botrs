@@ -21,7 +21,7 @@ impl EventHandler for GetReactionUsersHandler {
 
     /// Called when a message is created that mentions the bot.
     async fn message_create(&self, ctx: Context, _message: Message) {
-        let mut users: Vec<botrs::reaction::ReactionUser> = Vec::new();
+        let mut users: Vec<botrs::User> = Vec::new();
         let mut cookie = String::new();
 
         // Example channel_id and message_id - these would need to be actual values

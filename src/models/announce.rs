@@ -77,8 +77,6 @@ pub struct Announce {
     pub recommend_channels: Vec<RecommendChannel>,
 }
 
-pub type Announces = Announce;
-
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct ChannelAnnouncesToCreate {
     pub message_id: String,

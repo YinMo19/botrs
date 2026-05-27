@@ -5,7 +5,7 @@ use tokio::sync::mpsc;
 
 use super::Session;
 use crate::intents::Intents;
-use crate::models::api::WebsocketAP;
+use crate::models::api::GatewayResponse;
 use crate::models::gateway::GatewayEvent;
 use crate::token::Token;
 
@@ -19,20 +19,9 @@ pub type BoxedSessionManager = Box<dyn SessionManager>;
 pub trait SessionManager: Send + Sync {
     async fn start(
         &mut self,
-        ap_info: &WebsocketAP,
+        ap_info: &GatewayResponse,
         token: Token,
         intents: Intents,
         event_sender: mpsc::UnboundedSender<GatewayEvent>,
     ) -> crate::Result<()>;
-
-    #[allow(non_snake_case)]
-    async fn Start(
-        &mut self,
-        ap_info: &WebsocketAP,
-        token: Token,
-        intents: Intents,
-        event_sender: mpsc::UnboundedSender<GatewayEvent>,
-    ) -> crate::Result<()> {
-        self.start(ap_info, token, intents, event_sender).await
-    }
 }

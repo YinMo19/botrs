@@ -200,7 +200,7 @@ fn update_role_new_matches_botgo_request_body() {
         },
     );
 
-    assert_eq!(body.update.color, DefaultColor);
+    assert_eq!(body.update.color, DEFAULT_ROLE_COLOR);
     assert_eq!(
         serde_json::to_value(&body).unwrap(),
         serde_json::json!({
@@ -212,7 +212,7 @@ fn update_role_new_matches_botgo_request_body() {
             },
             "info": {
                 "name": "Admin",
-                "color": DefaultColor,
+                "color": DEFAULT_ROLE_COLOR,
                 "hoist": 1
             }
         })

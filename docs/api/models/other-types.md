@@ -65,7 +65,7 @@ Every field with `omitempty` in the protocol uses `skip_serializing_if` so zero 
 ## Pins, announces, message setting
 
 - `PinsMessage { guild_id, channel_id, message_ids: Vec<Snowflake> }` — return value of `get_pins`.
-- `Announce` (alias `Announces`) — see [`announce.rs`](https://github.com/YinMo19/botrs/blob/main/src/models/announce.rs); `RecommendChannel` and the create-side `ChannelAnnouncesToCreate` / `GuildAnnouncesToCreate` accompany it.
+- `Announce` — see [`announce.rs`](https://github.com/YinMo19/botrs/blob/main/src/models/announce.rs); `RecommendChannel` and the create-side `ChannelAnnouncesToCreate` / `GuildAnnouncesToCreate` accompany it.
 - `MessageSetting { disable_create_dm: bool, disable_push_msg: bool, channel_ids: Vec<Snowflake>, channel_push_max_num: i32 }` — every field omits its zero value to match the protocol.
 
 ## Interaction

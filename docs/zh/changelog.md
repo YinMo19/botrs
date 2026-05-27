@@ -27,6 +27,7 @@ BotRS 的所有重要更改都将记录在此文件中。
 - 移除冗余 Rust 方法别名（`BotApi::me`、`BotApi::me_guilds`、`BotApi::get_ws_url`、`BotApi::get_permissions`、`BotApi::patch_message` 及对应 `Context` wrapper）；请使用 `get_bot_info`、`get_guilds`、`get_gateway`、`get_api_permissions` 和 `patch_message_with_params`。
 - 移除 botpy 风格重复方法（`BotApi::create_dms`、`Context::create_dms`、`BotApi::get_delete_member` 和 `Context::get_delete_member`）；请使用 `create_direct_message` 和 `delete_member`。
 - 移除冗余 `Context` 方法别名（`add_reaction`、`remove_reaction`、`pin_message`、`unpin_message`、`add_guild_role_member` 和 `remove_guild_role_member`）；请使用 `put_reaction`、`delete_reaction`、`put_pin`、`delete_pin`、`create_guild_role_member` 和 `delete_guild_role_member`。
+- 移除兼容类型别名（`WebsocketAP`、`DirectMessageSession`、`ReactionUser`、`MessageReactionUsers`、`Announces`、`EnterAIO`、`HTTPIdentity`、`HTTPReady`、`HTTPSession`、`WHValidationReq`、`WHValidationRsp`、`RoleID` 和 `Roles`）以及 Go 风格的 `SessionManager::Start` / `DefaultColor` 别名；请使用具体 Rust 类型和 `SessionManager::start` / `DEFAULT_ROLE_COLOR`。
 - 移除已弃用的多 `Option` 消息发送方法（`post_message`、`post_group_message`、`post_c2c_message`、`post_dms`）及其 `Context` wrapper。请使用 `*_with_params` 方法。
 - 移除冗余的 `post_message_api` 和 `patch_message_api` 别名。
 
@@ -64,7 +65,7 @@ BotRS 的所有重要更改都将记录在此文件中。
 ## [0.8.0] - 2026-05-25
 
 ### 更改
-- `DirectMessage` 对齐为 QQ 机器人开放接口的私信会话 DTO，`DirectMessageSession` 改为其别名。
+- `DirectMessage` 对齐为 QQ 机器人开放接口的私信会话 DTO。
 - `direct_message_create` 现在接收普通 `Message`,与协议定义的 `WSDirectMessageData` 保持一致。
 - 私信示例和 API 文档改为使用 `DirectMessageParams` 与 `post_dms_with_params`。
 

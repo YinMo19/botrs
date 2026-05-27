@@ -58,8 +58,8 @@ pub use manage::{
 pub use models::gateway::Ready;
 pub use models::*;
 pub use reaction::{
-    Emoji as ReactionEmoji, MessageReaction, MessageReactionPager, MessageReactionUsers, Reaction,
-    ReactionTarget, ReactionTargetType, ReactionUsers,
+    Emoji as ReactionEmoji, MessageReaction, MessageReactionPager, Reaction, ReactionTarget,
+    ReactionTargetType, ReactionUsers,
 };
 pub use session_manager::{
     CANNOT_IDENTIFY_ERROR_CODES, CANNOT_RESUME_ERROR_CODES, ChanManager, Session as ManagedSession,

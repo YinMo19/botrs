@@ -2,9 +2,6 @@ use crate::models::serde_helpers::is_zero_u32;
 use crate::models::{HasId, HasName, Snowflake};
 use serde::{Deserialize, Serialize};
 
-#[allow(non_upper_case_globals)]
-pub const DefaultColor: u32 = 4_278_245_297;
-
 /// Guild roles response wrapper.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct GuildRoles {
@@ -32,8 +29,6 @@ impl GuildRoles {
 
 /// Represents a role ID.
 pub type RoleId = Snowflake;
-/// Role ID alias.
-pub type RoleID = RoleId;
 /// Default role color used when creating or updating roles.
 pub const DEFAULT_ROLE_COLOR: u32 = 4_278_245_297;
 
@@ -245,6 +240,3 @@ impl HasName for Role {
         &self.name
     }
 }
-
-// Type alias for backward compatibility
-pub type Roles = Vec<Role>;

@@ -68,13 +68,11 @@ pub struct GroupMessage {
 
 ```rust
 pub struct DirectMessage {
-    pub guild_id: Option<Snowflake>,
-    pub channel_id: Option<Snowflake>,
-    pub create_time: Option<String>,
+    pub guild_id: Snowflake,
+    pub channel_id: Snowflake,
+    pub create_time: String,
 }
 ```
-
-`DirectMessageSession` is a type alias of `DirectMessage`.
 
 ## Outgoing parameters
 

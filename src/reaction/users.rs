@@ -2,8 +2,6 @@ use crate::models::user::User;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-pub type ReactionUser = User;
-
 /// Reaction users response structure
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct ReactionUsers {
@@ -17,8 +15,6 @@ pub struct ReactionUsers {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub is_end: bool,
 }
-
-pub type MessageReactionUsers = ReactionUsers;
 
 impl ReactionUsers {
     /// Create a new ReactionUsers instance from JSON data

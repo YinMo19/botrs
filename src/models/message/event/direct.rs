@@ -15,9 +15,6 @@ pub struct DirectMessage {
     pub create_time: Timestamp,
 }
 
-/// Backward-compatible alias for the direct-message session DTO.
-pub type DirectMessageSession = DirectMessage;
-
 /// Payload for creating a direct message session.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct DirectMessageToCreate {

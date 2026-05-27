@@ -10,7 +10,7 @@ use super::{
 use crate::error::BotError;
 use crate::gateway::Gateway;
 use crate::intents::Intents;
-use crate::models::api::WebsocketAP;
+use crate::models::api::GatewayResponse;
 use crate::models::gateway::GatewayEvent;
 use crate::token::Token;
 
@@ -59,7 +59,7 @@ impl ChanManager {
         }
     }
 
-    pub fn sessions(ap_info: &WebsocketAP, token: Token, intents: Intents) -> Vec<Session> {
+    pub fn sessions(ap_info: &GatewayResponse, token: Token, intents: Intents) -> Vec<Session> {
         (0..ap_info.shards)
             .map(|shard_id| {
                 Session::new(
@@ -101,7 +101,7 @@ impl ChanManager {
 impl SessionManager for ChanManager {
     async fn start(
         &mut self,
-        ap_info: &WebsocketAP,
+        ap_info: &GatewayResponse,
         token: Token,
         intents: Intents,
         event_sender: mpsc::UnboundedSender<GatewayEvent>,

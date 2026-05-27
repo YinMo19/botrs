@@ -10,7 +10,7 @@ mod response;
 
 pub use audio::AudioAction;
 pub use error::ApiError;
-pub use gateway::{BotInfo, GatewayResponse, SessionStartLimit, ShardConfig, WebsocketAP};
+pub use gateway::{BotInfo, GatewayResponse, SessionStartLimit, ShardConfig};
 pub use message::{MessageResponse, PinsMessage};
 pub use pagination::{PaginatedResponse, Pagination};
 pub use rate_limit::RateLimit;
