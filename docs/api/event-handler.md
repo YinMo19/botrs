@@ -93,7 +93,7 @@ impl EventHandler for MyBot {
     }
 
     async fn message_create(&self, ctx: Context, message: Message) {
-        if message.is_from_bot() { return; }
+        if message.author.as_ref().and_then(|author| author.bot).unwrap_or_default() { return; }
         if let Some(content) = &message.content {
             if content.trim() == "!ping" {
                 let _ = message.reply(&ctx, "Pong!").await;

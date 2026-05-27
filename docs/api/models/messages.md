@@ -39,7 +39,8 @@ pub struct Message {
 Most string fields use `Option<Snowflake>` because the QQ Open API may omit them on partial payloads. Convenience methods on `Message`:
 
 - `reply(api, token, content)` — text reply that sets `msg_id` for passive routing.
-- `is_from_bot()`, `has_content()`, `has_attachments()`, `has_mentions()` — quick predicates.
+
+Inspect fields such as `author.bot`, `content`, `attachments`, and `mentions` directly for message predicates.
 
 ### `GroupMessage` and `C2CMessage`
 

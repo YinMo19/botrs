@@ -39,7 +39,8 @@ pub struct Message {
 字符串字段大量使用 `Option<Snowflake>`，因为 QQ 接口可能在部分载荷中省略它们。`Message` 提供的便捷方法：
 
 - `reply(api, token, content)` —— 文本回复，会自动设置 `msg_id` 走被动消息路径。
-- `is_from_bot()`、`has_content()`、`has_attachments()`、`has_mentions()` —— 常用判断。
+
+消息判断可直接检查 `author.bot`、`content`、`attachments`、`mentions` 等字段。
 
 ### `GroupMessage` 与 `C2CMessage`
 

@@ -51,7 +51,7 @@ Editing a guild message uses `edit_message(channel_id, message_id, params)`.
 
 ```rust
 async fn message_create(&self, ctx: Context, message: Message) {
-    if message.is_from_bot() { return; }
+    if message.author.as_ref().and_then(|author| author.bot).unwrap_or_default() { return; }
     if let Some("!ping") = message.content.as_deref() {
         let _ = message.reply(&ctx, "pong").await;
     }

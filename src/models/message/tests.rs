@@ -519,9 +519,8 @@ fn test_message_creation() {
     let message = Message::new();
     assert!(message.id.is_none());
     assert!(message.content.is_none());
-    assert!(!message.has_content());
-    assert!(!message.has_attachments());
-    assert!(!message.has_mentions());
+    assert!(message.attachments.is_empty());
+    assert!(message.mentions.is_empty());
 }
 
 #[test]
@@ -571,7 +570,12 @@ fn direct_message_session_uses_required_zero_value_fields() {
 fn test_message_with_content() {
     let mut message = Message::new();
     message.content = Some("Hello, world!".to_string());
-    assert!(message.has_content());
+    assert!(
+        message
+            .content
+            .as_ref()
+            .is_some_and(|content| !content.is_empty())
+    );
 }
 
 #[test]
@@ -712,8 +716,20 @@ fn test_bot_detection() {
         avatar: None,
     });
 
-    assert!(message.is_from_bot());
+    assert!(
+        message
+            .author
+            .as_ref()
+            .and_then(|author| author.bot)
+            .unwrap_or_default()
+    );
 
     message.author.as_mut().unwrap().bot = Some(false);
-    assert!(!message.is_from_bot());
+    assert!(
+        !message
+            .author
+            .as_ref()
+            .and_then(|author| author.bot)
+            .unwrap_or_default()
+    );
 }

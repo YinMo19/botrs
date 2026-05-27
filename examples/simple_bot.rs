@@ -20,7 +20,12 @@ impl EventHandler for SimpleHandler {
     /// Called when a message is created (@ mentions).
     async fn message_create(&self, ctx: Context, message: Message) {
         // Ignore messages from bots
-        if message.is_from_bot() {
+        if message
+            .author
+            .as_ref()
+            .and_then(|author| author.bot)
+            .unwrap_or_default()
+        {
             return;
         }
 

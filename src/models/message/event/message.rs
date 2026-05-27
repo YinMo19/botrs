@@ -109,26 +109,6 @@ impl Message {
             ))
         }
     }
-
-    /// Returns true if this message has content.
-    pub fn has_content(&self) -> bool {
-        self.content.as_ref().is_some_and(|c| !c.is_empty())
-    }
-
-    /// Returns true if this message has attachments.
-    pub fn has_attachments(&self) -> bool {
-        !self.attachments.is_empty()
-    }
-
-    /// Returns true if this message mentions users.
-    pub fn has_mentions(&self) -> bool {
-        !self.mentions.is_empty()
-    }
-
-    /// Returns true if the author is a bot.
-    pub fn is_from_bot(&self) -> bool {
-        self.author.as_ref().is_some_and(|a| a.bot.unwrap_or(false))
-    }
 }
 
 impl Default for Message {

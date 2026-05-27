@@ -29,7 +29,12 @@ impl EventHandler for MyBot {
     }
 
     async fn message_create(&self, ctx: Context, message: Message) {
-        if message.is_from_bot() {
+        if message
+            .author
+            .as_ref()
+            .and_then(|author| author.bot)
+            .unwrap_or_default()
+        {
             return;
         }
         let Some(content) = message.content.as_deref() else { return };
