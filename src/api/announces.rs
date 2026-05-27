@@ -428,10 +428,10 @@ mod tests {
 
         let recommend = serde_json::to_value(GuildRecommendAnnounceBody {
             announces_type: u8::from(AnnouncesType::Welcome) as u32,
-            recommend_channels: vec![RecommendChannel::new(
-                "channel-2",
-                Some("intro".to_string()),
-            )],
+            recommend_channels: vec![RecommendChannel {
+                channel_id: "channel-2".to_string(),
+                introduce: "intro".to_string(),
+            }],
         })
         .unwrap();
         assert_eq!(recommend["announces_type"], 1);

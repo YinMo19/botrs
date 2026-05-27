@@ -110,10 +110,10 @@ impl EventHandler for AnnounceHandler {
             }
         } else if content.contains("/设置推荐子频道") {
             // Create recommended channel announcement (equivalent to self.api.create_recommend_announce)
-            let channel_list = vec![botrs::models::announce::RecommendChannel::new(
-                channel_id.clone(),
-                Some("introduce".to_string()),
-            )];
+            let channel_list = vec![botrs::models::announce::RecommendChannel {
+                channel_id: channel_id.clone(),
+                introduce: "introduce".to_string(),
+            }];
 
             match ctx
                 .create_recommend_announce(

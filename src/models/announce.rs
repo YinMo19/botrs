@@ -17,16 +17,6 @@ pub struct RecommendChannel {
     pub introduce: String,
 }
 
-impl RecommendChannel {
-    /// Creates a recommended-channel entry.
-    pub fn new(channel_id: impl Into<String>, introduce: Option<String>) -> Self {
-        Self {
-            channel_id: channel_id.into(),
-            introduce: introduce.unwrap_or_default(),
-        }
-    }
-}
-
 impl HasId for RecommendChannel {
     fn id(&self) -> Option<&Snowflake> {
         Some(&self.channel_id)
@@ -91,38 +81,6 @@ pub struct GuildAnnouncesToCreate {
     pub recommend_channels: Vec<RecommendChannel>,
 }
 
-impl Announce {
-    /// Creates a message-type announcement.
-    pub fn new_message(
-        guild_id: impl Into<String>,
-        channel_id: impl Into<String>,
-        message_id: impl Into<String>,
-    ) -> Self {
-        Self {
-            guild_id: guild_id.into(),
-            channel_id: channel_id.into(),
-            message_id: message_id.into(),
-            announces_type: u8::from(AnnouncesType::Member) as u32,
-            recommend_channels: Vec::new(),
-        }
-    }
-
-    /// Creates a recommended-channel announcement.
-    pub fn new_recommend(
-        guild_id: impl Into<String>,
-        announces_type: AnnouncesType,
-        recommend_channels: Vec<RecommendChannel>,
-    ) -> Self {
-        Self {
-            guild_id: guild_id.into(),
-            channel_id: String::new(),
-            message_id: String::new(),
-            announces_type: u8::from(announces_type) as u32,
-            recommend_channels,
-        }
-    }
-}
-
 impl HasId for Announce {
     fn id(&self) -> Option<&Snowflake> {
         Some(&self.guild_id)
@@ -168,7 +126,10 @@ mod tests {
 
     #[test]
     fn test_recommend_channel() {
-        let channel = RecommendChannel::new("123456", Some("Test channel".to_string()));
+        let channel = RecommendChannel {
+            channel_id: "123456".to_string(),
+            introduce: "Test channel".to_string(),
+        };
         assert_eq!(channel.channel_id, "123456");
         assert_eq!(channel.introduce, "Test channel");
         assert_eq!(channel.id(), Some(&"123456".to_string()));
@@ -176,7 +137,13 @@ mod tests {
 
     #[test]
     fn test_message_announce() {
-        let announce = Announce::new_message("guild123", "channel456", "message789");
+        let announce = Announce {
+            guild_id: "guild123".to_string(),
+            channel_id: "channel456".to_string(),
+            message_id: "message789".to_string(),
+            announces_type: u8::from(AnnouncesType::Member) as u32,
+            recommend_channels: Vec::new(),
+        };
         assert_eq!(announce.guild_id, "guild123");
         assert_eq!(announce.channel_id, "channel456");
         assert_eq!(announce.message_id, "message789");
@@ -186,10 +153,22 @@ mod tests {
     #[test]
     fn test_recommend_announce() {
         let channels = vec![
-            RecommendChannel::new("channel1", Some("First channel".to_string())),
-            RecommendChannel::new("channel2", Some("Second channel".to_string())),
+            RecommendChannel {
+                channel_id: "channel1".to_string(),
+                introduce: "First channel".to_string(),
+            },
+            RecommendChannel {
+                channel_id: "channel2".to_string(),
+                introduce: "Second channel".to_string(),
+            },
         ];
-        let announce = Announce::new_recommend("guild123", AnnouncesType::Welcome, channels);
+        let announce = Announce {
+            guild_id: "guild123".to_string(),
+            channel_id: String::new(),
+            message_id: String::new(),
+            announces_type: u8::from(AnnouncesType::Welcome) as u32,
+            recommend_channels: channels,
+        };
         assert_eq!(announce.guild_id, "guild123");
         assert_eq!(announce.announces_type, 1);
         assert_eq!(announce.message_id, "");
@@ -221,10 +200,10 @@ mod tests {
             channel_id: "channel-1".to_string(),
             message_id: "message-1".to_string(),
             announces_type: 1,
-            recommend_channels: vec![RecommendChannel::new(
-                "channel-2",
-                Some("intro".to_string()),
-            )],
+            recommend_channels: vec![RecommendChannel {
+                channel_id: "channel-2".to_string(),
+                introduce: "intro".to_string(),
+            }],
         };
         let value = serde_json::to_value(&announce).unwrap();
 
@@ -260,16 +239,27 @@ mod tests {
 
     #[test]
     fn test_announce_display() {
-        let message_announce = Announce::new_message("guild1", "channel1", "message1");
+        let message_announce = Announce {
+            guild_id: "guild1".to_string(),
+            channel_id: "channel1".to_string(),
+            message_id: "message1".to_string(),
+            announces_type: u8::from(AnnouncesType::Member) as u32,
+            recommend_channels: Vec::new(),
+        };
         let display = format!("{}", message_announce);
         assert!(display.contains("MessageAnnounce"));
         assert!(display.contains("guild1"));
 
-        let recommend_announce = Announce::new_recommend(
-            "guild2",
-            AnnouncesType::Member,
-            vec![RecommendChannel::new("channel1", None)],
-        );
+        let recommend_announce = Announce {
+            guild_id: "guild2".to_string(),
+            channel_id: String::new(),
+            message_id: String::new(),
+            announces_type: u8::from(AnnouncesType::Member) as u32,
+            recommend_channels: vec![RecommendChannel {
+                channel_id: "channel1".to_string(),
+                introduce: String::new(),
+            }],
+        };
         let display = format!("{}", recommend_announce);
         assert!(display.contains("RecommendAnnounce"));
         assert!(display.contains("guild2"));
