@@ -9,8 +9,6 @@ pub struct HttpClient {
     pub(crate) client: Client,
     /// The base URL for API requests
     pub(crate) base_url: String,
-    /// Whether to use sandbox environment
-    pub(crate) is_sandbox: bool,
     /// OpenAPI instance app ID used by the X-Union-Appid header.
     pub(crate) union_app_id: Option<String>,
 }
@@ -41,32 +39,15 @@ impl HttpClient {
         Ok(Self {
             client,
             base_url,
-            is_sandbox,
             union_app_id: None,
         })
     }
 
-    /// Returns a client that sends the X-Union-Appid header for OpenAPI calls.
-    pub fn with_union_app_id(&self, app_id: impl Into<String>) -> Self {
+    pub(crate) fn with_union_app_id(&self, app_id: impl Into<String>) -> Self {
         Self {
             union_app_id: Some(app_id.into()),
             ..self.clone()
         }
-    }
-
-    /// Gets the base URL being used by this client.
-    pub fn base_url(&self) -> &str {
-        &self.base_url
-    }
-
-    /// Returns true if this client is using the sandbox environment.
-    pub fn is_sandbox(&self) -> bool {
-        self.is_sandbox
-    }
-
-    /// Returns the app ID configured for the X-Union-Appid header.
-    pub fn union_app_id(&self) -> Option<&str> {
-        self.union_app_id.as_deref()
     }
 }
 
@@ -74,7 +55,6 @@ impl std::fmt::Debug for HttpClient {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("HttpClient")
             .field("base_url", &self.base_url)
-            .field("is_sandbox", &self.is_sandbox)
             .finish()
     }
 }

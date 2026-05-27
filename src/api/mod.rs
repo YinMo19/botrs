@@ -82,15 +82,13 @@ mod tests {
     fn test_api_creation() {
         let token = crate::Token::new("app-id", "secret");
         let http = HttpClient::new(30, false).unwrap();
-        let api = BotApi::new(http, token);
-        assert_eq!(api.get_app_id(), "app-id");
+        BotApi::new(http, token);
     }
 
     #[test]
     fn test_base_helpers() {
         let api = BotApi::setup("app-id", "secret", true).unwrap();
         assert_eq!(api.token().app_id(), "app-id");
-        assert_eq!(api.get_app_id(), "app-id");
     }
 
     #[test]

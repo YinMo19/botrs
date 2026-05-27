@@ -7,12 +7,10 @@ use tokio::net::TcpListener;
 #[test]
 fn test_http_client_creation() {
     let client = HttpClient::new(30, false).unwrap();
-    assert!(!client.is_sandbox());
-    assert_eq!(client.base_url(), crate::DEFAULT_API_URL);
+    assert_eq!(client.base_url, crate::DEFAULT_API_URL);
 
     let sandbox_client = HttpClient::new(60, true).unwrap();
-    assert!(sandbox_client.is_sandbox());
-    assert_eq!(sandbox_client.base_url(), crate::SANDBOX_API_URL);
+    assert_eq!(sandbox_client.base_url, crate::SANDBOX_API_URL);
 }
 
 #[test]

@@ -45,11 +45,6 @@ impl BotApi {
         &self.token
     }
 
-    /// Returns the bot app ID stored on this OpenAPI instance.
-    pub fn get_app_id(&self) -> &str {
-        &self.app_id
-    }
-
     pub(crate) fn decode_json<T>(response: Value) -> Result<T>
     where
         T: serde::de::DeserializeOwned,
@@ -88,7 +83,7 @@ impl BotApi {
         Q: Serialize + ?Sized,
         B: Serialize + ?Sized,
     {
-        let url = format!("{}{}", self.http.base_url(), path);
+        let url = format!("{}{}", self.http.base_url, path);
         self.request_url_json(method, &url, query, body).await
     }
 
