@@ -1,13 +1,13 @@
 use std::fmt;
 
-use super::Err;
+use super::SdkError;
 
 /// The main error type for BotRS operations.
 #[derive(Debug, thiserror::Error)]
 pub enum BotError {
     /// SDK errors.
     #[error("{0}")]
-    Sdk(#[from] Err),
+    Sdk(#[from] SdkError),
 
     /// HTTP client errors
     #[error("HTTP error: {0}")]

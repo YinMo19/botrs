@@ -11,6 +11,7 @@ BotRS 的所有重要更改都将记录在此文件中。
 - 移除 `src/api/compat` 下的 `BotApi` PascalCase 门面（`PostMessage`、`Channels`、`PostAudio` 等）。请使用原生 snake_case `BotApi` 方法。
 - 移除顶层 Go 风格 OpenAPI 兼容模块（`facade`、`openapi`、`options`）以及只服务于该门面的 HTTP filter 注册表。
 - 移除不属于 REST 或网关 wire 行为的独立 Botgo helper 门面（`log`、`remote`、`search`、`version`）。
+- 移除 Go 风格错误与 session helper 名称（`Err`、`New`、`Error`、`CanNotResume`、`CheckSessionLimit` 等），改用原生 Rust 命名。
 - 移除已弃用的多 `Option` 消息发送方法（`post_message`、`post_group_message`、`post_c2c_message`、`post_dms`）及其 `Context` wrapper。请使用 `*_with_params` 方法。
 - 移除冗余的 `post_message_api` 和 `patch_message_api` 别名。
 
@@ -60,7 +61,7 @@ BotRS 的所有重要更改都将记录在此文件中。
 
 ### 新增
 - 增加与 QQ 机器人开放接口对齐的 OpenAPI v1 具体实现常量 `HeaderCallbackAppID` 和 `MaxIdleConns`。
-- 增加 `Session::from_app_id` / `Session::FromAppID`，用于 HTTP callback payload session。
+- 增加 `Session::from_app_id`，用于 HTTP callback payload session。
 
 ### 更改
 - OpenAPI 实例现在会保存 app ID 状态，并在请求中发送 `X-Union-Appid`。

@@ -63,9 +63,9 @@ pub use reaction::{
     ReactionTarget, ReactionTargetType, ReactionUsers,
 };
 pub use session_manager::{
-    CalcInterval, CanNotIdentify, CanNotIdentifyErrSet, CanNotResume, CanNotResumeErrSet,
-    ChanManager, CheckSessionLimit, NewSessionManager, Session as ManagedSession, SessionManager,
-    calc_interval, new_session_manager, set_session_manager_factory,
+    CANNOT_IDENTIFY_ERROR_CODES, CANNOT_RESUME_ERROR_CODES, ChanManager, Session as ManagedSession,
+    SessionManager, calc_interval, can_not_identify, can_not_resume, check_session_limit,
+    new_session_manager, set_session_manager_factory,
 };
 pub use signature::{Generate, HeaderSig, HeaderTimestamp, Verify};
 pub use token::{

@@ -14,11 +14,6 @@ pub fn new_session_manager() -> BoxedSessionManager {
     factory()
 }
 
-#[allow(non_snake_case)]
-pub fn NewSessionManager() -> BoxedSessionManager {
-    new_session_manager()
-}
-
 pub fn set_session_manager_factory(
     factory: impl Fn() -> BoxedSessionManager + Send + Sync + 'static,
 ) {
@@ -29,9 +24,4 @@ pub fn set_session_manager_factory(
 
 pub fn set_session_manager(manager: impl SessionManager + Clone + 'static) {
     set_session_manager_factory(move || Box::new(manager.clone()));
-}
-
-#[allow(non_snake_case)]
-pub fn SetSessionManager(manager: impl SessionManager + Clone + 'static) {
-    set_session_manager(manager);
 }

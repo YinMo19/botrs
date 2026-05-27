@@ -6,20 +6,20 @@
 
 mod bot_error;
 mod codes;
-mod compat;
 mod http;
+mod sdk;
 
 /// A specialized Result type for BotRS operations.
 pub type Result<T> = std::result::Result<T, BotError>;
 
 pub use bot_error::{BotError, IntoBotError};
 pub use codes::*;
-pub use compat::{
-    Code, Err, ErrInvalidSession, ErrNeedReConnect, ErrNotFoundOpenAPI, ErrPagerIsNil,
-    ErrSessionLimit, ErrURLInvalid, Error, New, err_invalid_session, err_need_reconnect,
-    err_not_found_openapi, err_pager_is_nil, err_session_limit, err_url_invalid,
-};
 pub use http::http_error_from_status;
+pub use sdk::{
+    SdkError, invalid_session_error, invalid_url_error, missing_pager_error, need_reconnect_error,
+    openapi_not_found_error, sdk_error, sdk_error_from_error, sdk_error_with_trace,
+    session_limit_error,
+};
 
 #[cfg(test)]
 mod tests;

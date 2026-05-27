@@ -3,7 +3,7 @@ use std::sync::{LazyLock, RwLock};
 
 pub type EventParseFunc = fn(&mut WSPayload, &[u8]) -> crate::Result<()>;
 pub type ReadyHandler = fn(&mut WSPayload, &mut WSReadyData);
-pub type ErrorNotifyHandler = fn(crate::error::Err);
+pub type ErrorNotifyHandler = fn(crate::error::SdkError);
 pub type PlainEventHandler = fn(&mut WSPayload, &[u8]) -> crate::Result<()>;
 
 macro_rules! handler_type {

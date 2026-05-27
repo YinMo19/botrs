@@ -1,28 +1,18 @@
 use std::collections::HashSet;
 use std::sync::LazyLock;
 
-use crate::error::{CodeConnCloseCantIdentify, CodeConnCloseCantResume};
+use crate::error::{CodeConnCloseCantIdentify, CodeConnCloseCantResume, sdk_error_from_error};
 
-pub static CanNotResumeErrSet: LazyLock<HashSet<i32>> =
+pub static CANNOT_RESUME_ERROR_CODES: LazyLock<HashSet<i32>> =
     LazyLock::new(|| HashSet::from([CodeConnCloseCantResume]));
 
-pub static CanNotIdentifyErrSet: LazyLock<HashSet<i32>> =
+pub static CANNOT_IDENTIFY_ERROR_CODES: LazyLock<HashSet<i32>> =
     LazyLock::new(|| HashSet::from([CodeConnCloseCantIdentify]));
 
 pub fn can_not_resume(err: &(dyn std::error::Error + 'static)) -> bool {
-    CanNotResumeErrSet.contains(&crate::error::Error(err).Code())
-}
-
-#[allow(non_snake_case)]
-pub fn CanNotResume(err: &(dyn std::error::Error + 'static)) -> bool {
-    can_not_resume(err)
+    CANNOT_RESUME_ERROR_CODES.contains(&sdk_error_from_error(err).code())
 }
 
 pub fn can_not_identify(err: &(dyn std::error::Error + 'static)) -> bool {
-    CanNotIdentifyErrSet.contains(&crate::error::Error(err).Code())
-}
-
-#[allow(non_snake_case)]
-pub fn CanNotIdentify(err: &(dyn std::error::Error + 'static)) -> bool {
-    can_not_identify(err)
+    CANNOT_IDENTIFY_ERROR_CODES.contains(&sdk_error_from_error(err).code())
 }

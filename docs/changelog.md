@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed the `src/api/compat` PascalCase `BotApi` facade (`PostMessage`, `Channels`, `PostAudio`, etc.). Use the native snake_case `BotApi` methods instead.
 - Removed the top-level Go-style OpenAPI compatibility modules (`facade`, `openapi`, and `options`) and the HTTP filter registry that only existed for that facade.
 - Removed standalone Botgo helper facades (`log`, `remote`, `search`, and `version`) that were not part of the REST or gateway wire behavior.
+- Removed Go-style error/session helper names (`Err`, `New`, `Error`, `CanNotResume`, `CheckSessionLimit`, etc.) in favor of native Rust names.
 - Removed the deprecated multi-`Option` message sending methods (`post_message`, `post_group_message`, `post_c2c_message`, `post_dms`) and their `Context` wrappers. Use the `*_with_params` methods instead.
 - Removed the redundant `post_message_api` and `patch_message_api` aliases.
 
@@ -60,7 +61,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - OpenAPI v1 concrete constants `HeaderCallbackAppID` and `MaxIdleConns` aligned with the QQ Bot Open API.
-- `Session::from_app_id` / `Session::FromAppID` helper for HTTP callback payload sessions.
+- `Session::from_app_id` helper for HTTP callback payload sessions.
 
 ### Changed
 - OpenAPI instances now preserve the configured app ID state and send `X-Union-Appid` on requests.

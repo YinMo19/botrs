@@ -2,7 +2,7 @@ use super::Gateway;
 use crate::error::{
     CodeConnCloseCantIdentify, CodeConnCloseCantResume, CodeInvalidSession, Result,
     WSCodeBackendAuthenticationFail, WSCodeBackendBotBanned, WSCodeBackendBotOffline,
-    WSCodeBackendInvalidSeq, WSCodeBackendSessionNoLongerValid, err_invalid_session,
+    WSCodeBackendInvalidSeq, WSCodeBackendSessionNoLongerValid, invalid_session_error, sdk_error,
 };
 use std::sync::atomic::Ordering;
 use tracing::{debug, info};
@@ -23,14 +23,14 @@ impl Gateway {
             self.last_seq.store(0, Ordering::Relaxed);
             self.is_ready.store(false, Ordering::Relaxed);
             self.can_reconnect.store(true, Ordering::Relaxed);
-            Err(err_invalid_session().into())
+            Err(invalid_session_error().into())
         } else if Self::cannot_identify_close_code(close_code) {
             info!("[botrs] 连接关闭且不能重新鉴权，停止连接尝试");
             self.session_id = None;
             self.last_seq.store(0, Ordering::Relaxed);
             self.is_ready.store(false, Ordering::Relaxed);
             self.can_reconnect.store(false, Ordering::Relaxed);
-            Err(crate::error::New(
+            Err(sdk_error(
                 CodeConnCloseCantIdentify,
                 format!("websocket closed with code {close_code}"),
             )

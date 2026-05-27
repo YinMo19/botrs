@@ -109,7 +109,7 @@ impl<H: EventHandler + 'static> Client<H> {
         let gateway_info = self.api.get_gateway(&self.token).await?;
         info!("Gateway URL: {}", gateway_info.url);
 
-        CheckSessionLimit(&gateway_info)?;
+        check_session_limit(&gateway_info)?;
 
         // Create context
         let ctx = Context::new(self.api.clone(), self.token.clone()).with_bot_info(bot_info);
@@ -118,7 +118,7 @@ impl<H: EventHandler + 'static> Client<H> {
         let (event_sender, mut event_receiver) = mpsc::unbounded_channel();
 
         let reconnect_interval =
-            crate::session_manager::CalcInterval(gateway_info.session_start_limit.max_concurrency);
+            crate::session_manager::calc_interval(gateway_info.session_start_limit.max_concurrency);
         debug!(
             "Gateway reconnect interval: {:?} (max_concurrency: {})",
             reconnect_interval, gateway_info.session_start_limit.max_concurrency
@@ -128,7 +128,7 @@ impl<H: EventHandler + 'static> Client<H> {
             "Starting {} gateway shard(s) with interval {:?}",
             gateway_info.shards, reconnect_interval
         );
-        let mut session_manager = NewSessionManager();
+        let mut session_manager = new_session_manager();
         tokio::spawn({
             let gateway_info = gateway_info.clone();
             let token = self.token.clone();

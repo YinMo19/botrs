@@ -12,7 +12,7 @@ pub type Result<T> = std::result::Result<T, BotError>;
 
 | Variant                                      | Source                                                   |
 |----------------------------------------------|----------------------------------------------------------|
-| `Sdk(Err)`                                   | QQ-defined error code with optional response body.       |
+| `Sdk(SdkError)`                              | QQ-defined error code with optional response body.       |
 | `Http(reqwest::Error)`                       | Transport / TLS / DNS / timeout from the HTTP client.    |
 | `WebSocket(Box<tungstenite::Error>)`         | Gateway WebSocket failure.                               |
 | `Json(serde_json::Error)`                    | Payload decoding failure.                                |
@@ -36,7 +36,7 @@ pub type Result<T> = std::result::Result<T, BotError>;
 | `Io(std::io::Error)`                         | Local I/O (e.g. file uploads).                           |
 | `NotImplemented(String)`                     | Endpoint reachable but not yet wired up.                 |
 
-`Sdk` wraps `Err`, the framework's internal error code carrier. It exposes `code()`, `message()`, and `trace_id()`. The framework uses it as the catch-all for QQ-defined codes (e.g. 9999 for "unknown SDK error", `CodeNeedReConnect`, `CodeConnCloseCantResume`).
+`Sdk` wraps `SdkError`, the framework's internal error code carrier. It exposes `code()`, `message()`, and `trace_id()`. The framework uses it as the catch-all for QQ-defined codes (e.g. 9999 for "unknown SDK error", `CodeNeedReConnect`, `CodeConnCloseCantResume`).
 
 ## Construction helpers
 

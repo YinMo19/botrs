@@ -12,7 +12,7 @@ pub type Result<T> = std::result::Result<T, BotError>;
 
 | 变体                                          | 来源                                                    |
 |-----------------------------------------------|---------------------------------------------------------|
-| `Sdk(Err)`                                    | QQ 定义的错误码，可能附带响应体。                       |
+| `Sdk(SdkError)`                               | QQ 定义的错误码，可能附带响应体。                       |
 | `Http(reqwest::Error)`                        | HTTP 客户端的传输 / TLS / DNS / 超时错误。              |
 | `WebSocket(Box<tungstenite::Error>)`          | 网关 WebSocket 失败。                                   |
 | `Json(serde_json::Error)`                     | 载荷反序列化失败。                                      |
@@ -36,7 +36,7 @@ pub type Result<T> = std::result::Result<T, BotError>;
 | `Io(std::io::Error)`                          | 本地 I/O，例如文件上传。                                |
 | `NotImplemented(String)`                      | 接口可达，但尚未在框架里实现。                          |
 
-`Sdk` 包装的是框架内部的错误码载体 `Err`，其方法包括 `code()`、`message()`、`trace_id()`。框架将 QQ 定义的所有数值错误码（例如 9999、`CodeNeedReConnect`、`CodeConnCloseCantResume` 等）经 `Sdk` 派发。
+`Sdk` 包装的是框架内部的错误码载体 `SdkError`，其方法包括 `code()`、`message()`、`trace_id()`。框架将 QQ 定义的所有数值错误码（例如 9999、`CodeNeedReConnect`、`CodeConnCloseCantResume` 等）经 `Sdk` 派发。
 
 ## 构造辅助
 

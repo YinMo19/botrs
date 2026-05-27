@@ -4,7 +4,9 @@ use std::time::Duration;
 use tokio::sync::mpsc;
 
 use super::*;
-use crate::error::{CodeConnCloseCantIdentify, CodeConnCloseCantResume, CodeNeedReConnect, New};
+use crate::error::{
+    CodeConnCloseCantIdentify, CodeConnCloseCantResume, CodeNeedReConnect, sdk_error,
+};
 use crate::intents::Intents;
 use crate::models::api::{GatewayResponse, SessionStartLimit};
 use crate::token::Token;
@@ -24,32 +26,32 @@ fn ap_info(shards: u32, remaining: u32, max_concurrency: u32) -> GatewayResponse
 
 #[test]
 fn calc_interval_matches_expected() {
-    assert_eq!(CalcInterval(0), Duration::from_secs(2));
-    assert_eq!(CalcInterval(1), Duration::from_secs(2));
-    assert_eq!(CalcInterval(2), Duration::from_secs(1));
-    assert_eq!(CalcInterval(3), Duration::from_secs(1));
-    assert_eq!(CalcInterval(100), Duration::from_secs(1));
+    assert_eq!(calc_interval(0), Duration::from_secs(2));
+    assert_eq!(calc_interval(1), Duration::from_secs(2));
+    assert_eq!(calc_interval(2), Duration::from_secs(1));
+    assert_eq!(calc_interval(3), Duration::from_secs(1));
+    assert_eq!(calc_interval(100), Duration::from_secs(1));
 }
 
 #[test]
 fn check_session_limit_matches_expected() {
-    assert!(CheckSessionLimit(&ap_info(2, 2, 1)).is_ok());
+    assert!(check_session_limit(&ap_info(2, 2, 1)).is_ok());
 
-    let err = CheckSessionLimit(&ap_info(3, 2, 1)).unwrap_err();
-    assert!(CanNotIdentify(&err));
+    let err = check_session_limit(&ap_info(3, 2, 1)).unwrap_err();
+    assert!(can_not_identify(&err));
 }
 
 #[test]
 fn resume_and_identify_error_sets_match_expected() {
-    let resume = New(CodeConnCloseCantResume, "invalid session");
-    let identify = New(CodeConnCloseCantIdentify, "bot banned");
-    let reconnect = New(CodeNeedReConnect, "need reconnect");
+    let resume = sdk_error(CodeConnCloseCantResume, "invalid session");
+    let identify = sdk_error(CodeConnCloseCantIdentify, "bot banned");
+    let reconnect = sdk_error(CodeNeedReConnect, "need reconnect");
 
-    assert!(CanNotResume(&resume));
-    assert!(!CanNotResume(&identify));
-    assert!(CanNotIdentify(&identify));
-    assert!(!CanNotIdentify(&resume));
-    assert!(!CanNotIdentify(&reconnect));
+    assert!(can_not_resume(&resume));
+    assert!(!can_not_resume(&identify));
+    assert!(can_not_identify(&identify));
+    assert!(!can_not_identify(&resume));
+    assert!(!can_not_identify(&reconnect));
 }
 
 #[test]
@@ -85,7 +87,7 @@ async fn non_resumable_error_clears_session_before_requeue() {
             next.last_seq = 42;
             (
                 next,
-                Err(New(CodeConnCloseCantResume, "invalid session").into()),
+                Err(sdk_error(CodeConnCloseCantResume, "invalid session").into()),
             )
         })
     });

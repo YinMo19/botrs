@@ -4,8 +4,8 @@ use tokio::sync::mpsc;
 use tracing::{debug, error, info};
 
 use super::{
-    CalcInterval, CanNotIdentify, CanNotResume, CheckSessionLimit, Session, SessionConnectFn,
-    SessionFuture, SessionManager,
+    Session, SessionConnectFn, SessionFuture, SessionManager, calc_interval, can_not_identify,
+    can_not_resume, check_session_limit,
 };
 use crate::error::BotError;
 use crate::gateway::Gateway;
@@ -82,11 +82,11 @@ impl ChanManager {
         let (mut reconnect_session, result) = connect_fn(session, event_sender).await;
         if let Err(err) = result {
             error!("[ws/session/local] Listening err {}", err);
-            if CanNotResume(&err) {
+            if can_not_resume(&err) {
                 reconnect_session.id.clear();
                 reconnect_session.last_seq = 0;
             }
-            if CanNotIdentify(&err) {
+            if can_not_identify(&err) {
                 error!("can not identify because server return {}", err);
                 return;
             }
@@ -106,8 +106,8 @@ impl SessionManager for ChanManager {
         intents: Intents,
         event_sender: mpsc::UnboundedSender<GatewayEvent>,
     ) -> crate::Result<()> {
-        CheckSessionLimit(ap_info)?;
-        let start_interval = CalcInterval(ap_info.session_start_limit.max_concurrency);
+        check_session_limit(ap_info)?;
+        let start_interval = calc_interval(ap_info.session_start_limit.max_concurrency);
         info!(
             "[ws/session/local] will start {} sessions and per session start interval is {:?}",
             ap_info.shards, start_interval

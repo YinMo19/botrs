@@ -18,7 +18,7 @@ The variants you'll match on most often correspond to outcomes the QQ API and ga
 - `BotError::Connection(String)` / `BotError::Gateway(String)` / `BotError::Session(String)` — gateway lifecycle failures.
 - `BotError::Timeout` — request didn't complete inside the configured `HttpClient` timeout.
 - `BotError::Http(reqwest::Error)` / `BotError::WebSocket(...)` / `BotError::Json(...)` / `BotError::Url(...)` / `BotError::Io(...)` — transport-level wrappers. These already render usefully with `Display`, so logging them is usually enough.
-- `BotError::Sdk(Err)` — an internal "SDK error" carrying a numeric code and trace ID, used by the gateway state machine. Match it for diagnostics, then propagate.
+- `BotError::Sdk(SdkError)` — an internal SDK error carrying a numeric code and trace ID, used by the gateway state machine. Match it for diagnostics, then propagate.
 
 ## How errors reach you
 

@@ -18,7 +18,7 @@
 - `BotError::Connection(String)` / `BotError::Gateway(String)` / `BotError::Session(String)` —— 网关生命周期失败。
 - `BotError::Timeout` —— 请求未在 `HttpClient` 配置的超时内完成。
 - `BotError::Http(reqwest::Error)` / `BotError::WebSocket(...)` / `BotError::Json(...)` / `BotError::Url(...)` / `BotError::Io(...)` —— 传输层包装，`Display` 输出已足够诊断。
-- `BotError::Sdk(Err)` —— 内部 SDK 错误（携带数值 code 与 trace ID），用于网关状态机；用于诊断后透传即可。
+- `BotError::Sdk(SdkError)` —— 内部 SDK 错误（携带数值 code 与 trace ID），用于网关状态机；用于诊断后透传即可。
 
 ## 错误如何抵达你
 

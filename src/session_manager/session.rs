@@ -53,9 +53,4 @@ impl Session {
             app_id: Some(app_id.into()),
         }
     }
-
-    #[allow(non_snake_case)]
-    pub fn FromAppID(app_id: impl Into<String>) -> Self {
-        Self::from_app_id(app_id)
-    }
 }
