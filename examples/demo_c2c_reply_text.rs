@@ -1,7 +1,6 @@
 //! Demo: C2C Reply Text
 //!
 //! This example demonstrates how to create a bot that responds to C2C (client-to-client) messages.
-//! It's equivalent to the Python demo_c2c_reply_text.py example.
 
 mod common;
 
@@ -48,10 +47,10 @@ impl EventHandler for C2CReplyHandler {
         // Get message ID for reply
         let msg_id = message.id.as_deref();
 
-        // Create reply content (equivalent to Python version)
+        // Create reply content.
         let reply_content = format!("我收到了你的消息：{content}");
 
-        // Send C2C message using new API (equivalent to message._api.post_c2c_message)
+        // Send C2C message.
         let params = botrs::models::message::C2CMessageParams {
             msg_type: 0,
             content: Some(reply_content),

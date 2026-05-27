@@ -1,7 +1,7 @@
 //! Demo: AT Reply with File Data
 //!
 //! This example demonstrates how to create a bot that responds to @ mentions
-//! with file uploads (images). It's equivalent to the Python demo_at_reply_file_data.py example.
+//! with file uploads (images).
 
 mod common;
 
@@ -49,7 +49,7 @@ impl EventHandler for FileReplyHandler {
             }
         };
 
-        // Method 1: Read file as bytes and send (equivalent to Python method 1)
+        // Method 1: read file as bytes and send.
         match self
             .send_file_as_bytes(&ctx, channel_id, &reply_content)
             .await
@@ -58,7 +58,7 @@ impl EventHandler for FileReplyHandler {
             Err(e) => warn!("Failed to send file as bytes: {}", e),
         }
 
-        // Method 2: Send file by reading it again (equivalent to Python method 2)
+        // Method 2: send file by reading it again.
         // Note: In Rust, this is similar to method 1 since we need to read the file
         match self
             .send_file_direct(&ctx, channel_id, &reply_content)
@@ -68,7 +68,7 @@ impl EventHandler for FileReplyHandler {
             Err(e) => warn!("Failed to send file directly: {}", e),
         }
 
-        // Method 3: Send file by path (equivalent to Python method 3)
+        // Method 3: send file by path.
         // Note: In the current API, we still need to read the file, but this demonstrates
         // the concept of path-based file sending
         match self
@@ -87,7 +87,7 @@ impl EventHandler for FileReplyHandler {
 }
 
 impl FileReplyHandler {
-    /// Method 1: Read file as bytes and send (equivalent to Python method 1)
+    /// Method 1: read file as bytes and send.
     async fn send_file_as_bytes(
         &self,
         ctx: &Context,
@@ -96,7 +96,7 @@ impl FileReplyHandler {
     ) -> Result<(), Box<dyn std::error::Error>> {
         let file_path = "examples/resource/test.png";
 
-        // Read file as bytes (equivalent to Python: with open("resource/test.png", "rb") as img: img_bytes = img.read())
+        // Read file as bytes.
         let img_bytes = match fs::read(file_path) {
             Ok(bytes) => bytes,
             Err(e) => {
@@ -123,7 +123,7 @@ impl FileReplyHandler {
         Ok(())
     }
 
-    /// Method 2: Send file by reading it directly (equivalent to Python method 2)
+    /// Method 2: send file by reading it directly.
     async fn send_file_direct(
         &self,
         ctx: &Context,
@@ -132,7 +132,7 @@ impl FileReplyHandler {
     ) -> Result<(), Box<dyn std::error::Error>> {
         let file_path = "examples/resource/test.png";
 
-        // Read file directly (equivalent to Python: with open("resource/test.png", "rb") as img:)
+        // Read file directly.
         let img_bytes = match fs::read(file_path) {
             Ok(bytes) => bytes,
             Err(e) => {
@@ -157,7 +157,7 @@ impl FileReplyHandler {
         Ok(())
     }
 
-    /// Method 3: Send file by path (equivalent to Python method 3)
+    /// Method 3: send file by path.
     /// Note: The API still requires bytes, but this demonstrates path-based approach
     async fn send_file_by_path(
         &self,
@@ -169,7 +169,7 @@ impl FileReplyHandler {
 
         info!("Sending file from path: {}", file_path);
 
-        // Read file from path (equivalent to Python: file_image="resource/test.png")
+        // Read file from path.
         let img_bytes = match fs::read(file_path) {
             Ok(bytes) => bytes,
             Err(e) => {

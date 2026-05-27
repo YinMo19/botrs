@@ -1,7 +1,6 @@
 //! Demo: Group Manage Event
 //!
 //! This example demonstrates how to create a bot that handles group management events.
-//! It's equivalent to the Python demo_group_manage_event.py example.
 
 mod common;
 

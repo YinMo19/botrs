@@ -1,7 +1,6 @@
 //! Demo: API Permission
 //!
 //! This example demonstrates how to create a bot that manages API permissions.
-//! It's equivalent to the Python demo_api_permission.py example.
 
 mod common;
 

@@ -1,7 +1,6 @@
 //! Demo: Audio or Live Channel Member
 //!
 //! This example demonstrates how to create a bot that handles audio or live channel member events.
-//! It's equivalent to the Python demo_audio_or_live_channel_member.py example.
 
 mod common;
 
@@ -25,7 +24,7 @@ impl EventHandler for AudioOrLiveChannelMemberHandler {
         // Get user ID for logging
         let user_id = public_audio.user_id.as_deref().unwrap_or("Unknown");
 
-        // Check channel type and log accordingly (equivalent to Python version)
+        // Check channel type and log accordingly.
         match public_audio.channel_type {
             Some(PublicAudioType::Voice) => {
                 info!("{} 加入了音视频子频道", user_id);
@@ -47,7 +46,7 @@ impl EventHandler for AudioOrLiveChannelMemberHandler {
         // Get user ID for logging
         let user_id = public_audio.user_id.as_deref().unwrap_or("Unknown");
 
-        // Check channel type and log accordingly (equivalent to Python version)
+        // Check channel type and log accordingly.
         match public_audio.channel_type {
             Some(PublicAudioType::Voice) => {
                 info!("{} 退出了音视频子频道", user_id);

@@ -1,7 +1,7 @@
 //! Demo: Message Recall
 //!
 //! This example demonstrates how to create a bot that sends a message and then
-//! immediately recalls (deletes) it. It's equivalent to the Python demo_recall.py example.
+//! immediately recalls (deletes) it.
 
 mod common;
 
@@ -39,7 +39,7 @@ impl EventHandler for RecallHandler {
 
         let reply_content = format!("机器人{bot_name}收到你的@消息了: {content}");
 
-        // Send a reply message first (equivalent to message.reply in Python)
+        // Send a reply message first.
         let reply_result = message.reply(&ctx.api, &ctx.token, &reply_content).await;
 
         match reply_result {

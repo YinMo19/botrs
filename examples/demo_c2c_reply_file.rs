@@ -1,7 +1,6 @@
 //! Demo: C2C Reply File
 //!
 //! This example demonstrates how to create a bot that responds to C2C messages with file uploads.
-//! It's equivalent to the Python demo_c2c_reply_file.py example.
 
 mod common;
 
@@ -40,7 +39,7 @@ impl EventHandler for C2CReplyFileHandler {
         // File URL - this needs to be filled with an actual uploaded resource URL
         let file_url = "https://arcaea.lowiro.com/assets/character-card_en_Hikari@2x-UqTl1zuc.png"; // 这里需要填写上传的资源Url，这里夹带一点私货
 
-        // Upload media file (equivalent to message._api.post_c2c_file)
+        // Upload media file.
         let upload_media_result = ctx
             .api
             .post_c2c_file(
@@ -62,7 +61,7 @@ impl EventHandler for C2CReplyFileHandler {
 
         info!("Successfully uploaded C2C file: {:?}", upload_media);
 
-        // Send C2C message with media (equivalent to message._api.post_c2c_message with media)
+        // Send C2C message with media.
         let params = botrs::models::message::C2CMessageParams {
             msg_type: 7, // 7表示富媒体类型 (rich media type)
             msg_id: message.id.clone(),

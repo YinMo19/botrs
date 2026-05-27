@@ -1,7 +1,7 @@
 //! Demo: AT Reply with Keyboard Messages
 //!
 //! This example demonstrates how to create a bot that responds to @ mentions
-//! with keyboard messages. It's equivalent to the Python demo_at_reply_keyboard.py example.
+//! with keyboard messages.
 
 mod common;
 

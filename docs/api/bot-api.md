@@ -118,14 +118,36 @@ Every method takes `&self, token: &Token, …` and returns `Result<…>`. The li
 **Reply to an @-mention with a keyboard.** Build the keyboard once, attach to `MessageParams`, and dispatch with the `_with_params` helper.
 
 ```rust
-let keyboard = MessageKeyboard::new()
-    .with_row(MessageKeyboardRow::new()
-        .with_button(MessageKeyboardButton::primary("ok", "OK"))
-        .with_button(MessageKeyboardButton::secondary("cancel", "Cancel")));
+let keyboard = Keyboard {
+    content: Some(KeyboardContent {
+        rows: Some(vec![KeyboardRow {
+            buttons: Some(vec![KeyboardButton {
+                id: Some("ok".into()),
+                render_data: Some(KeyboardButtonRenderData {
+                    label: Some("OK".into()),
+                    style: Some(1),
+                    ..Default::default()
+                }),
+                action: Some(KeyboardButtonAction {
+                    action_type: Some(ACTION_TYPE_CALLBACK),
+                    permission: Some(KeyboardButtonPermission {
+                        permission_type: Some(PERMISSION_TYPE_ALL),
+                        ..Default::default()
+                    }),
+                    data: Some("ok".into()),
+                    ..Default::default()
+                }),
+                ..Default::default()
+            }]),
+        }]),
+        ..Default::default()
+    }),
+    ..Default::default()
+};
 
-let params = MessageParams::new_text("Choose:")
-    .with_reply(message.id.as_deref().unwrap_or(""))
-    .with_keyboard(keyboard);
+let mut params = MessageParams::new_text("Choose:")
+    .with_reply(message.id.as_deref().unwrap_or(""));
+params.keyboard = Some(keyboard);
 
 api.post_message_with_params(&token, &channel_id, params).await?;
 ```

@@ -1,7 +1,6 @@
 //! Demo: AT Reply
 //!
 //! This example demonstrates how to create a bot that responds to @ mentions.
-//! It's equivalent to the Python demo_at_reply.py example.
 
 mod common;
 
@@ -22,7 +21,7 @@ impl EventHandler for AtReplyHandler {
 
     /// Called when a message is created that mentions the bot.
     async fn message_create(&self, ctx: Context, message: Message) {
-        // Log user avatar and username (similar to Python version)
+        // Log user avatar and username.
         if let Some(author) = &message.author {
             if let Some(avatar) = &author.avatar {
                 info!("User avatar: {}", avatar);

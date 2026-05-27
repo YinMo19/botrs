@@ -1,7 +1,6 @@
 //! Demo: AT Reply ARK
 //!
 //! This example demonstrates how to create a bot that responds to @ mentions with ARK messages.
-//! It's equivalent to the Python demo_at_reply_ark.py example.
 
 mod common;
 
@@ -32,7 +31,7 @@ impl EventHandler for AtReplyArkHandler {
             }
         };
 
-        // Create ARK payload (equivalent to Python version)
+        // Create ARK payload.
         let ark_payload = Ark {
             template_id: Some(37),
             kv: Some(vec![
@@ -62,7 +61,7 @@ impl EventHandler for AtReplyArkHandler {
             ]),
         };
 
-        // Send message with ARK payload (equivalent to self.api.post_message)
+        // Send message with ARK payload.
         let params = botrs::models::message::MessageParams {
             ark: Some(ark_payload),
             ..Default::default()

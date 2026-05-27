@@ -1,7 +1,6 @@
 //! Demo: Schedule
 //!
 //! This example demonstrates how to create a bot that manages schedules.
-//! It's equivalent to the Python demo_schedule.py example.
 
 mod common;
 
@@ -51,7 +50,7 @@ impl EventHandler for ScheduleHandler {
             Err(e) => warn!("Failed to reply to message: {}", e),
         }
 
-        // Calculate time delays (equivalent to Python time calculations)
+        // Calculate time delays.
         let delay = 1000 * 60; // 1 minute in milliseconds
         let now = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
@@ -62,7 +61,7 @@ impl EventHandler for ScheduleHandler {
 
         // Handle different schedule commands
         if content.contains("/创建日程") {
-            // Create schedule (equivalent to self.api.create_schedule)
+            // Create schedule.
             match ctx
                 .api
                 .create_schedule(
@@ -87,7 +86,7 @@ impl EventHandler for ScheduleHandler {
                 }
             }
         } else if content.contains("/查询日程") {
-            // Get schedule (equivalent to self.api.get_schedule)
+            // Get schedule.
             if !schedule_id.is_empty() {
                 match ctx
                     .api

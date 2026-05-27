@@ -1,7 +1,7 @@
 //! Demo: DMS Reply
 //!
 //! This example demonstrates how to create a bot that responds to direct messages
-//! and can create DM sessions. It's equivalent to the Python demo_dms_reply.py example.
+//! and can create DM sessions.
 
 mod common;
 

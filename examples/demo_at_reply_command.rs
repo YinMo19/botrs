@@ -1,7 +1,7 @@
 //! Demo: AT Reply with Commands
 //!
 //! This example demonstrates how to create a bot that responds to @ mentions
-//! with a simple command system. It's equivalent to the Python demo_at_reply_command.py example.
+//! with a simple command system.
 
 mod common;
 
@@ -83,7 +83,7 @@ impl AtReplyCommandHandler {
     fn new() -> Self {
         let mut registry = CommandRegistry::new();
 
-        // Register commands with their aliases (similar to @Commands decorator)
+        // Register commands with their aliases.
         registry.register(vec!["你好", "hello"], hello_command);
         registry.register(vec!["晚安"], good_night_command);
 
@@ -110,13 +110,13 @@ impl EventHandler for AtReplyCommandHandler {
 
         // Try to execute commands
         if let Some(response) = self.registry.try_execute(content) {
-            // Send reply using message.reply (equivalent to first method in Python)
+            // Send a reply through the message helper.
             match message.reply(&ctx.api, &ctx.token, &response).await {
                 Ok(_) => info!("Successfully sent reply via message.reply"),
                 Err(e) => warn!("Failed to send reply via message.reply: {}", e),
             }
 
-            // Also send using api.post_message (equivalent to second method in Python)
+            // Also send through the explicit API params path.
             let params = botrs::models::message::MessageParams {
                 content: Some(response),
                 msg_id: message.id.clone(),

@@ -87,7 +87,7 @@ Send-side payloads use builder structs to avoid the long `Option<...>` argument 
 | `GroupMessageParams`    | `BotApi::post_group_message_with_params`   |
 | `C2CMessageParams`      | `BotApi::post_c2c_message_with_params`     |
 
-Each exposes `new_text(content)`, `new_embed(embed)`, `new_markdown(...)`, etc., plus chainable setters such as `with_reply(message_id)`, `with_keyboard(keyboard)`, `with_file_image(bytes)`. Pass them to the matching `post_*_with_params` method.
+Each exposes `new_text(content)` and reply/file helpers where they apply. For embed, markdown, ark, keyboard, media, and other optional payloads, set the corresponding field on the params struct and pass it to the matching `post_*_with_params` method.
 
 ```rust
 let params = MessageParams::new_text("Pong!").with_reply(message_id);
@@ -101,7 +101,7 @@ api.post_message_with_params(&token, &channel_id, params).await?;
 | `Embed`             | Embed body (title, description, fields, thumbnail).  |
 | `Ark`               | Ark template payload (`template_id` + `kv` array).   |
 | `MarkdownPayload`   | Markdown send body (template id, content, params).   |
-| `MessageKeyboard`   | Inline keyboard (rows of buttons).                   |
+| `Keyboard`          | Inline keyboard (rows of buttons).                   |
 | `MessageReference`  | `{ message_id, ignore_get_message_error }`.          |
 | `MessageAttachment` | File attachment metadata (URL, filename, size, …).   |
 | `MessageAudit`      | Audit-result payload from the audit gateway events.  |

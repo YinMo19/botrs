@@ -118,14 +118,36 @@ let me = api.get_bot_info(&token).await?;
 **回应 @ 提及，并附带按钮键盘。** 一次构建键盘，挂到 `MessageParams` 上，再交给 `_with_params` 系列方法。
 
 ```rust
-let keyboard = MessageKeyboard::new()
-    .with_row(MessageKeyboardRow::new()
-        .with_button(MessageKeyboardButton::primary("ok", "OK"))
-        .with_button(MessageKeyboardButton::secondary("cancel", "Cancel")));
+let keyboard = Keyboard {
+    content: Some(KeyboardContent {
+        rows: Some(vec![KeyboardRow {
+            buttons: Some(vec![KeyboardButton {
+                id: Some("ok".into()),
+                render_data: Some(KeyboardButtonRenderData {
+                    label: Some("OK".into()),
+                    style: Some(1),
+                    ..Default::default()
+                }),
+                action: Some(KeyboardButtonAction {
+                    action_type: Some(ACTION_TYPE_CALLBACK),
+                    permission: Some(KeyboardButtonPermission {
+                        permission_type: Some(PERMISSION_TYPE_ALL),
+                        ..Default::default()
+                    }),
+                    data: Some("ok".into()),
+                    ..Default::default()
+                }),
+                ..Default::default()
+            }]),
+        }]),
+        ..Default::default()
+    }),
+    ..Default::default()
+};
 
-let params = MessageParams::new_text("Choose:")
-    .with_reply(message.id.as_deref().unwrap_or(""))
-    .with_keyboard(keyboard);
+let mut params = MessageParams::new_text("Choose:")
+    .with_reply(message.id.as_deref().unwrap_or(""));
+params.keyboard = Some(keyboard);
 
 api.post_message_with_params(&token, &channel_id, params).await?;
 ```

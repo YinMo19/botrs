@@ -1,7 +1,7 @@
 //! Demo: AT Reply with Embed Messages
 //!
 //! This example demonstrates how to create a bot that responds to @ mentions
-//! with embed messages. It's equivalent to the Python demo_at_reply_embed.py example.
+//! with embed messages.
 
 mod common;
 
@@ -33,7 +33,7 @@ impl EventHandler for EmbedReplyHandler {
 
         info!("Received message: {}", content);
 
-        // Create an embed message (equivalent to Python version)
+        // Create an embed message.
         let embed = Embed {
             title: Some("embed消息".to_string()),
             prompt: "消息透传显示".to_string(),
@@ -50,7 +50,7 @@ impl EventHandler for EmbedReplyHandler {
             ..Default::default()
         };
 
-        // Send embed message using api.post_message (equivalent to Python version)
+        // Send the embed message.
         let channel_id = match &message.channel_id {
             Some(id) => id,
             None => {
@@ -73,10 +73,7 @@ impl EventHandler for EmbedReplyHandler {
             Err(e) => warn!("Failed to send embed message: {}", e),
         }
 
-        // Alternative: Reply using message.reply with embed
-        // This is equivalent to the commented Python line: await message.reply(embed=embed)
-        // However, the current reply method only supports text content
-        // We would need to extend it to support embeds, or use the API directly as above
+        // For embeds, use the API params path because `message.reply` sends text.
     }
 
     /// Called when an error occurs during event processing.

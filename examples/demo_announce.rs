@@ -1,7 +1,6 @@
 //! Demo: Announce
 //!
 //! This example demonstrates how to create a bot that manages announcements.
-//! It's equivalent to the Python demo_announce.py example.
 
 mod common;
 
@@ -46,7 +45,7 @@ impl EventHandler for AnnounceHandler {
             }
         };
 
-        // Send acknowledgment message first (equivalent to self.api.post_message)
+        // Send an acknowledgment message first.
         let ack_content = format!("command received: {content}");
         let params = botrs::models::message::MessageParams {
             content: Some(ack_content),

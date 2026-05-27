@@ -1,7 +1,6 @@
 //! Demo: Group Reply Text
 //!
 //! This example demonstrates how to create a bot that responds to group messages.
-//! It's equivalent to the Python demo_group_reply_text.py example.
 
 mod common;
 
@@ -42,10 +41,10 @@ impl EventHandler for GroupReplyHandler {
         // Get message ID for reply
         let msg_id = message.id.as_deref();
 
-        // Create reply content (equivalent to Python version)
+        // Create reply content.
         let reply_content = format!("收到了消息：{content}");
 
-        // Send group message using new API (equivalent to message._api.post_group_message)
+        // Send group message.
         let params = botrs::models::message::GroupMessageParams {
             msg_type: 0,
             content: Some(reply_content),

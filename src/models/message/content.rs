@@ -34,8 +34,6 @@ pub struct ArkKv {
     pub obj: Option<Vec<ArkObj>>,
 }
 
-pub type ArkKV = ArkKv;
-
 /// Ark object structure.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ArkObj {
@@ -54,8 +52,6 @@ pub struct ArkObjKv {
     #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub value: Option<String>,
 }
-
-pub type ArkObjKV = ArkObjKv;
 
 /// Embed message structure.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
@@ -84,8 +80,6 @@ pub struct EmbedThumbnail {
     #[serde(default)]
     pub url: String,
 }
-
-pub type MessageEmbedThumbnail = EmbedThumbnail;
 
 /// Embed field structure.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
@@ -122,17 +116,6 @@ pub const PERMISSION_TYPE_SPECIFY_USER_IDS: PermissionType = 0;
 pub const PERMISSION_TYPE_MANAGER: PermissionType = 1;
 pub const PERMISSION_TYPE_ALL: PermissionType = 2;
 pub const PERMISSION_TYPE_SPECIFY_ROLE_IDS: PermissionType = 3;
-
-pub type MessageKeyboard = Keyboard;
-pub type CustomKeyboard = KeyboardContent;
-pub type Row = KeyboardRow;
-pub type Button = KeyboardButton;
-pub type RenderData = KeyboardButtonRenderData;
-pub type Action = KeyboardButtonAction;
-pub type Permission = KeyboardButtonPermission;
-pub type SubscribeData = KeyboardSubscribeData;
-pub type TemplateID = KeyboardTemplateId;
-pub type Modal = KeyboardModal;
 
 /// Keyboard content structure.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
@@ -274,9 +257,6 @@ pub struct KeyboardPayload {
     /// Keyboard content
     pub content: serde_json::Value,
 }
-
-pub type Markdown = MarkdownPayload;
-pub type MarkdownParams = MarkdownParam;
 
 /// Markdown message payload.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]

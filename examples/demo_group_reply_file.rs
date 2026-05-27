@@ -1,7 +1,6 @@
 //! Demo: Group Reply File
 //!
 //! This example demonstrates how to create a bot that responds to group messages with file uploads.
-//! It's equivalent to the Python demo_group_reply_file.py example.
 
 mod common;
 
@@ -34,7 +33,7 @@ impl EventHandler for GroupReplyFileHandler {
         // File URL - this needs to be filled with an actual uploaded resource URL
         let file_url = "https://arcaea.lowiro.com/assets/character-card_en_Hikari@2x-UqTl1zuc.png"; // 这里需要填写上传的资源Url，夹带私货
 
-        // Upload media file (equivalent to message._api.post_group_file)
+        // Upload media file.
         let upload_media_result = ctx
             .api
             .post_group_file(
@@ -56,7 +55,7 @@ impl EventHandler for GroupReplyFileHandler {
 
         info!("Successfully uploaded group file: {:?}", upload_media);
 
-        // Send group message with media (equivalent to message._api.post_group_message with media)
+        // Send group message with media.
         let params = botrs::models::message::GroupMessageParams {
             msg_type: 7, // 7表示富媒体类型 (rich media type)
             msg_id: message.id.clone(),

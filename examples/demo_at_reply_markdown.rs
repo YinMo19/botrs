@@ -1,7 +1,7 @@
 //! Demo: AT Reply with Markdown Messages
 //!
 //! This example demonstrates how to create a bot that responds to @ mentions
-//! with markdown messages. It's equivalent to the Python demo_at_reply_markdown.py example.
+//! with markdown messages.
 
 mod common;
 
@@ -24,7 +24,7 @@ impl MarkdownReplyHandler {
         channel_id: &str,
         _msg_id: Option<&str>,
     ) {
-        // Create markdown parameters (equivalent to Python MessageMarkdownParams)
+        // Create markdown parameters.
         let params = vec![
             MarkdownParam {
                 key: Some("title".to_string()),
@@ -117,7 +117,7 @@ impl EventHandler for MarkdownReplyHandler {
 
         let reply_content = format!("机器人{bot_name}收到你的@消息了: {content}");
 
-        // First send a regular reply (equivalent to Python message.reply)
+        // First send a regular reply.
         match message.reply(&ctx.api, &ctx.token, &reply_content).await {
             Ok(_) => info!("Successfully sent regular reply"),
             Err(e) => warn!("Failed to send regular reply: {}", e),

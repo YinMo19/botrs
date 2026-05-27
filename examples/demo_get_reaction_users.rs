@@ -1,7 +1,6 @@
 //! Demo: Get Reaction Users
 //!
 //! This example demonstrates how to create a bot that gets users who reacted to a message.
-//! It's equivalent to the Python demo_get_reaction_users.py example.
 
 mod common;
 
@@ -74,7 +73,7 @@ impl EventHandler for GetReactionUsersHandler {
             }
         }
 
-        // Log results (equivalent to Python print statements)
+        // Log results.
         info!("Total users found: {}", users.len());
         for user in users {
             info!("User: {}", user.username);

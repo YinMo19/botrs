@@ -1,7 +1,6 @@
 //! Demo: Guild Member Event
 //!
 //! This example demonstrates how to create a bot that handles guild member events.
-//! It's equivalent to the Python demo_guild_member_event.py example.
 
 mod common;
 

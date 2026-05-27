@@ -1,7 +1,6 @@
 //! Demo: C2C Manage Event
 //!
 //! This example demonstrates how to create a bot that handles C2C management events.
-//! It's equivalent to the Python demo_c2c_manage_event.py example.
 
 mod common;
 

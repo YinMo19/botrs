@@ -1,7 +1,7 @@
 //! Demo: AT Reply with Message Reference
 //!
 //! This example demonstrates how to create a bot that responds to @ mentions
-//! with message references (reply to specific messages). It's equivalent to the Python demo_at_reply_reference.py example.
+//! with message references (reply to specific messages).
 
 mod common;
 
@@ -49,13 +49,13 @@ impl EventHandler for ReferenceReplyHandler {
             }
         };
 
-        // Create message reference (equivalent to Python Reference(message_id=message.id))
+        // Create message reference.
         let message_reference = Reference {
             message_id: Some(message_id.clone()),
             ignore_get_message_error: None,
         };
 
-        // Send message with reference using new API (equivalent to Python api.post_message)
+        // Send message with reference.
         let params = botrs::models::message::MessageParams {
             content: Some("<emoji:4>这是一条引用消息".to_string()),
             message_reference: Some(message_reference),

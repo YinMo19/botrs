@@ -1,7 +1,6 @@
 //! Demo: Open Forum Event
 //!
 //! This example demonstrates how to create a bot that handles open forum events.
-//! It's equivalent to the Python demo_open_forum_event.py example.
 
 mod common;
 

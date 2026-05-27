@@ -1,7 +1,6 @@
 //! Demo: Group Reply ARK
 //!
 //! This example demonstrates how to create a bot that responds to group messages with ARK messages.
-//! It's equivalent to the Python demo_group_reply_ark.py example.
 
 mod common;
 

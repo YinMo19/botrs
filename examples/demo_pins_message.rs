@@ -1,7 +1,6 @@
 //! Demo: Pins Message
 //!
 //! This example demonstrates how to create a bot that manages pinned messages.
-//! It's equivalent to the Python demo_pins_message.py example.
 
 mod common;
 

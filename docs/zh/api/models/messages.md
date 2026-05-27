@@ -87,7 +87,7 @@ pub struct DirectMessage {
 | `GroupMessageParams`    | `BotApi::post_group_message_with_params`   |
 | `C2CMessageParams`      | `BotApi::post_c2c_message_with_params`     |
 
-每个结构体都暴露 `new_text(content)`、`new_embed(embed)`、`new_markdown(...)` 等构造器，以及链式 setter，例如 `with_reply(message_id)`、`with_keyboard(keyboard)`、`with_file_image(bytes)`。把构建好的参数交给对应的 `post_*_with_params` 方法即可。
+每个结构体都暴露 `new_text(content)`，并在适用场景提供回复和文件辅助方法。embed、markdown、ark、keyboard、media 等可选载荷请直接设置参数结构体里的对应字段，然后交给对应的 `post_*_with_params` 方法。
 
 ```rust
 let params = MessageParams::new_text("Pong!").with_reply(message_id);
@@ -101,7 +101,7 @@ api.post_message_with_params(&token, &channel_id, params).await?;
 | `Embed`             | 嵌入式消息（标题、描述、字段、缩略图）。             |
 | `Ark`               | Ark 模板消息（`template_id` + `kv` 数组）。          |
 | `MarkdownPayload`   | Markdown 发送体（模板 id、内容、参数等）。           |
-| `MessageKeyboard`   | 行内键盘（按钮组合）。                               |
+| `Keyboard`          | 行内键盘（按钮组合）。                               |
 | `MessageReference`  | `{ message_id, ignore_get_message_error }`。         |
 | `MessageAttachment` | 附件元信息（URL、文件名、大小……）。                  |
 | `MessageAudit`      | 审核网关事件的载荷。                                 |
