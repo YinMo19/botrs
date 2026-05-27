@@ -129,34 +129,9 @@ impl GuildRole {
         Self::default()
     }
 
-    /// Returns true if this role is hoisted (displayed separately).
-    pub fn is_hoisted(&self) -> bool {
-        self.hoist != 0
-    }
-
     /// Converts the role to the numeric hoist value expected by the API.
     pub fn hoist_as_u32(&self) -> u32 {
         self.hoist_value()
-    }
-
-    /// Gets the role's color as a hex value.
-    pub fn color_hex(&self) -> Option<String> {
-        (self.color != 0).then(|| format!("#{:06X}", self.color))
-    }
-
-    /// Gets the number of members with this role.
-    pub fn member_count(&self) -> u32 {
-        self.member_count
-    }
-
-    /// Gets the member limit for this role.
-    pub fn get_member_limit(&self) -> u32 {
-        self.member_limit
-    }
-
-    /// Returns true if the role has reached its member limit.
-    pub fn is_at_member_limit(&self) -> bool {
-        self.member_limit > 0 && self.member_count >= self.member_limit
     }
 }
 

@@ -128,8 +128,8 @@ fn test_role_creation() {
     let role = GuildRole::new();
     assert_eq!(role.id, "");
     assert_eq!(role.name, "");
-    assert!(!role.is_hoisted());
-    assert_eq!(role.member_count(), 0);
+    assert_eq!(role.hoist, 0);
+    assert_eq!(role.member_count, 0);
 }
 
 #[test]
@@ -144,11 +144,11 @@ fn test_role_with_data() {
 
     assert_eq!(role.id(), Some(&"role123".to_string()));
     assert_eq!(role.name(), "Admin");
-    assert_eq!(role.color_hex(), Some("#FF0000".to_string()));
-    assert!(role.is_hoisted());
-    assert_eq!(role.member_count(), 5);
-    assert_eq!(role.get_member_limit(), 10);
-    assert!(!role.is_at_member_limit());
+    assert_eq!(role.color, 0xFF0000);
+    assert_eq!(role.hoist, 1);
+    assert_eq!(role.member_count, 5);
+    assert_eq!(role.member_limit, 10);
+    assert!(role.member_count < role.member_limit);
 }
 
 #[test]
