@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed Go-style intent constants (`IntentGuilds`, `IntentGroupMessages`, `IntentNone`, etc.); use `Intents::GUILDS`, `Intents::PUBLIC_MESSAGES`, or `0` instead.
 - Removed Go-style enum constant aliases (`AudioStatusStart`, `InteractionTypePing`, `LayoutTypeImageText`, etc.); use enum variants or Rust-style constants instead.
 - Removed Go-style pager, member-delete option, and message helper names (`QueryParams`, `WithAddBlackList`, `GetEventID`, `GetSendType`, `APIMessage`, etc.) in favor of native Rust methods.
+- Removed Go-style message mention helper names (`MentionUser`, `MentionAllUser`, `MentionChannel`, `Emoji`, `ETLInput`, `ParseCommand`); use `mention_user`, `mention_all_user`, `mention_channel`, `emoji`, `etl_input`, and `parse_command`.
 - Removed the deprecated multi-`Option` message sending methods (`post_message`, `post_group_message`, `post_c2c_message`, `post_dms`) and their `Context` wrappers. Use the `*_with_params` methods instead.
 - Removed the redundant `post_message_api` and `patch_message_api` aliases.
 

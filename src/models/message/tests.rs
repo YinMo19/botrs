@@ -2,14 +2,14 @@
 mod tests {
     use super::super::{
         ActionButton, ActionTypeSubscribe, ApiMessage, Ark, ArkKv, ArkObj, ArkObjKv,
-        C2CMessageParams, DirectMessage, ETLInput, Embed, Emoji, GroupMessageParams, InputNotify,
-        Keyboard, KeyboardButton, KeyboardButtonAction, KeyboardButtonPermission,
-        KeyboardButtonRenderData, KeyboardContent, KeyboardModal, KeyboardRow, KeyboardStyle,
-        KeyboardSubscribeData, KeyboardTemplateId, MarkdownParam, MarkdownPayload, MarkdownStyle,
-        Media, MediaInfo, MentionAllUser, MentionChannel, MentionUser, Message, MessageAttachment,
-        MessageAudit, MessageCreateType, MessagePagerType, MessageParams, MessageReference,
-        MessageToCreate, MessageUser, MessagesPager, ParseCommand, Reference, RichMediaMessage,
-        SendType, Stream,
+        C2CMessageParams, DirectMessage, Embed, GroupMessageParams, InputNotify, Keyboard,
+        KeyboardButton, KeyboardButtonAction, KeyboardButtonPermission, KeyboardButtonRenderData,
+        KeyboardContent, KeyboardModal, KeyboardRow, KeyboardStyle, KeyboardSubscribeData,
+        KeyboardTemplateId, MarkdownParam, MarkdownPayload, MarkdownStyle, Media, MediaInfo,
+        Message, MessageAttachment, MessageAudit, MessageCreateType, MessagePagerType,
+        MessageParams, MessageReference, MessageToCreate, MessageUser, MessagesPager, Reference,
+        RichMediaMessage, SendType, Stream, emoji, etl_input, mention_all_user, mention_channel,
+        mention_user, parse_command,
     };
 
     #[test]
@@ -43,27 +43,27 @@ mod tests {
 
     #[test]
     fn test_message_helpers() {
-        assert_eq!(MentionUser("123"), "<@123>");
-        assert_eq!(MentionAllUser(), "@everyone");
-        assert_eq!(MentionChannel("456"), "<#456>");
-        assert_eq!(Emoji(1), "<emoji:1>");
-        assert_eq!(ETLInput("<@!123>  ping value"), "ping value");
+        assert_eq!(mention_user("123"), "<@123>");
+        assert_eq!(mention_all_user(), "@everyone");
+        assert_eq!(mention_channel("456"), "<#456>");
+        assert_eq!(emoji(1), "<emoji:1>");
+        assert_eq!(etl_input("<@!123>  ping value"), "ping value");
         assert_eq!(
-            ETLInput("\u{00a0}<@!123> ping  value\u{00a0}"),
+            etl_input("\u{00a0}<@!123> ping  value\u{00a0}"),
             "ping  value"
         );
-        assert_eq!(ETLInput("<@123> ping"), "<@123> ping");
-        assert_eq!(ETLInput("<@!abc> ping"), "<@!abc> ping");
+        assert_eq!(etl_input("<@123> ping"), "<@123> ping");
+        assert_eq!(etl_input("<@!abc> ping"), "<@!abc> ping");
 
-        let command = ParseCommand("<@!123>  /ping value");
+        let command = parse_command("<@!123>  /ping value");
         assert_eq!(command.cmd, "/ping");
         assert_eq!(command.content, "value");
 
-        let command = ParseCommand("<@!123> /ping value");
+        let command = parse_command("<@!123> /ping value");
         assert_eq!(command.cmd, "/ping");
         assert_eq!(command.content, "value");
 
-        let command = ParseCommand("/ping\tvalue");
+        let command = parse_command("/ping\tvalue");
         assert_eq!(command.cmd, "/ping\tvalue");
         assert_eq!(command.content, "");
     }

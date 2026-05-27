@@ -40,47 +40,26 @@ pub fn mention_user(user_id: impl std::fmt::Display) -> String {
     format!("<@{user_id}>")
 }
 
-#[allow(non_snake_case)]
-pub fn MentionUser(user_id: impl std::fmt::Display) -> String {
-    mention_user(user_id)
-}
-
 pub fn mention_all_user() -> &'static str {
     "@everyone"
-}
-
-#[allow(non_snake_case)]
-pub fn MentionAllUser() -> &'static str {
-    mention_all_user()
 }
 
 pub fn mention_channel(channel_id: impl std::fmt::Display) -> String {
     format!("<#{channel_id}>")
 }
 
-#[allow(non_snake_case)]
-pub fn MentionChannel(channel_id: impl std::fmt::Display) -> String {
-    mention_channel(channel_id)
-}
-
 pub fn emoji(id: impl std::fmt::Display) -> String {
     format!("<emoji:{id}>")
 }
 
-#[allow(non_snake_case)]
-pub fn Emoji(id: impl std::fmt::Display) -> String {
-    emoji(id)
-}
-
-#[allow(non_snake_case)]
-pub fn ETLInput(input: &str) -> String {
+pub fn etl_input(input: &str) -> String {
     remove_at_mentions(input)
         .trim_matches(is_at_mention_space)
         .to_string()
 }
 
 pub fn parse_command(input: &str) -> CMD {
-    let cleaned = ETLInput(input);
+    let cleaned = etl_input(input);
     match cleaned.split_once(' ') {
         Some((cmd, content)) => CMD {
             cmd: cmd.trim_matches(is_at_mention_space).to_string(),
@@ -91,9 +70,4 @@ pub fn parse_command(input: &str) -> CMD {
             content: String::new(),
         },
     }
-}
-
-#[allow(non_snake_case)]
-pub fn ParseCommand(input: &str) -> CMD {
-    parse_command(input)
 }
