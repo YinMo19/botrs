@@ -53,7 +53,7 @@ Every method takes `&self, token: &Token, …` and returns `Result<…>`. The li
 
 ### Direct messages
 
-- create session: `create_dms` (alias `create_direct_message`).
+- create session: `create_direct_message`.
 - send: `post_dms_with_params`, `post_direct_message`.
 - recall: `retract_dm_message`.
 - setting guide: `post_dm_setting_guide`, `post_dm_setting_guide_message`.

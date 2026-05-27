@@ -124,25 +124,6 @@ impl BotApi {
             .await
     }
 
-    /// Removes a member using inline delete options.
-    pub async fn get_delete_member(
-        &self,
-        token: &Token,
-        guild_id: &str,
-        user_id: &str,
-        add_blacklist: Option<bool>,
-        delete_history_msg_days: Option<i32>,
-    ) -> Result<()> {
-        self.delete_member(
-            token,
-            guild_id,
-            user_id,
-            add_blacklist,
-            delete_history_msg_days,
-        )
-        .await
-    }
-
     /// Removes a member from a guild using explicit delete options.
     pub async fn delete_member_with_options(
         &self,
@@ -326,11 +307,11 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn get_delete_member_alias_uses_default_body() {
+    async fn delete_member_normalizes_invalid_history_days() {
         let (base_url, request, server) = spawn_empty_response_capture_server().await;
         let api = test_api(base_url).await;
 
-        api.get_delete_member(api.token().unwrap(), "guild-1", "user-1", None, Some(42))
+        api.delete_member(api.token().unwrap(), "guild-1", "user-1", None, Some(42))
             .await
             .unwrap();
 

@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed Go-style channel enum aliases and duplicate enum-value constants (`ChannelTypeText`, `ChannelSubTypeChat`, `ChannelPrivateTypePublic`, `SpeakPermissionTypePublic`, `CHANNEL_TYPE_TEXT`, etc.); use enum variants such as `ChannelType::Text`.
 - Removed Go-style gateway opcode/event aliases (`OPCode`, `WSDispatchEvent`, `WSIdentity`, `HTTPCallbackAck`, `EventMessageCreate`, `OPMeans`, etc.); use `OpCode`, `WS_DISPATCH_EVENT`, `WS_IDENTIFY`, `HTTP_CALLBACK_ACK`, `EVENT_MESSAGE_CREATE`, and `op_meaning`.
 - Removed redundant Rust alias methods (`BotApi::me`, `BotApi::me_guilds`, `BotApi::get_ws_url`, `BotApi::get_permissions`, `BotApi::patch_message`, and matching `Context` wrappers); use `get_bot_info`, `get_guilds`, `get_gateway`, `get_api_permissions`, and `patch_message_with_params`.
+- Removed botpy-style duplicate methods (`BotApi::create_dms`, `Context::create_dms`, `BotApi::get_delete_member`, and `Context::get_delete_member`); use `create_direct_message` and `delete_member`.
 - Removed the deprecated multi-`Option` message sending methods (`post_message`, `post_group_message`, `post_c2c_message`, `post_dms`) and their `Context` wrappers. Use the `*_with_params` methods instead.
 - Removed the redundant `post_message_api` and `patch_message_api` aliases.
 

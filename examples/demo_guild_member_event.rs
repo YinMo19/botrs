@@ -4,6 +4,7 @@
 
 mod common;
 
+use botrs::models::message::DirectMessageToCreate;
 use botrs::{Client, Context, EventHandler, Intents, Member, Ready, Token};
 use common::{Config, init_logging};
 use std::env;
@@ -42,8 +43,8 @@ impl EventHandler for GuildMemberEventHandler {
         // For this demo, we'll use a placeholder since it's not available in Member
         let guild_id = "placeholder_guild_id"; // This should come from event context
 
-        // Create DMS (equivalent to self.api.create_dms)
-        match ctx.api.create_dms(&ctx.token, guild_id, user_id).await {
+        let dm = DirectMessageToCreate::new(guild_id, user_id);
+        match ctx.api.create_direct_message(&ctx.token, &dm).await {
             Ok(_dms_payload) => {
                 info!("发送私信");
 

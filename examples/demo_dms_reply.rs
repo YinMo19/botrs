@@ -5,6 +5,7 @@
 
 mod common;
 
+use botrs::models::message::DirectMessageToCreate;
 use botrs::{Client, Context, EventHandler, Intents, Message, Ready, Token};
 use common::{Config, init_logging};
 use std::env;
@@ -105,8 +106,8 @@ impl EventHandler for DmsReplyHandler {
                 user_id, guild_id
             );
 
-            // Create DM session (equivalent to api.create_dms)
-            match ctx.api.create_dms(&ctx.token, guild_id, user_id).await {
+            let dm = DirectMessageToCreate::new(guild_id, user_id);
+            match ctx.api.create_direct_message(&ctx.token, &dm).await {
                 Ok(dms_payload) => {
                     info!("Successfully created DM session");
                     info!("DMS Payload: {:?}", dms_payload);

@@ -53,7 +53,7 @@ let me = api.get_bot_info(&token).await?;
 
 ### 私信
 
-- 创建会话：`create_dms`（别名 `create_direct_message`）。
+- 创建会话：`create_direct_message`。
 - 发送：`post_dms_with_params`、`post_direct_message`。
 - 撤回：`retract_dm_message`。
 - 设置引导：`post_dm_setting_guide`、`post_dm_setting_guide_message`。

@@ -21,15 +21,4 @@ impl BotApi {
             .await?;
         Self::decode_json(response)
     }
-
-    /// Creates a direct message session.
-    pub async fn create_dms(
-        &self,
-        token: &Token,
-        guild_id: &str,
-        user_id: &str,
-    ) -> Result<DirectMessageSession> {
-        let dm = DirectMessageToCreate::new(guild_id, user_id);
-        self.create_direct_message(token, &dm).await
-    }
 }

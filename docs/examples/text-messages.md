@@ -29,7 +29,7 @@ let params = MessageParams {
 ctx.api.post_message_with_params(&ctx.token, channel_id, params).await?;
 ```
 
-For groups and C2C, remember to set `msg_type: 0` for plain text and pass `msg_id: message.id.clone()` so the platform threads the reply correctly (see `demo_group_reply_text.rs` and `demo_c2c_reply_text.rs`). DMS additionally needs `guild_id` from the inbound `Message` (or from `BotApi::create_dms`, see `demo_dms_reply.rs`).
+For groups and C2C, remember to set `msg_type: 0` for plain text and pass `msg_id: message.id.clone()` so the platform threads the reply correctly (see `demo_group_reply_text.rs` and `demo_c2c_reply_text.rs`). DMS additionally needs `guild_id` from the inbound `Message` or a session created with `BotApi::create_direct_message`.
 
 ## See also
 

@@ -2,16 +2,6 @@ use super::Context;
 use crate::client::prelude::*;
 
 impl Context {
-    pub async fn create_dms(
-        &self,
-        source_guild_id: &str,
-        recipient_id: &str,
-    ) -> Result<DirectMessageSession> {
-        self.api
-            .create_dms(&self.token, source_guild_id, recipient_id)
-            .await
-    }
-
     /// Creates a direct message session.
     pub async fn create_direct_message(
         &self,
@@ -128,10 +118,11 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn context_create_dms_uses_source_guild_then_recipient() {
+    async fn create_direct_message_uses_source_guild_then_recipient() {
         let (base_url, request, server) = spawn_capture_server().await;
         let ctx = test_context(base_url).await;
-        let session = ctx.create_dms("guild-1", "user-1").await.unwrap();
+        let dm = DirectMessageToCreate::new("guild-1", "user-1");
+        let session = ctx.create_direct_message(&dm).await.unwrap();
 
         assert_eq!(session.guild_id, "dm-guild-1");
         let request = request.await.unwrap();

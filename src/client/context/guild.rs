@@ -249,25 +249,6 @@ impl Context {
             .await
     }
 
-    /// Alias for deleting a guild member.
-    pub async fn get_delete_member(
-        &self,
-        guild_id: &str,
-        user_id: &str,
-        add_blacklist: Option<bool>,
-        delete_history_msg_days: Option<i32>,
-    ) -> Result<()> {
-        self.api
-            .get_delete_member(
-                &self.token,
-                guild_id,
-                user_id,
-                add_blacklist,
-                delete_history_msg_days,
-            )
-            .await
-    }
-
     /// Removes a member from the guild using explicit delete options.
     pub async fn delete_member_with_options(
         &self,

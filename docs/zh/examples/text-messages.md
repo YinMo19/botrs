@@ -29,7 +29,7 @@ let params = MessageParams {
 ctx.api.post_message_with_params(&ctx.token, channel_id, params).await?;
 ```
 
-群与 C2C 记得把 `msg_type` 设为 `0`（纯文本），并把 `msg_id: message.id.clone()` 一起传给平台，这样回复才能正确串起会话（见 `demo_group_reply_text.rs`、`demo_c2c_reply_text.rs`）。私信还需要从入站 `Message` 拿 `guild_id`（或先调用 `BotApi::create_dms`，见 `demo_dms_reply.rs`）。
+群与 C2C 记得把 `msg_type` 设为 `0`（纯文本），并把 `msg_id: message.id.clone()` 一起传给平台，这样回复才能正确串起会话（见 `demo_group_reply_text.rs`、`demo_c2c_reply_text.rs`）。私信还需要从入站 `Message` 拿 `guild_id`，或使用 `BotApi::create_direct_message` 创建会话。
 
 ## 参见
 
