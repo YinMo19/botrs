@@ -56,45 +56,6 @@ pub struct Emoji {
     pub url: Option<String>,
 }
 
-impl Emoji {
-    /// Creates an emoji with the given ID and type.
-    pub fn new(id: impl Into<String>, emoji_type: EmojiType) -> Self {
-        Self {
-            id: id.into(),
-            emoji_type,
-            name: None,
-            url: None,
-        }
-    }
-
-    /// Creates a system emoji.
-    pub fn system(id: impl Into<String>) -> Self {
-        Self::new(id, EmojiType::System)
-    }
-
-    /// Creates a custom emoji with optional display metadata.
-    pub fn custom(id: impl Into<String>, name: Option<String>, url: Option<String>) -> Self {
-        Self {
-            id: id.into(),
-            emoji_type: EmojiType::Custom,
-            name,
-            url,
-        }
-    }
-
-    /// Sets the name for this emoji.
-    pub fn with_name(mut self, name: impl Into<String>) -> Self {
-        self.name = Some(name.into());
-        self
-    }
-
-    /// Sets the URL for this emoji.
-    pub fn with_url(mut self, url: impl Into<String>) -> Self {
-        self.url = Some(url.into());
-        self
-    }
-}
-
 impl HasId for Emoji {
     fn id(&self) -> Option<&Snowflake> {
         Some(&self.id)
@@ -134,17 +95,13 @@ mod tests {
     }
 
     #[test]
-    fn test_emoji_creation() {
-        let emoji = Emoji::new("123", EmojiType::System);
-        assert_eq!(emoji.id, "123");
-        assert_eq!(emoji.emoji_type, EmojiType::System);
-        assert_eq!(emoji.name, None);
-        assert_eq!(emoji.url, None);
-    }
-
-    #[test]
     fn emoji_omits_absent_metadata_like_official_dto() {
-        let emoji = Emoji::system("123");
+        let emoji = Emoji {
+            id: "123".to_string(),
+            emoji_type: EmojiType::System,
+            name: None,
+            url: None,
+        };
         assert_eq!(
             serde_json::to_value(&emoji).unwrap(),
             serde_json::json!({
@@ -153,11 +110,12 @@ mod tests {
             })
         );
 
-        let custom = Emoji::custom(
-            "789",
-            Some("happy".to_string()),
-            Some("https://example.com/happy.png".to_string()),
-        );
+        let custom = Emoji {
+            id: "789".to_string(),
+            emoji_type: EmojiType::Custom,
+            name: Some("happy".to_string()),
+            url: Some("https://example.com/happy.png".to_string()),
+        };
         assert_eq!(
             serde_json::to_value(&custom).unwrap(),
             serde_json::json!({
@@ -170,49 +128,34 @@ mod tests {
     }
 
     #[test]
-    fn test_system_emoji() {
-        let emoji = Emoji::system("456");
-        assert_eq!(emoji.id, "456");
-        assert_eq!(emoji.emoji_type, EmojiType::System);
-    }
-
-    #[test]
-    fn test_custom_emoji() {
-        let emoji = Emoji::custom(
-            "789",
-            Some("happy".to_string()),
-            Some("https://example.com/happy.png".to_string()),
-        );
-        assert_eq!(emoji.id, "789");
-        assert_eq!(emoji.emoji_type, EmojiType::Custom);
-        assert_eq!(emoji.name, Some("happy".to_string()));
-        assert_eq!(emoji.url, Some("https://example.com/happy.png".to_string()));
-    }
-
-    #[test]
-    fn test_emoji_builder_methods() {
-        let emoji = Emoji::system("111")
-            .with_name("smile")
-            .with_url("https://example.com/smile.png");
-
-        assert_eq!(emoji.name, Some("smile".to_string()));
-        assert_eq!(emoji.url, Some("https://example.com/smile.png".to_string()));
-    }
-
-    #[test]
     fn test_emoji_has_id() {
-        let emoji = Emoji::system("test_id");
+        let emoji = Emoji {
+            id: "test_id".to_string(),
+            emoji_type: EmojiType::System,
+            name: None,
+            url: None,
+        };
         assert_eq!(emoji.id(), Some(&"test_id".to_string()));
     }
 
     #[test]
     fn test_emoji_display() {
-        let named_emoji = Emoji::custom("123", Some("happy".to_string()), None);
+        let named_emoji = Emoji {
+            id: "123".to_string(),
+            emoji_type: EmojiType::Custom,
+            name: Some("happy".to_string()),
+            url: None,
+        };
         let display = format!("{}", named_emoji);
         assert!(display.contains(":happy:"));
         assert!(display.contains("Custom emoji"));
 
-        let unnamed_emoji = Emoji::system("456");
+        let unnamed_emoji = Emoji {
+            id: "456".to_string(),
+            emoji_type: EmojiType::System,
+            name: None,
+            url: None,
+        };
         let display = format!("{}", unnamed_emoji);
         assert!(display.contains("Emoji 456"));
         assert!(display.contains("System emoji"));
