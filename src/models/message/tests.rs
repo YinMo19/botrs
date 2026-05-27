@@ -1,15 +1,14 @@
 #[cfg(test)]
 mod tests {
     use super::super::{
-        ACTION_TYPE_SUBSCRIBE, ActionButton, ApiMessage, Ark, ArkKv, ArkObj, ArkObjKv,
-        C2CMessageParams, DirectMessage, Embed, GroupMessageParams, InputNotify, Keyboard,
-        KeyboardButton, KeyboardButtonAction, KeyboardButtonPermission, KeyboardButtonRenderData,
-        KeyboardContent, KeyboardModal, KeyboardRow, KeyboardStyle, KeyboardSubscribeData,
-        KeyboardTemplateId, MarkdownParam, MarkdownPayload, MarkdownStyle, Media, MediaInfo,
-        Message, MessageAttachment, MessageAudit, MessageCreateType, MessagePagerType,
-        MessageParams, MessageReference, MessageToCreate, MessageUser, MessagesPager, Reference,
-        RichMediaMessage, SendType, Stream, emoji, etl_input, mention_all_user, mention_channel,
-        mention_user, parse_command,
+        ACTION_TYPE_SUBSCRIBE, ActionButton, Ark, ArkKv, ArkObj, ArkObjKv, C2CMessageParams,
+        DirectMessage, Embed, GroupMessageParams, InputNotify, Keyboard, KeyboardButton,
+        KeyboardButtonAction, KeyboardButtonPermission, KeyboardButtonRenderData, KeyboardContent,
+        KeyboardModal, KeyboardRow, KeyboardStyle, KeyboardSubscribeData, KeyboardTemplateId,
+        MarkdownParam, MarkdownPayload, MarkdownStyle, Media, MediaInfo, Message,
+        MessageAttachment, MessageAudit, MessageCreateType, MessagePagerType, MessageParams,
+        MessageReference, MessageToCreate, MessageUser, MessagesPager, Reference, Stream, emoji,
+        etl_input, mention_all_user, mention_channel, mention_user, parse_command,
     };
 
     #[test]
@@ -66,29 +65,6 @@ mod tests {
         let command = parse_command("/ping\tvalue");
         assert_eq!(command.cmd, "/ping\tvalue");
         assert_eq!(command.content, "");
-    }
-
-    #[test]
-    fn api_message_helpers_match_send_type_contract() {
-        let message = MessageToCreate {
-            event_id: Some("event-1".to_string()),
-            ..Default::default()
-        };
-        let rich_media = RichMediaMessage::default();
-        let reference = Reference {
-            message_id: Some("message-1".to_string()),
-            ignore_get_message_error: Some(true),
-        };
-
-        assert_eq!(message.event_id(), "event-1");
-        assert_eq!(message.send_type(), SendType::Text);
-        assert_eq!(rich_media.event_id(), "");
-        assert_eq!(rich_media.send_type(), SendType::RichMedia);
-        assert_eq!(reference.message_id.as_deref(), Some("message-1"));
-
-        let api_message = ApiMessage::from(message);
-        assert_eq!(api_message.event_id(), "event-1");
-        assert_eq!(api_message.send_type(), SendType::Text);
     }
 
     #[test]
@@ -348,41 +324,6 @@ mod tests {
                     "reset": true
                 },
                 "feature_id": 7
-            })
-        );
-    }
-
-    #[test]
-    fn rich_media_omits_go_zero_values() {
-        let message = RichMediaMessage {
-            file_type: Some(0),
-            url: Some(String::new()),
-            srv_send_msg: Some(false),
-            content: Some(String::new()),
-            msg_seq: Some(0),
-        };
-
-        assert_eq!(
-            serde_json::to_value(&message).unwrap(),
-            serde_json::json!({})
-        );
-
-        let message = RichMediaMessage {
-            file_type: Some(1),
-            url: Some("https://example.com/file.png".to_string()),
-            srv_send_msg: Some(true),
-            content: Some("caption".to_string()),
-            msg_seq: Some(1),
-        };
-
-        assert_eq!(
-            serde_json::to_value(&message).unwrap(),
-            serde_json::json!({
-                "file_type": 1,
-                "url": "https://example.com/file.png",
-                "srv_send_msg": true,
-                "content": "caption",
-                "msg_seq": 1
             })
         );
     }

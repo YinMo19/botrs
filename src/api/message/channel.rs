@@ -38,31 +38,6 @@ impl BotApi {
         .await
     }
 
-    /// Sends a channel message using the structured message create payload.
-    pub async fn post_message_to_create(
-        &self,
-        channel_id: &str,
-        msg: &MessageToCreate,
-    ) -> Result<Message> {
-        debug!("Sending message to channel {}", channel_id);
-        let path = resource::channel_messages(channel_id);
-        self.request_json(Method::POST, &path, None::<&()>, Some(msg))
-            .await
-    }
-
-    /// Edits a channel message using the structured message create payload.
-    pub async fn patch_message_to_create(
-        &self,
-        channel_id: &str,
-        message_id: &str,
-        msg: &MessageToCreate,
-    ) -> Result<Message> {
-        debug!("Editing message {} in channel {}", message_id, channel_id);
-        let path = resource::channel_message(channel_id, message_id);
-        self.request_json(Method::PATCH, &path, None::<&()>, Some(msg))
-            .await
-    }
-
     /// Sends a message to a channel using MessageParams.
     pub async fn send_message(
         &self,

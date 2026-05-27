@@ -54,13 +54,13 @@ Every method takes `&self` plus endpoint-specific arguments and returns `Result<
 ### Direct messages
 
 - create session: `create_direct_message`.
-- send: `send_direct_message`, `post_direct_message`.
+- send: `send_direct_message`.
 - recall: `retract_dm_message`.
 - setting guide: `post_dm_setting_guide`, `post_dm_setting_guide_message`.
 
 ### Group / C2C messages
 
-- send: `send_group_message`, `send_c2c_message`, `post_group_message_to_create`, `post_c2c_message_to_create`, `post_group_api_message`, `post_c2c_api_message`, `post_group_rich_media_message`, `post_c2c_rich_media_message`.
+- send: `send_group_message`, `send_c2c_message`.
 - recall: `retract_group_message`, `retract_c2c_message`.
 - file upload: `post_group_file`, `post_c2c_file`.
 

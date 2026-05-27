@@ -2,42 +2,10 @@ use crate::api::{BotApi, resource};
 use crate::error::Result;
 use crate::models::{
     api::MessageResponse,
-    message::{
-        ApiMessage, C2CMessageParams, GroupMessageParams, Message, MessageToCreate,
-        RichMediaMessage, SendType,
-    },
+    message::{C2CMessageParams, GroupMessageParams, MessageToCreate},
 };
 use reqwest::Method;
-use serde::Serialize;
 use tracing::debug;
-
-#[derive(Clone, Copy)]
-enum OpenMessageTarget<'a> {
-    Group(&'a str),
-    C2c(&'a str),
-}
-
-impl<'a> OpenMessageTarget<'a> {
-    const fn name(self) -> &'static str {
-        match self {
-            Self::Group(_) => "group",
-            Self::C2c(_) => "C2C",
-        }
-    }
-
-    const fn id(self) -> &'a str {
-        match self {
-            Self::Group(id) | Self::C2c(id) => id,
-        }
-    }
-
-    fn send_path(self, send_type: SendType) -> String {
-        match self {
-            Self::Group(id) => resource::group_send(id, send_type),
-            Self::C2c(id) => resource::c2c_send(id, send_type),
-        }
-    }
-}
 
 impl BotApi {
     /// Sends a group message using GroupMessageParams.
@@ -53,36 +21,6 @@ impl BotApi {
             .await
     }
 
-    /// Sends a group message using the structured API message envelope.
-    pub async fn post_group_api_message(
-        &self,
-        group_openid: &str,
-        msg: &ApiMessage,
-    ) -> Result<Message> {
-        self.post_open_api_payload(OpenMessageTarget::Group(group_openid), msg.send_type(), msg)
-            .await
-    }
-
-    /// Sends a group message create payload and returns the full message.
-    pub async fn post_group_message_to_create(
-        &self,
-        group_openid: &str,
-        msg: &MessageToCreate,
-    ) -> Result<Message> {
-        self.post_open_api_payload(OpenMessageTarget::Group(group_openid), msg.send_type(), msg)
-            .await
-    }
-
-    /// Uploads or directly sends group rich media.
-    pub async fn post_group_rich_media_message(
-        &self,
-        group_openid: &str,
-        msg: &RichMediaMessage,
-    ) -> Result<Message> {
-        self.post_open_api_payload(OpenMessageTarget::Group(group_openid), msg.send_type(), msg)
-            .await
-    }
-
     /// Sends a C2C (client-to-client) message using C2CMessageParams.
     pub async fn send_c2c_message(
         &self,
@@ -94,51 +32,6 @@ impl BotApi {
         let path = resource::c2c_messages(openid);
         self.request_message_response_body(Method::POST, &path, &body)
             .await
-    }
-
-    /// Sends a C2C message using the structured API message envelope.
-    pub async fn post_c2c_api_message(&self, openid: &str, msg: &ApiMessage) -> Result<Message> {
-        self.post_open_api_payload(OpenMessageTarget::C2c(openid), msg.send_type(), msg)
-            .await
-    }
-
-    /// Sends a C2C message create payload and returns the full message.
-    pub async fn post_c2c_message_to_create(
-        &self,
-        openid: &str,
-        msg: &MessageToCreate,
-    ) -> Result<Message> {
-        self.post_open_api_payload(OpenMessageTarget::C2c(openid), msg.send_type(), msg)
-            .await
-    }
-
-    /// Uploads or directly sends C2C rich media.
-    pub async fn post_c2c_rich_media_message(
-        &self,
-        openid: &str,
-        msg: &RichMediaMessage,
-    ) -> Result<Message> {
-        self.post_open_api_payload(OpenMessageTarget::C2c(openid), msg.send_type(), msg)
-            .await
-    }
-
-    async fn post_open_api_payload<T>(
-        &self,
-        target: OpenMessageTarget<'_>,
-        send_type: SendType,
-        msg: &T,
-    ) -> Result<Message>
-    where
-        T: Serialize + ?Sized,
-    {
-        debug!("Sending {} message to {}", target.name(), target.id());
-        self.request_json(
-            Method::POST,
-            &target.send_path(send_type),
-            None::<&()>,
-            Some(msg),
-        )
-        .await
     }
 }
 

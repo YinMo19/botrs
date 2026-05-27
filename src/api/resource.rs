@@ -1,5 +1,3 @@
-use crate::models::message::SendType;
-
 pub(crate) const GATEWAY_BOT: &str = "/gateway/bot";
 pub(crate) const USER_ME: &str = "/users/@me";
 pub(crate) const USER_ME_GUILDS: &str = "/users/@me/guilds";
@@ -78,13 +76,6 @@ pub(crate) fn group_message(group_openid: &str, message_id: &str) -> String {
     format!("/v2/groups/{group_openid}/messages/{message_id}")
 }
 
-pub(crate) fn group_send(group_openid: &str, send_type: SendType) -> String {
-    match send_type {
-        SendType::RichMedia => group_file(group_openid),
-        _ => group_messages(group_openid),
-    }
-}
-
 pub(crate) fn c2c_messages(openid: &str) -> String {
     format!("/v2/users/{openid}/messages")
 }
@@ -95,13 +86,6 @@ pub(crate) fn c2c_file(openid: &str) -> String {
 
 pub(crate) fn c2c_message(openid: &str, message_id: &str) -> String {
     format!("/v2/users/{openid}/messages/{message_id}")
-}
-
-pub(crate) fn c2c_send(openid: &str, send_type: SendType) -> String {
-    match send_type {
-        SendType::RichMedia => c2c_file(openid),
-        _ => c2c_messages(openid),
-    }
 }
 
 pub(crate) fn dms_messages(guild_id: &str) -> String {

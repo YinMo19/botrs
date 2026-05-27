@@ -258,6 +258,12 @@ pub struct KeyboardPayload {
     pub content: serde_json::Value,
 }
 
+impl From<KeyboardPayload> for Keyboard {
+    fn from(payload: KeyboardPayload) -> Self {
+        serde_json::from_value(payload.content).unwrap_or_default()
+    }
+}
+
 /// Markdown message payload.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct MarkdownPayload {

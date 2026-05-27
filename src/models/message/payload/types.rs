@@ -4,24 +4,6 @@ pub(crate) fn option_message_type_is_none_or_zero(value: &Option<MessageCreateTy
     value.as_ref().is_none_or(|value| u32::from(*value) == 0)
 }
 
-/// Message send type used to select API routes.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
-#[serde(from = "u8", into = "u8")]
-#[repr(u8)]
-pub enum SendType {
-    /// Regular text/message route
-    Text = 1,
-    /// Rich media file route
-    RichMedia = 2,
-    /// Unknown send type
-    Unknown(u8),
-}
-
-wire_enum!(SendType, u8, Unknown, {
-    Text = 1,
-    RichMedia = 2,
-});
-
 /// Message type used by the message create APIs.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(from = "u32", into = "u32")]

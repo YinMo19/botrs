@@ -2,7 +2,7 @@ use crate::models::serde_helpers::option_is_none_or_default;
 use serde::{Deserialize, Serialize};
 
 use super::{
-    ActionButton, InputNotify, MediaInfo, MessageCreateType, PromptKeyboard, SendType, Stream,
+    ActionButton, InputNotify, MediaInfo, MessageCreateType, PromptKeyboard, Stream,
     option_message_type_is_none_or_zero,
 };
 use crate::models::message::{Ark, Embed, Keyboard, MarkdownPayload, Reference};
@@ -79,15 +79,5 @@ impl MessageToCreate {
     pub fn with_reply(mut self, message_id: impl Into<String>) -> Self {
         self.msg_id = Some(message_id.into());
         self
-    }
-
-    /// Returns the send type for route selection.
-    pub const fn send_type(&self) -> SendType {
-        SendType::Text
-    }
-
-    /// Returns the event ID used for passive replies.
-    pub fn event_id(&self) -> &str {
-        self.event_id.as_deref().unwrap_or("")
     }
 }

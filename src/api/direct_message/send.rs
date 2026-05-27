@@ -2,7 +2,7 @@ use crate::api::{BotApi, resource};
 use crate::error::Result;
 use crate::models::{
     api::MessageResponse,
-    message::{DirectMessageParams, Message, MessageToCreate},
+    message::{DirectMessageParams, MessageToCreate},
 };
 use reqwest::Method;
 use tracing::debug;
@@ -18,18 +18,6 @@ impl BotApi {
         let body = MessageToCreate::from(params);
         let path = resource::dms_messages(guild_id);
         self.request_message_response_body(Method::POST, &path, &body)
-            .await
-    }
-
-    /// Sends a direct message using the structured message create payload.
-    pub async fn post_direct_message(
-        &self,
-        guild_id: &str,
-        msg: &MessageToCreate,
-    ) -> Result<Message> {
-        debug!("Sending direct message to guild {}", guild_id);
-        let path = resource::dms_messages(guild_id);
-        self.request_json(Method::POST, &path, None::<&()>, Some(msg))
             .await
     }
 }
