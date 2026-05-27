@@ -29,7 +29,6 @@ There are no `stop` / `is_connected` / `get_session_info` methods — the framew
 ## Accessors
 
 - `api()` — `&BotApi`. Useful for issuing requests outside an event handler (e.g. before `start()`).
-- `http()` — `&HttpClient`. Lets you tweak transport-level options.
 - `intents()` — the configured `Intents`.
 - `is_sandbox()` — whether sandbox mode was selected.
 

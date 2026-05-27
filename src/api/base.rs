@@ -63,15 +63,6 @@ impl BotApi {
         })
     }
 
-    /// Returns a client with verbose HTTP debug logging toggled.
-    pub fn set_debug(&self, debug: bool) -> Self {
-        Self {
-            http: self.http.with_debug(debug),
-            app_id: self.app_id.clone(),
-            token: self.token.clone(),
-        }
-    }
-
     /// Returns the token stored for OpenAPI calls.
     pub fn token(&self) -> &Token {
         &self.token
@@ -139,10 +130,5 @@ impl BotApi {
     /// Returns the last OpenAPI trace ID observed by the underlying HTTP client.
     pub fn trace_id(&self) -> String {
         self.http.trace_id()
-    }
-
-    /// Gets the HTTP client reference.
-    pub fn http(&self) -> &HttpClient {
-        &self.http
     }
 }

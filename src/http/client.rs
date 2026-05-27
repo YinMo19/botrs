@@ -16,8 +16,6 @@ pub struct HttpClient {
     pub(crate) timeout: Duration,
     /// Last trace ID returned by OpenAPI.
     pub(crate) last_trace_id: Arc<RwLock<Option<String>>>,
-    /// Whether verbose HTTP debug logging is enabled.
-    pub(crate) debug: bool,
     /// OpenAPI instance app ID used by the X-Union-Appid header.
     pub(crate) union_app_id: Option<String>,
 }
@@ -51,19 +49,17 @@ impl HttpClient {
             is_sandbox,
             timeout: Duration::from_secs(timeout),
             last_trace_id: Arc::new(RwLock::new(None)),
-            debug: false,
             union_app_id: None,
         })
     }
 
-    pub(crate) fn clone_with_client(&self, client: Client, timeout: Duration, debug: bool) -> Self {
+    pub(crate) fn clone_with_client(&self, client: Client, timeout: Duration) -> Self {
         Self {
             client,
             base_url: self.base_url.clone(),
             is_sandbox: self.is_sandbox,
             timeout,
             last_trace_id: Arc::clone(&self.last_trace_id),
-            debug,
             union_app_id: self.union_app_id.clone(),
         }
     }
@@ -75,27 +71,13 @@ impl HttpClient {
             .user_agent(format!("BotRS/{}", crate::VERSION))
             .build()
             .map_err(BotError::Http)?;
-        Ok(self.clone_with_client(client, timeout, self.debug))
-    }
-
-    /// Returns a client with debug logging toggled.
-    pub fn with_debug(&self, debug: bool) -> Self {
-        Self {
-            debug,
-            ..self.clone()
-        }
+        Ok(self.clone_with_client(client, timeout))
     }
 
     /// Returns a client for the requested API environment while preserving
-    /// timeout and debug settings.
+    /// timeout settings.
     pub fn with_sandbox(&self, is_sandbox: bool) -> Result<Self> {
-        Self::new(self.timeout.as_secs(), is_sandbox).map(|client| {
-            if self.debug {
-                client.with_debug(true)
-            } else {
-                client
-            }
-        })
+        Self::new(self.timeout.as_secs(), is_sandbox)
     }
 
     /// Returns a client that sends the X-Union-Appid header for OpenAPI calls.
@@ -130,11 +112,6 @@ impl HttpClient {
             .unwrap_or_default()
     }
 
-    /// Returns whether debug logging is enabled.
-    pub fn debug_enabled(&self) -> bool {
-        self.debug
-    }
-
     /// Returns the app ID configured for the X-Union-Appid header.
     pub fn union_app_id(&self) -> Option<&str> {
         self.union_app_id.as_deref()
@@ -147,7 +124,6 @@ impl std::fmt::Debug for HttpClient {
             .field("base_url", &self.base_url)
             .field("is_sandbox", &self.is_sandbox)
             .field("timeout", &self.timeout)
-            .field("debug", &self.debug)
             .finish()
     }
 }

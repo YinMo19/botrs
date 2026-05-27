@@ -29,7 +29,6 @@ client.start().await?;
 ## 访问器
 
 - `api()` —— `&BotApi`，方便在事件循环之外（例如 `start()` 调用前）发请求。
-- `http()` —— `&HttpClient`，可微调底层传输参数。
 - `intents()` —— 当前配置的 `Intents`。
 - `is_sandbox()` —— 是否处于沙箱模式。
 

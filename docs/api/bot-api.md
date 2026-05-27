@@ -111,7 +111,6 @@ Every method takes `&self` plus endpoint-specific arguments and returns `Result<
 ### Lifecycle
 
 - `close` — drains in-flight requests and shuts down the client.
-- `http` — borrow the underlying `HttpClient` for advanced use.
 
 ## Worked examples
 

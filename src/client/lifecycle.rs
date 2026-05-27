@@ -1,5 +1,6 @@
 use super::prelude::*;
 use super::{Client, Context, EventHandler};
+use crate::http::HttpClient;
 
 impl<H: EventHandler + 'static> Client<H> {
     /// Creates a client using the crate default request timeout.
@@ -152,11 +153,6 @@ impl<H: EventHandler + 'static> Client<H> {
     /// Gets a reference to the API client.
     pub fn api(&self) -> &BotApi {
         &self.api
-    }
-
-    /// Gets a reference to the HTTP client.
-    pub fn http(&self) -> &HttpClient {
-        self.api.http()
     }
 
     /// Gets the intents being used.

@@ -84,7 +84,7 @@ mod tests {
         let token = crate::Token::new("app-id", "secret");
         let http = HttpClient::new(30, false).unwrap();
         let api = BotApi::new(http, token);
-        assert!(!api.http().is_sandbox());
+        assert_eq!(api.get_app_id(), "app-id");
     }
 
     #[test]
@@ -92,15 +92,8 @@ mod tests {
         let api = BotApi::setup("app-id", "secret", true).unwrap();
         assert_eq!(api.token().app_id(), "app-id");
         assert_eq!(api.get_app_id(), "app-id");
-        assert_eq!(api.http().union_app_id(), Some("app-id"));
-        assert!(api.http().is_sandbox());
 
         let api = api.with_timeout(Duration::from_secs(7)).unwrap();
-        assert_eq!(api.http().timeout(), Duration::from_secs(7));
-        assert_eq!(api.get_app_id(), "app-id");
-
-        let api = api.set_debug(true);
-        assert!(api.http().debug_enabled());
         assert_eq!(api.get_app_id(), "app-id");
         assert_eq!(api.trace_id(), "");
     }

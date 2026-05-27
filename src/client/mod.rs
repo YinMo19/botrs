@@ -21,7 +21,6 @@ mod prelude {
         Format, ForumAuditResult, ForumRsp, OpenThread, Post, PostThreadRsp, Reply, Thread,
         ThreadInfo, ThreadToCreate,
     };
-    pub(super) use crate::http::HttpClient;
     pub(super) use crate::intents::Intents;
     pub(super) use crate::interaction::Interaction;
     pub(super) use crate::manage::{
