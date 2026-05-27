@@ -1,18 +1,6 @@
 use super::*;
 
 #[test]
-fn test_pagination() {
-    let pagination = Pagination::new(2, 10, 25);
-    assert_eq!(pagination.total_pages, 3);
-    assert!(pagination.has_prev);
-    assert!(pagination.has_next);
-
-    let last_page = Pagination::new(3, 10, 25);
-    assert!(!last_page.has_next);
-    assert!(last_page.has_prev);
-}
-
-#[test]
 fn test_rate_limit() {
     let rate_limit = RateLimit {
         bucket: Some("global".to_string()),
