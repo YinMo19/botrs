@@ -162,20 +162,12 @@ impl HttpClient {
             headers.insert("Content-Type", "application/json".parse().unwrap());
         }
 
-        let mut context = crate::openapi::FilterContext::request(method.clone(), url, headers);
-        crate::openapi::DoReqFilterChains(&mut context)?;
-
-        let request_headers = context.request_headers.clone();
-        let mut request = self
-            .client
-            .request(method.clone(), url)
-            .headers(request_headers.clone());
+        let mut request = self.client.request(method.clone(), url).headers(headers);
         if let Some(body) = body {
             request = request.json(body);
         }
         let response = request.send().await.map_err(BotError::Http)?;
-        self.handle_bytes_response(response, method, url, request_headers)
-            .await
+        self.handle_bytes_response(response).await
     }
 
     /// Makes a generic HTTP request to the API.
@@ -233,14 +225,7 @@ impl HttpClient {
             headers.insert("Content-Type", "application/json".parse().unwrap());
         }
 
-        let mut context = crate::openapi::FilterContext::request(method.clone(), url, headers);
-        crate::openapi::DoReqFilterChains(&mut context)?;
-        let request_headers = context.request_headers.clone();
-
-        let mut request = self
-            .client
-            .request(method.clone(), url)
-            .headers(request_headers.clone());
+        let mut request = self.client.request(method.clone(), url).headers(headers);
 
         if let Some(q) = query {
             request = request.query(q);
@@ -252,8 +237,7 @@ impl HttpClient {
 
         let response = request.send().await.map_err(BotError::Http)?;
 
-        self.handle_response(response, method, url, request_headers)
-            .await
+        self.handle_response(response).await
     }
 
     pub(crate) async fn request_raw_with_headers<Q>(
@@ -274,14 +258,7 @@ impl HttpClient {
         let mut headers = self.authorized_headers(token, headers).await?;
         headers.insert("Content-Type", "application/json".parse().unwrap());
 
-        let mut context = crate::openapi::FilterContext::request(method.clone(), &url, headers);
-        crate::openapi::DoReqFilterChains(&mut context)?;
-        let request_headers = context.request_headers.clone();
-
-        let mut request = self
-            .client
-            .request(method.clone(), &url)
-            .headers(request_headers.clone());
+        let mut request = self.client.request(method.clone(), &url).headers(headers);
 
         if let Some(q) = query {
             request = request.query(q);
@@ -293,8 +270,7 @@ impl HttpClient {
             .await
             .map_err(BotError::Http)?;
 
-        self.handle_response(response, method, &url, request_headers)
-            .await
+        self.handle_response(response).await
     }
 
     pub(crate) async fn authorized_headers(

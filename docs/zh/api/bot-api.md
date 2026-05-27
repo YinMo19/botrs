@@ -47,21 +47,21 @@ let me = api.get_bot_info(&token).await?;
 ### 频道消息
 
 - `get_message`、`get_messages`、`get_messages_with_params`
-- 发送：`post_message_with_params`（推荐）；旧接口：`post_message`、`post_message_to_create`、`post_message_api`。
-- 编辑：`patch_message_with_params`（推荐）；旧接口：`patch_message`、`patch_message_to_create`、`patch_message_api`。
+- 发送：`post_message_with_params`、`post_message_to_create`。
+- 编辑：`patch_message_with_params`、`patch_message`、`patch_message_to_create`。
 - 撤回：`recall_message`。
 
 ### 私信
 
 - 创建会话：`create_dms`（别名 `create_direct_message`）。
-- 发送：`post_dms_with_params`；旧接口：`post_dms`、`post_direct_message`。
+- 发送：`post_dms_with_params`、`post_direct_message`。
 - 撤回：`retract_dm_message`。
 - 设置引导：`post_dm_setting_guide`、`post_dm_setting_guide_message`。
 
 ### 群 / C2C 消息
 
-- 发送：`post_group_message_with_params`、`post_c2c_message_with_params`（`post_c` 是 C2C 别名）；旧接口：`post_group_message`、`post_group_message_to_create`、`post_group_api_message`、`post_group_rich_media_message`。
-- 撤回：`retract_group_message`、`retract_c`。
+- 发送：`post_group_message_with_params`、`post_c2c_message_with_params`、`post_group_message_to_create`、`post_c2c_message_to_create`、`post_group_api_message`、`post_c2c_api_message`、`post_group_rich_media_message`、`post_c2c_rich_media_message`。
+- 撤回：`retract_group_message`、`retract_c2c_message`。
 - 文件上传：`post_group_file`、`post_c2c_file`。
 
 ### 表情回应

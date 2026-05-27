@@ -12,7 +12,6 @@ pub mod connection;
 pub mod constant;
 pub mod error;
 pub mod event;
-pub mod facade;
 pub mod forum;
 pub mod gateway;
 pub mod http;
@@ -21,8 +20,6 @@ pub mod interaction;
 pub mod log;
 pub mod manage;
 pub mod models;
-pub mod openapi;
-pub mod options;
 pub mod reaction;
 pub mod remote;
 pub mod search;
@@ -50,10 +47,6 @@ pub use event::{
     RegisterHandler, RegisterHandlers, ReplyEventHandler, SubscribeMsgStatusEventHandler,
     ThreadEventHandler,
 };
-pub use facade::{
-    DefaultImpl, NewOpenAPI, NewSandboxOpenAPI, RegisterDispatchEventHandler, SelectOpenAPIVersion,
-    SetLogger, SetOpenAPIClient, SetSessionManager, SetWebsocketClient,
-};
 pub use forum::{
     Content, Format, ForumAuditResult, ForumRsp, OpenThread, Post, PostInfo, PostThreadRsp, Reply,
     ReplyInfo, Thread, ThreadInfo, ThreadToCreate, Title,
@@ -72,14 +65,6 @@ pub use manage::{
 };
 pub use models::gateway::Ready;
 pub use models::*;
-pub use openapi::{
-    APIPermissionsAPI, AnnouncesAPI, AudioAPI, Base, ChannelAPI, ChannelPermissionsAPI,
-    DirectMessageAPI, DoReqFilterChains, DoRespFilterChains, FilterContext, GuildAPI, HTTPFilter,
-    InteractionAPI, IsSuccessStatus, MemberAPI, MessageAPI, MessageReactionAPI, MessageSettingAPI,
-    OpenAPI, PinsAPI, Register as RegisterOpenAPI, RegisterReqFilter, RegisterRespFilter, RoleAPI,
-    ScheduleAPI, UserAPI, WebhookAPI, WebsocketAPI,
-};
-pub use options::{OpenApiOption, Options, WithHideTip, WithURL};
 pub use reaction::{
     Emoji as ReactionEmoji, MessageReaction, MessageReactionPager, MessageReactionUsers, Reaction,
     ReactionTarget, ReactionTargetType, ReactionUsers,

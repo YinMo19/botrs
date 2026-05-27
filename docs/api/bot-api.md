@@ -47,21 +47,21 @@ Every method takes `&self, token: &Token, …` and returns `Result<…>`. The li
 ### Messages (channel)
 
 - `get_message`, `get_messages`, `get_messages_with_params`
-- send: `post_message_with_params` (recommended). Legacy: `post_message`, `post_message_to_create`, `post_message_api`.
-- edit: `patch_message_with_params` (recommended). Legacy: `patch_message`, `patch_message_to_create`, `patch_message_api`.
+- send: `post_message_with_params`, `post_message_to_create`.
+- edit: `patch_message_with_params`, `patch_message`, `patch_message_to_create`.
 - recall: `recall_message`.
 
 ### Direct messages
 
 - create session: `create_dms` (alias `create_direct_message`).
-- send: `post_dms_with_params`. Legacy: `post_dms`, `post_direct_message`.
+- send: `post_dms_with_params`, `post_direct_message`.
 - recall: `retract_dm_message`.
 - setting guide: `post_dm_setting_guide`, `post_dm_setting_guide_message`.
 
 ### Group / C2C messages
 
-- send: `post_group_message_with_params`, `post_c2c_message_with_params` (`post_c` is the C2C alias). Legacy: `post_group_message`, `post_group_message_to_create`, `post_group_api_message`, `post_group_rich_media_message`.
-- recall: `retract_group_message`, `retract_c`.
+- send: `post_group_message_with_params`, `post_c2c_message_with_params`, `post_group_message_to_create`, `post_c2c_message_to_create`, `post_group_api_message`, `post_c2c_api_message`, `post_group_rich_media_message`, `post_c2c_rich_media_message`.
+- recall: `retract_group_message`, `retract_c2c_message`.
 - file upload: `post_group_file`, `post_c2c_file`.
 
 ### Reactions

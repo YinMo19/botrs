@@ -75,16 +75,6 @@ impl BotApi {
             .await
     }
 
-    /// Pascal-case alias for sending a channel message.
-    pub async fn post_message_api(
-        &self,
-        token: &Token,
-        channel_id: &str,
-        msg: &MessageToCreate,
-    ) -> Result<Message> {
-        self.post_message_to_create(token, channel_id, msg).await
-    }
-
     /// Edits a channel message using the structured message create payload.
     pub async fn patch_message_to_create(
         &self,
@@ -96,18 +86,6 @@ impl BotApi {
         debug!("Editing message {} in channel {}", message_id, channel_id);
         let path = resource::channel_message(channel_id, message_id);
         self.request_json(token, Method::PATCH, &path, None::<&()>, Some(msg))
-            .await
-    }
-
-    /// Pascal-case alias for editing a channel message.
-    pub async fn patch_message_api(
-        &self,
-        token: &Token,
-        channel_id: &str,
-        message_id: &str,
-        msg: &MessageToCreate,
-    ) -> Result<Message> {
-        self.patch_message_to_create(token, channel_id, message_id, msg)
             .await
     }
 

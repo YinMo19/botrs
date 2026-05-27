@@ -1,25 +1,15 @@
 use super::HttpClient;
 use crate::error::{BotError, Result, http_error_from_status};
 use crate::models::api::{ApiError, RateLimit};
-use reqwest::{Method, Response, StatusCode, header::HeaderMap};
+use reqwest::{Response, StatusCode};
 use serde_json::Value;
 use tracing::{debug, error, warn};
 
 impl HttpClient {
     /// Handles the HTTP response and converts it to a JSON value.
-    pub(crate) async fn handle_response(
-        &self,
-        response: Response,
-        method: Method,
-        url: &str,
-        request_headers: HeaderMap,
-    ) -> Result<serde_json::Value> {
+    pub(crate) async fn handle_response(&self, response: Response) -> Result<serde_json::Value> {
         let status = response.status();
-        let mut headers = response.headers().clone();
-        let mut context =
-            crate::openapi::FilterContext::response(method, url, request_headers, status, headers);
-        crate::openapi::DoRespFilterChains(&mut context)?;
-        headers = context.response_headers;
+        let headers = response.headers().clone();
         self.store_trace_id(&headers);
 
         if status == StatusCode::TOO_MANY_REQUESTS {
@@ -34,7 +24,7 @@ impl HttpClient {
         }
 
         let body = response.text().await.map_err(BotError::Http)?;
-        if crate::openapi::IsSuccessStatus(status.as_u16()) && body.trim().is_empty() {
+        if is_success_status(status) && body.trim().is_empty() {
             debug!("Request successful, empty response body");
             return Ok(Value::Null);
         }
@@ -45,7 +35,7 @@ impl HttpClient {
             BotError::Json(e)
         })?;
 
-        if !crate::openapi::IsSuccessStatus(status.as_u16()) {
+        if !is_success_status(status) {
             let api_error = self.parse_api_error(status, &json)?;
             error!("API error: {}", api_error);
             return Err(http_error_from_status(status.as_u16(), api_error.message));
@@ -59,19 +49,9 @@ impl HttpClient {
         Ok(json)
     }
 
-    pub(crate) async fn handle_bytes_response(
-        &self,
-        response: Response,
-        method: Method,
-        url: &str,
-        request_headers: HeaderMap,
-    ) -> Result<Vec<u8>> {
+    pub(crate) async fn handle_bytes_response(&self, response: Response) -> Result<Vec<u8>> {
         let status = response.status();
-        let mut headers = response.headers().clone();
-        let mut context =
-            crate::openapi::FilterContext::response(method, url, request_headers, status, headers);
-        crate::openapi::DoRespFilterChains(&mut context)?;
-        headers = context.response_headers;
+        let headers = response.headers().clone();
         self.store_trace_id(&headers);
 
         if status == StatusCode::TOO_MANY_REQUESTS {
@@ -84,7 +64,7 @@ impl HttpClient {
         }
 
         let body = response.bytes().await.map_err(BotError::Http)?.to_vec();
-        if !crate::openapi::IsSuccessStatus(status.as_u16()) {
+        if !is_success_status(status) {
             let message = serde_json::from_slice::<Value>(&body)
                 .ok()
                 .and_then(|json| {
@@ -194,4 +174,8 @@ impl HttpClient {
             retry_after,
         })
     }
+}
+
+fn is_success_status(status: StatusCode) -> bool {
+    matches!(status.as_u16(), 200 | 204)
 }

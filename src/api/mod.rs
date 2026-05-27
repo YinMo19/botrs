@@ -117,13 +117,6 @@ mod tests {
     }
 
     #[test]
-    fn hide_tip_option_sets_flag() {
-        let options = crate::Options::from_options([crate::WithHideTip()]);
-        assert!(options.hide_tip);
-        assert!(options.url.is_none());
-    }
-
-    #[test]
     fn hide_tip_query_omits_false() {
         assert!(BotApi::hide_tip_query(false).is_none());
         assert_eq!(
