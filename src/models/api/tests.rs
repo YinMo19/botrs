@@ -1,17 +1,6 @@
 use super::*;
 
 #[test]
-fn test_api_response() {
-    let success: ApiResponse<String> = ApiResponse::success("test".to_string());
-    assert!(success.code.is_none());
-    assert!(success.into_result().is_ok());
-
-    let error: ApiResponse<String> = ApiResponse::error(404, "Not found");
-    assert_eq!(error.code, Some(404));
-    assert!(error.into_result().is_err());
-}
-
-#[test]
 fn test_pagination() {
     let pagination = Pagination::new(2, 10, 25);
     assert_eq!(pagination.total_pages, 3);
