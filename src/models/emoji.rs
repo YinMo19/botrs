@@ -59,8 +59,10 @@ pub struct Emoji {
     #[serde(rename = "type")]
     pub emoji_type: EmojiType,
     /// Name of the emoji (optional)
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub name: Option<String>,
     /// URL to the emoji image (for custom emojis)
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub url: Option<String>,
 }
 
@@ -172,6 +174,33 @@ mod tests {
         assert_eq!(emoji.name, None);
         assert_eq!(emoji.url, None);
         assert!(emoji.is_system());
+    }
+
+    #[test]
+    fn emoji_omits_absent_metadata_like_official_dto() {
+        let emoji = Emoji::system("123");
+        assert_eq!(
+            serde_json::to_value(&emoji).unwrap(),
+            serde_json::json!({
+                "id": "123",
+                "type": 1
+            })
+        );
+
+        let custom = Emoji::custom(
+            "789",
+            Some("happy".to_string()),
+            Some("https://example.com/happy.png".to_string()),
+        );
+        assert_eq!(
+            serde_json::to_value(&custom).unwrap(),
+            serde_json::json!({
+                "id": "789",
+                "type": 2,
+                "name": "happy",
+                "url": "https://example.com/happy.png"
+            })
+        );
     }
 
     #[test]
