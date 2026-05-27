@@ -5,7 +5,6 @@ impl<H: EventHandler> std::fmt::Debug for Client<H> {
         f.debug_struct("Client")
             .field("intents", &self.intents)
             .field("is_sandbox", &self.is_sandbox)
-            .field("timeout", &self.timeout)
             .finish()
     }
 }

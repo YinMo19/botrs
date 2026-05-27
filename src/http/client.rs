@@ -2,7 +2,6 @@ use crate::error::{BotError, Result};
 use reqwest::Client;
 use std::sync::{Arc, RwLock};
 use std::time::Duration;
-use tracing::debug;
 
 /// HTTP client for the QQ Guild Bot API.
 #[derive(Clone)]
@@ -139,12 +138,6 @@ impl HttpClient {
     /// Returns the app ID configured for the X-Union-Appid header.
     pub fn union_app_id(&self) -> Option<&str> {
         self.union_app_id.as_deref()
-    }
-
-    /// Closes the HTTP client and cleans up resources.
-    pub async fn close(&self) {
-        // reqwest::Client doesn't need explicit cleanup.
-        debug!("HTTP client closed");
     }
 }
 

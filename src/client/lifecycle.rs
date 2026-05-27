@@ -44,7 +44,6 @@ impl<H: EventHandler + 'static> Client<H> {
             api,
             handler: Arc::new(handler),
             is_sandbox,
-            timeout,
         })
     }
 
@@ -66,7 +65,6 @@ impl<H: EventHandler + 'static> Client<H> {
             api,
             handler: Arc::new(handler),
             is_sandbox,
-            timeout,
         })
     }
 
@@ -171,11 +169,5 @@ impl<H: EventHandler + 'static> Client<H> {
     /// Returns true if using sandbox environment.
     pub fn is_sandbox(&self) -> bool {
         self.is_sandbox
-    }
-
-    /// Shuts down the client and cleans up resources.
-    pub async fn shutdown(&self) {
-        info!("Shutting down bot client");
-        self.api.close().await;
     }
 }

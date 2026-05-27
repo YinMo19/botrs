@@ -27,9 +27,7 @@ fn test_api_error_parsing() {
         "trace_id": "test-trace"
     });
 
-    let error = client
-        .parse_api_error(StatusCode::NOT_FOUND, &json)
-        .unwrap();
+    let error = client.parse_api_error(StatusCode::NOT_FOUND, &json);
     assert_eq!(error.code, 404);
     assert_eq!(error.err_code, None);
     assert_eq!(error.message, "Not found");
@@ -47,9 +45,7 @@ fn api_error_parsing_prefers_official_err_code() {
         "trace_id": "trace-err-code"
     });
 
-    let error = client
-        .parse_api_error(StatusCode::UNAUTHORIZED, &json)
-        .unwrap();
+    let error = client.parse_api_error(StatusCode::UNAUTHORIZED, &json);
     assert_eq!(error.code, 11244);
     assert_eq!(error.err_code, Some(11244));
     assert_eq!(error.message, "token expired");

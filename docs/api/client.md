@@ -22,7 +22,7 @@ client.start().await?;
 ## Lifecycle
 
 - `start().await` — connects, identifies, and runs the event loop. Returns once the loop terminates (gracefully or via fatal error).
-- `shutdown().await` — signals the running loop to drain and close. Call this from another task (e.g. a `Ctrl+C` handler) to end `start` cleanly.
+Dropping the running `Client` task closes the gateway connection.
 
 There are no `stop` / `is_connected` / `get_session_info` methods — the framework intentionally exposes a small surface and pushes session details into events instead. Use `EventHandler::ready` and `EventHandler::resumed` to observe lifecycle changes.
 
@@ -41,15 +41,14 @@ There are no `stop` / `is_connected` / `get_session_info` methods — the framew
 
 ```rust
 let mut client = Client::new(token, intents, MyHandler, false)?;
-let handle = client.api().clone();    // optional: hold a clone for shutdown
 let main = tokio::spawn(async move { client.start().await });
 
 tokio::signal::ctrl_c().await?;
-handle.close().await;
+main.abort();
 let _ = main.await;
 ```
 
-`BotApi::close()` cancels in-flight requests, while the event loop's own `shutdown()` (or simply dropping the `Client`) closes the gateway.
+Dropping the `Client` task closes the gateway connection; `reqwest::Client` does not require an explicit close call.
 
 ## See also
 

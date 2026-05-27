@@ -155,9 +155,4 @@ impl BotApi {
     pub fn http(&self) -> &HttpClient {
         &self.http
     }
-
-    /// Closes the API client and cleans up resources.
-    pub async fn close(&self) {
-        self.http.close().await;
-    }
 }

@@ -30,11 +30,11 @@ pub use message_setting::*;
 pub use permission::*;
 pub use robot::*;
 pub use schedule::*;
-pub use user::*;
+pub use user::{Member as UserMember, Role as UserRole, User};
 pub use webhook::*;
 
 // Re-export specific types for convenience
-pub use guild::{Guild, Member, Role};
+pub use guild::{Guild, GuildRole, Member};
 
 use serde::{Deserialize, Deserializer, Serialize};
 use std::{collections::HashMap, str::FromStr, time::Duration as StdDuration};

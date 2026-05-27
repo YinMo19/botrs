@@ -1,5 +1,5 @@
 use super::RemindType;
-use crate::models::{HasId, HasName, Member, Snowflake};
+use crate::models::{HasId, HasName, Snowflake, UserMember};
 use serde::{Deserialize, Serialize};
 
 /// Represents a schedule event in a channel.
@@ -28,7 +28,7 @@ pub struct Schedule {
     pub remind_type: String,
     /// Creator of the schedule
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub creator: Option<Member>,
+    pub creator: Option<UserMember>,
 }
 
 impl Schedule {
@@ -59,7 +59,7 @@ impl Schedule {
     }
 
     /// Sets the creator for this schedule.
-    pub fn with_creator(mut self, creator: Member) -> Self {
+    pub fn with_creator(mut self, creator: UserMember) -> Self {
         self.creator = Some(creator);
         self
     }

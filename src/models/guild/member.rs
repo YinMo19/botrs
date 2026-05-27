@@ -44,18 +44,6 @@ pub const DELETE_SEVEN_DAYS: DeleteHistoryMsgDay = 7;
 pub const DELETE_FIFTEEN_DAYS: DeleteHistoryMsgDay = 15;
 pub const DELETE_THIRTY_DAYS: DeleteHistoryMsgDay = 30;
 pub const DELETE_ALL: DeleteHistoryMsgDay = -1;
-#[allow(non_upper_case_globals)]
-pub const NoDelete: DeleteHistoryMsgDay = NO_DELETE;
-#[allow(non_upper_case_globals)]
-pub const DeleteThreeDays: DeleteHistoryMsgDay = DELETE_THREE_DAYS;
-#[allow(non_upper_case_globals)]
-pub const DeleteSevenDays: DeleteHistoryMsgDay = DELETE_SEVEN_DAYS;
-#[allow(non_upper_case_globals)]
-pub const DeleteFifteenDays: DeleteHistoryMsgDay = DELETE_FIFTEEN_DAYS;
-#[allow(non_upper_case_globals)]
-pub const DeleteThirtyDays: DeleteHistoryMsgDay = DELETE_THIRTY_DAYS;
-#[allow(non_upper_case_globals)]
-pub const DeleteAll: DeleteHistoryMsgDay = DELETE_ALL;
 
 /// Additional options for deleting a guild member.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

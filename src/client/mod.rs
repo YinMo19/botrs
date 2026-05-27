@@ -65,6 +65,4 @@ pub struct Client<H: EventHandler> {
     handler: Arc<H>,
     /// Whether to use sandbox environment
     is_sandbox: bool,
-    /// Request timeout in seconds
-    timeout: u64,
 }

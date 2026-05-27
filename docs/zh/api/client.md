@@ -22,7 +22,7 @@ client.start().await?;
 ## 生命周期
 
 - `start().await` —— 建立连接、完成 identify，并运行事件循环；事件循环退出（正常或致命错误）后返回。
-- `shutdown().await` —— 通知正在运行的循环排空并关闭。在另一个任务（如 `Ctrl+C` 处理器）调用即可干净停机。
+丢弃正在运行的 `Client` 任务会关闭网关连接。
 
 框架特意保持小表面，没有 `stop` / `is_connected` / `get_session_info` 这些方法 —— 会话状态应当通过事件感知。请用 `EventHandler::ready` 与 `EventHandler::resumed` 监听生命周期变化。
 
@@ -41,15 +41,14 @@ client.start().await?;
 
 ```rust
 let mut client = Client::new(token, intents, MyHandler, false)?;
-let handle = client.api().clone();    // 可选：保留 clone 以便关闭
 let main = tokio::spawn(async move { client.start().await });
 
 tokio::signal::ctrl_c().await?;
-handle.close().await;
+main.abort();
 let _ = main.await;
 ```
 
-`BotApi::close()` 取消进行中的请求；事件循环自身的 `shutdown()`（或直接 drop `Client`）则负责关闭网关。
+丢弃 `Client` 任务会关闭网关连接；`reqwest::Client` 不需要显式 close 调用。
 
 ## 参见
 

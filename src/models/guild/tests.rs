@@ -132,7 +132,7 @@ fn test_icon_url() {
 
 #[test]
 fn test_role_creation() {
-    let role = Role::new();
+    let role = GuildRole::new();
     assert_eq!(role.id, "");
     assert_eq!(role.name, "");
     assert!(!role.is_hoisted());
@@ -141,7 +141,7 @@ fn test_role_creation() {
 
 #[test]
 fn test_role_with_data() {
-    let mut role = Role::new();
+    let mut role = GuildRole::new();
     role.id = "role123".to_string();
     role.name = "Admin".to_string();
     role.color = 0xFF0000;

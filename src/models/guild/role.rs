@@ -27,8 +27,6 @@ impl GuildRoles {
     }
 }
 
-/// Represents a role ID.
-pub type RoleId = Snowflake;
 /// Default role color used when creating or updating roles.
 pub const DEFAULT_ROLE_COLOR: u32 = 4_278_245_297;
 
@@ -169,73 +167,6 @@ impl HasId for GuildRole {
 }
 
 impl HasName for GuildRole {
-    fn name(&self) -> &str {
-        &self.name
-    }
-}
-
-/// Represents a role in a guild (legacy type alias).
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
-pub struct Role {
-    /// The role's unique ID
-    #[serde(default, skip_serializing_if = "String::is_empty")]
-    pub id: Snowflake,
-    /// The role's name
-    #[serde(default)]
-    pub name: String,
-    /// The role's color (ARGB hex as decimal)
-    #[serde(default)]
-    pub color: u32,
-    /// Whether this role is displayed separately in the member list
-    #[serde(default)]
-    pub hoist: u32,
-    /// The number of members with this role
-    #[serde(default, rename = "number", skip_serializing_if = "is_zero_u32")]
-    pub member_count: u32,
-    /// The number of online members with this role
-    #[serde(default, skip_serializing_if = "is_zero_u32")]
-    pub member_limit: u32,
-}
-
-impl Role {
-    /// Creates a new role.
-    pub fn new() -> Self {
-        Self::default()
-    }
-
-    /// Returns true if this role is hoisted (displayed separately).
-    pub fn is_hoisted(&self) -> bool {
-        self.hoist != 0
-    }
-
-    /// Gets the role's color as a hex value.
-    pub fn color_hex(&self) -> Option<String> {
-        (self.color != 0).then(|| format!("#{:06X}", self.color))
-    }
-
-    /// Gets the number of members with this role.
-    pub fn member_count(&self) -> u32 {
-        self.member_count
-    }
-
-    /// Gets the member limit for this role.
-    pub fn get_member_limit(&self) -> u32 {
-        self.member_limit
-    }
-
-    /// Returns true if the role has reached its member limit.
-    pub fn is_at_member_limit(&self) -> bool {
-        self.member_limit > 0 && self.member_count >= self.member_limit
-    }
-}
-
-impl HasId for Role {
-    fn id(&self) -> Option<&Snowflake> {
-        (!self.id.is_empty()).then_some(&self.id)
-    }
-}
-
-impl HasName for Role {
     fn name(&self) -> &str {
         &self.name
     }

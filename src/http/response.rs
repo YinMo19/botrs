@@ -36,7 +36,7 @@ impl HttpClient {
         })?;
 
         if !is_success_status(status) {
-            let api_error = self.parse_api_error(status, &json)?;
+            let api_error = self.parse_api_error(status, &json);
             error!("API error: {}", api_error);
             return Err(http_error_from_status(status.as_u16(), api_error.message));
         }
@@ -95,13 +95,9 @@ impl HttpClient {
     }
 
     /// Parses an API error from the response.
-    pub(crate) fn parse_api_error(
-        &self,
-        status: StatusCode,
-        json: &serde_json::Value,
-    ) -> Result<ApiError> {
+    pub(crate) fn parse_api_error(&self, status: StatusCode, json: &serde_json::Value) -> ApiError {
         if let Ok(error) = serde_json::from_value::<ApiError>(json.clone()) {
-            return Ok(error);
+            return error;
         }
 
         let code = json
@@ -127,13 +123,13 @@ impl HttpClient {
             .and_then(|t| t.as_str())
             .map(|s| s.to_string());
 
-        Ok(ApiError {
+        ApiError {
             code,
             err_code,
             message,
             errors: Some(json.clone()),
             trace_id,
-        })
+        }
     }
 
     /// Parses rate limit information from response headers.
