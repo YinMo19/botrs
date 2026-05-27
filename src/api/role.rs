@@ -121,7 +121,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn create_role_matches_botgo_update_body() {
+    async fn create_role_sends_update_body() {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
         let role = GuildRole {
@@ -143,7 +143,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn update_role_matches_botgo_update_body() {
+    async fn update_role_sends_update_body() {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
         let role = GuildRole {

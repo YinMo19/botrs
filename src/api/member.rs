@@ -189,7 +189,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn inline_add_role_member_matches_botgo_empty_channel() {
+    async fn inline_add_role_member_sends_empty_channel() {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
         api.create_guild_role_member("guild-1", "role-1", "user-1", &MemberAddRoleBody::new())
@@ -203,7 +203,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn inline_delete_role_member_matches_botgo_channel_body() {
+    async fn inline_delete_role_member_sends_channel_body() {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
         let body = MemberAddRoleBody::with_channel_id("channel-1");
@@ -220,7 +220,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn inline_mute_member_matches_botgo_omitempty_body() {
+    async fn inline_mute_member_omits_empty_body_fields() {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
         api.mute_member("guild-1", "user-1", None, Some("20"))

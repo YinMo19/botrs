@@ -183,7 +183,7 @@ fn role_keeps_official_json_shape() {
 }
 
 #[test]
-fn update_role_new_matches_botgo_request_body() {
+fn update_role_new_matches_request_body() {
     let body = UpdateRole::new(
         "guild-1",
         GuildRole {
@@ -321,7 +321,7 @@ fn member_uses_required_zero_value_fields() {
 }
 
 #[test]
-fn member_add_role_body_matches_botgo_json_shape() {
+fn member_add_role_body_matches_json_shape() {
     let empty = serde_json::to_value(MemberAddRoleBody::new()).unwrap();
     assert_eq!(empty, serde_json::json!({"channel": null}));
 
@@ -339,7 +339,7 @@ fn member_add_role_body_matches_botgo_json_shape() {
 }
 
 #[test]
-fn member_delete_options_match_botgo_option_shape() {
+fn member_delete_options_match_query_shape() {
     let options = MemberDeleteOptions::new()
         .with_delete_history_msg_days(99)
         .with_add_blacklist(true)

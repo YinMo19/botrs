@@ -94,7 +94,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn resume_uses_raw_access_token_like_botgo() {
+    async fn resume_uses_raw_access_token() {
         let token = Token::new("APPID_XXXXXX", "SECRET_XXXXXX");
         token
             .set_cached_access_token_for_test("ACCESS_TOKEN_XXXXXX")

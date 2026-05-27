@@ -20,12 +20,12 @@ BotRS 的所有重要更改都将记录在此文件中。
 - 移除 Go 风格 pager、成员删除 option 和消息辅助名称（`QueryParams`、`WithAddBlackList`、`GetEventID`、`GetSendType`、`APIMessage` 等），改用原生 Rust 方法。
 - 移除 Go 风格消息 mention 辅助名称（`MentionUser`、`MentionAllUser`、`MentionChannel`、`Emoji`、`ETLInput`、`ParseCommand`）；请使用 `mention_user`、`mention_all_user`、`mention_channel`、`emoji`、`etl_input` 和 `parse_command`。
 - 移除 Go 风格消息 payload 与 keyboard 常量别名（`TextMsg`、`MarkdownMsg`、`RichMedia`、`ActionTypeURL`、`PermissionTypAll` 等）；请使用 `MessageCreateType` 以及 Rust 风格 `ACTION_TYPE_*` / `PERMISSION_TYPE_*` 常量。
-- 移除 Go 风格和 botpy 风格消息内容类型别名（`ArkKV`、`ArkObjKV`、`MessageKeyboard`、`CustomKeyboard`、`TemplateID`、`MarkdownParams` 等）；请使用具体 Rust 类型，例如 `ArkKv`、`Keyboard`、`KeyboardContent`、`KeyboardTemplateId` 和 `MarkdownParam`。
+- 移除 Go 风格和 Python 风格消息内容类型别名（`ArkKV`、`ArkObjKV`、`MessageKeyboard`、`CustomKeyboard`、`TemplateID`、`MarkdownParams` 等）；请使用具体 Rust 类型，例如 `ArkKv`、`Keyboard`、`KeyboardContent`、`KeyboardTemplateId` 和 `MarkdownParam`。
 - 将 Go 风格错误码常量（`CodeNeedReConnect`、`WSCodeBackendAuthenticationFail`、`APICodeTokenExpireOrNotExist` 等）改名为 Rust 风格 `CODE_*`、`WS_CODE_*` 和 `API_CODE_*`。
 - 移除 Go 风格 channel enum 别名和重复 enum-value 常量（`ChannelTypeText`、`ChannelSubTypeChat`、`ChannelPrivateTypePublic`、`SpeakPermissionTypePublic`、`CHANNEL_TYPE_TEXT` 等）；请使用 `ChannelType::Text` 这类枚举 variant。
 - 移除 Go 风格 gateway opcode/event 别名（`OPCode`、`WSDispatchEvent`、`WSIdentity`、`HTTPCallbackAck`、`EventMessageCreate`、`OPMeans` 等）；请使用 `OpCode`、`WS_DISPATCH_EVENT`、`WS_IDENTIFY`、`HTTP_CALLBACK_ACK`、`EVENT_MESSAGE_CREATE` 和 `op_meaning`。
 - 移除冗余 Rust 方法别名（`BotApi::me`、`BotApi::me_guilds`、`BotApi::get_ws_url`、`BotApi::get_permissions`、`BotApi::patch_message` 及对应 `Context` wrapper）；请使用 `get_bot_info`、`get_guilds`、`get_gateway`、`get_api_permissions` 和 `edit_message`。
-- 移除 botpy 风格重复方法（`BotApi::create_dms`、`Context::create_dms`、`BotApi::get_delete_member` 和 `Context::get_delete_member`）；请使用 `create_direct_message` 和 `delete_member`。
+- 移除 Python 风格重复方法（`BotApi::create_dms`、`Context::create_dms`、`BotApi::get_delete_member` 和 `Context::get_delete_member`）；请使用 `create_direct_message` 和 `delete_member`。
 - 移除冗余 `Context` 方法别名（`add_reaction`、`remove_reaction`、`pin_message`、`unpin_message`、`add_guild_role_member` 和 `remove_guild_role_member`）；请使用 `put_reaction`、`delete_reaction`、`put_pin`、`delete_pin`、`create_guild_role_member` 和 `delete_guild_role_member`。
 - 移除兼容类型别名（`WebsocketAP`、`DirectMessageSession`、`ReactionUser`、`MessageReactionUsers`、`Announces`、`EnterAIO`、`HTTPIdentity`、`HTTPReady`、`HTTPSession`、`WHValidationReq`、`WHValidationRsp`、`RoleID` 和 `Roles`）以及 Go 风格的 `SessionManager::Start` / `DefaultColor` 别名；请使用具体 Rust 类型和 `SessionManager::start` / `DEFAULT_ROLE_COLOR`。
 - 移除已弃用的多 `Option` 消息发送方法（`post_message`、`post_group_message`、`post_c2c_message`、`post_dms`）、`*_with_params` 兼容名及其 `Context` wrapper。请使用 `send_message`、`send_group_message`、`send_c2c_message` 和 `send_direct_message`。

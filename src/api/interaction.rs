@@ -123,7 +123,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn put_interaction_keeps_botgo_callback_header_and_raw_body() {
+    async fn put_interaction_keeps_callback_header_and_raw_body() {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
         api.put_interaction("interaction-1", r#"{"code":0}"#)

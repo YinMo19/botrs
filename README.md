@@ -80,4 +80,4 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
-我们强烈推荐你查看 [完整文档](https://botrs.yinmo.site/) 来进行开发。这个仓库本身参考了 botgo 的实现，基于 rust 的语言特性进行了深度开发。
+我们强烈推荐你查看 [完整文档](https://botrs.yinmo.site/) 来进行开发。这个仓库基于官方网络接口行为和 Rust 的语言特性进行了深度开发。

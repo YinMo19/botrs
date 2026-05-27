@@ -109,7 +109,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn group_message_params_send_botgo_body() {
+    async fn group_message_params_send_message_body() {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
         let response = api
@@ -130,7 +130,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn c2c_message_params_send_botgo_body() {
+    async fn c2c_message_params_send_message_body() {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
         let response = api

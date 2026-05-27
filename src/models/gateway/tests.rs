@@ -80,7 +80,7 @@ fn gateway_event_omits_absent_wire_fields() {
 }
 
 #[test]
-fn identify_properties_default_to_botgo_zero_value() {
+fn identify_properties_default_to_zero_value() {
     let identify = Identify {
         token: "QQBot ACCESS_TOKEN_XXXXXX".to_string(),
         intents: Intents::PUBLIC_MESSAGES,

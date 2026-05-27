@@ -185,7 +185,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn inline_user_permission_update_matches_botgo_omitempty_body() {
+    async fn inline_user_permission_update_omits_empty_body_fields() {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
         api.update_channel_user_permissions("channel-1", "user-1", Some("2"), None)
@@ -199,7 +199,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn inline_role_permission_update_matches_botgo_omitempty_body() {
+    async fn inline_role_permission_update_omits_empty_body_fields() {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
         api.update_channel_role_permissions("channel-1", "role-1", None, Some("4"))

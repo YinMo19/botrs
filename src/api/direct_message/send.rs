@@ -113,7 +113,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn send_direct_message_sends_botgo_body() {
+    async fn send_direct_message_sends_message_body() {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
         let response = api
