@@ -26,14 +26,3 @@ pub struct APIPermission {
     #[serde(default, skip_serializing_if = "is_zero_i32")]
     pub auth_status: i32,
 }
-
-impl APIPermission {
-    /// Gets the authorization status as a string.
-    pub fn auth_status_string(&self) -> &'static str {
-        match self.auth_status {
-            0 => "Unauthorized",
-            1 => "Authorized",
-            _ => "Unknown",
-        }
-    }
-}

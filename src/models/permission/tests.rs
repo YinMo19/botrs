@@ -14,7 +14,6 @@ fn test_api_permission() {
     assert_eq!(permission.method, "GET");
     assert_eq!(permission.desc, "Get guild member");
     assert_eq!(permission.auth_status, 1);
-    assert_eq!(permission.auth_status_string(), "Authorized");
 }
 
 #[test]
@@ -27,7 +26,6 @@ fn test_api_permission_unauthorized() {
     };
 
     assert_eq!(permission.auth_status, 0);
-    assert_eq!(permission.auth_status_string(), "Unauthorized");
 }
 
 #[test]
@@ -40,7 +38,6 @@ fn test_api_permission_unknown_status() {
     };
 
     assert_eq!(permission.auth_status, 2);
-    assert_eq!(permission.auth_status_string(), "Unknown");
 }
 
 #[test]
@@ -120,8 +117,9 @@ fn test_api_permission_demand() {
 
     assert_eq!(demand.guild_id, "guild123");
     assert_eq!(demand.channel_id, "channel456");
-    assert_eq!(demand.api_path(), "/guilds/{guild_id}/members/{user_id}");
-    assert_eq!(demand.api_method(), "GET");
+    let identify = demand.api_identify.as_ref().unwrap();
+    assert_eq!(identify.path, "/guilds/{guild_id}/members/{user_id}");
+    assert_eq!(identify.method, "GET");
     assert_eq!(demand.desc, "Need access to get guild member information");
     assert_eq!(demand.title, "");
 }
@@ -150,8 +148,6 @@ fn api_permission_demand_uses_zero_values() {
     assert!(demand.api_identify.is_none());
     assert_eq!(demand.title, "");
     assert_eq!(demand.desc, "");
-    assert_eq!(demand.api_path(), "");
-    assert_eq!(demand.api_method(), "");
 
     let value = serde_json::to_value(&demand).unwrap();
     assert!(value.as_object().unwrap().is_empty());

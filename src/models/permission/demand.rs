@@ -22,24 +22,6 @@ pub struct APIPermissionDemand {
     pub desc: String,
 }
 
-impl APIPermissionDemand {
-    /// Gets the API path being requested.
-    pub fn api_path(&self) -> &str {
-        self.api_identify
-            .as_ref()
-            .map(|identify| identify.path.as_str())
-            .unwrap_or_default()
-    }
-
-    /// Gets the HTTP method being requested.
-    pub fn api_method(&self) -> &str {
-        self.api_identify
-            .as_ref()
-            .map(|identify| identify.method.as_str())
-            .unwrap_or_default()
-    }
-}
-
 impl HasId for APIPermissionDemand {
     fn id(&self) -> Option<&Snowflake> {
         Some(&self.guild_id)
