@@ -19,6 +19,7 @@ BotRS 的所有重要更改都将记录在此文件中。
 - 移除 Go 风格 enum 常量别名（`AudioStatusStart`、`InteractionTypePing`、`LayoutTypeImageText` 等）；请使用 enum variant 或 Rust 风格常量。
 - 移除 Go 风格 pager、成员删除 option 和消息辅助名称（`QueryParams`、`WithAddBlackList`、`GetEventID`、`GetSendType`、`APIMessage` 等），改用原生 Rust 方法。
 - 移除 Go 风格消息 mention 辅助名称（`MentionUser`、`MentionAllUser`、`MentionChannel`、`Emoji`、`ETLInput`、`ParseCommand`）；请使用 `mention_user`、`mention_all_user`、`mention_channel`、`emoji`、`etl_input` 和 `parse_command`。
+- 移除 Go 风格消息 payload 与 keyboard 常量别名（`TextMsg`、`MarkdownMsg`、`RichMedia`、`ActionTypeURL`、`PermissionTypAll` 等）；请使用 `MessageCreateType`、`SendType` 以及 Rust 风格 `ACTION_TYPE_*` / `PERMISSION_TYPE_*` 常量。
 - 移除已弃用的多 `Option` 消息发送方法（`post_message`、`post_group_message`、`post_c2c_message`、`post_dms`）及其 `Context` wrapper。请使用 `*_with_params` 方法。
 - 移除冗余的 `post_message_api` 和 `patch_message_api` 别名。
 

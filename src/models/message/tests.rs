@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests {
     use super::super::{
-        ActionButton, ActionTypeSubscribe, ApiMessage, Ark, ArkKv, ArkObj, ArkObjKv,
+        ACTION_TYPE_SUBSCRIBE, ActionButton, ApiMessage, Ark, ArkKv, ArkObj, ArkObjKv,
         C2CMessageParams, DirectMessage, Embed, GroupMessageParams, InputNotify, Keyboard,
         KeyboardButton, KeyboardButtonAction, KeyboardButtonPermission, KeyboardButtonRenderData,
         KeyboardContent, KeyboardModal, KeyboardRow, KeyboardStyle, KeyboardSubscribeData,
@@ -497,7 +497,7 @@ mod tests {
     #[test]
     fn keyboard_keeps_non_zero_values() {
         let action = KeyboardButtonAction {
-            action_type: Some(ActionTypeSubscribe),
+            action_type: Some(ACTION_TYPE_SUBSCRIBE),
             click_limit: Some(1),
             data: Some("payload".to_string()),
             enter: true,

@@ -45,23 +45,6 @@ pub enum MessageCreateType {
     Unknown(u32),
 }
 
-#[allow(non_upper_case_globals)]
-pub const TextMsg: MessageCreateType = MessageCreateType::Text;
-#[allow(non_upper_case_globals)]
-pub const MarkdownMsg: MessageCreateType = MessageCreateType::Markdown;
-#[allow(non_upper_case_globals)]
-pub const ArkMsg: MessageCreateType = MessageCreateType::Ark;
-#[allow(non_upper_case_globals)]
-pub const EmbedMsg: MessageCreateType = MessageCreateType::Embed;
-#[allow(non_upper_case_globals)]
-pub const ATMsg: MessageCreateType = MessageCreateType::At;
-#[allow(non_upper_case_globals)]
-pub const InputNotifyMsg: MessageCreateType = MessageCreateType::InputNotify;
-#[allow(non_upper_case_globals)]
-pub const RichMediaMsg: MessageCreateType = MessageCreateType::RichMedia;
-#[allow(non_upper_case_globals)]
-pub const RichMedia: SendType = SendType::RichMedia;
-
 wire_enum!(MessageCreateType, u32, Unknown, {
     Text = 0,
     Markdown = 2,

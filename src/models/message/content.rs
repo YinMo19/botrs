@@ -117,29 +117,11 @@ pub const ACTION_TYPE_CALLBACK: ActionType = 1;
 pub const ACTION_TYPE_AT_BOT: ActionType = 2;
 pub const ACTION_TYPE_MQQ_API: ActionType = 3;
 pub const ACTION_TYPE_SUBSCRIBE: ActionType = 4;
-#[allow(non_upper_case_globals)]
-pub const ActionTypeURL: ActionType = ACTION_TYPE_URL;
-#[allow(non_upper_case_globals)]
-pub const ActionTypeCallback: ActionType = ACTION_TYPE_CALLBACK;
-#[allow(non_upper_case_globals)]
-pub const ActionTypeAtBot: ActionType = ACTION_TYPE_AT_BOT;
-#[allow(non_upper_case_globals)]
-pub const ActionTypeMQQAPI: ActionType = ACTION_TYPE_MQQ_API;
-#[allow(non_upper_case_globals)]
-pub const ActionTypeSubscribe: ActionType = ACTION_TYPE_SUBSCRIBE;
 
 pub const PERMISSION_TYPE_SPECIFY_USER_IDS: PermissionType = 0;
 pub const PERMISSION_TYPE_MANAGER: PermissionType = 1;
 pub const PERMISSION_TYPE_ALL: PermissionType = 2;
 pub const PERMISSION_TYPE_SPECIFY_ROLE_IDS: PermissionType = 3;
-#[allow(non_upper_case_globals)]
-pub const PermissionTypeSpecifyUserIDs: PermissionType = PERMISSION_TYPE_SPECIFY_USER_IDS;
-#[allow(non_upper_case_globals)]
-pub const PermissionTypManager: PermissionType = PERMISSION_TYPE_MANAGER;
-#[allow(non_upper_case_globals)]
-pub const PermissionTypAll: PermissionType = PERMISSION_TYPE_ALL;
-#[allow(non_upper_case_globals)]
-pub const PermissionTypSpecifyRoleIDs: PermissionType = PERMISSION_TYPE_SPECIFY_ROLE_IDS;
 
 pub type MessageKeyboard = Keyboard;
 pub type CustomKeyboard = KeyboardContent;
