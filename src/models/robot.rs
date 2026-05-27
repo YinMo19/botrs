@@ -89,62 +89,6 @@ pub struct Activity {
     pub details: Option<String>,
 }
 
-impl Activity {
-    /// Creates a new activity.
-    pub fn new(name: impl Into<String>, activity_type: ActivityType) -> Self {
-        Self {
-            name: name.into(),
-            activity_type,
-            url: None,
-            state: None,
-            details: None,
-        }
-    }
-
-    /// Creates a playing activity.
-    pub fn playing(name: impl Into<String>) -> Self {
-        Self::new(name, ActivityType::Playing)
-    }
-
-    /// Creates a streaming activity.
-    pub fn streaming(name: impl Into<String>, url: impl Into<String>) -> Self {
-        Self {
-            name: name.into(),
-            activity_type: ActivityType::Streaming,
-            url: Some(url.into()),
-            state: None,
-            details: None,
-        }
-    }
-
-    /// Creates a listening activity.
-    pub fn listening(name: impl Into<String>) -> Self {
-        Self::new(name, ActivityType::Listening)
-    }
-
-    /// Creates a watching activity.
-    pub fn watching(name: impl Into<String>) -> Self {
-        Self::new(name, ActivityType::Watching)
-    }
-
-    /// Creates a custom activity.
-    pub fn custom(name: impl Into<String>) -> Self {
-        Self::new(name, ActivityType::Custom)
-    }
-
-    /// Sets the activity state.
-    pub fn with_state(mut self, state: impl Into<String>) -> Self {
-        self.state = Some(state.into());
-        self
-    }
-
-    /// Sets the activity details.
-    pub fn with_details(mut self, details: impl Into<String>) -> Self {
-        self.details = Some(details.into());
-        self
-    }
-}
-
 /// The type of activity the robot is performing.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(from = "u8", into = "u8")]
@@ -213,7 +157,13 @@ mod tests {
 
         let mut robot = test_robot("123456789", "TestBot");
         robot.status = Some(RobotStatus::Online);
-        robot.activity = Some(Activity::playing("Rust"));
+        robot.activity = Some(Activity {
+            name: "Rust".to_string(),
+            activity_type: ActivityType::Playing,
+            url: None,
+            state: None,
+            details: None,
+        });
         assert_eq!(
             serde_json::to_value(&robot).unwrap(),
             serde_json::json!({
@@ -249,11 +199,23 @@ mod tests {
 
     #[test]
     fn test_activity_creation() {
-        let activity = Activity::playing("Rust Programming");
+        let activity = Activity {
+            name: "Rust Programming".to_string(),
+            activity_type: ActivityType::Playing,
+            url: None,
+            state: None,
+            details: None,
+        };
         assert_eq!(activity.name, "Rust Programming");
         assert_eq!(activity.activity_type, ActivityType::Playing);
 
-        let streaming = Activity::streaming("Live Coding", "https://example.com");
+        let streaming = Activity {
+            name: "Live Coding".to_string(),
+            activity_type: ActivityType::Streaming,
+            url: Some("https://example.com".to_string()),
+            state: None,
+            details: None,
+        };
         assert_eq!(streaming.activity_type, ActivityType::Streaming);
         assert_eq!(streaming.url, Some("https://example.com".to_string()));
     }
