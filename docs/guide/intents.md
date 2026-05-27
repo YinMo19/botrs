@@ -46,4 +46,4 @@ The privileged intents (`GUILD_MESSAGES`, `FORUMS`) require approval in the QQ G
 
 ## Inspecting at runtime
 
-`contains(flag)` checks a single flag, and the named accessors (`intents.guilds()`, `intents.public_guild_messages()`, etc.) return `bool`. After construction, the client exposes its current set via `client.intents()`.
+`contains(flag)` checks a single flag, and the named accessors (`intents.guilds()`, `intents.public_guild_messages()`, etc.) return `bool`.

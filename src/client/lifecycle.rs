@@ -43,7 +43,6 @@ impl<H: EventHandler + 'static> Client<H> {
             intents,
             api,
             handler: Arc::new(handler),
-            is_sandbox,
         })
     }
 
@@ -63,7 +62,6 @@ impl<H: EventHandler + 'static> Client<H> {
             intents,
             api,
             handler: Arc::new(handler),
-            is_sandbox,
         })
     }
 
@@ -149,19 +147,5 @@ impl<H: EventHandler + 'static> Client<H> {
 
         info!("Bot client stopped");
         Ok(())
-    }
-    /// Gets a reference to the API client.
-    pub fn api(&self) -> &BotApi {
-        &self.api
-    }
-
-    /// Gets the intents being used.
-    pub fn intents(&self) -> Intents {
-        self.intents
-    }
-
-    /// Returns true if using sandbox environment.
-    pub fn is_sandbox(&self) -> bool {
-        self.is_sandbox
     }
 }

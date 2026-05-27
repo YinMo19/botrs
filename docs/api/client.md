@@ -26,12 +26,6 @@ Dropping the running `Client` task closes the gateway connection.
 
 There are no `stop` / `is_connected` / `get_session_info` methods — the framework intentionally exposes a small surface and pushes session details into events instead. Use `EventHandler::ready` and `EventHandler::resumed` to observe lifecycle changes.
 
-## Accessors
-
-- `api()` — `&BotApi`. Useful for issuing requests outside an event handler (e.g. before `start()`).
-- `intents()` — the configured `Intents`.
-- `is_sandbox()` — whether sandbox mode was selected.
-
 ## Reconnect behaviour
 
 `start()` reconnects automatically on transient gateway failures, applying the throttling described in the [gateway guide](../guide/gateway.md). When a fatal failure (invalid token, unrecoverable handshake) is detected, `start()` resolves with the propagated `BotError`.
@@ -52,6 +46,6 @@ Dropping the `Client` task closes the gateway connection; `reqwest::Client` does
 ## See also
 
 - [EventHandler](./event-handler.md) — the trait `H` must implement.
-- [Bot API](./bot-api.md) — full route catalogue exposed via `client.api()`.
+- [Bot API](./bot-api.md) — full route catalogue exposed through `Context` during event handling.
 - [Intents](./intents.md) — controls which events the gateway will dispatch.
 - [Gateway guide](../guide/gateway.md) — connection lifecycle, heartbeats, reconnect throttling.

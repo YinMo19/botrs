@@ -46,4 +46,4 @@ let intents = Intents::default()
 
 ## 运行时查询
 
-`contains(flag)` 用于检查某一位；同名访问器（如 `intents.guilds()`、`intents.public_guild_messages()`）返回 `bool`。客户端构造完毕后可以通过 `client.intents()` 获取当前集合。
+`contains(flag)` 用于检查某一位；同名访问器（如 `intents.guilds()`、`intents.public_guild_messages()`）返回 `bool`。

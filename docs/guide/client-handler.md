@@ -19,8 +19,6 @@ The arguments:
 
 After construction, call `client.start().await`. The future resolves only after the gateway connection ends and the event channel drains. Internally `start` validates the token, fetches `/users/@me` and the gateway URL, spawns a session manager that runs each shard, and pumps events back into the event handler.
 
-Useful read-only accessors on `Client`: `client.api()`, `client.intents()`, `client.is_sandbox()`.
-
 ## The handler trait
 
 `EventHandler` has one `async fn` per dispatched gateway event. Every method has a default empty implementation, so you only override the events you care about. Annotate the impl with `#[async_trait::async_trait]`.

@@ -19,8 +19,6 @@ let client = Client::new(token, intents, handler, is_sandbox)?;
 
 构造完成后调用 `client.start().await`。该 future 在网关连接结束、事件通道关闭后才会返回。`start` 内部会：校验 token、调用 `/users/@me` 与网关 URL 接口、启动一个会话管理器为每个 shard 维持连接，并把事件回送给处理器。
 
-`Client` 的只读访问器：`client.api()`、`client.intents()`、`client.is_sandbox()`。
-
 ## 处理器 trait
 
 `EventHandler` 中每个网关事件对应一个 `async fn`，都有空的默认实现，因此只需要重写关心的事件。impl 块需要标注 `#[async_trait::async_trait]`。

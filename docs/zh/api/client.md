@@ -26,12 +26,6 @@ client.start().await?;
 
 框架特意保持小表面，没有 `stop` / `is_connected` / `get_session_info` 这些方法 —— 会话状态应当通过事件感知。请用 `EventHandler::ready` 与 `EventHandler::resumed` 监听生命周期变化。
 
-## 访问器
-
-- `api()` —— `&BotApi`，方便在事件循环之外（例如 `start()` 调用前）发请求。
-- `intents()` —— 当前配置的 `Intents`。
-- `is_sandbox()` —— 是否处于沙箱模式。
-
 ## 重连行为
 
 `start()` 会按照 [网关指南](../guide/gateway.md) 描述的节流策略，自动处理瞬时网关故障。检测到不可恢复错误（无效 token、握手失败）时，`start()` 直接返回对应的 `BotError`。
@@ -52,6 +46,6 @@ let _ = main.await;
 ## 参见
 
 - [EventHandler](./event-handler.md) —— `H` 必须实现的 trait。
-- [Bot API](./bot-api.md) —— 通过 `client.api()` 暴露的完整接口集。
+- [Bot API](./bot-api.md) —— 事件处理中通过 `Context` 暴露的完整接口集。
 - [Intents](./intents.md) —— 控制网关将派发哪些事件。
 - [网关指南](../guide/gateway.md) —— 连接生命周期、心跳、重连节流。

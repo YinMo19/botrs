@@ -60,6 +60,4 @@ pub struct Client<H: EventHandler> {
     api: Arc<BotApi>,
     /// Event handler
     handler: Arc<H>,
-    /// Whether to use sandbox environment
-    is_sandbox: bool,
 }
