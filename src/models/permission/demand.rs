@@ -23,28 +23,6 @@ pub struct APIPermissionDemand {
 }
 
 impl APIPermissionDemand {
-    /// Creates a permission demand request.
-    pub fn new(
-        guild_id: impl Into<String>,
-        channel_id: impl Into<String>,
-        api_identify: APIPermissionDemandIdentify,
-        desc: impl Into<String>,
-    ) -> Self {
-        Self {
-            guild_id: guild_id.into(),
-            channel_id: channel_id.into(),
-            api_identify: Some(api_identify),
-            title: String::new(),
-            desc: desc.into(),
-        }
-    }
-
-    /// Sets the title for this permission demand.
-    pub fn with_title(mut self, title: impl Into<String>) -> Self {
-        self.title = title.into();
-        self
-    }
-
     /// Gets the API path being requested.
     pub fn api_path(&self) -> &str {
         self.api_identify

@@ -28,21 +28,6 @@ pub struct APIPermission {
 }
 
 impl APIPermission {
-    /// Creates an API permission record.
-    pub fn new(
-        path: impl Into<String>,
-        method: impl Into<String>,
-        desc: Option<String>,
-        auth_status: Option<i32>,
-    ) -> Self {
-        Self {
-            path: path.into(),
-            method: method.into(),
-            desc: desc.unwrap_or_default(),
-            auth_status: auth_status.unwrap_or_default(),
-        }
-    }
-
     /// Gets the authorization status as a string.
     pub fn auth_status_string(&self) -> &'static str {
         match self.auth_status {

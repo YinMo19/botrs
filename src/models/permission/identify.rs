@@ -12,32 +12,36 @@ pub struct APIPermissionDemandIdentify {
 }
 
 impl APIPermissionDemandIdentify {
-    /// Creates an API permission identifier from method and path.
-    pub fn new(path: impl Into<String>, method: impl Into<String>) -> Self {
-        Self {
-            path: path.into(),
-            method: method.into(),
-        }
-    }
-
     /// Creates an identifier for the guild members API.
     pub fn guild_members() -> Self {
-        Self::new("/guilds/{guild_id}/members/{user_id}", "GET")
+        Self {
+            path: "/guilds/{guild_id}/members/{user_id}".to_string(),
+            method: "GET".to_string(),
+        }
     }
 
     /// Creates an identifier for the guild channels API.
     pub fn guild_channels() -> Self {
-        Self::new("/guilds/{guild_id}/channels", "GET")
+        Self {
+            path: "/guilds/{guild_id}/channels".to_string(),
+            method: "GET".to_string(),
+        }
     }
 
     /// Creates an identifier for posting messages API.
     pub fn post_messages() -> Self {
-        Self::new("/channels/{channel_id}/messages", "POST")
+        Self {
+            path: "/channels/{channel_id}/messages".to_string(),
+            method: "POST".to_string(),
+        }
     }
 
     /// Creates an identifier for managing guild roles API.
     pub fn guild_roles() -> Self {
-        Self::new("/guilds/{guild_id}/roles", "POST")
+        Self {
+            path: "/guilds/{guild_id}/roles".to_string(),
+            method: "POST".to_string(),
+        }
     }
 }
 

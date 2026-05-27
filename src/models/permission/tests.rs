@@ -3,12 +3,12 @@ use crate::models::HasId;
 
 #[test]
 fn test_api_permission() {
-    let permission = APIPermission::new(
-        "/guilds/123/members/456",
-        "GET",
-        Some("Get guild member".to_string()),
-        Some(1),
-    );
+    let permission = APIPermission {
+        path: "/guilds/123/members/456".to_string(),
+        method: "GET".to_string(),
+        desc: "Get guild member".to_string(),
+        auth_status: 1,
+    };
 
     assert_eq!(permission.path, "/guilds/123/members/456");
     assert_eq!(permission.method, "GET");
@@ -19,12 +19,12 @@ fn test_api_permission() {
 
 #[test]
 fn test_api_permission_unauthorized() {
-    let permission = APIPermission::new(
-        "/guilds/123/roles",
-        "POST",
-        Some("Create guild role".to_string()),
-        Some(0),
-    );
+    let permission = APIPermission {
+        path: "/guilds/123/roles".to_string(),
+        method: "POST".to_string(),
+        desc: "Create guild role".to_string(),
+        auth_status: 0,
+    };
 
     assert_eq!(permission.auth_status, 0);
     assert_eq!(permission.auth_status_string(), "Unauthorized");
@@ -32,7 +32,12 @@ fn test_api_permission_unauthorized() {
 
 #[test]
 fn test_api_permission_unknown_status() {
-    let permission = APIPermission::new("/guilds/123/channels", "GET", None, Some(2));
+    let permission = APIPermission {
+        path: "/guilds/123/channels".to_string(),
+        method: "GET".to_string(),
+        desc: String::new(),
+        auth_status: 2,
+    };
 
     assert_eq!(permission.auth_status, 2);
     assert_eq!(permission.auth_status_string(), "Unknown");
@@ -61,12 +66,12 @@ fn api_permissions_omits_empty_list() {
 #[test]
 fn api_permissions_keep_official_json_shape() {
     let permissions = APIPermissions {
-        api_list: vec![APIPermission::new(
-            "/guilds/{guild_id}/members/{user_id}",
-            "GET",
-            Some("Get member".to_string()),
-            Some(1),
-        )],
+        api_list: vec![APIPermission {
+            path: "/guilds/{guild_id}/members/{user_id}".to_string(),
+            method: "GET".to_string(),
+            desc: "Get member".to_string(),
+            auth_status: 1,
+        }],
     };
     let value = serde_json::to_value(&permissions).unwrap();
 
@@ -82,7 +87,10 @@ fn api_permissions_keep_official_json_shape() {
 
 #[test]
 fn test_api_permission_demand_identify() {
-    let identify = APIPermissionDemandIdentify::new("/guilds/{guild_id}/members", "GET");
+    let identify = APIPermissionDemandIdentify {
+        path: "/guilds/{guild_id}/members".to_string(),
+        method: "GET".to_string(),
+    };
     assert_eq!(identify.path, "/guilds/{guild_id}/members");
     assert_eq!(identify.method, "GET");
     assert_eq!(format!("{}", identify), "GET /guilds/{guild_id}/members");
@@ -102,12 +110,13 @@ fn test_api_permission_demand_identify_presets() {
 #[test]
 fn test_api_permission_demand() {
     let identify = APIPermissionDemandIdentify::guild_members();
-    let demand = APIPermissionDemand::new(
-        "guild123",
-        "channel456",
-        identify,
-        "Need access to get guild member information",
-    );
+    let demand = APIPermissionDemand {
+        guild_id: "guild123".to_string(),
+        channel_id: "channel456".to_string(),
+        api_identify: Some(identify),
+        title: String::new(),
+        desc: "Need access to get guild member information".to_string(),
+    };
 
     assert_eq!(demand.guild_id, "guild123");
     assert_eq!(demand.channel_id, "channel456");
@@ -120,13 +129,13 @@ fn test_api_permission_demand() {
 #[test]
 fn test_api_permission_demand_with_title() {
     let identify = APIPermissionDemandIdentify::post_messages();
-    let demand = APIPermissionDemand::new(
-        "guild123",
-        "channel456",
-        identify,
-        "Need to send automated messages",
-    )
-    .with_title("Message Posting Permission");
+    let demand = APIPermissionDemand {
+        guild_id: "guild123".to_string(),
+        channel_id: "channel456".to_string(),
+        api_identify: Some(identify),
+        title: "Message Posting Permission".to_string(),
+        desc: "Need to send automated messages".to_string(),
+    };
 
     assert_eq!(demand.title, "Message Posting Permission");
     assert_eq!(demand.id(), Some(&"guild123".to_string()));
@@ -181,12 +190,13 @@ fn api_permission_demand_to_create_keeps_official_json_shape() {
 #[test]
 fn test_api_permission_demand_display() {
     let identify = APIPermissionDemandIdentify::guild_channels();
-    let demand = APIPermissionDemand::new(
-        "guild999",
-        "channel888",
-        identify,
-        "This is a very long description that should be truncated when displayed",
-    );
+    let demand = APIPermissionDemand {
+        guild_id: "guild999".to_string(),
+        channel_id: "channel888".to_string(),
+        api_identify: Some(identify),
+        title: String::new(),
+        desc: "This is a very long description that should be truncated when displayed".to_string(),
+    };
 
     let display = format!("{}", demand);
     assert!(display.contains("guild999"));
