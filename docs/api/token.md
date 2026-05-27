@@ -75,5 +75,5 @@ info!("starting bot {}", token.safe_display());
 ## See also
 
 - [Bot API](./bot-api.md) — every route ultimately consumes a `Token`.
-- [Context](./context.md) — embeds a `Token` so handlers don't pass it around manually.
+- [Context](./context.md) — exposes the `BotApi` that owns the token used for REST calls.
 - [Error types](./error-types.md) — `BotError::Auth` and `BotError::Config` behaviour referenced above.

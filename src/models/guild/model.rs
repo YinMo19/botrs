@@ -53,7 +53,7 @@ impl Guild {
     }
 
     /// Creates a new guild from API data.
-    pub fn from_data(_api: crate::api::BotApi, _event_id: String, data: serde_json::Value) -> Self {
+    pub fn from_data(_event_id: String, data: serde_json::Value) -> Self {
         serde_json::from_value::<Self>(data).unwrap_or_default()
     }
 

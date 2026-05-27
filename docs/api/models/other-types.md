@@ -14,7 +14,7 @@ pub struct AudioControl {            // request body for /audio_control
 pub enum AudioStatus { Start = 0, Pause = 1, Resume = 2, Stop = 3 }
 ```
 
-`Audio` is the gateway event payload (`AUDIO_START` / `AUDIO_FINISH` etc.) and exposes the BotApi handle through `Audio::api()`. `PublicAudio` carries voice/live channel member events with a `PublicAudioType` (`Voice = 2`, `Live = 5`).
+`Audio` is the gateway event payload (`AUDIO_START` / `AUDIO_FINISH` etc.). `PublicAudio` carries voice/live channel member events with a `PublicAudioType` (`Voice = 2`, `Live = 5`). Use the event callback `Context` for REST calls.
 
 ## Forum threads
 

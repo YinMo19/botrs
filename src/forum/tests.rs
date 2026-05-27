@@ -1,5 +1,4 @@
 use super::*;
-use crate::BotApi;
 
 #[test]
 fn test_format() {
@@ -87,7 +86,6 @@ fn forum_rest_models_match_platform_shapes() {
 #[test]
 fn forum_events_use_required_zero_value_fields() {
     let thread = serde_json::to_value(Thread::new(
-        BotApi::new_for_test(crate::http::HttpClient::new(30, false).unwrap()),
         Some("event-1".to_string()),
         &serde_json::json!({}),
     ))
@@ -152,8 +150,6 @@ fn forum_audit_result_serializes_zero_value_strings() {
 
 #[test]
 fn forum_wrapper_event_ids_are_internal_only() {
-    let http = crate::http::HttpClient::new(30, false).unwrap();
-    let api = BotApi::new_for_test(http);
     let data = serde_json::json!({
         "guild_id": "guild-1",
         "channel_id": "channel-1",
@@ -172,10 +168,10 @@ fn forum_wrapper_event_ids_are_internal_only() {
         }
     });
 
-    let thread = Thread::new(api.clone(), Some("event-1".to_string()), &data);
-    let post = Post::new(api.clone(), Some("event-2".to_string()), &data);
-    let reply = Reply::new(api.clone(), Some("event-3".to_string()), &data);
-    let mut open_thread = OpenThread::new(api, &data);
+    let thread = Thread::new(Some("event-1".to_string()), &data);
+    let post = Post::new(Some("event-2".to_string()), &data);
+    let reply = Reply::new(Some("event-3".to_string()), &data);
+    let mut open_thread = OpenThread::new(&data);
     open_thread.event_id = Some("event-4".to_string());
 
     assert_eq!(thread.event_id.as_deref(), Some("event-1"));
@@ -195,8 +191,6 @@ fn forum_wrapper_event_ids_are_internal_only() {
 
 #[test]
 fn open_forum_event_matches_platform_shape() {
-    let http = crate::http::HttpClient::new(30, false).unwrap();
-    let api = BotApi::new_for_test(http);
     let data = serde_json::json!({
         "guild_id": "guild-1",
         "channel_id": "channel-1",
@@ -215,7 +209,7 @@ fn open_forum_event_matches_platform_shape() {
         }
     });
 
-    let open_thread = OpenThread::new(api, &data);
+    let open_thread = OpenThread::new(&data);
 
     assert_eq!(open_thread.guild_id.as_deref(), Some("guild-1"));
     assert_eq!(open_thread.channel_id.as_deref(), Some("channel-1"));

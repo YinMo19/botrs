@@ -11,7 +11,7 @@
 - `on_mic(&self, ctx, audio: Audio)` —— 机器人已上麦。
 - `off_mic(&self, ctx, audio: Audio)` —— 机器人已下麦。
 
-`Audio` 包含 `channel_id`、`guild_id`、`audio_url`、`text`、`event_id`，均为 `Option<String>`。`Audio` 内部还持有 `BotApi` 引用，可通过 `audio.api()` 访问，便于在不传 `Context` 的情况下发起 REST 请求。
+`Audio` 包含 `channel_id`、`guild_id`、`audio_url`、`text`、`event_id`，均为 `Option<String>`。事件触发后的 REST 调用请直接使用回调里的 `ctx`。
 
 语音／直播子频道成员进出事件需要启用 `Intents::AUDIO_OR_LIVE_CHANNEL_MEMBER`，并实现 `audio_or_live_channel_member_enter` / `_exit`。载荷为 `PublicAudio { guild_id, channel_id, channel_type: Option<PublicAudioType>, user_id }`，`PublicAudioType` 取值 `Voice = 2` 或 `Live = 5`。
 

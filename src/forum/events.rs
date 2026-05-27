@@ -1,4 +1,3 @@
-use crate::api::BotApi;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
@@ -102,9 +101,6 @@ impl ReplyInfo {
 /// Forum thread structure
 #[derive(Debug, Clone, Serialize)]
 pub struct Thread {
-    /// API client reference
-    #[serde(skip)]
-    api: BotApi,
     /// Thread information
     #[serde(default)]
     pub thread_info: ThreadInfo,
@@ -136,21 +132,15 @@ struct ThreadWire {
 
 impl Thread {
     /// Builds a forum thread event from the gateway payload.
-    pub fn new(api: BotApi, event_id: Option<String>, data: &Value) -> Self {
+    pub fn new(event_id: Option<String>, data: &Value) -> Self {
         let wire: ThreadWire = serde_json::from_value(data.clone()).unwrap_or_default();
         Self {
-            api,
             thread_info: wire.thread_info,
             channel_id: wire.channel_id,
             guild_id: wire.guild_id,
             author_id: wire.author_id,
             event_id,
         }
-    }
-
-    /// Get the API client reference
-    pub fn api(&self) -> &BotApi {
-        &self.api
     }
 }
 
@@ -167,9 +157,6 @@ impl std::fmt::Display for Thread {
 /// Forum post structure.
 #[derive(Debug, Clone, Serialize)]
 pub struct Post {
-    /// API client reference
-    #[serde(skip)]
-    api: BotApi,
     /// Guild ID
     #[serde(default)]
     pub guild_id: String,
@@ -201,10 +188,9 @@ struct PostWire {
 
 impl Post {
     /// Create a new Post instance.
-    pub fn new(api: BotApi, event_id: Option<String>, data: &Value) -> Self {
+    pub fn new(event_id: Option<String>, data: &Value) -> Self {
         let wire: PostWire = serde_json::from_value(data.clone()).unwrap_or_default();
         Self {
-            api,
             guild_id: wire.guild_id,
             channel_id: wire.channel_id,
             author_id: wire.author_id,
@@ -212,19 +198,11 @@ impl Post {
             event_id,
         }
     }
-
-    /// Get the API client reference.
-    pub fn api(&self) -> &BotApi {
-        &self.api
-    }
 }
 
 /// Forum reply structure.
 #[derive(Debug, Clone, Serialize)]
 pub struct Reply {
-    /// API client reference
-    #[serde(skip)]
-    api: BotApi,
     /// Guild ID
     #[serde(default)]
     pub guild_id: String,
@@ -256,20 +234,14 @@ struct ReplyWire {
 
 impl Reply {
     /// Create a new Reply instance.
-    pub fn new(api: BotApi, event_id: Option<String>, data: &Value) -> Self {
+    pub fn new(event_id: Option<String>, data: &Value) -> Self {
         let wire: ReplyWire = serde_json::from_value(data.clone()).unwrap_or_default();
         Self {
-            api,
             guild_id: wire.guild_id,
             channel_id: wire.channel_id,
             author_id: wire.author_id,
             reply_info: wire.reply_info,
             event_id,
         }
-    }
-
-    /// Get the API client reference.
-    pub fn api(&self) -> &BotApi {
-        &self.api
     }
 }

@@ -14,7 +14,7 @@ pub struct AudioControl {            // /audio_control 的请求体
 pub enum AudioStatus { Start = 0, Pause = 1, Resume = 2, Stop = 3 }
 ```
 
-`Audio` 是网关事件载荷（`AUDIO_START` / `AUDIO_FINISH` 等），通过 `Audio::api()` 暴露 BotApi 句柄。`PublicAudio` 表示语音/直播子频道的成员事件，附带 `PublicAudioType`（`Voice = 2`、`Live = 5`）。
+`Audio` 是网关事件载荷（`AUDIO_START` / `AUDIO_FINISH` 等）。`PublicAudio` 表示语音/直播子频道的成员事件，附带 `PublicAudioType`（`Voice = 2`、`Live = 5`）。需要发起 REST 调用时使用事件回调里的 `Context`。
 
 ## 论坛主题
 

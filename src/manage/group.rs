@@ -1,12 +1,8 @@
-use crate::api::BotApi;
 use serde::{Deserialize, Serialize};
 
 /// Group management event structure
 #[derive(Debug, Clone, Serialize)]
 pub struct GroupManageEvent {
-    /// API client reference
-    #[serde(skip)]
-    api: BotApi,
     /// Event ID
     #[serde(skip)]
     pub event_id: Option<String>,
@@ -20,20 +16,14 @@ pub struct GroupManageEvent {
 
 impl GroupManageEvent {
     /// Builds a group management event from the gateway payload.
-    pub fn new(api: BotApi, event_id: Option<String>, data: &serde_json::Value) -> Self {
+    pub fn new(event_id: Option<String>, data: &serde_json::Value) -> Self {
         let wire: GroupManageWire = serde_json::from_value(data.clone()).unwrap_or_default();
         Self {
-            api,
             event_id,
             timestamp: wire.timestamp,
             group_openid: wire.group_openid,
             op_member_openid: wire.op_member_openid,
         }
-    }
-
-    /// Get the API client reference
-    pub fn api(&self) -> &BotApi {
-        &self.api
     }
 
     /// Get the event timestamp as a formatted string

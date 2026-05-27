@@ -8,7 +8,7 @@ The `Client` owns the gateway connection and the HTTP client. You construct it w
 
 The `EventHandler` trait is a single trait with a default `async fn` per event (`message_create`, `at_message_create`, `guild_create`, `forum_thread_create`, and so on). You implement only the ones you care about.
 
-Each handler call receives a `Context`, which holds an `Arc<BotApi>` and the `Token` the client was started with. `BotApi` is the typed HTTP layer; you can also construct one yourself if you need to call the REST API outside of an event handler.
+Each handler call receives a `Context`, which holds the shared `BotApi`. `BotApi` is the typed HTTP layer and owns the token used for REST calls; you can also construct one yourself if you need REST access outside of an event handler.
 
 `Intents` is a bitflag set that tells the gateway which event categories to deliver. Subscribing only to what you need keeps payload volume down.
 

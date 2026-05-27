@@ -25,7 +25,7 @@ impl EventHandler for MyBot {
 }
 ```
 
-The Python `Context`-equivalent (`api` + `token`) is passed in explicitly as the second parameter rather than reached for via `self`.
+The Python `Context`-equivalent is passed in explicitly as the second parameter rather than reached for via `self`; REST credentials live inside its shared `BotApi`.
 
 ## Token
 

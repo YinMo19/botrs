@@ -3,7 +3,6 @@
 //! This module provides structures and implementations for handling audio events,
 //! audio controls, and live audio channel interactions.
 
-use crate::api::BotApi;
 use crate::models::api::AudioAction;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
@@ -100,9 +99,6 @@ pub struct AudioControl {
 /// Audio event data structure
 #[derive(Debug, Clone, Serialize)]
 pub struct Audio {
-    /// API client reference
-    #[serde(skip)]
-    api: BotApi,
     /// Event ID
     #[serde(skip)]
     pub event_id: Option<String>,
@@ -118,20 +114,14 @@ pub struct Audio {
 
 impl Audio {
     /// Builds audio event data from the gateway payload.
-    pub fn new(api: BotApi, event_id: Option<String>, data: AudioAction) -> Self {
+    pub fn new(event_id: Option<String>, data: AudioAction) -> Self {
         Self {
-            api,
             event_id,
             channel_id: non_empty(data.channel_id),
             guild_id: non_empty(data.guild_id),
             audio_url: non_empty(data.audio_url),
             text: non_empty(data.text),
         }
-    }
-
-    /// Get the API client reference
-    pub fn api(&self) -> &BotApi {
-        &self.api
     }
 }
 
@@ -152,9 +142,6 @@ impl std::fmt::Display for Audio {
 /// Public audio event data structure for live channels
 #[derive(Debug, Clone, Serialize)]
 pub struct PublicAudio {
-    /// API client reference
-    #[serde(skip)]
-    api: BotApi,
     /// Guild ID
     pub guild_id: Option<String>,
     /// Channel ID
@@ -179,20 +166,14 @@ struct PublicAudioWire {
 
 impl PublicAudio {
     /// Builds public audio event data from the gateway payload.
-    pub fn new(api: BotApi, data: serde_json::Value) -> Self {
+    pub fn new(data: serde_json::Value) -> Self {
         let wire: PublicAudioWire = serde_json::from_value(data).unwrap_or_default();
         Self {
-            api,
             guild_id: wire.guild_id,
             channel_id: wire.channel_id,
             channel_type: wire.channel_type,
             user_id: wire.user_id,
         }
-    }
-
-    /// Get the API client reference
-    pub fn api(&self) -> &BotApi {
-        &self.api
     }
 }
 
@@ -257,9 +238,7 @@ mod tests {
 
     #[test]
     fn audio_event_helper_hides_empty_zero_values() {
-        let http = crate::http::HttpClient::new(30, false).unwrap();
-        let api = BotApi::new_for_test(http);
-        let audio = Audio::new(api, None, AudioAction::default());
+        let audio = Audio::new(None, AudioAction::default());
 
         assert!(audio.guild_id.is_none());
         assert!(audio.channel_id.is_none());
@@ -269,10 +248,7 @@ mod tests {
 
     #[test]
     fn audio_event_id_is_internal_only() {
-        let http = crate::http::HttpClient::new(30, false).unwrap();
-        let api = BotApi::new_for_test(http);
         let audio = Audio::new(
-            api,
             Some("event-1".to_string()),
             AudioAction {
                 guild_id: "guild-1".to_string(),

@@ -14,12 +14,8 @@ impl BotApi {
         Self::decode_json(response)
     }
 
-    /// Creates a guild role from a structured role body.
-    pub async fn create_guild_role_with_update(
-        &self,
-        guild_id: &str,
-        role: GuildRole,
-    ) -> Result<UpdateResult> {
+    /// Creates a guild role.
+    pub async fn create_guild_role(&self, guild_id: &str, role: GuildRole) -> Result<UpdateResult> {
         debug!("Creating guild role in {}", guild_id);
         let body = UpdateRole::new(guild_id, role);
         let path = resource::guild_roles(guild_id);
@@ -30,28 +26,8 @@ impl BotApi {
         Self::decode_json(response)
     }
 
-    pub async fn create_guild_role(
-        &self,
-        guild_id: &str,
-        name: Option<&str>,
-        color: Option<u32>,
-        hoist: Option<bool>,
-    ) -> Result<UpdateResult> {
-        debug!("Creating guild role in {}", guild_id);
-        let role = GuildRole {
-            name: name.unwrap_or_default().to_string(),
-            color: color.unwrap_or_default(),
-            hoist: hoist.map(u32::from).unwrap_or_default(),
-            ..Default::default()
-        };
-        let body = UpdateRole::new(guild_id, role);
-        let path = resource::guild_roles(guild_id);
-        self.request_json(reqwest::Method::POST, &path, None::<&()>, Some(&body))
-            .await
-    }
-
-    /// Updates a guild role from a structured role body.
-    pub async fn update_guild_role_with_update(
+    /// Updates a guild role.
+    pub async fn update_guild_role(
         &self,
         guild_id: &str,
         role_id: &str,
@@ -65,27 +41,6 @@ impl BotApi {
             .patch(self.token(), &path, None::<&()>, Some(&body))
             .await?;
         Self::decode_json(response)
-    }
-
-    pub async fn update_guild_role(
-        &self,
-        guild_id: &str,
-        role_id: &str,
-        name: Option<&str>,
-        color: Option<u32>,
-        hoist: Option<bool>,
-    ) -> Result<UpdateResult> {
-        debug!("Updating guild role {} in {}", role_id, guild_id);
-        let role = GuildRole {
-            name: name.unwrap_or_default().to_string(),
-            color: color.unwrap_or_default(),
-            hoist: hoist.map(u32::from).unwrap_or_default(),
-            ..Default::default()
-        };
-        let body = UpdateRole::new(guild_id, role);
-        let path = resource::guild_role(guild_id, role_id);
-        self.request_json(reqwest::Method::PATCH, &path, None::<&()>, Some(&body))
-            .await
     }
 
     /// Deletes a guild role.
@@ -166,13 +121,15 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn inline_create_role_matches_botgo_update_body() {
+    async fn create_role_matches_botgo_update_body() {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
-        let result = api
-            .create_guild_role("guild-1", Some("Test Role"), Some(4_278_245_297), None)
-            .await
-            .unwrap();
+        let role = GuildRole {
+            name: "Test Role".to_string(),
+            color: 4_278_245_297,
+            ..Default::default()
+        };
+        let result = api.create_guild_role("guild-1", role).await.unwrap();
 
         assert_eq!(result.role_id, "role-1");
         assert_eq!(result.guild_id, "guild-1");
@@ -186,11 +143,16 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn inline_update_role_matches_botgo_update_body() {
+    async fn update_role_matches_botgo_update_body() {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
+        let role = GuildRole {
+            name: "Test Role".to_string(),
+            hoist: 0,
+            ..Default::default()
+        };
         let result = api
-            .update_guild_role("guild-1", "role-1", Some("Test Role"), Some(0), Some(false))
+            .update_guild_role("guild-1", "role-1", role)
             .await
             .unwrap();
 

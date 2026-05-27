@@ -27,7 +27,7 @@ With `Intents::FORUMS`, the following `EventHandler` methods become live:
 
 `Thread` carries `channel_id`, `guild_id`, `author_id`, `event_id` (`Option<String>`), and a `thread_info: ThreadInfo`. `ThreadInfo` exposes the title and rich-content blocks the forum editor produced.
 
-`Post` and `Reply` follow the same shape but with `post_info: PostInfo` / `reply_info: ReplyInfo` instead. All three structs cache the `BotApi` they were built with; you can grab it via `thread.api()` and similar accessors.
+`Post` and `Reply` follow the same shape but with `post_info: PostInfo` / `reply_info: ReplyInfo` instead. Use the callback `ctx` when a forum event needs to make REST calls.
 
 `ForumAuditResult` mirrors the audit payload directly:
 

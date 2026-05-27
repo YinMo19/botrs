@@ -1,4 +1,3 @@
-use crate::api::BotApi;
 use serde::{Deserialize, Serialize};
 
 /// C2C friend event payload.
@@ -28,9 +27,6 @@ impl C2CFriendData {
 /// C2C (Client-to-Client) management event structure
 #[derive(Debug, Clone, Serialize)]
 pub struct C2CManageEvent {
-    /// API client reference
-    #[serde(skip)]
-    api: BotApi,
     /// Event ID
     #[serde(skip)]
     pub event_id: Option<String>,
@@ -46,21 +42,15 @@ pub struct C2CManageEvent {
 
 impl C2CManageEvent {
     /// Builds a C2C management event from the gateway payload.
-    pub fn new(api: BotApi, event_id: Option<String>, data: &serde_json::Value) -> Self {
+    pub fn new(event_id: Option<String>, data: &serde_json::Value) -> Self {
         let wire: C2CManageWire = serde_json::from_value(data.clone()).unwrap_or_default();
         Self {
-            api,
             event_id,
             timestamp: wire.timestamp,
             openid: wire.openid,
             nick: wire.nick,
             avatar: wire.avatar,
         }
-    }
-
-    /// Get the API client reference
-    pub fn api(&self) -> &BotApi {
-        &self.api
     }
 
     /// Get the event timestamp as a formatted string

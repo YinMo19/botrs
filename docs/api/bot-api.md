@@ -35,14 +35,14 @@ Every method takes `&self` plus endpoint-specific arguments and returns `Result<
 ### Channels
 
 - `get_channel`, `get_channels`
-- `create_channel`, `create_private_channel`, `update_channel` / `patch_channel`, `delete_channel`
+- `create_channel`, `create_private_channel`, `update_channel`, `delete_channel`
 - permissions: `get_channel_user_permissions`, `get_channel_role_permissions`, `update_channel_user_permissions`, `update_channel_role_permissions`, `put_channel_permissions`, `put_channel_roles_permissions`
 
 ### Roles
 
 - `get_guild_roles`
-- `create_guild_role`, `create_guild_role_with_update`, `update_guild_role`, `update_guild_role_with_update`, `delete_guild_role`
-- assign / remove: `create_guild_role_member`, `delete_guild_role_member`, `member_add_role`, `member_delete_role`, `delete_member`, `delete_member_with_options`
+- `create_guild_role`, `update_guild_role`, `delete_guild_role`
+- assign / remove: `create_guild_role_member`, `delete_guild_role_member`, `delete_member`, `delete_member_with_options`
 
 ### Messages (channel)
 

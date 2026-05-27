@@ -1,96 +1,11 @@
 use super::{BotApi, resource};
 use crate::error::Result;
 use crate::models::{
-    channel::{Channel, ChannelSubType, ChannelType, ChannelValueObject, PrivateType},
+    channel::{Channel, ChannelValueObject, PrivateType},
     guild::Member,
 };
-use serde::Serialize;
 use serde_json::Value;
 use tracing::debug;
-
-#[derive(Debug, Serialize)]
-struct CreateChannelBody {
-    name: String,
-    #[serde(rename = "type")]
-    channel_type: ChannelType,
-    #[serde(rename = "sub_type")]
-    sub_type: ChannelSubType,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    position: Option<u32>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    parent_id: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    private_type: Option<u32>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    private_user_ids: Option<Vec<String>>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    speak_permission: Option<u32>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    application_id: Option<String>,
-}
-
-impl CreateChannelBody {
-    #[allow(clippy::too_many_arguments)]
-    fn new(
-        name: &str,
-        channel_type: ChannelType,
-        sub_type: ChannelSubType,
-        position: Option<u32>,
-        parent_id: Option<&str>,
-        private_type: Option<u32>,
-        private_user_ids: Option<Vec<String>>,
-        speak_permission: Option<u32>,
-        application_id: Option<&str>,
-    ) -> Self {
-        Self {
-            name: name.to_string(),
-            channel_type,
-            sub_type,
-            position: position.filter(|value| *value != 0),
-            parent_id: parent_id
-                .filter(|value| !value.is_empty())
-                .map(ToOwned::to_owned),
-            private_type: private_type.filter(|value| *value != 0),
-            private_user_ids: private_user_ids.filter(|value| !value.is_empty()),
-            speak_permission: speak_permission.filter(|value| *value != 0),
-            application_id: application_id
-                .filter(|value| !value.is_empty())
-                .map(ToOwned::to_owned),
-        }
-    }
-}
-
-#[derive(Debug, Serialize)]
-struct UpdateChannelBody {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    name: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    position: Option<u32>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    parent_id: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    private_type: Option<u32>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    speak_permission: Option<u32>,
-}
-
-impl UpdateChannelBody {
-    fn new(
-        name: Option<&str>,
-        position: Option<u32>,
-        parent_id: Option<&str>,
-        private_type: Option<u32>,
-        speak_permission: Option<u32>,
-    ) -> Self {
-        Self {
-            name: name.map(ToOwned::to_owned),
-            position,
-            parent_id: parent_id.map(ToOwned::to_owned),
-            private_type,
-            speak_permission,
-        }
-    }
-}
 
 impl BotApi {
     // Channel APIs
@@ -111,8 +26,8 @@ impl BotApi {
         Self::decode_json(response)
     }
 
-    /// Creates a guild channel from a structured channel body.
-    pub async fn post_channel(
+    /// Creates a guild channel.
+    pub async fn create_channel(
         &self,
         guild_id: &str,
         value: &ChannelValueObject,
@@ -122,40 +37,6 @@ impl BotApi {
         let response = self
             .http
             .post(self.token(), &path, None::<&()>, Some(value))
-            .await?;
-        Self::decode_json(response)
-    }
-
-    /// Creates a guild channel from inline fields.
-    pub async fn create_channel(
-        &self,
-        guild_id: &str,
-        name: &str,
-        channel_type: ChannelType,
-        sub_type: ChannelSubType,
-        position: Option<u32>,
-        parent_id: Option<&str>,
-        private_type: Option<u32>,
-        private_user_ids: Option<Vec<String>>,
-        speak_permission: Option<u32>,
-        application_id: Option<&str>,
-    ) -> Result<Channel> {
-        debug!("Creating channel in guild {}", guild_id);
-        let body = CreateChannelBody::new(
-            name,
-            channel_type,
-            sub_type,
-            position,
-            parent_id,
-            private_type,
-            private_user_ids,
-            speak_permission,
-            application_id,
-        );
-        let path = resource::guild_channels(guild_id);
-        let response = self
-            .http
-            .post(self.token(), &path, None::<&()>, Some(&body))
             .await?;
         Self::decode_json(response)
     }
@@ -177,32 +58,11 @@ impl BotApi {
             value.private_user_ids = Some(user_ids);
             value.private_type = Some(PrivateType::OnlyAdmin);
         }
-        self.post_channel(guild_id, &value).await
+        self.create_channel(guild_id, &value).await
     }
 
-    /// Updates a channel from inline fields.
+    /// Updates a channel.
     pub async fn update_channel(
-        &self,
-        channel_id: &str,
-        name: Option<&str>,
-        position: Option<u32>,
-        parent_id: Option<&str>,
-        private_type: Option<u32>,
-        speak_permission: Option<u32>,
-    ) -> Result<Channel> {
-        debug!("Updating channel {}", channel_id);
-        let body =
-            UpdateChannelBody::new(name, position, parent_id, private_type, speak_permission);
-        let path = resource::channel(channel_id);
-        let response = self
-            .http
-            .patch(self.token(), &path, None::<&()>, Some(&body))
-            .await?;
-        Self::decode_json(response)
-    }
-
-    /// Updates a channel from a structured channel body.
-    pub async fn patch_channel(
         &self,
         channel_id: &str,
         value: &ChannelValueObject,
@@ -330,47 +190,44 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn inline_create_channel_matches_botgo_sub_type_body() {
+    async fn create_channel_uses_structured_body() {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
-        let channel = api
-            .create_channel(
-                "guild-1",
-                "channel_test",
-                ChannelType::Text,
-                ChannelSubType::Chat,
-                Some(0),
-                Some(""),
-                Some(0),
-                Some(Vec::new()),
-                Some(0),
-                Some(""),
-            )
-            .await
-            .unwrap();
+        let value = ChannelValueObject::new(
+            "channel_test",
+            crate::models::channel::ChannelType::Text,
+            crate::models::channel::ChannelSubType::Chat,
+        );
+        let channel = api.create_channel("guild-1", &value).await.unwrap();
 
         assert_eq!(channel.id, "channel-1");
         let request = request.await.unwrap();
         assert!(request.starts_with("POST /guilds/guild-1/channels HTTP/1.1"));
-        assert!(request.ends_with("\r\n\r\n{\"name\":\"channel_test\",\"type\":0,\"sub_type\":0}"));
+        assert!(request.ends_with("\r\n\r\n{\"name\":\"channel_test\"}"));
         server.await.unwrap();
     }
 
     #[tokio::test]
-    async fn inline_update_channel_uses_provided_fields() {
+    async fn update_channel_uses_structured_body() {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
-        let channel = api
-            .update_channel("channel-1", Some(""), Some(0), Some(""), Some(0), Some(0))
-            .await
-            .unwrap();
+        let value = ChannelValueObject {
+            name: Some("updated".to_string()),
+            channel_type: Some(crate::models::channel::ChannelType::Voice),
+            sub_type: Some(crate::models::channel::ChannelSubType::Notice),
+            position: Some(1),
+            ..Default::default()
+        };
+        let channel = api.update_channel("channel-1", &value).await.unwrap();
 
         assert_eq!(channel.id, "channel-1");
         let request = request.await.unwrap();
         assert!(request.starts_with("PATCH /channels/channel-1 HTTP/1.1"));
-        assert!(request.ends_with(
-            "\r\n\r\n{\"name\":\"\",\"position\":0,\"parent_id\":\"\",\"private_type\":0,\"speak_permission\":0}"
-        ));
+        assert!(
+            request.ends_with(
+                "\r\n\r\n{\"name\":\"updated\",\"type\":2,\"position\":1,\"sub_type\":1}"
+            )
+        );
         server.await.unwrap();
     }
 

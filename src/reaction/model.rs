@@ -1,4 +1,3 @@
-use crate::api::BotApi;
 use crate::models::Snowflake;
 use serde::Serialize;
 use serde_json::Value;
@@ -8,9 +7,6 @@ use super::{Emoji, MessageReaction, ReactionTarget, ReactionTargetType};
 /// Reaction structure representing emoji reactions to messages or posts
 #[derive(Debug, Clone, Serialize)]
 pub struct Reaction {
-    /// API client reference
-    #[serde(skip)]
-    api: BotApi,
     /// User ID who made the reaction
     pub user_id: Snowflake,
     /// Channel ID where the reaction occurred
@@ -28,19 +24,17 @@ pub struct Reaction {
 
 impl Reaction {
     /// Parses a reaction event from the gateway payload.
-    pub fn new(api: BotApi, event_id: Option<String>, data: &Value) -> crate::Result<Self> {
+    pub fn new(event_id: Option<String>, data: &Value) -> crate::Result<Self> {
         let message_reaction = serde_json::from_value(data.clone())?;
-        Ok(Self::from_message_reaction(api, event_id, message_reaction))
+        Ok(Self::from_message_reaction(event_id, message_reaction))
     }
 
     /// Creates a new Reaction instance from the structured DTO.
     pub fn from_message_reaction(
-        api: BotApi,
         event_id: Option<String>,
         message_reaction: MessageReaction,
     ) -> Self {
         Self {
-            api,
             event_id,
             user_id: message_reaction.user_id,
             channel_id: message_reaction.channel_id,
@@ -48,11 +42,6 @@ impl Reaction {
             emoji: message_reaction.emoji,
             target: message_reaction.target,
         }
-    }
-
-    /// Get the API client reference
-    pub fn api(&self) -> &BotApi {
-        &self.api
     }
 
     /// Check if this is a message reaction

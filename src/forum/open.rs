@@ -1,4 +1,3 @@
-use crate::api::BotApi;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
@@ -55,9 +54,6 @@ impl ForumAuditResult {
 /// Open forum thread structure
 #[derive(Debug, Clone, Serialize)]
 pub struct OpenThread {
-    /// API client reference
-    #[serde(skip)]
-    api: BotApi,
     /// Channel ID
     pub channel_id: Option<String>,
     /// Guild ID
@@ -81,20 +77,14 @@ struct OpenThreadWire {
 
 impl OpenThread {
     /// Builds an open forum event from the gateway payload.
-    pub fn new(api: BotApi, data: &Value) -> Self {
+    pub fn new(data: &Value) -> Self {
         let wire: OpenThreadWire = serde_json::from_value(data.clone()).unwrap_or_default();
         Self {
-            api,
             event_id: None,
             guild_id: wire.guild_id,
             channel_id: wire.channel_id,
             author_id: wire.author_id,
         }
-    }
-
-    /// Get the API client reference
-    pub fn api(&self) -> &BotApi {
-        &self.api
     }
 }
 

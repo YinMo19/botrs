@@ -1,5 +1,4 @@
 use super::*;
-use crate::BotApi;
 
 #[test]
 fn test_interaction_type() {
@@ -81,7 +80,6 @@ fn interaction_types_serialize_as_numeric_wire_values() {
 #[test]
 fn interaction_payload_uses_expected_type_fields() {
     let interaction = Interaction::new(
-        BotApi::new_for_test(crate::http::HttpClient::new(30, false).unwrap()),
         Some("event-1".to_string()),
         &serde_json::json!({
             "id": "interaction-1",

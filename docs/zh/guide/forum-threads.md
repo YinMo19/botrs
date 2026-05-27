@@ -27,7 +27,7 @@
 
 `Thread` 带有 `channel_id`、`guild_id`、`author_id`、`event_id`（均为 `Option<String>`），以及 `thread_info: ThreadInfo`，其中 `ThreadInfo` 暴露主题标题和编辑器生成的富文本块。
 
-`Post` 与 `Reply` 形态相同，仅把 `thread_info` 换成 `post_info: PostInfo` / `reply_info: ReplyInfo`。三者都持有创建时使用的 `BotApi`，可通过 `thread.api()` 等访问器获取。
+`Post` 与 `Reply` 形态相同，仅把 `thread_info` 换成 `post_info: PostInfo` / `reply_info: ReplyInfo`。论坛事件需要发起 REST 调用时，直接使用回调里的 `ctx`。
 
 `ForumAuditResult` 直接映射审核载荷：
 

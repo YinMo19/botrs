@@ -1,5 +1,4 @@
 use super::{InteractionData, InteractionDataType, InteractionType};
-use crate::api::BotApi;
 use crate::models::serde_helpers::{deserialize_string_or_number, is_default};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -7,9 +6,6 @@ use serde_json::Value;
 /// Interaction structure representing user interactions
 #[derive(Debug, Clone, Serialize)]
 pub struct Interaction {
-    /// API client reference
-    #[serde(skip)]
-    api: BotApi,
     /// Interaction ID
     #[serde(skip_serializing_if = "Option::is_none")]
     pub id: Option<String>,
@@ -56,10 +52,9 @@ pub struct Interaction {
 
 impl Interaction {
     /// Builds an interaction event from the gateway payload.
-    pub fn new(api: BotApi, event_id: Option<String>, data: &Value) -> Self {
+    pub fn new(event_id: Option<String>, data: &Value) -> Self {
         let wire: InteractionWire = serde_json::from_value(data.clone()).unwrap_or_default();
         Self {
-            api,
             event_id,
             id: wire.id,
             application_id: wire.application_id,
@@ -75,11 +70,6 @@ impl Interaction {
             timestamp: wire.timestamp,
             version: wire.version,
         }
-    }
-
-    /// Get the API client reference
-    pub fn api(&self) -> &BotApi {
-        &self.api
     }
 
     /// Check if this is a button interaction

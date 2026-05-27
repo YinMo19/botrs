@@ -1,5 +1,4 @@
 use super::*;
-use crate::BotApi;
 
 #[test]
 fn test_reaction_target_type() {
@@ -94,10 +93,7 @@ fn message_reaction_uses_required_zero_value_fields() {
 
 #[test]
 fn reaction_event_id_is_internal_only() {
-    let http = crate::http::HttpClient::new(30, false).unwrap();
-    let api = BotApi::new_for_test(http);
     let reaction = Reaction::from_message_reaction(
-        api,
         Some("event-1".to_string()),
         MessageReaction::new(
             "user-1",

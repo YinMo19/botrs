@@ -11,7 +11,7 @@ Subscribing to `Intents::AUDIO_ACTION` enables four callbacks:
 - `on_mic(&self, ctx, audio: Audio)` — bot is on-mic in the voice subchannel.
 - `off_mic(&self, ctx, audio: Audio)` — bot is off-mic.
 
-`Audio` carries `channel_id`, `guild_id`, `audio_url`, `text`, `event_id`, all `Option<String>`. It also keeps an internal `BotApi` reference accessible via `audio.api()`, which is convenient when the handler wants to make REST calls without dragging the whole `Context`.
+`Audio` carries `channel_id`, `guild_id`, `audio_url`, `text`, `event_id`, all `Option<String>`. Use the callback `ctx` for any REST calls triggered by the event.
 
 For voice / live-channel member traffic, enable `Intents::AUDIO_OR_LIVE_CHANNEL_MEMBER` and implement `audio_or_live_channel_member_enter` / `_exit`. The payload is `PublicAudio { guild_id, channel_id, channel_type: Option<PublicAudioType>, user_id }` where `PublicAudioType` is `Voice = 2` or `Live = 5`.
 

@@ -38,7 +38,7 @@ impl<H: EventHandler + 'static> Client<H> {
             ($event_name:literal, $event_type:ty, $handler:ident) => {{
                 if let Some(data) = event.data {
                     let event_id = fallback_event_id($event_name, &event.id, event.sequence);
-                    let value = <$event_type>::from_data(ctx.api_clone(), event_id, data);
+                    let value = <$event_type>::from_data(event_id, data);
                     self.handler.$handler(ctx, value).await;
                 }
             }};
@@ -73,20 +73,10 @@ impl<H: EventHandler + 'static> Client<H> {
             }};
         }
 
-        macro_rules! dispatch_api_payload_new {
-            ($event_type:ty, $handler:ident) => {{
-                if let Some(data) = event.data {
-                    let event_id = payload_event_id(&event.id, &data);
-                    let value = <$event_type>::new(ctx.api_clone(), event_id, &data);
-                    self.handler.$handler(ctx, value).await;
-                }
-            }};
-        }
-
         macro_rules! dispatch_reaction {
             ($handler:ident) => {{
                 if let Some(data) = event.data {
-                    let reaction = Reaction::new(ctx.api_clone(), event.id, &data)?;
+                    let reaction = Reaction::new(event.id, &data)?;
                     self.handler.$handler(ctx, reaction).await;
                 }
             }};
@@ -96,7 +86,7 @@ impl<H: EventHandler + 'static> Client<H> {
             ($handler:ident) => {{
                 if let Some(data) = event.data {
                     let audio_action = AudioAction::from_value(&data);
-                    let audio = Audio::new(ctx.api_clone(), event.id, audio_action);
+                    let audio = Audio::new(event.id, audio_action);
                     self.handler.$handler(ctx, audio).await;
                 }
             }};
@@ -105,7 +95,7 @@ impl<H: EventHandler + 'static> Client<H> {
         macro_rules! dispatch_forum {
             ($event_type:ty, $handler:ident) => {{
                 if let Some(data) = event.data {
-                    let value = <$event_type>::new(ctx.api_clone(), event.id, &data);
+                    let value = <$event_type>::new(event.id, &data);
                     self.handler.$handler(ctx, value).await;
                 }
             }};
@@ -114,7 +104,7 @@ impl<H: EventHandler + 'static> Client<H> {
         macro_rules! dispatch_open_forum {
             ($handler:ident) => {{
                 if let Some(data) = event.data {
-                    let mut thread = OpenThread::new(ctx.api_clone(), &data);
+                    let mut thread = OpenThread::new(&data);
                     thread.event_id = event.id;
                     self.handler.$handler(ctx, thread).await;
                 }
@@ -189,7 +179,7 @@ impl<H: EventHandler + 'static> Client<H> {
             }
             Some("INTERACTION_CREATE") => {
                 if let Some(data) = event.data {
-                    let interaction = Interaction::new(ctx.api_clone(), event.id, &data);
+                    let interaction = Interaction::new(event.id, &data);
                     self.handler.interaction_create(ctx, interaction).await;
                 }
             }
@@ -239,32 +229,32 @@ impl<H: EventHandler + 'static> Client<H> {
                 dispatch_from_data!("MESSAGE_AUDIT_REJECT", MessageAudit, message_audit_reject);
             }
             Some("FRIEND_ADD") => {
-                dispatch_api_payload_new!(C2CManageEvent, friend_add);
+                dispatch_payload_new!(C2CManageEvent, friend_add);
             }
             Some("FRIEND_DEL") => {
-                dispatch_api_payload_new!(C2CManageEvent, friend_del);
+                dispatch_payload_new!(C2CManageEvent, friend_del);
             }
             Some("C2C_MSG_REJECT") => {
-                dispatch_api_payload_new!(C2CManageEvent, c2c_msg_reject);
+                dispatch_payload_new!(C2CManageEvent, c2c_msg_reject);
             }
             Some("C2C_MSG_RECEIVE") => {
-                dispatch_api_payload_new!(C2CManageEvent, c2c_msg_receive);
+                dispatch_payload_new!(C2CManageEvent, c2c_msg_receive);
             }
             Some("GROUP_ADD_ROBOT") => {
-                dispatch_api_payload_new!(GroupManageEvent, group_add_robot);
+                dispatch_payload_new!(GroupManageEvent, group_add_robot);
             }
             Some("GROUP_DEL_ROBOT") => {
-                dispatch_api_payload_new!(GroupManageEvent, group_del_robot);
+                dispatch_payload_new!(GroupManageEvent, group_del_robot);
             }
             Some("GROUP_MSG_REJECT") => {
-                dispatch_api_payload_new!(GroupManageEvent, group_msg_reject);
+                dispatch_payload_new!(GroupManageEvent, group_msg_reject);
             }
             Some("GROUP_MSG_RECEIVE") => {
-                dispatch_api_payload_new!(GroupManageEvent, group_msg_receive);
+                dispatch_payload_new!(GroupManageEvent, group_msg_receive);
             }
             Some("AUDIO_OR_LIVE_CHANNEL_MEMBER_ENTER") => {
                 if let Some(data) = event.data {
-                    let audio = PublicAudio::new(ctx.api_clone(), data);
+                    let audio = PublicAudio::new(data);
                     self.handler
                         .audio_or_live_channel_member_enter(ctx, audio)
                         .await;
@@ -272,7 +262,7 @@ impl<H: EventHandler + 'static> Client<H> {
             }
             Some("AUDIO_OR_LIVE_CHANNEL_MEMBER_EXIT") => {
                 if let Some(data) = event.data {
-                    let audio = PublicAudio::new(ctx.api_clone(), data);
+                    let audio = PublicAudio::new(data);
                     self.handler
                         .audio_or_live_channel_member_exit(ctx, audio)
                         .await;

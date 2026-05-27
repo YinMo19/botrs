@@ -23,10 +23,6 @@ impl Context {
         &self.api
     }
 
-    pub(crate) fn api_clone(&self) -> BotApi {
-        self.api.as_ref().clone()
-    }
-
     /// Sets the bot information.
     pub fn with_bot_info(mut self, bot_info: BotInfo) -> Self {
         self.bot_info = Some(bot_info);

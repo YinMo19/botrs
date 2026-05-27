@@ -138,7 +138,6 @@ fn channel_decodes_large_type_values() {
 #[test]
 fn channel_from_data_does_not_use_gateway_event_id_as_channel_id() {
     let channel = Channel::from_data(
-        crate::api::BotApi::new_for_test(crate::http::HttpClient::new(30, false).unwrap()),
         "event-1".to_string(),
         serde_json::json!({
             "guild_id": "guild-1",

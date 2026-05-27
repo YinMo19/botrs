@@ -4,37 +4,19 @@ use crate::models::guild::{MemberAddRoleBody, UpdateGuildMute, UpdateGuildMuteRe
 use tracing::debug;
 
 impl BotApi {
-    /// Adds a role to a guild member, optionally scoped to a channel.
+    /// Adds a role to a guild member.
     pub async fn create_guild_role_member(
-        &self,
-        guild_id: &str,
-        role_id: &str,
-        user_id: &str,
-        channel_id: Option<&str>,
-    ) -> Result<()> {
-        debug!(
-            "Adding user {} to role {} in guild {}",
-            user_id, role_id, guild_id
-        );
-
-        let body = channel_id
-            .map(MemberAddRoleBody::with_channel_id)
-            .unwrap_or_default();
-        let path = resource::guild_member_role(guild_id, user_id, role_id);
-        self.http
-            .put(self.token(), &path, None::<&()>, Some(&body))
-            .await?;
-        Ok(())
-    }
-
-    /// Adds a role to a guild member using a structured body.
-    pub async fn member_add_role(
         &self,
         guild_id: &str,
         role_id: &str,
         user_id: &str,
         body: &MemberAddRoleBody,
     ) -> Result<()> {
+        debug!(
+            "Adding user {} to role {} in guild {}",
+            user_id, role_id, guild_id
+        );
+
         let path = resource::guild_member_role(guild_id, user_id, role_id);
         self.http
             .put(self.token(), &path, None::<&()>, Some(body))
@@ -42,37 +24,19 @@ impl BotApi {
         Ok(())
     }
 
-    /// Removes a role from a guild member, optionally scoped to a channel.
+    /// Removes a role from a guild member.
     pub async fn delete_guild_role_member(
-        &self,
-        guild_id: &str,
-        role_id: &str,
-        user_id: &str,
-        channel_id: Option<&str>,
-    ) -> Result<()> {
-        debug!(
-            "Removing user {} from role {} in guild {}",
-            user_id, role_id, guild_id
-        );
-
-        let body = channel_id
-            .map(MemberAddRoleBody::with_channel_id)
-            .unwrap_or_default();
-        let path = resource::guild_member_role(guild_id, user_id, role_id);
-        self.http
-            .delete_with_body(self.token(), &path, None::<&()>, Some(&body))
-            .await?;
-        Ok(())
-    }
-
-    /// Removes a role from a guild member using a structured body.
-    pub async fn member_delete_role(
         &self,
         guild_id: &str,
         role_id: &str,
         user_id: &str,
         body: &MemberAddRoleBody,
     ) -> Result<()> {
+        debug!(
+            "Removing user {} from role {} in guild {}",
+            user_id, role_id, guild_id
+        );
+
         let path = resource::guild_member_role(guild_id, user_id, role_id);
         self.http
             .delete_with_body(self.token(), &path, None::<&()>, Some(body))
@@ -228,7 +192,7 @@ mod tests {
     async fn inline_add_role_member_matches_botgo_empty_channel() {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
-        api.create_guild_role_member("guild-1", "role-1", "user-1", None)
+        api.create_guild_role_member("guild-1", "role-1", "user-1", &MemberAddRoleBody::new())
             .await
             .unwrap();
 
@@ -242,7 +206,8 @@ mod tests {
     async fn inline_delete_role_member_matches_botgo_channel_body() {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
-        api.delete_guild_role_member("guild-1", "role-1", "user-1", Some("channel-1"))
+        let body = MemberAddRoleBody::with_channel_id("channel-1");
+        api.delete_guild_role_member("guild-1", "role-1", "user-1", &body)
             .await
             .unwrap();
 

@@ -30,11 +30,6 @@ impl BotApi {
         }
     }
 
-    #[cfg(test)]
-    pub(crate) fn new_for_test(http: HttpClient) -> Self {
-        Self::new(http, Token::new("APPID_XXXXXX", "SECRET_XXXXXX"))
-    }
-
     /// Creates a new instance from this client as an OpenAPI template.
     pub fn setup_from_template(&self, token: Token, in_sandbox: bool) -> Result<Self> {
         let app_id = token.app_id().to_string();

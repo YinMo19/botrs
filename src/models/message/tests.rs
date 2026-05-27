@@ -14,7 +14,6 @@ mod tests {
     #[test]
     fn c2c_message_accepts_minimal_gateway_payload() {
         let message = super::super::C2CMessage::from_data(
-            crate::api::BotApi::new_for_test(crate::http::HttpClient::new(30, true).unwrap()),
             "event-1".to_string(),
             serde_json::json!({
                 "author": {
@@ -580,7 +579,6 @@ mod tests {
     #[test]
     fn message_event_id_is_internal_only() {
         let message = Message::from_data(
-            crate::api::BotApi::new_for_test(crate::http::HttpClient::new(30, false).unwrap()),
             "event-1".to_string(),
             serde_json::json!({
                 "id": "message-1",
@@ -611,7 +609,6 @@ mod tests {
     #[test]
     fn message_audit_keeps_channel_sequence() {
         let audit = MessageAudit::from_data(
-            crate::api::BotApi::new_for_test(crate::http::HttpClient::new(30, false).unwrap()),
             "event-1".to_string(),
             serde_json::json!({
                 "audit_id": "audit-1",

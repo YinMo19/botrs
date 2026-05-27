@@ -25,7 +25,7 @@ impl EventHandler for MyBot {
 }
 ```
 
-Python 中通过 `self` 拿到的 `Context`（即 `api` + `token`）在这里以第二个参数显式传入。
+Python 中通过 `self` 拿到的上下文在这里以第二个参数显式传入；REST 凭证保存在它共享的 `BotApi` 里。
 
 ## Token
 
