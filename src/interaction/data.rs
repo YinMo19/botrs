@@ -42,13 +42,6 @@ pub struct Resolved {
     pub extra: BTreeMap<String, Value>,
 }
 
-impl Resolved {
-    /// Create a new Resolved instance from JSON data
-    pub fn new(data: &Value) -> Self {
-        serde_json::from_value(data.clone()).unwrap_or_default()
-    }
-}
-
 /// Interaction data structure
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct InteractionData {
@@ -61,11 +54,4 @@ pub struct InteractionData {
     /// Resolved data
     #[serde(default, skip_serializing_if = "is_default")]
     pub resolved: Resolved,
-}
-
-impl InteractionData {
-    /// Create a new InteractionData instance from JSON data
-    pub fn new(data: &Value) -> Self {
-        serde_json::from_value(data.clone()).unwrap_or_default()
-    }
 }
