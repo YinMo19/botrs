@@ -16,19 +16,6 @@ pub struct ApiError {
     pub trace_id: Option<String>,
 }
 
-impl ApiError {
-    /// Creates a new API error.
-    pub fn new(code: u32, message: impl Into<String>) -> Self {
-        Self {
-            code,
-            err_code: None,
-            message: message.into(),
-            errors: None,
-            trace_id: None,
-        }
-    }
-}
-
 impl<'de> Deserialize<'de> for ApiError {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where

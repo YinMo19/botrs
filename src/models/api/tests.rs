@@ -16,11 +16,21 @@ fn test_rate_limit() {
 
 #[test]
 fn test_api_error() {
-    let error = ApiError::new(429, "Rate limited");
+    let error: ApiError = serde_json::from_value(serde_json::json!({
+        "code": 429,
+        "message": "Rate limited"
+    }))
+    .unwrap();
+
     assert_eq!(error.err_code, None);
     assert_eq!(error.code, 429);
+    assert_eq!(error.message, "Rate limited");
 
-    let auth_error = ApiError::new(401, "Unauthorized");
+    let auth_error: ApiError = serde_json::from_value(serde_json::json!({
+        "code": 401,
+        "message": "Unauthorized"
+    }))
+    .unwrap();
     assert_eq!(auth_error.code, 401);
 }
 
