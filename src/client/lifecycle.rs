@@ -36,11 +36,10 @@ impl<H: EventHandler + 'static> Client<H> {
 
         let http = HttpClient::new(timeout, is_sandbox)?;
         token.validate()?;
-        let api = Arc::new(BotApi::new(http.clone(), token));
+        let api = Arc::new(BotApi::new(http, token));
 
         Ok(Self {
             intents,
-            http,
             api,
             handler: Arc::new(handler),
             is_sandbox,
@@ -57,11 +56,10 @@ impl<H: EventHandler + 'static> Client<H> {
     ) -> Result<Self> {
         let http = HttpClient::new(timeout, is_sandbox)?;
         token.validate()?;
-        let api = Arc::new(BotApi::new(http.clone(), token));
+        let api = Arc::new(BotApi::new(http, token));
 
         Ok(Self {
             intents,
-            http,
             api,
             handler: Arc::new(handler),
             is_sandbox,
@@ -158,7 +156,7 @@ impl<H: EventHandler + 'static> Client<H> {
 
     /// Gets a reference to the HTTP client.
     pub fn http(&self) -> &HttpClient {
-        &self.http
+        self.api.http()
     }
 
     /// Gets the intents being used.

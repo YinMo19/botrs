@@ -51,14 +51,12 @@ mod prelude {
     pub(super) use tracing::{debug, error, info};
 }
 
-use prelude::{Arc, BotApi, HttpClient, Intents};
+use prelude::{Arc, BotApi, Intents};
 
 /// Main client for the QQ Guild Bot API.
 pub struct Client<H: EventHandler> {
     /// Intent flags
     intents: Intents,
-    /// HTTP client
-    http: HttpClient,
     /// API client
     api: Arc<BotApi>,
     /// Event handler
