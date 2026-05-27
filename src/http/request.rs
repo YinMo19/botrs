@@ -9,8 +9,7 @@ use serde::Serialize;
 use tracing::debug;
 
 impl HttpClient {
-    /// Makes a GET request to the API.
-    pub async fn get<Q>(
+    pub(crate) async fn get<Q>(
         &self,
         token: &Token,
         path: &str,
@@ -23,8 +22,7 @@ impl HttpClient {
             .await
     }
 
-    /// Makes a POST request to the API.
-    pub async fn post<Q, B>(
+    pub(crate) async fn post<Q, B>(
         &self,
         token: &Token,
         path: &str,
@@ -54,8 +52,7 @@ impl HttpClient {
             .await
     }
 
-    /// Makes a PUT request to the API.
-    pub async fn put<Q, B>(
+    pub(crate) async fn put<Q, B>(
         &self,
         token: &Token,
         path: &str,
@@ -69,25 +66,7 @@ impl HttpClient {
         self.request(Method::PUT, token, path, query, body).await
     }
 
-    /// Makes a PUT request with additional headers.
-    pub async fn put_with_headers<Q, B>(
-        &self,
-        token: &Token,
-        path: &str,
-        query: Option<&Q>,
-        body: Option<&B>,
-        headers: HeaderMap,
-    ) -> Result<serde_json::Value>
-    where
-        Q: Serialize + ?Sized,
-        B: Serialize + ?Sized,
-    {
-        self.request_with_headers(Method::PUT, token, path, query, body, headers)
-            .await
-    }
-
-    /// Makes a PUT request with a raw request body and additional headers.
-    pub async fn put_raw_with_headers<Q>(
+    pub(crate) async fn put_raw_with_headers<Q>(
         &self,
         token: &Token,
         path: &str,
@@ -102,8 +81,7 @@ impl HttpClient {
             .await
     }
 
-    /// Makes a DELETE request to the API.
-    pub async fn delete<Q>(
+    pub(crate) async fn delete<Q>(
         &self,
         token: &Token,
         path: &str,
@@ -116,8 +94,7 @@ impl HttpClient {
             .await
     }
 
-    /// Makes a DELETE request with a JSON request body.
-    pub async fn delete_with_body<Q, B>(
+    pub(crate) async fn delete_with_body<Q, B>(
         &self,
         token: &Token,
         path: &str,
@@ -131,8 +108,7 @@ impl HttpClient {
         self.request(Method::DELETE, token, path, query, body).await
     }
 
-    /// Makes a PATCH request to the API.
-    pub async fn patch<Q, B>(
+    pub(crate) async fn patch<Q, B>(
         &self,
         token: &Token,
         path: &str,

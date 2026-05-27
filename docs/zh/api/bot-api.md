@@ -108,11 +108,6 @@ let me = api.get_bot_info().await?;
 
 - `get_message_setting` —— 频道推送和私信开关。
 
-### 生命周期
-
-- `close` —— 等待请求结束并关闭底层客户端。
-- `http` —— 借出底层 `HttpClient`，便于做高级定制。
-
 ## 完整示例
 
 **回应 @ 提及，并附带按钮键盘。** 一次构建键盘，挂到 `MessageParams` 上，再交给 `send_message`。

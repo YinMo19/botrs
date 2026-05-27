@@ -108,10 +108,6 @@ Every method takes `&self` plus endpoint-specific arguments and returns `Result<
 
 - `get_message_setting` — guild push and DM toggles.
 
-### Lifecycle
-
-- `close` — drains in-flight requests and shuts down the client.
-
 ## Worked examples
 
 **Reply to an @-mention with a keyboard.** Build the keyboard once, attach to `MessageParams`, and dispatch with `send_message`.
