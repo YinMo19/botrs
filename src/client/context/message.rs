@@ -152,18 +152,6 @@ impl Context {
             .await
     }
 
-    /// Edits a channel message with the provided message payload.
-    pub async fn patch_message(
-        &self,
-        channel_id: &str,
-        message_id: &str,
-        params: MessageParams,
-    ) -> Result<MessageResponse> {
-        self.api
-            .patch_message(&self.token, channel_id, message_id, params)
-            .await
-    }
-
     /// Sends an inline keyboard message.
     pub async fn post_keyboard_message(
         &self,

@@ -48,7 +48,7 @@ Every method takes `&self, token: &Token, …` and returns `Result<…>`. The li
 
 - `get_message`, `get_messages`, `get_messages_with_params`
 - send: `post_message_with_params`, `post_message_to_create`.
-- edit: `patch_message_with_params`, `patch_message`, `patch_message_to_create`.
+- edit: `patch_message_with_params`, `patch_message_to_create`.
 - recall: `recall_message`.
 
 ### Direct messages
@@ -85,7 +85,7 @@ Every method takes `&self, token: &Token, …` and returns `Result<…>`. The li
 
 ### API permissions
 
-- `get_permissions` (alias `get_api_permissions`), `post_permission_demand`, `require_api_permissions`
+- `get_api_permissions`, `post_permission_demand`, `require_api_permissions`
 
 ### Audio / voice
 

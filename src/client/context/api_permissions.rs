@@ -7,11 +7,6 @@ impl Context {
         self.api.get_api_permissions(&self.token, guild_id).await
     }
 
-    /// Lists the inner API permission records.
-    pub async fn get_permissions(&self, guild_id: &str) -> Result<Vec<APIPermission>> {
-        self.api.get_permissions(&self.token, guild_id).await
-    }
-
     /// Creates an API permission demand request with a structured body.
     pub async fn require_api_permissions(
         &self,
@@ -112,17 +107,20 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn get_permissions_returns_inner_api_list() {
+    async fn get_api_permissions_returns_permission_list() {
         let (base_url, request, server) = spawn_capture_server(
             r#"{"apis":[{"path":"/channels/{channel_id}/messages","method":"POST","desc":"Send message","auth_status":1}]}"#,
         )
         .await;
         let ctx = test_context(base_url).await;
-        let permissions = ctx.get_permissions("guild-1").await.unwrap();
+        let permissions = ctx.get_api_permissions("guild-1").await.unwrap();
 
-        assert_eq!(permissions.len(), 1);
-        assert_eq!(permissions[0].path, "/channels/{channel_id}/messages");
-        assert_eq!(permissions[0].auth_status, 1);
+        assert_eq!(permissions.api_list.len(), 1);
+        assert_eq!(
+            permissions.api_list[0].path,
+            "/channels/{channel_id}/messages"
+        );
+        assert_eq!(permissions.api_list[0].auth_status, 1);
         let request = request.await.unwrap();
         assert!(request.starts_with("GET /guilds/guild-1/api_permission HTTP/1.1"));
         server.await.unwrap();

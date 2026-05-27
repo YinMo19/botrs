@@ -31,7 +31,7 @@ pub struct Context {
 - **语音 / 音频** —— `update_audio`、`post_audio`、`mute_*`、`cancel_mute_*`、`on_microphone`、`off_microphone`、`list_voice_channel_members`。
 - **回应 / 精华** —— `add_reaction`、`remove_reaction`、`pin_message`、`unpin_message`、`clean_pins`、`create_message_reaction`、`delete_own_message_reaction`。
 - **公告** —— `create_*_announce`、`delete_*_announce`、`clean_*_announces`。
-- **撤回 / 编辑** —— `recall_message`、`retract_dm_message`、`retract_c2c_message`、`retract_group_message`、`patch_message`。
+- **撤回 / 编辑** —— `recall_message`、`retract_dm_message`、`retract_c2c_message`、`retract_group_message`、`patch_message_with_params`。
 - **设置引导** —— `post_setting_guide(_message)`、`post_dm_setting_guide(_message)`。
 - **文件** —— `post_group_file`、`post_c2c_file`。
 - **Webhook 会话** —— `create_session`、`check_sessions`、`session_list`、`remove_session`。

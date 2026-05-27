@@ -62,10 +62,9 @@ impl EventHandler for ApiPermissionHandler {
 
         // Handle different permission commands
         if content.contains("/权限列表") {
-            // Get permissions list (equivalent to self.api.get_permissions)
-            match ctx.api.get_permissions(&ctx.token, _guild_id).await {
-                Ok(apis) => {
-                    for api in apis {
+            match ctx.api.get_api_permissions(&ctx.token, _guild_id).await {
+                Ok(permissions) => {
+                    for api in permissions.api_list {
                         info!("api: {}, status: {}", api.desc, api.auth_status);
                     }
                 }

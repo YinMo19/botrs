@@ -48,7 +48,7 @@ let me = api.get_bot_info(&token).await?;
 
 - `get_message`、`get_messages`、`get_messages_with_params`
 - 发送：`post_message_with_params`、`post_message_to_create`。
-- 编辑：`patch_message_with_params`、`patch_message`、`patch_message_to_create`。
+- 编辑：`patch_message_with_params`、`patch_message_to_create`。
 - 撤回：`recall_message`。
 
 ### 私信
@@ -85,7 +85,7 @@ let me = api.get_bot_info(&token).await?;
 
 ### API 权限
 
-- `get_permissions`（别名 `get_api_permissions`）、`post_permission_demand`、`require_api_permissions`
+- `get_api_permissions`、`post_permission_demand`、`require_api_permissions`
 
 ### 音频 / 语音
 

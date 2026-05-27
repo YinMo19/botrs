@@ -15,11 +15,6 @@ impl BotApi {
         Self::decode_json(response)
     }
 
-    /// Alias for fetching information about the current bot.
-    pub async fn me(&self, token: &Token) -> Result<BotInfo> {
-        self.get_bot_info(token).await
-    }
-
     /// Lists guilds visible to the current bot using inline pagination parameters.
     pub async fn get_guilds(
         &self,
@@ -38,17 +33,6 @@ impl BotApi {
             };
         }
         self.get_guilds_with_pager(token, &pager).await
-    }
-
-    /// Alias for listing guilds visible to the current bot.
-    pub async fn me_guilds(
-        &self,
-        token: &Token,
-        guild_id: Option<&str>,
-        limit: Option<u32>,
-        desc: Option<bool>,
-    ) -> Result<Vec<Guild>> {
-        self.get_guilds(token, guild_id, limit, desc).await
     }
 
     /// Lists guilds visible to the current bot using a pre-built pager.
@@ -142,13 +126,13 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn me_alias_uses_current_user_route() {
+    async fn get_bot_info_uses_current_user_route() {
         let (base_url, request, server) = spawn_capture_server_with_body(
             r#"{"id":"bot-1","username":"Bot","avatar":"avatar-url","share_url":"https://example.test/share"}"#,
         )
         .await;
         let api = test_api(base_url).await;
-        let bot = api.me(api.token().unwrap()).await.unwrap();
+        let bot = api.get_bot_info(api.token().unwrap()).await.unwrap();
 
         assert_eq!(bot.id, "bot-1");
         assert_eq!(bot.username, "Bot");
@@ -164,21 +148,6 @@ mod tests {
         let api = test_api(base_url).await;
         let guilds = api
             .get_guilds(api.token().unwrap(), None, None, None)
-            .await
-            .unwrap();
-
-        assert_eq!(guilds[0].id, "guild-1");
-        let request = request.await.unwrap();
-        assert!(request.starts_with("GET /users/@me/guilds?limit=100 HTTP/1.1"));
-        server.await.unwrap();
-    }
-
-    #[tokio::test]
-    async fn me_guilds_alias_uses_default_limit() {
-        let (base_url, request, server) = spawn_capture_server().await;
-        let api = test_api(base_url).await;
-        let guilds = api
-            .me_guilds(api.token().unwrap(), None, None, None)
             .await
             .unwrap();
 

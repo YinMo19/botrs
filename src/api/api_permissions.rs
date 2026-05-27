@@ -1,8 +1,7 @@
 use super::{BotApi, resource};
 use crate::error::Result;
 use crate::models::permission::{
-    APIPermission, APIPermissionDemand, APIPermissionDemandIdentify, APIPermissionDemandToCreate,
-    APIPermissions,
+    APIPermissionDemand, APIPermissionDemandIdentify, APIPermissionDemandToCreate, APIPermissions,
 };
 use crate::token::Token;
 use tracing::debug;
@@ -21,14 +20,6 @@ impl BotApi {
         let path = resource::api_permission(guild_id);
         let response = self.http.get(token, &path, None::<&()>).await?;
         Self::decode_json(response)
-    }
-
-    pub async fn get_permissions(
-        &self,
-        token: &Token,
-        guild_id: &str,
-    ) -> Result<Vec<APIPermission>> {
-        Ok(self.get_api_permissions(token, guild_id).await?.api_list)
     }
 
     /// Creates an API permission demand request with a structured body.

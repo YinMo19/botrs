@@ -118,18 +118,6 @@ impl BotApi {
             .await
     }
 
-    /// Alias for editing a channel message.
-    pub async fn patch_message(
-        &self,
-        token: &Token,
-        channel_id: &str,
-        message_id: &str,
-        params: MessageParams,
-    ) -> Result<MessageResponse> {
-        self.patch_message_with_params(token, channel_id, message_id, params)
-            .await
-    }
-
     /// Sends an inline keyboard message body.
     pub async fn post_keyboard_message(
         &self,

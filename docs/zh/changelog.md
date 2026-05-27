@@ -24,6 +24,7 @@ BotRS 的所有重要更改都将记录在此文件中。
 - 将 Go 风格错误码常量（`CodeNeedReConnect`、`WSCodeBackendAuthenticationFail`、`APICodeTokenExpireOrNotExist` 等）改名为 Rust 风格 `CODE_*`、`WS_CODE_*` 和 `API_CODE_*`。
 - 移除 Go 风格 channel enum 别名和重复 enum-value 常量（`ChannelTypeText`、`ChannelSubTypeChat`、`ChannelPrivateTypePublic`、`SpeakPermissionTypePublic`、`CHANNEL_TYPE_TEXT` 等）；请使用 `ChannelType::Text` 这类枚举 variant。
 - 移除 Go 风格 gateway opcode/event 别名（`OPCode`、`WSDispatchEvent`、`WSIdentity`、`HTTPCallbackAck`、`EventMessageCreate`、`OPMeans` 等）；请使用 `OpCode`、`WS_DISPATCH_EVENT`、`WS_IDENTIFY`、`HTTP_CALLBACK_ACK`、`EVENT_MESSAGE_CREATE` 和 `op_meaning`。
+- 移除冗余 Rust 方法别名（`BotApi::me`、`BotApi::me_guilds`、`BotApi::get_ws_url`、`BotApi::get_permissions`、`BotApi::patch_message` 及对应 `Context` wrapper）；请使用 `get_bot_info`、`get_guilds`、`get_gateway`、`get_api_permissions` 和 `patch_message_with_params`。
 - 移除已弃用的多 `Option` 消息发送方法（`post_message`、`post_group_message`、`post_c2c_message`、`post_dms`）及其 `Context` wrapper。请使用 `*_with_params` 方法。
 - 移除冗余的 `post_message_api` 和 `patch_message_api` 别名。
 
