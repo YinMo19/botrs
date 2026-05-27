@@ -49,19 +49,6 @@ pub struct MessagesPager {
 }
 
 impl MessagesPager {
-    /// Creates a new messages pager.
-    pub fn new(
-        pager_type: Option<MessagePagerType>,
-        id: Option<impl Into<String>>,
-        limit: Option<impl ToString>,
-    ) -> Self {
-        Self {
-            pager_type,
-            id: id.map(Into::into),
-            limit: limit.map(|value| value.to_string()),
-        }
-    }
-
     /// Converts the pager to query parameters.
     pub fn query_params(&self) -> std::collections::HashMap<String, String> {
         let mut query = std::collections::HashMap::new();

@@ -501,7 +501,11 @@ fn reference_keeps_official_zero_value_shape() {
 
 #[test]
 fn messages_pager_query_params() {
-    let pager = MessagesPager::new(Some(MessagePagerType::Before), Some("msg-1"), Some(20));
+    let pager = MessagesPager {
+        pager_type: Some(MessagePagerType::Before),
+        id: Some("msg-1".to_string()),
+        limit: Some("20".to_string()),
+    };
     let query = pager.query_params();
 
     assert_eq!(query.get("before").map(String::as_str), Some("msg-1"));
@@ -510,7 +514,11 @@ fn messages_pager_query_params() {
 
 #[test]
 fn messages_pager_omits_empty_query_params() {
-    let pager = MessagesPager::new(Some(MessagePagerType::Before), Some(""), Some(""));
+    let pager = MessagesPager {
+        pager_type: Some(MessagePagerType::Before),
+        id: Some(String::new()),
+        limit: Some(String::new()),
+    };
     assert!(pager.query_params().is_empty());
 }
 
