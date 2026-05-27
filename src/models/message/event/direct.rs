@@ -33,9 +33,3 @@ impl DirectMessageToCreate {
         }
     }
 }
-impl DirectMessage {
-    /// Creates a new direct-message session.
-    pub fn new() -> Self {
-        Self::default()
-    }
-}

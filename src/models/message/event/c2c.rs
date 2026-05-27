@@ -6,7 +6,7 @@ use serde_json::Value;
 use crate::models::message::C2CMessageParams;
 
 /// Represents a C2C (client-to-client) message.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct C2CMessage {
     /// The message's unique ID
     pub id: Option<String>,
@@ -34,22 +34,6 @@ pub struct C2CMessage {
 }
 
 impl C2CMessage {
-    /// Creates a new C2C message.
-    pub fn new() -> Self {
-        Self {
-            id: None,
-            content: None,
-            message_reference: None,
-            mentions: Vec::new(),
-            attachments: Vec::new(),
-            msg_seq: None,
-            timestamp: None,
-            author: None,
-            message_scene: None,
-            event_id: None,
-        }
-    }
-
     /// Reply to this C2C message
     pub async fn reply(
         &self,
@@ -74,11 +58,5 @@ impl C2CMessage {
                 "Missing user_openid or message_id for C2C reply".to_string(),
             ))
         }
-    }
-}
-
-impl Default for C2CMessage {
-    fn default() -> Self {
-        Self::new()
     }
 }

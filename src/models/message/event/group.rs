@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use crate::models::message::GroupMessageParams;
 
 /// Represents a group message.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct GroupMessage {
     /// The message's unique ID
     pub id: Option<Snowflake>,
@@ -33,22 +33,6 @@ pub struct GroupMessage {
 }
 
 impl GroupMessage {
-    /// Creates a new group message.
-    pub fn new() -> Self {
-        Self {
-            id: None,
-            content: None,
-            message_reference: None,
-            mentions: Vec::new(),
-            attachments: Vec::new(),
-            msg_seq: None,
-            timestamp: None,
-            author: None,
-            group_openid: None,
-            event_id: None,
-        }
-    }
-
     /// Reply to this group message
     pub async fn reply(
         &self,
@@ -69,11 +53,5 @@ impl GroupMessage {
                 "Missing group_openid or message_id for reply".to_string(),
             ))
         }
-    }
-}
-
-impl Default for GroupMessage {
-    fn default() -> Self {
-        Self::new()
     }
 }

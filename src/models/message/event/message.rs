@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use crate::models::message::{Ark, Embed, MessageParams};
 
 /// Represents a message in a guild channel.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct Message {
     /// The message's unique ID
     pub id: Option<Snowflake>,
@@ -60,35 +60,6 @@ pub struct Message {
 }
 
 impl Message {
-    /// Creates a new message.
-    pub fn new() -> Self {
-        Self {
-            id: None,
-            content: None,
-            channel_id: None,
-            guild_id: None,
-            group_id: None,
-            author: None,
-            member: None,
-            message_reference: None,
-            mentions: Vec::new(),
-            attachments: Vec::new(),
-            embeds: Vec::new(),
-            ark: None,
-            direct_message: None,
-            seq: None,
-            seq_in_channel: None,
-            timestamp: None,
-            edited_timestamp: None,
-            mention_everyone: None,
-            src_guild_id: None,
-            file_info: None,
-            ttl: None,
-            message_scene: None,
-            event_id: None,
-        }
-    }
-
     /// Reply to this message
     pub async fn reply(
         &self,
@@ -108,12 +79,6 @@ impl Message {
                 "Missing channel_id or message_id for reply".to_string(),
             ))
         }
-    }
-}
-
-impl Default for Message {
-    fn default() -> Self {
-        Self::new()
     }
 }
 

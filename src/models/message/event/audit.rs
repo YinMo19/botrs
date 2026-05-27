@@ -29,10 +29,3 @@ pub struct MessageAudit {
     #[serde(skip)]
     pub event_id: Option<String>,
 }
-
-impl MessageAudit {
-    /// Creates a new message audit.
-    pub fn new() -> Self {
-        Self::default()
-    }
-}

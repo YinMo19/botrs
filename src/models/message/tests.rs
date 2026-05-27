@@ -516,7 +516,7 @@ fn messages_pager_omits_empty_query_params() {
 
 #[test]
 fn test_message_creation() {
-    let message = Message::new();
+    let message = Message::default();
     assert!(message.id.is_none());
     assert!(message.content.is_none());
     assert!(message.attachments.is_empty());
@@ -568,8 +568,10 @@ fn direct_message_session_uses_required_zero_value_fields() {
 
 #[test]
 fn test_message_with_content() {
-    let mut message = Message::new();
-    message.content = Some("Hello, world!".to_string());
+    let message = Message {
+        content: Some("Hello, world!".to_string()),
+        ..Default::default()
+    };
     assert!(
         message
             .content
@@ -708,13 +710,15 @@ fn message_attachment_omits_go_zero_values() {
 
 #[test]
 fn test_bot_detection() {
-    let mut message = Message::new();
-    message.author = Some(MessageUser {
-        id: Some("123".to_string()),
-        username: Some("Bot".to_string()),
-        bot: Some(true),
-        avatar: None,
-    });
+    let mut message = Message {
+        author: Some(MessageUser {
+            id: Some("123".to_string()),
+            username: Some("Bot".to_string()),
+            bot: Some(true),
+            avatar: None,
+        }),
+        ..Default::default()
+    };
 
     assert!(
         message
