@@ -230,17 +230,10 @@ mod tests {
     }
 
     #[test]
-    fn recall_hide_tip_query_matches_api_layers() {
-        assert!(BotApi::recall_hide_tip_query(None).is_none());
+    fn hide_tip_query_omits_false() {
+        assert!(BotApi::hide_tip_query(false).is_none());
         assert_eq!(
-            BotApi::recall_hide_tip_query(Some(false))
-                .unwrap()
-                .get("hidetip")
-                .map(String::as_str),
-            Some("false")
-        );
-        assert_eq!(
-            BotApi::recall_hide_tip_query(Some(true))
+            BotApi::hide_tip_query(true)
                 .unwrap()
                 .get("hidetip")
                 .map(String::as_str),

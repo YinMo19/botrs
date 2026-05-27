@@ -6,7 +6,7 @@ impl BotApi {
     /// Pins add API.
     #[allow(non_snake_case)]
     pub async fn AddPins(&self, channel_id: &str, message_id: &str) -> Result<PinsMessage> {
-        self.add_pins_botgo(self.token_required()?, channel_id, message_id)
+        self.put_pin(self.token_required()?, channel_id, message_id)
             .await
     }
 
@@ -100,7 +100,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn high_level_put_pin_uses_empty_json_body() {
+    async fn put_pin_uses_empty_body() {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
         let pins = api
@@ -112,13 +112,13 @@ mod tests {
         let request = request.await.unwrap();
         let headers = request.to_ascii_lowercase();
         assert!(request.starts_with("PUT /channels/channel-1/pins/message-1 HTTP/1.1"));
-        assert!(headers.contains("content-type: application/json"));
-        assert!(request.ends_with("\r\n\r\n{}"));
+        assert!(!headers.contains("content-type: application/json"));
+        assert!(request.ends_with("\r\n\r\n"));
         server.await.unwrap();
     }
 
     #[tokio::test]
-    async fn compat_add_pins_matches_botgo_empty_body() {
+    async fn add_pins_uses_empty_body() {
         let (base_url, request, server) = spawn_capture_server().await;
         let pins = test_api(base_url)
             .await

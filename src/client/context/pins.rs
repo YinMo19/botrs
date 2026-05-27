@@ -116,7 +116,7 @@ mod tests {
 
         let request = request.await.unwrap();
         assert!(request.starts_with("PUT /channels/channel-1/pins/message-1 HTTP/1.1"));
-        assert!(request.ends_with("\r\n\r\n{}"));
+        assert!(request.ends_with("\r\n\r\n"));
         server.await.unwrap();
     }
 }

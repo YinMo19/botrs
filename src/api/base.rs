@@ -191,17 +191,6 @@ impl BotApi {
         hide_tip.then(|| HashMap::from([("hidetip", "true".to_string())]))
     }
 
-    pub(crate) fn recall_hide_tip_query(
-        hide_tip: Option<bool>,
-    ) -> Option<HashMap<&'static str, String>> {
-        hide_tip.map(|hide_tip| {
-            HashMap::from([(
-                "hidetip",
-                if hide_tip { "true" } else { "false" }.to_string(),
-            )])
-        })
-    }
-
     /// Passes through an arbitrary request to a full URL.
     pub async fn transport<B>(
         &self,

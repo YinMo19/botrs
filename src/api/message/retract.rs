@@ -13,22 +13,7 @@ impl BotApi {
         hidetip: Option<bool>,
     ) -> Result<()> {
         debug!("Recalling message {} in channel {}", message_id, channel_id);
-        let params = Self::recall_hide_tip_query(Some(hidetip.unwrap_or(false)));
-        let path = resource::channel_message(channel_id, message_id);
-        self.http.delete(token, &path, params.as_ref()).await?;
-        Ok(())
-    }
-
-    /// Recalls a channel message using botgo's option-driven query behavior.
-    pub(crate) async fn recall_message_botgo(
-        &self,
-        token: &Token,
-        channel_id: &str,
-        message_id: &str,
-        hidetip: bool,
-    ) -> Result<()> {
-        debug!("Recalling message {} in channel {}", message_id, channel_id);
-        let params = Self::hide_tip_query(hidetip);
+        let params = hidetip.and_then(Self::hide_tip_query);
         let path = resource::channel_message(channel_id, message_id);
         self.http.delete(token, &path, params.as_ref()).await?;
         Ok(())
@@ -130,7 +115,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn recall_message_keeps_default_hidetip_false() {
+    async fn recall_message_omits_default_hidetip() {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
 
@@ -144,30 +129,29 @@ mod tests {
         .unwrap();
 
         let request = request.await.unwrap();
-        assert!(
-            request.starts_with(
-                "DELETE /channels/channel-1/messages/message-1?hidetip=false HTTP/1.1"
-            )
-        );
+        assert!(request.starts_with("DELETE /channels/channel-1/messages/message-1 HTTP/1.1"));
         server.await.unwrap();
     }
 
     #[tokio::test]
-    async fn recall_message_botgo_omits_false_hidetip() {
+    async fn recall_message_sends_true_hidetip() {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
 
-        api.recall_message_botgo(
+        api.recall_message(
             api.token_required().unwrap(),
             "channel-1",
             "message-1",
-            false,
+            Some(true),
         )
         .await
         .unwrap();
 
         let request = request.await.unwrap();
-        assert!(request.starts_with("DELETE /channels/channel-1/messages/message-1 HTTP/1.1"));
+        assert!(
+            request
+                .starts_with("DELETE /channels/channel-1/messages/message-1?hidetip=true HTTP/1.1")
+        );
         server.await.unwrap();
     }
 }
