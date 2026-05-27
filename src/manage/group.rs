@@ -16,7 +16,7 @@ pub struct GroupManageEvent {
 
 impl GroupManageEvent {
     /// Builds a group management event from the gateway payload.
-    pub fn new(event_id: Option<String>, data: &serde_json::Value) -> Self {
+    pub(crate) fn new(event_id: Option<String>, data: &serde_json::Value) -> Self {
         let wire: GroupManageWire = serde_json::from_value(data.clone()).unwrap_or_default();
         Self {
             event_id,
