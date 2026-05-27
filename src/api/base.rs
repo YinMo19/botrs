@@ -29,19 +29,7 @@ impl BotApi {
         }
     }
 
-    /// Creates a configured API client in one step.
-    pub fn setup(
-        bot_app_id: impl Into<String>,
-        secret: impl Into<String>,
-        in_sandbox: bool,
-    ) -> Result<Self> {
-        let token = Token::new(bot_app_id, secret);
-        let http = HttpClient::new(crate::DEFAULT_TIMEOUT, in_sandbox)?;
-        Ok(Self::new(http, token))
-    }
-
-    /// Returns the token stored for OpenAPI calls.
-    pub fn token(&self) -> &Token {
+    pub(crate) fn token(&self) -> &Token {
         &self.token
     }
 

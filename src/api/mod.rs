@@ -86,12 +86,6 @@ mod tests {
     }
 
     #[test]
-    fn test_base_helpers() {
-        let api = BotApi::setup("app-id", "secret", true).unwrap();
-        assert_eq!(api.token().app_id(), "app-id");
-    }
-
-    #[test]
     fn hide_tip_query_omits_false() {
         assert!(BotApi::hide_tip_query(false).is_none());
         assert_eq!(
