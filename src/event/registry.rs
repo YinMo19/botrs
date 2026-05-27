@@ -53,7 +53,7 @@ fn default_event_handlers() -> Vec<(OpCode, EventType, EventParseFn)> {
     .collect()
 }
 
-pub fn parse_and_handle(payload: &mut WSPayload) -> crate::Result<()> {
+pub(crate) fn parse_and_handle(payload: &mut WSPayload) -> crate::Result<()> {
     let raw = payload
         .raw_message
         .clone()

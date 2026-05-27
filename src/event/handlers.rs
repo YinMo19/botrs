@@ -1,4 +1,4 @@
-use super::PayloadData;
+use super::payload::PayloadData;
 use crate::forum::{ForumAuditResult, Post, Reply, Thread};
 use crate::interaction::Interaction;
 use crate::manage::{C2CFriendData, EnterAioEvent, SubscribeMessageStatusData};

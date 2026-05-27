@@ -1,13 +1,13 @@
 use crate::models::gateway::*;
 use serde::de::DeserializeOwned;
 
-pub fn parse_data<T: DeserializeOwned>(message: &[u8]) -> crate::Result<T> {
+pub(super) fn parse_data<T: DeserializeOwned>(message: &[u8]) -> crate::Result<T> {
     let value: serde_json::Value = serde_json::from_slice(message)?;
     serde_json::from_value(value.get("d").cloned().unwrap_or(serde_json::Value::Null))
         .map_err(Into::into)
 }
 
-pub trait PayloadData: Sized {
+pub(super) trait PayloadData: Sized {
     fn parse_from_payload(payload: &WSPayload, message: &[u8]) -> crate::Result<Self>;
 }
 

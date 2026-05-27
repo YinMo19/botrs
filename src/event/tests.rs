@@ -1,3 +1,4 @@
+use super::payload::parse_data;
 use super::*;
 use crate::manage::C2CFriendData;
 use crate::models::gateway::*;
