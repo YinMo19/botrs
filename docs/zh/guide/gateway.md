@@ -47,5 +47,5 @@ shard 数量来自 `gateway_info.shards`（即 `BotApi::get_gateway` 的返回�
 
 ## 相关类型
 
-- `botrs::Session`、`botrs::SessionManager` 与 `botrs::ChanManager` 是网关运行时使用的公开会话管理类型。
+- `botrs::session_manager::Session`、`botrs::session_manager::SessionManager` 与 `botrs::session_manager::ChanManager` 是网关运行时使用的公开会话管理类型。
 - 公共端点常量包括 `botrs::DEFAULT_WS_URL`（`wss://api.sgroup.qq.com/websocket`）与 `botrs::SANDBOX_API_URL`。

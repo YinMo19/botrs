@@ -49,10 +49,6 @@ pub use reaction::{
     Emoji as ReactionEmoji, MessageReaction, MessageReactionPager, Reaction, ReactionTarget,
     ReactionTargetType, ReactionUsers,
 };
-pub use session_manager::{
-    ChanManager, Session, SessionManager, can_not_identify, can_not_resume, check_session_limit,
-    new_session_manager, set_session_manager_factory,
-};
 pub use signature::{HEADER_SIGNATURE, HEADER_TIMESTAMP, generate, verify};
 pub use token::{Token, start_access_token_refresh};
 pub use webhook::{dispatch_ack, handle_http_callback, heartbeat_ack, validation_ack};

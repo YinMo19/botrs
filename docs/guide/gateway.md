@@ -47,5 +47,5 @@ The number of shards comes from `gateway_info.shards` (returned by `BotApi::get_
 
 ## Related types
 
-- `botrs::Session`, `botrs::SessionManager`, and `botrs::ChanManager` are the public session-management types used by the gateway runtime.
+- `botrs::session_manager::Session`, `botrs::session_manager::SessionManager`, and `botrs::session_manager::ChanManager` are the public session-management types used by the gateway runtime.
 - Constants such as `botrs::DEFAULT_WS_URL` (`wss://api.sgroup.qq.com/websocket`) and `botrs::SANDBOX_API_URL` are the published endpoints.
