@@ -57,10 +57,8 @@ impl Channel {
     }
 
     /// Creates a new channel from API data.
-    pub fn from_data(_api: crate::api::BotApi, id: String, data: serde_json::Value) -> Self {
-        let mut channel = serde_json::from_value::<Self>(data).unwrap_or_default();
-        channel.id = id;
-        channel
+    pub fn from_data(_api: crate::api::BotApi, _event_id: String, data: serde_json::Value) -> Self {
+        serde_json::from_value::<Self>(data).unwrap_or_default()
     }
 
     /// Gets the channel's mention string.

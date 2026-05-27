@@ -136,6 +136,21 @@ fn channel_decodes_large_type_values() {
 }
 
 #[test]
+fn channel_from_data_does_not_use_gateway_event_id_as_channel_id() {
+    let channel = Channel::from_data(
+        crate::api::BotApi::new(crate::http::HttpClient::new(30, false).unwrap()),
+        "event-1".to_string(),
+        serde_json::json!({
+            "guild_id": "guild-1",
+            "name": "general"
+        }),
+    );
+
+    assert_eq!(channel.id, "");
+    assert_eq!(channel.guild_id, "guild-1");
+}
+
+#[test]
 fn channel_permissions_are_separate_dtos() {
     let user_permissions: ChannelPermissions = serde_json::from_value(serde_json::json!({
         "channel_id": "channel-1",

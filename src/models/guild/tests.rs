@@ -35,8 +35,9 @@ fn test_guild_with_data() {
 fn guild_fields_use_official_json_names() {
     let guild = Guild::from_data(
         crate::api::BotApi::new(crate::http::HttpClient::new(30, false).unwrap()),
-        "guild-1".to_string(),
+        "event-1".to_string(),
         serde_json::json!({
+            "id": "guild-1",
             "name": "Guild",
             "owner": true,
             "channels": [
@@ -66,6 +67,19 @@ fn guild_fields_use_official_json_names() {
     assert!(value.get("is_owner").is_none());
     assert_eq!(value["channels"][0]["id"], serde_json::json!("channel-1"));
     assert_eq!(value["union_world_id"], serde_json::json!("world-1"));
+}
+
+#[test]
+fn guild_from_data_does_not_use_gateway_event_id_as_guild_id() {
+    let guild = Guild::from_data(
+        crate::api::BotApi::new(crate::http::HttpClient::new(30, false).unwrap()),
+        "event-1".to_string(),
+        serde_json::json!({
+            "name": "Guild"
+        }),
+    );
+
+    assert_eq!(guild.id, "");
 }
 
 #[test]

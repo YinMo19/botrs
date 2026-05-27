@@ -53,12 +53,8 @@ impl Guild {
     }
 
     /// Creates a new guild from API data.
-    pub fn from_data(_api: crate::api::BotApi, id: String, data: serde_json::Value) -> Self {
-        let mut guild = serde_json::from_value::<Self>(data).unwrap_or_default();
-        if guild.id.is_empty() {
-            guild.id = id;
-        }
-        guild
+    pub fn from_data(_api: crate::api::BotApi, _event_id: String, data: serde_json::Value) -> Self {
+        serde_json::from_value::<Self>(data).unwrap_or_default()
     }
 
     /// Gets the guild's icon URL if it has one.
