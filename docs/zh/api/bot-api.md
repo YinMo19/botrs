@@ -102,7 +102,7 @@ let me = api.get_bot_info().await?;
 
 ### Webhook 会话
 
-- `create_session`、`check_sessions`、`session_list`、`remove_session`、`transport`
+- `create_session`、`check_sessions`、`session_list`、`remove_session`
 
 ### 消息推送配置
 

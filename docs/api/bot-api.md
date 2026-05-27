@@ -102,7 +102,7 @@ Every method takes `&self` plus endpoint-specific arguments and returns `Result<
 
 ### Webhook sessions
 
-- `create_session`, `check_sessions`, `session_list`, `remove_session`, `transport`
+- `create_session`, `check_sessions`, `session_list`, `remove_session`
 
 ### Message setting
 

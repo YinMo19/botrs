@@ -30,19 +30,6 @@ impl BotApi {
         }
     }
 
-    /// Creates a new instance from this client as an OpenAPI template.
-    pub fn setup_from_template(&self, token: Token, in_sandbox: bool) -> Result<Self> {
-        let app_id = token.app_id().to_string();
-        Ok(Self {
-            http: self
-                .http
-                .with_sandbox(in_sandbox)?
-                .with_union_app_id(&app_id),
-            app_id,
-            token,
-        })
-    }
-
     /// Creates a configured API client in one step.
     pub fn setup(
         bot_app_id: impl Into<String>,
@@ -117,14 +104,6 @@ impl BotApi {
 
     pub(crate) fn hide_tip_query(hide_tip: bool) -> Option<HashMap<&'static str, String>> {
         hide_tip.then(|| HashMap::from([("hidetip", "true".to_string())]))
-    }
-
-    /// Passes through an arbitrary request to a full URL.
-    pub async fn transport<B>(&self, method: Method, url: &str, body: Option<&B>) -> Result<Vec<u8>>
-    where
-        B: Serialize + ?Sized,
-    {
-        self.http.transport(self.token(), method, url, body).await
     }
 
     /// Returns the last OpenAPI trace ID observed by the underlying HTTP client.

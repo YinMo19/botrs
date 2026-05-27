@@ -49,36 +49,6 @@ impl HttpClient {
         Ok(json)
     }
 
-    pub(crate) async fn handle_bytes_response(&self, response: Response) -> Result<Vec<u8>> {
-        let status = response.status();
-        let headers = response.headers().clone();
-        self.store_trace_id(&headers);
-
-        if status == StatusCode::TOO_MANY_REQUESTS {
-            let retry_after = headers
-                .get("retry-after")
-                .and_then(|h| h.to_str().ok())
-                .and_then(|s| s.parse().ok())
-                .unwrap_or(60);
-            return Err(BotError::rate_limit(retry_after));
-        }
-
-        let body = response.bytes().await.map_err(BotError::Http)?.to_vec();
-        if !is_success_status(status) {
-            let message = serde_json::from_slice::<Value>(&body)
-                .ok()
-                .and_then(|json| {
-                    json.get("message")
-                        .and_then(|value| value.as_str())
-                        .map(ToOwned::to_owned)
-                })
-                .unwrap_or_else(|| String::from_utf8_lossy(&body).into_owned());
-            return Err(http_error_from_status(status.as_u16(), message));
-        }
-
-        Ok(body)
-    }
-
     pub(crate) fn store_trace_id(&self, headers: &reqwest::header::HeaderMap) {
         let trace_id = headers
             .get(crate::constant::HEADER_TRACE_ID)

@@ -146,30 +146,6 @@ impl HttpClient {
         self.request(Method::PATCH, token, path, query, body).await
     }
 
-    /// Passes through an arbitrary request to the provided URL.
-    pub async fn transport<B>(
-        &self,
-        token: &Token,
-        method: Method,
-        url: &str,
-        body: Option<&B>,
-    ) -> Result<Vec<u8>>
-    where
-        B: Serialize + ?Sized,
-    {
-        let mut headers = self.authorized_headers(token, HeaderMap::new()).await?;
-        if body.is_some() {
-            headers.insert("Content-Type", "application/json".parse().unwrap());
-        }
-
-        let mut request = self.client.request(method.clone(), url).headers(headers);
-        if let Some(body) = body {
-            request = request.json(body);
-        }
-        let response = request.send().await.map_err(BotError::Http)?;
-        self.handle_bytes_response(response).await
-    }
-
     /// Makes a generic HTTP request to the API.
     pub(crate) async fn request<Q, B>(
         &self,
