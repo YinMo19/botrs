@@ -114,13 +114,6 @@ pub struct Member {
     pub op_user_id: Snowflake,
 }
 
-impl Member {
-    /// Creates a new member.
-    pub fn new() -> Self {
-        Self::default()
-    }
-}
-
 impl HasId for Member {
     fn id(&self) -> Option<&Snowflake> {
         self.user.as_ref().map(|user| &user.id)

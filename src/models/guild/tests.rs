@@ -283,7 +283,7 @@ fn pager_query_params_match_official_priority() {
 
 #[test]
 fn test_member_creation() {
-    let member = Member::new();
+    let member = Member::default();
     assert!(member.user.is_none());
     assert_eq!(member.nick, "");
     assert!(member.roles.is_empty());
@@ -291,8 +291,10 @@ fn test_member_creation() {
 
 #[test]
 fn test_member_with_roles() {
-    let mut member = Member::new();
-    member.roles = vec!["role1".to_string(), "role2".to_string()];
+    let member = Member {
+        roles: vec!["role1".to_string(), "role2".to_string()],
+        ..Default::default()
+    };
 
     assert!(member.roles.iter().any(|id| id == "role1"));
     assert!(member.roles.iter().any(|id| id == "role2"));
