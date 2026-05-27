@@ -139,18 +139,18 @@ mod tests {
     }
 
     #[test]
-    fn open_message_text_params_default_msg_seq_like_botpy() {
+    fn open_message_text_params_omit_unspecified_msg_seq() {
         let group = GroupMessageParams::new_text("hello");
         let group_value = serde_json::to_value(MessageToCreate::from(group)).unwrap();
-        assert_eq!(group_value["msg_seq"], 1);
+        assert!(group_value.get("msg_seq").is_none());
 
         let c2c = C2CMessageParams::new_text("hello");
         let c2c_value = serde_json::to_value(MessageToCreate::from(c2c)).unwrap();
-        assert_eq!(c2c_value["msg_seq"], 1);
+        assert!(c2c_value.get("msg_seq").is_none());
     }
 
     #[test]
-    fn open_message_manual_params_default_msg_seq_like_botpy() {
+    fn open_message_manual_params_omit_unspecified_msg_seq() {
         let group = GroupMessageParams {
             msg_type: 0,
             content: Some("hello".to_string()),
@@ -158,7 +158,7 @@ mod tests {
             ..Default::default()
         };
         let group_value = serde_json::to_value(MessageToCreate::from(group)).unwrap();
-        assert_eq!(group_value["msg_seq"], 1);
+        assert!(group_value.get("msg_seq").is_none());
 
         let c2c = C2CMessageParams {
             msg_type: 0,
@@ -167,7 +167,7 @@ mod tests {
             ..Default::default()
         };
         let c2c_value = serde_json::to_value(MessageToCreate::from(c2c)).unwrap();
-        assert_eq!(c2c_value["msg_seq"], 1);
+        assert!(c2c_value.get("msg_seq").is_none());
     }
 
     #[test]

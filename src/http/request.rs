@@ -4,7 +4,6 @@ use crate::token::Token;
 use reqwest::{
     Method,
     header::{HeaderMap, HeaderValue},
-    multipart::Form,
 };
 use serde::Serialize;
 use tracing::debug;
@@ -290,34 +289,6 @@ impl HttpClient {
 
         let response = request
             .body(body.into())
-            .send()
-            .await
-            .map_err(BotError::Http)?;
-
-        self.handle_response(response, method, &url, request_headers)
-            .await
-    }
-
-    pub(crate) async fn request_multipart(
-        &self,
-        method: Method,
-        token: &Token,
-        path: &str,
-        form: Form,
-    ) -> Result<serde_json::Value> {
-        let url = format!("{}{}", self.base_url, path);
-        debug!("Making {} multipart request to: {}", method, url);
-
-        let headers = self.authorized_headers(token, HeaderMap::new()).await?;
-        let mut context = crate::openapi::FilterContext::request(method.clone(), &url, headers);
-        crate::openapi::DoReqFilterChains(&mut context)?;
-        let request_headers = context.request_headers.clone();
-
-        let response = self
-            .client
-            .request(method.clone(), &url)
-            .headers(request_headers.clone())
-            .multipart(form)
             .send()
             .await
             .map_err(BotError::Http)?;

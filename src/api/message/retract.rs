@@ -130,7 +130,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn recall_message_matches_botpy_default_hidetip_false() {
+    async fn recall_message_keeps_default_hidetip_false() {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
 

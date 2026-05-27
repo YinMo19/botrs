@@ -232,7 +232,6 @@ macro_rules! impl_open_message_params {
                 Self {
                     msg_type: 0,
                     content: Some(content.into()),
-                    msg_seq: Some(1),
                     ..Default::default()
                 }
             }
@@ -262,7 +261,7 @@ macro_rules! impl_open_message_params {
                     keyboard: params.keyboard.map(Into::into),
                     event_id: params.event_id,
                     timestamp: params.timestamp,
-                    msg_seq: params.msg_seq.or(Some(1)),
+                    msg_seq: params.msg_seq,
                     subscribe_id: params.subscribe_id,
                     input_notify: params.input_notify,
                     media: params.media.map(Into::into),

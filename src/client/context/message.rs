@@ -3,15 +3,16 @@ use crate::client::prelude::*;
 
 impl Context {
     pub async fn send_message(&self, channel_id: &str, content: &str) -> Result<MessageResponse> {
-        let params = crate::models::message::MessageParams::new_text(content);
+        let params = MessageParams::new_text(content);
         self.api
             .post_message_with_params(&self.token, channel_id, params)
             .await
     }
 
-    /// Sends a channel message using botpy's locals()-style request body.
+    /// Sends a channel message using the legacy positional argument API.
+    #[allow(deprecated)]
     #[allow(clippy::too_many_arguments)]
-    pub async fn post_message_botpy(
+    pub async fn post_message(
         &self,
         channel_id: &str,
         content: Option<&str>,
@@ -26,7 +27,7 @@ impl Context {
         keyboard: Option<&Keyboard>,
     ) -> Result<MessageResponse> {
         self.api
-            .post_message_botpy(
+            .post_message(
                 &self.token,
                 channel_id,
                 content,
@@ -43,92 +44,44 @@ impl Context {
             .await
     }
 
-    /// Sends a channel message using botpy's method name and request body.
-    #[allow(clippy::too_many_arguments)]
-    pub async fn post_message(
+    /// Sends a channel message using MessageParams.
+    pub async fn post_message_with_params(
         &self,
         channel_id: &str,
-        content: Option<&str>,
-        embed: Option<&Embed>,
-        ark: Option<&Ark>,
-        message_reference: Option<&Reference>,
-        image: Option<&str>,
-        file_image: Option<&[u8]>,
-        msg_id: Option<&str>,
-        event_id: Option<&str>,
-        markdown: Option<&MarkdownPayload>,
-        keyboard: Option<&Keyboard>,
+        params: MessageParams,
     ) -> Result<MessageResponse> {
-        self.post_message_botpy(
-            channel_id,
-            content,
-            embed,
-            ark,
-            message_reference,
-            image,
-            file_image,
-            msg_id,
-            event_id,
-            markdown,
-            keyboard,
-        )
-        .await
-    }
-
-    /// Sends a channel message containing an embed and optional text content.
-    pub async fn send_message_with_embed(
-        &self,
-        channel_id: &str,
-        content: Option<&str>,
-        embed: &Embed,
-    ) -> Result<MessageResponse> {
-        let params = crate::models::message::MessageParams {
-            content: content.map(|s| s.to_string()),
-            embed: Some(embed.clone()),
-            ..Default::default()
-        };
         self.api
             .post_message_with_params(&self.token, channel_id, params)
             .await
     }
 
-    /// Sends a channel reply and ignores lookup failures for the referenced message.
-    pub async fn reply_message(
+    /// Edits a channel message using MessageParams.
+    pub async fn patch_message_with_params(
         &self,
         channel_id: &str,
-        content: &str,
         message_id: &str,
+        params: MessageParams,
     ) -> Result<MessageResponse> {
-        let reference = Reference {
-            message_id: Some(message_id.to_string()),
-            ignore_get_message_error: Some(true),
-        };
-
-        let params = crate::models::message::MessageParams {
-            content: Some(content.to_string()),
-            message_reference: Some(reference),
-            ..Default::default()
-        };
         self.api
-            .post_message_with_params(&self.token, channel_id, params)
+            .patch_message_with_params(&self.token, channel_id, message_id, params)
             .await
     }
 
-    /// Sends a text message to an open-platform group conversation.
-    pub async fn send_group_message(
+    /// Sends a group message using GroupMessageParams.
+    pub async fn post_group_message_with_params(
         &self,
         group_openid: &str,
-        content: &str,
+        params: GroupMessageParams,
     ) -> Result<MessageResponse> {
-        let params = crate::models::message::GroupMessageParams::new_text(content);
         self.api
             .post_group_message_with_params(&self.token, group_openid, params)
             .await
     }
 
-    /// Sends a group message using botpy's locals()-style request body.
+    /// Sends a group message using the legacy positional argument API.
+    #[allow(deprecated)]
     #[allow(clippy::too_many_arguments)]
-    pub async fn post_group_message_botpy(
+    pub async fn post_group_message(
         &self,
         group_openid: &str,
         msg_type: Option<u32>,
@@ -144,7 +97,7 @@ impl Context {
         keyboard: Option<&KeyboardPayload>,
     ) -> Result<MessageResponse> {
         self.api
-            .post_group_message_botpy(
+            .post_group_message(
                 &self.token,
                 group_openid,
                 msg_type,
@@ -162,51 +115,33 @@ impl Context {
             .await
     }
 
-    /// Sends a group message using botpy's method name and request body.
-    #[allow(clippy::too_many_arguments)]
-    pub async fn post_group_message(
+    /// Sends a text message to an open-platform group conversation.
+    pub async fn send_group_message(
         &self,
         group_openid: &str,
-        msg_type: Option<u32>,
-        content: Option<&str>,
-        embed: Option<&Embed>,
-        ark: Option<&Ark>,
-        message_reference: Option<&Reference>,
-        media: Option<&Media>,
-        msg_id: Option<&str>,
-        msg_seq: Option<u32>,
-        event_id: Option<&str>,
-        markdown: Option<&MarkdownPayload>,
-        keyboard: Option<&KeyboardPayload>,
+        content: &str,
     ) -> Result<MessageResponse> {
-        self.post_group_message_botpy(
-            group_openid,
-            msg_type,
-            content,
-            embed,
-            ark,
-            message_reference,
-            media,
-            msg_id,
-            msg_seq,
-            event_id,
-            markdown,
-            keyboard,
-        )
-        .await
+        let params = GroupMessageParams::new_text(content);
+        self.api
+            .post_group_message_with_params(&self.token, group_openid, params)
+            .await
     }
 
-    /// Sends a text message to a C2C conversation.
-    pub async fn send_c2c_message(&self, openid: &str, content: &str) -> Result<MessageResponse> {
-        let params = crate::models::message::C2CMessageParams::new_text(content);
+    /// Sends a C2C message using C2CMessageParams.
+    pub async fn post_c2c_message_with_params(
+        &self,
+        openid: &str,
+        params: C2CMessageParams,
+    ) -> Result<MessageResponse> {
         self.api
             .post_c2c_message_with_params(&self.token, openid, params)
             .await
     }
 
-    /// Sends a C2C message using botpy's locals()-style request body.
+    /// Sends a C2C message using the legacy positional argument API.
+    #[allow(deprecated)]
     #[allow(clippy::too_many_arguments)]
-    pub async fn post_c2c_message_botpy(
+    pub async fn post_c2c_message(
         &self,
         openid: &str,
         msg_type: Option<u32>,
@@ -222,7 +157,7 @@ impl Context {
         keyboard: Option<&KeyboardPayload>,
     ) -> Result<MessageResponse> {
         self.api
-            .post_c2c_message_botpy(
+            .post_c2c_message(
                 &self.token,
                 openid,
                 msg_type,
@@ -240,38 +175,23 @@ impl Context {
             .await
     }
 
-    /// Sends a C2C message using botpy's method name and request body.
-    #[allow(clippy::too_many_arguments)]
-    pub async fn post_c2c_message(
+    /// Sends a text message to a C2C conversation.
+    pub async fn send_c2c_message(&self, openid: &str, content: &str) -> Result<MessageResponse> {
+        let params = C2CMessageParams::new_text(content);
+        self.api
+            .post_c2c_message_with_params(&self.token, openid, params)
+            .await
+    }
+
+    /// Sends a direct message using DirectMessageParams.
+    pub async fn post_dms_with_params(
         &self,
-        openid: &str,
-        msg_type: Option<u32>,
-        content: Option<&str>,
-        embed: Option<&Embed>,
-        ark: Option<&Ark>,
-        message_reference: Option<&Reference>,
-        media: Option<&Media>,
-        msg_id: Option<&str>,
-        msg_seq: Option<u32>,
-        event_id: Option<&str>,
-        markdown: Option<&MarkdownPayload>,
-        keyboard: Option<&KeyboardPayload>,
+        guild_id: &str,
+        params: DirectMessageParams,
     ) -> Result<MessageResponse> {
-        self.post_c2c_message_botpy(
-            openid,
-            msg_type,
-            content,
-            embed,
-            ark,
-            message_reference,
-            media,
-            msg_id,
-            msg_seq,
-            event_id,
-            markdown,
-            keyboard,
-        )
-        .await
+        self.api
+            .post_dms_with_params(&self.token, guild_id, params)
+            .await
     }
 
     /// Fetches one channel message by ID.
@@ -303,6 +223,44 @@ impl Context {
             .await
     }
 
+    /// Sends a channel message containing an embed and optional text content.
+    pub async fn send_message_with_embed(
+        &self,
+        channel_id: &str,
+        content: Option<&str>,
+        embed: &Embed,
+    ) -> Result<MessageResponse> {
+        let params = MessageParams {
+            content: content.map(ToOwned::to_owned),
+            embed: Some(embed.clone()),
+            ..Default::default()
+        };
+        self.api
+            .post_message_with_params(&self.token, channel_id, params)
+            .await
+    }
+
+    /// Sends a channel reply and ignores lookup failures for the referenced message.
+    pub async fn reply_message(
+        &self,
+        channel_id: &str,
+        content: &str,
+        message_id: &str,
+    ) -> Result<MessageResponse> {
+        let reference = Reference {
+            message_id: Some(message_id.to_string()),
+            ignore_get_message_error: Some(true),
+        };
+        let params = MessageParams {
+            content: Some(content.to_string()),
+            message_reference: Some(reference),
+            ..Default::default()
+        };
+        self.api
+            .post_message_with_params(&self.token, channel_id, params)
+            .await
+    }
+
     /// Edits a channel message with the provided message payload.
     pub async fn patch_message(
         &self,
@@ -315,11 +273,11 @@ impl Context {
             .await
     }
 
-    /// Sends a botpy-style inline keyboard message.
+    /// Sends an inline keyboard message.
     pub async fn post_keyboard_message(
         &self,
         channel_id: &str,
-        keyboard: Option<&KeyboardPayload>,
+        keyboard: Option<&Keyboard>,
         markdown: Option<&MarkdownPayload>,
     ) -> Result<MessageResponse> {
         self.api
@@ -327,7 +285,7 @@ impl Context {
             .await
     }
 
-    /// Edits a guild message using botpy's inline markdown/keyboard body shape.
+    /// Edits a guild message with inline markdown or keyboard content.
     pub async fn patch_guild_message(
         &self,
         channel_id: &str,
@@ -335,7 +293,7 @@ impl Context {
         msg_id: Option<&str>,
         event_id: Option<&str>,
         markdown: Option<&MarkdownPayload>,
-        keyboard: Option<&KeyboardPayload>,
+        keyboard: Option<&Keyboard>,
     ) -> Result<MessageResponse> {
         self.api
             .patch_guild_message(

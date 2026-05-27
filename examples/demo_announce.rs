@@ -105,7 +105,7 @@ impl EventHandler for AnnounceHandler {
             // Delete announcement (equivalent to self.api.delete_announce)
             match ctx
                 .api
-                .delete_announce(&ctx.token, _guild_id, _referenced_message_id)
+                .delete_announce(&ctx.token, _guild_id, Some(_referenced_message_id.as_str()))
                 .await
             {
                 Ok(result) => {

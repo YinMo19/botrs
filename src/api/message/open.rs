@@ -12,91 +12,6 @@ use reqwest::Method;
 use serde::Serialize;
 use tracing::debug;
 
-#[derive(Serialize)]
-struct BotpyOpenMessageBody<'a> {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    group_openid: Option<&'a str>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    openid: Option<&'a str>,
-    msg_type: u32,
-    content: Option<&'a str>,
-    embed: Option<&'a Embed>,
-    ark: Option<&'a Ark>,
-    message_reference: Option<&'a Reference>,
-    media: Option<&'a Media>,
-    msg_id: Option<&'a str>,
-    msg_seq: u32,
-    event_id: Option<&'a str>,
-    markdown: Option<&'a MarkdownPayload>,
-    keyboard: Option<&'a KeyboardPayload>,
-}
-
-impl<'a> BotpyOpenMessageBody<'a> {
-    #[allow(clippy::too_many_arguments)]
-    fn group(
-        group_openid: &'a str,
-        msg_type: Option<u32>,
-        content: Option<&'a str>,
-        embed: Option<&'a Embed>,
-        ark: Option<&'a Ark>,
-        message_reference: Option<&'a Reference>,
-        media: Option<&'a Media>,
-        msg_id: Option<&'a str>,
-        msg_seq: Option<u32>,
-        event_id: Option<&'a str>,
-        markdown: Option<&'a MarkdownPayload>,
-        keyboard: Option<&'a KeyboardPayload>,
-    ) -> Self {
-        Self {
-            group_openid: Some(group_openid),
-            openid: None,
-            msg_type: msg_type.unwrap_or(0),
-            content,
-            embed,
-            ark,
-            message_reference,
-            media,
-            msg_id,
-            msg_seq: msg_seq.unwrap_or(1),
-            event_id,
-            markdown,
-            keyboard,
-        }
-    }
-
-    #[allow(clippy::too_many_arguments)]
-    fn c2c(
-        openid: &'a str,
-        msg_type: Option<u32>,
-        content: Option<&'a str>,
-        embed: Option<&'a Embed>,
-        ark: Option<&'a Ark>,
-        message_reference: Option<&'a Reference>,
-        media: Option<&'a Media>,
-        msg_id: Option<&'a str>,
-        msg_seq: Option<u32>,
-        event_id: Option<&'a str>,
-        markdown: Option<&'a MarkdownPayload>,
-        keyboard: Option<&'a KeyboardPayload>,
-    ) -> Self {
-        Self {
-            group_openid: None,
-            openid: Some(openid),
-            msg_type: msg_type.unwrap_or(0),
-            content,
-            embed,
-            ark,
-            message_reference,
-            media,
-            msg_id,
-            msg_seq: msg_seq.unwrap_or(1),
-            event_id,
-            markdown,
-            keyboard,
-        }
-    }
-}
-
 #[derive(Clone, Copy)]
 enum OpenMessageTarget<'a> {
     Group(&'a str),
@@ -156,44 +71,6 @@ impl BotApi {
         .await
     }
 
-    /// Sends a group message using botpy's locals()-style request body.
-    #[allow(clippy::too_many_arguments)]
-    pub async fn post_group_message_botpy(
-        &self,
-        token: &Token,
-        group_openid: &str,
-        msg_type: Option<u32>,
-        content: Option<&str>,
-        embed: Option<&Embed>,
-        ark: Option<&Ark>,
-        message_reference: Option<&Reference>,
-        media: Option<&Media>,
-        msg_id: Option<&str>,
-        msg_seq: Option<u32>,
-        event_id: Option<&str>,
-        markdown: Option<&MarkdownPayload>,
-        keyboard: Option<&KeyboardPayload>,
-    ) -> Result<MessageResponse> {
-        debug!("Sending botpy-style group message to {}", group_openid);
-        let body = BotpyOpenMessageBody::group(
-            group_openid,
-            msg_type,
-            content,
-            embed,
-            ark,
-            message_reference,
-            media,
-            msg_id,
-            msg_seq,
-            event_id,
-            markdown,
-            keyboard,
-        );
-        let path = resource::group_messages(group_openid);
-        self.request_message_response_body(token, Method::POST, &path, &body)
-            .await
-    }
-
     /// Sends a group message create payload and returns the full message.
     pub async fn post_group_message_to_create(
         &self,
@@ -245,22 +122,22 @@ impl BotApi {
         markdown: Option<&MarkdownPayload>,
         keyboard: Option<&KeyboardPayload>,
     ) -> Result<MessageResponse> {
-        self.post_group_message_botpy(
-            token,
-            group_openid,
-            msg_type,
-            content,
-            embed,
-            ark,
-            message_reference,
-            media,
-            msg_id,
+        let params = GroupMessageParams {
+            msg_type: msg_type.unwrap_or(0),
+            content: content.map(ToOwned::to_owned),
+            embed: embed.cloned(),
+            ark: ark.cloned(),
+            message_reference: message_reference.cloned(),
+            media: media.cloned(),
+            msg_id: msg_id.map(ToOwned::to_owned),
             msg_seq,
-            event_id,
-            markdown,
-            keyboard,
-        )
-        .await
+            event_id: event_id.map(ToOwned::to_owned),
+            markdown: markdown.cloned(),
+            keyboard: keyboard.cloned(),
+            ..Default::default()
+        };
+        self.post_group_message_with_params(token, group_openid, params)
+            .await
     }
 
     /// Sends a C2C (client-to-client) message using C2CMessageParams.
@@ -285,44 +162,6 @@ impl BotApi {
         msg: &ApiMessage,
     ) -> Result<Message> {
         self.post_open_api_payload(token, OpenMessageTarget::C2c(openid), msg.send_type(), msg)
-            .await
-    }
-
-    /// Sends a C2C message using botpy's locals()-style request body.
-    #[allow(clippy::too_many_arguments)]
-    pub async fn post_c2c_message_botpy(
-        &self,
-        token: &Token,
-        openid: &str,
-        msg_type: Option<u32>,
-        content: Option<&str>,
-        embed: Option<&Embed>,
-        ark: Option<&Ark>,
-        message_reference: Option<&Reference>,
-        media: Option<&Media>,
-        msg_id: Option<&str>,
-        msg_seq: Option<u32>,
-        event_id: Option<&str>,
-        markdown: Option<&MarkdownPayload>,
-        keyboard: Option<&KeyboardPayload>,
-    ) -> Result<MessageResponse> {
-        debug!("Sending botpy-style C2C message to {}", openid);
-        let body = BotpyOpenMessageBody::c2c(
-            openid,
-            msg_type,
-            content,
-            embed,
-            ark,
-            message_reference,
-            media,
-            msg_id,
-            msg_seq,
-            event_id,
-            markdown,
-            keyboard,
-        );
-        let path = resource::c2c_messages(openid);
-        self.request_message_response_body(token, Method::POST, &path, &body)
             .await
     }
 
@@ -367,22 +206,22 @@ impl BotApi {
         markdown: Option<&MarkdownPayload>,
         keyboard: Option<&KeyboardPayload>,
     ) -> Result<MessageResponse> {
-        self.post_c2c_message_botpy(
-            token,
-            openid,
-            msg_type,
-            content,
-            embed,
-            ark,
-            message_reference,
-            media,
-            msg_id,
+        let params = C2CMessageParams {
+            msg_type: msg_type.unwrap_or(0),
+            content: content.map(ToOwned::to_owned),
+            embed: embed.cloned(),
+            ark: ark.cloned(),
+            message_reference: message_reference.cloned(),
+            media: media.cloned(),
+            msg_id: msg_id.map(ToOwned::to_owned),
             msg_seq,
-            event_id,
-            markdown,
-            keyboard,
-        )
-        .await
+            event_id: event_id.map(ToOwned::to_owned),
+            markdown: markdown.cloned(),
+            keyboard: keyboard.cloned(),
+            ..Default::default()
+        };
+        self.post_c2c_message_with_params(token, openid, params)
+            .await
     }
 
     async fn post_open_api_payload<T>(
@@ -481,24 +320,14 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn botpy_group_message_body_keeps_defaults_and_nulls() {
+    async fn group_message_params_send_botgo_body() {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
         let response = api
-            .post_group_message_botpy(
+            .post_group_message_with_params(
                 api.token_required().unwrap(),
                 "group-openid-1",
-                None,
-                Some("hello"),
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
+                GroupMessageParams::new_text("hello"),
             )
             .await
             .unwrap();
@@ -509,18 +338,7 @@ mod tests {
         assert_eq!(
             request_body(&request),
             serde_json::json!({
-                "group_openid": "group-openid-1",
-                "msg_type": 0,
-                "content": "hello",
-                "embed": null,
-                "ark": null,
-                "message_reference": null,
-                "media": null,
-                "msg_id": null,
-                "msg_seq": 1,
-                "event_id": null,
-                "markdown": null,
-                "keyboard": null
+                "content": "hello"
             })
         );
         server.await.unwrap();
@@ -528,7 +346,7 @@ mod tests {
 
     #[allow(deprecated)]
     #[tokio::test]
-    async fn legacy_group_message_matches_botpy_defaults_and_nulls() {
+    async fn legacy_group_message_matches_botgo_body() {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
         let response = api
@@ -556,42 +374,21 @@ mod tests {
         assert_eq!(
             request_body(&request),
             serde_json::json!({
-                "group_openid": "group-openid-1",
-                "msg_type": 0,
-                "content": "hello",
-                "embed": null,
-                "ark": null,
-                "message_reference": null,
-                "media": null,
-                "msg_id": null,
-                "msg_seq": 1,
-                "event_id": null,
-                "markdown": null,
-                "keyboard": null
+                "content": "hello"
             })
         );
         server.await.unwrap();
     }
 
     #[tokio::test]
-    async fn botpy_c2c_message_body_keeps_defaults_and_nulls() {
+    async fn c2c_message_params_send_botgo_body() {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
         let response = api
-            .post_c2c_message_botpy(
+            .post_c2c_message_with_params(
                 api.token_required().unwrap(),
                 "openid-1",
-                None,
-                Some("hello"),
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
+                C2CMessageParams::new_text("hello"),
             )
             .await
             .unwrap();
@@ -602,18 +399,7 @@ mod tests {
         assert_eq!(
             request_body(&request),
             serde_json::json!({
-                "openid": "openid-1",
-                "msg_type": 0,
-                "content": "hello",
-                "embed": null,
-                "ark": null,
-                "message_reference": null,
-                "media": null,
-                "msg_id": null,
-                "msg_seq": 1,
-                "event_id": null,
-                "markdown": null,
-                "keyboard": null
+                "content": "hello"
             })
         );
         server.await.unwrap();
@@ -621,7 +407,7 @@ mod tests {
 
     #[allow(deprecated)]
     #[tokio::test]
-    async fn legacy_c2c_message_matches_botpy_defaults_and_nulls() {
+    async fn legacy_c2c_message_matches_botgo_body() {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
         let response = api
@@ -649,18 +435,7 @@ mod tests {
         assert_eq!(
             request_body(&request),
             serde_json::json!({
-                "openid": "openid-1",
-                "msg_type": 0,
-                "content": "hello",
-                "embed": null,
-                "ark": null,
-                "message_reference": null,
-                "media": null,
-                "msg_id": null,
-                "msg_seq": 1,
-                "event_id": null,
-                "markdown": null,
-                "keyboard": null
+                "content": "hello"
             })
         );
         server.await.unwrap();

@@ -111,7 +111,11 @@ impl EventHandler for DmsReplyHandler {
                     info!("Successfully created DM session");
                     info!("DMS Payload: {:?}", dms_payload);
 
-                    let dm_guild_id = dms_payload.guild_id.as_deref().unwrap_or(guild_id);
+                    let dm_guild_id = if dms_payload.guild_id.is_empty() {
+                        guild_id
+                    } else {
+                        dms_payload.guild_id.as_str()
+                    };
 
                     // Send a DM using the created session
                     let params = botrs::models::message::DirectMessageParams::new_text("hello");

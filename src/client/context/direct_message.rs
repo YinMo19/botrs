@@ -33,41 +33,8 @@ impl Context {
             .await
     }
 
-    /// Sends a direct message using botpy's locals()-style request body.
-    #[allow(clippy::too_many_arguments)]
-    pub async fn post_dms_botpy(
-        &self,
-        guild_id: &str,
-        content: Option<&str>,
-        embed: Option<&Embed>,
-        ark: Option<&Ark>,
-        message_reference: Option<&Reference>,
-        image: Option<&str>,
-        file_image: Option<&[u8]>,
-        msg_id: Option<&str>,
-        event_id: Option<&str>,
-        markdown: Option<&MarkdownPayload>,
-        keyboard: Option<&Keyboard>,
-    ) -> Result<MessageResponse> {
-        self.api
-            .post_dms_botpy(
-                &self.token,
-                guild_id,
-                content,
-                embed,
-                ark,
-                message_reference,
-                image,
-                file_image,
-                msg_id,
-                event_id,
-                markdown,
-                keyboard,
-            )
-            .await
-    }
-
-    /// Sends a direct message using botpy's method name and request body.
+    /// Sends a direct message using the legacy positional argument API.
+    #[allow(deprecated)]
     #[allow(clippy::too_many_arguments)]
     pub async fn post_dms(
         &self,
@@ -83,20 +50,22 @@ impl Context {
         markdown: Option<&MarkdownPayload>,
         keyboard: Option<&Keyboard>,
     ) -> Result<MessageResponse> {
-        self.post_dms_botpy(
-            guild_id,
-            content,
-            embed,
-            ark,
-            message_reference,
-            image,
-            file_image,
-            msg_id,
-            event_id,
-            markdown,
-            keyboard,
-        )
-        .await
+        self.api
+            .post_dms(
+                &self.token,
+                guild_id,
+                content,
+                embed,
+                ark,
+                message_reference,
+                image,
+                file_image,
+                msg_id,
+                event_id,
+                markdown,
+                keyboard,
+            )
+            .await
     }
 
     /// Posts a DM setting guide message.
@@ -198,7 +167,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn context_create_dms_uses_botpy_argument_order() {
+    async fn context_create_dms_uses_source_guild_then_recipient() {
         let (base_url, request, server) = spawn_capture_server().await;
         let ctx = test_context(base_url).await;
         let session = ctx.create_dms("guild-1", "user-1").await.unwrap();
