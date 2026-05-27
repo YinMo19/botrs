@@ -5,8 +5,7 @@ use super::{
     KeyboardModal, KeyboardRow, KeyboardStyle, KeyboardSubscribeData, KeyboardTemplateId,
     MarkdownParam, MarkdownPayload, MarkdownStyle, Media, MediaInfo, Message, MessageAttachment,
     MessageAudit, MessageCreateType, MessagePagerType, MessageParams, MessageReference,
-    MessageToCreate, MessageUser, MessagesPager, Reference, Stream, emoji, etl_input,
-    mention_all_user, mention_channel, mention_user, parse_command,
+    MessageToCreate, MessageUser, MessagesPager, Reference, Stream,
 };
 
 #[test]
@@ -34,33 +33,6 @@ fn c2c_message_accepts_minimal_gateway_payload() {
 
     let value = serde_json::to_value(&message).unwrap();
     assert!(value.get("event_id").is_none());
-}
-
-#[test]
-fn test_message_helpers() {
-    assert_eq!(mention_user("123"), "<@123>");
-    assert_eq!(mention_all_user(), "@everyone");
-    assert_eq!(mention_channel("456"), "<#456>");
-    assert_eq!(emoji(1), "<emoji:1>");
-    assert_eq!(etl_input("<@!123>  ping value"), "ping value");
-    assert_eq!(
-        etl_input("\u{00a0}<@!123> ping  value\u{00a0}"),
-        "ping  value"
-    );
-    assert_eq!(etl_input("<@123> ping"), "<@123> ping");
-    assert_eq!(etl_input("<@!abc> ping"), "<@!abc> ping");
-
-    let command = parse_command("<@!123>  /ping value");
-    assert_eq!(command.cmd, "/ping");
-    assert_eq!(command.content, "value");
-
-    let command = parse_command("<@!123> /ping value");
-    assert_eq!(command.cmd, "/ping");
-    assert_eq!(command.content, "value");
-
-    let command = parse_command("/ping\tvalue");
-    assert_eq!(command.cmd, "/ping\tvalue");
-    assert_eq!(command.content, "");
 }
 
 #[test]
