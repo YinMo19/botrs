@@ -5,8 +5,6 @@ use crate::models::api::GatewayResponse;
 use crate::models::gateway::GatewayEvent;
 use crate::token::Token;
 
-pub type BoxedSessionManager = Box<dyn SessionManager>;
-
 /// Session manager interface for the QQ Bot Open API gateway.
 #[async_trait::async_trait]
 pub trait SessionManager: Send + Sync {
