@@ -46,8 +46,6 @@ fn test_schedule_creation() {
     assert_eq!(schedule.end_timestamp, "1640998800");
     assert_eq!(schedule.jump_channel_id, "channel123");
     assert_eq!(schedule.remind_type, "3");
-    assert!(schedule.has_reminder());
-    assert!(schedule.has_jump_channel());
 }
 
 #[test]
@@ -90,7 +88,7 @@ fn test_schedule_no_reminder() {
         RemindType::None,
     );
 
-    assert!(!schedule.has_reminder());
+    assert_eq!(schedule.remind_type, "0");
     assert_eq!(schedule.reminder_description(), "No reminder");
 }
 
@@ -137,8 +135,6 @@ fn schedule_uses_required_zero_value_fields() {
     assert_eq!(schedule.jump_channel_id, "");
     assert_eq!(schedule.remind_type, "");
     assert!(schedule.creator.is_none());
-    assert!(!schedule.has_jump_channel());
-    assert!(!schedule.has_reminder());
 
     let value = serde_json::to_value(&schedule).unwrap();
     assert!(value.as_object().unwrap().is_empty());

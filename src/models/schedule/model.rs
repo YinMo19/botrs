@@ -70,11 +70,6 @@ impl Schedule {
         self
     }
 
-    /// Returns true if the schedule has a reminder set.
-    pub fn has_reminder(&self) -> bool {
-        !self.remind_type.is_empty() && self.remind_type != "0"
-    }
-
     /// Gets the reminder description.
     pub fn reminder_description(&self) -> &'static str {
         self.remind_type
@@ -99,11 +94,6 @@ impl Schedule {
         let start = self.start_timestamp_parsed().ok()?;
         let end = self.end_timestamp_parsed().ok()?;
         Some(end - start)
-    }
-
-    /// Returns true if this schedule has a jump channel set.
-    pub fn has_jump_channel(&self) -> bool {
-        !self.jump_channel_id.is_empty()
     }
 }
 
