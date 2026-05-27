@@ -40,13 +40,6 @@ pub struct ThreadInfo {
     pub date_time: String,
 }
 
-impl ThreadInfo {
-    /// Create a new ThreadInfo instance
-    pub fn new(data: &Value) -> Self {
-        serde_json::from_value(data.clone()).unwrap_or_default()
-    }
-}
-
 /// Post info structure.
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct PostInfo {
@@ -62,13 +55,6 @@ pub struct PostInfo {
     /// Creation date and time
     #[serde(default)]
     pub date_time: String,
-}
-
-impl PostInfo {
-    /// Create a new PostInfo instance.
-    pub fn new(data: &Value) -> Self {
-        serde_json::from_value(data.clone()).unwrap_or_default()
-    }
 }
 
 /// Reply info structure.
@@ -89,13 +75,6 @@ pub struct ReplyInfo {
     /// Creation date and time
     #[serde(default)]
     pub date_time: String,
-}
-
-impl ReplyInfo {
-    /// Create a new ReplyInfo instance.
-    pub fn new(data: &Value) -> Self {
-        serde_json::from_value(data.clone()).unwrap_or_default()
-    }
 }
 
 /// Forum thread structure

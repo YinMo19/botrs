@@ -35,7 +35,7 @@ fn thread_info_keeps_title_and_content_as_strings() {
         "date_time": "2024-01-02T03:04:05+08:00"
     });
 
-    let thread_info = ThreadInfo::new(&data);
+    let thread_info: ThreadInfo = serde_json::from_value(data).unwrap();
     assert_eq!(thread_info.thread_id, "thread-1");
     assert_eq!(thread_info.title, "{\"paragraphs\":[]}");
     assert_eq!(thread_info.content, "{\"paragraphs\":[{\"elems\":[]}]}");
