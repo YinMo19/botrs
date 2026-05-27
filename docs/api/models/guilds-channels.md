@@ -61,9 +61,7 @@ For modify/create endpoints use `ChannelValueObject`, which wraps every field in
 | `PrivateType`         | `Public=0`, `OnlyAdmin=1`, `AdminAndMember=2`                          |
 | `SpeakPermission`     | `Invalid=0`, `Public=1`, `AdminAndMember=2`                            |
 
-Each enum implements `From<u8>`/`From<u32>` for raw numeric round-trips. Use the enum variants directly, for example `ChannelType::Text` or `SpeakPermission::Public`.
-
-Predicates on `Channel`: `is_text()`, `is_voice()`, `is_group()`, `is_live()`, `is_application()`, `is_discussion()`, `is_public()`, `is_admin_only()`, `everyone_can_speak()`, `mention()` (returns `<#id>`).
+Each enum implements `From<u8>`/`From<u32>` for raw numeric round-trips. Use the enum variants directly, for example `channel.channel_type == ChannelType::Text` or `channel.speak_permission == SpeakPermission::Public`.
 
 ## Channel permissions
 

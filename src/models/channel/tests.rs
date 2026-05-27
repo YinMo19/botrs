@@ -5,7 +5,7 @@ fn test_channel_creation() {
     let channel = Channel::new();
     assert!(channel.id.is_empty());
     assert!(channel.name.is_empty());
-    assert!(channel.is_public()); // Default should be public
+    assert_eq!(channel.private_type, PrivateType::Public);
 }
 
 #[test]
@@ -13,15 +13,13 @@ fn test_channel_types() {
     let mut channel = Channel::new();
 
     channel.channel_type = ChannelType::Text;
-    assert!(channel.is_text());
-    assert!(!channel.is_voice());
+    assert_eq!(channel.channel_type, ChannelType::Text);
 
     channel.channel_type = ChannelType::Voice;
-    assert!(channel.is_voice());
-    assert!(!channel.is_text());
+    assert_eq!(channel.channel_type, ChannelType::Voice);
 
     channel.channel_type = ChannelType::Category;
-    assert!(channel.is_group());
+    assert_eq!(channel.channel_type, ChannelType::Category);
 }
 
 #[test]
@@ -41,15 +39,13 @@ fn test_private_types() {
     let mut channel = Channel::new();
 
     channel.private_type = PrivateType::Public;
-    assert!(channel.is_public());
-    assert!(!channel.is_admin_only());
+    assert_eq!(channel.private_type, PrivateType::Public);
 
     channel.private_type = PrivateType::OnlyAdmin;
-    assert!(!channel.is_public());
-    assert!(channel.is_admin_only());
+    assert_eq!(channel.private_type, PrivateType::OnlyAdmin);
 
     channel.private_type = PrivateType::AdminAndMember;
-    assert!(channel.is_specified_users_only());
+    assert_eq!(channel.private_type, PrivateType::AdminAndMember);
 }
 
 #[test]
@@ -57,19 +53,10 @@ fn test_speak_permissions() {
     let mut channel = Channel::new();
 
     channel.speak_permission = SpeakPermission::Public;
-    assert!(channel.everyone_can_speak());
-    assert!(!channel.admin_only_speak());
+    assert_eq!(channel.speak_permission, SpeakPermission::Public);
 
     channel.speak_permission = SpeakPermission::AdminAndMember;
-    assert!(!channel.everyone_can_speak());
-    assert!(channel.admin_only_speak());
-}
-
-#[test]
-fn test_channel_mention() {
-    let mut channel = Channel::new();
-    channel.id = "123456789".to_string();
-    assert_eq!(channel.mention(), "<#123456789>");
+    assert_eq!(channel.speak_permission, SpeakPermission::AdminAndMember);
 }
 
 #[test]
