@@ -20,6 +20,7 @@ examples/
 ├── demo_at_reply_file_data.rs   # Bot @ reply with file uploads
 ├── demo_at_reply_reference.rs   # Bot @ reply with message references
 ├── demo_group_reply_text.rs     # Bot group message reply example
+├── demo_group_reply_ark.rs      # Bot group ARK message reply example
 ├── demo_c2c_reply_text.rs       # Bot C2C (private) message reply example
 ├── demo_dms_reply.rs            # Bot direct message reply example
 └── demo_recall.rs               # Bot message recall (delete) example
@@ -98,6 +99,11 @@ cargo run --example demo_at_reply_keyboard --features examples
 cargo run --example demo_group_reply_text --features examples
 ```
 
+### Group ARK Message Bot
+```bash
+cargo run --example demo_group_reply_ark --features examples
+```
+
 ### C2C (Private) Message Bot
 ```bash
 cargo run --example demo_c2c_reply_text --features examples
@@ -163,6 +169,11 @@ cargo run --example simple_bot --features examples
 - **Features**: Group message handling and replies
 - **Intents**: `public_messages`
 
+### demo_group_reply_ark.rs
+- **Python equivalent**: `demo_group_reply_ark.py`
+- **Features**: Group message handling and ARK replies
+- **Intents**: `public_messages`
+
 ### demo_c2c_reply_text.rs
 - **Python equivalent**: `demo_c2c_reply_text.py`
 - **Features**: C2C (private/friend) message handling and replies
@@ -209,6 +220,7 @@ The examples demonstrate various message types:
 - **Embed messages**: Rich embeds with titles, descriptions, fields, and colors
 - **Markdown messages**: Formatted messages using markdown syntax
 - **Keyboard messages**: Interactive messages with clickable buttons
+- **ARK messages**: Template-based rich messages
 - **Media messages**: Messages with attachments (files, images, etc.)
 
 ## Error Handling

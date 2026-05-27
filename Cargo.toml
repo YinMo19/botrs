@@ -90,6 +90,10 @@ name = "demo_group_reply_text"
 required-features = ["examples"]
 
 [[example]]
+name = "demo_group_reply_ark"
+required-features = ["examples"]
+
+[[example]]
 name = "demo_c2c_reply_text"
 required-features = ["examples"]
 
