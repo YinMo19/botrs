@@ -31,18 +31,6 @@ wire_enum!(ChannelType, u32, Unknown, {
     Forum = 10007,
 });
 
-impl ChannelType {
-    /// Create ChannelType from u8 value
-    pub fn from_u8(value: u8) -> Option<Self> {
-        Some(Self::from(value as u32))
-    }
-
-    /// Create ChannelType from the raw integer value.
-    pub fn from_u32(value: u32) -> Self {
-        Self::from(value)
-    }
-}
-
 /// Channel subtype enumeration.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
 #[serde(from = "u32", into = "u32")]
@@ -68,13 +56,6 @@ wire_enum!(ChannelSubType, u32, Unknown, {
     TeamGame = 3,
 });
 
-impl ChannelSubType {
-    /// Create ChannelSubType from u8 value
-    pub fn from_u8(value: u8) -> Option<Self> {
-        Some(Self::from(value as u32))
-    }
-}
-
 /// Private type enumeration.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
 #[serde(from = "u8", into = "u8")]
@@ -96,13 +77,6 @@ wire_enum!(PrivateType, u8, Unknown, {
     OnlyAdmin = 1,
     AdminAndMember = 2,
 });
-
-impl PrivateType {
-    /// Create PrivateType from u8 value
-    pub fn from_u8(value: u8) -> Option<Self> {
-        Some(Self::from(value))
-    }
-}
 
 impl From<PrivateType> for u32 {
     fn from(private_type: PrivateType) -> Self {
@@ -136,13 +110,6 @@ wire_enum!(SpeakPermission, u8, Unknown, {
     Public = 1,
     AdminAndMember = 2,
 });
-
-impl SpeakPermission {
-    /// Create SpeakPermission from u8 value
-    pub fn from_u8(value: u8) -> Option<Self> {
-        Some(Self::from(value))
-    }
-}
 
 impl From<SpeakPermission> for u32 {
     fn from(speak_permission: SpeakPermission) -> Self {
