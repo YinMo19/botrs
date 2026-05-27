@@ -1,4 +1,3 @@
-use super::{PostInfo, ReplyInfo, ThreadInfo};
 use crate::api::BotApi;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -65,12 +64,6 @@ pub struct OpenThread {
     pub guild_id: Option<String>,
     /// Author ID
     pub author_id: Option<String>,
-    /// Thread information when present
-    pub thread_info: Option<ThreadInfo>,
-    /// Post information when present
-    pub post_info: Option<PostInfo>,
-    /// Reply information when present
-    pub reply_info: Option<ReplyInfo>,
     /// Event ID
     #[serde(skip)]
     pub event_id: Option<String>,
@@ -84,12 +77,6 @@ struct OpenThreadWire {
     channel_id: Option<String>,
     #[serde(default)]
     author_id: Option<String>,
-    #[serde(default)]
-    thread_info: Option<ThreadInfo>,
-    #[serde(default)]
-    post_info: Option<PostInfo>,
-    #[serde(default)]
-    reply_info: Option<ReplyInfo>,
 }
 
 impl OpenThread {
@@ -102,9 +89,6 @@ impl OpenThread {
             guild_id: wire.guild_id,
             channel_id: wire.channel_id,
             author_id: wire.author_id,
-            thread_info: wire.thread_info,
-            post_info: wire.post_info,
-            reply_info: wire.reply_info,
         }
     }
 

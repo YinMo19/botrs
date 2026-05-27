@@ -249,3 +249,59 @@ impl ConnectionState {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn test_state() -> ConnectionState {
+        let http = crate::http::HttpClient::new(30, false).unwrap();
+        ConnectionState::new(BotApi::new(http))
+    }
+
+    #[test]
+    fn open_forum_parsers_match_botpy_shape() {
+        let state = test_state();
+        let payload = serde_json::json!({
+            "id": "event-1",
+            "d": {
+                "guild_id": "guild-1",
+                "channel_id": "channel-1",
+                "author_id": "author-1",
+                "thread_info": {
+                    "thread_id": "thread-1"
+                },
+                "post_info": {
+                    "thread_id": "thread-1",
+                    "post_id": "post-1"
+                },
+                "reply_info": {
+                    "thread_id": "thread-1",
+                    "post_id": "post-1",
+                    "reply_id": "reply-1"
+                }
+            }
+        });
+
+        for event_type in [
+            "open_forum_thread_create",
+            "open_forum_thread_update",
+            "open_forum_thread_delete",
+            "open_forum_post_create",
+            "open_forum_post_delete",
+            "open_forum_reply_create",
+            "open_forum_reply_delete",
+        ] {
+            let (name, value) = state.parse_event(event_type, &payload).unwrap();
+            assert_eq!(name, event_type);
+            assert_eq!(
+                value,
+                serde_json::json!({
+                    "channel_id": "channel-1",
+                    "guild_id": "guild-1",
+                    "author_id": "author-1"
+                })
+            );
+        }
+    }
+}

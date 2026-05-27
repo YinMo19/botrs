@@ -109,33 +109,43 @@ pub(in crate::connection) fn parse_open_forum_thread_delete(
 }
 
 pub(in crate::connection) fn parse_open_forum_post_create(
-    _state: &ConnectionState,
+    state: &ConnectionState,
     payload: &Value,
 ) -> Option<(&'static str, Value)> {
     let post_data = payload.get("d")?;
-    Some(("open_forum_post_create", post_data.clone()))
+    let thread = OpenThread::new(state.api.clone(), post_data);
+    Some(("open_forum_post_create", serde_json::to_value(thread).ok()?))
 }
 
 pub(in crate::connection) fn parse_open_forum_post_delete(
-    _state: &ConnectionState,
+    state: &ConnectionState,
     payload: &Value,
 ) -> Option<(&'static str, Value)> {
     let post_data = payload.get("d")?;
-    Some(("open_forum_post_delete", post_data.clone()))
+    let thread = OpenThread::new(state.api.clone(), post_data);
+    Some(("open_forum_post_delete", serde_json::to_value(thread).ok()?))
 }
 
 pub(in crate::connection) fn parse_open_forum_reply_create(
-    _state: &ConnectionState,
+    state: &ConnectionState,
     payload: &Value,
 ) -> Option<(&'static str, Value)> {
     let reply_data = payload.get("d")?;
-    Some(("open_forum_reply_create", reply_data.clone()))
+    let thread = OpenThread::new(state.api.clone(), reply_data);
+    Some((
+        "open_forum_reply_create",
+        serde_json::to_value(thread).ok()?,
+    ))
 }
 
 pub(in crate::connection) fn parse_open_forum_reply_delete(
-    _state: &ConnectionState,
+    state: &ConnectionState,
     payload: &Value,
 ) -> Option<(&'static str, Value)> {
     let reply_data = payload.get("d")?;
-    Some(("open_forum_reply_delete", reply_data.clone()))
+    let thread = OpenThread::new(state.api.clone(), reply_data);
+    Some((
+        "open_forum_reply_delete",
+        serde_json::to_value(thread).ok()?,
+    ))
 }

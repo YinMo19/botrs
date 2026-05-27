@@ -192,3 +192,41 @@ fn forum_wrapper_event_ids_are_internal_only() {
         assert!(value.get("event_id").is_none());
     }
 }
+
+#[test]
+fn open_forum_event_matches_botpy_shape() {
+    let http = crate::http::HttpClient::new(30, false).unwrap();
+    let api = BotApi::new(http);
+    let data = serde_json::json!({
+        "guild_id": "guild-1",
+        "channel_id": "channel-1",
+        "author_id": "author-1",
+        "thread_info": {
+            "thread_id": "thread-1"
+        },
+        "post_info": {
+            "thread_id": "thread-1",
+            "post_id": "post-1"
+        },
+        "reply_info": {
+            "thread_id": "thread-1",
+            "post_id": "post-1",
+            "reply_id": "reply-1"
+        }
+    });
+
+    let open_thread = OpenThread::new(api, &data);
+
+    assert_eq!(open_thread.guild_id.as_deref(), Some("guild-1"));
+    assert_eq!(open_thread.channel_id.as_deref(), Some("channel-1"));
+    assert_eq!(open_thread.author_id.as_deref(), Some("author-1"));
+
+    assert_eq!(
+        serde_json::to_value(open_thread).unwrap(),
+        serde_json::json!({
+            "channel_id": "channel-1",
+            "guild_id": "guild-1",
+            "author_id": "author-1"
+        })
+    );
+}
