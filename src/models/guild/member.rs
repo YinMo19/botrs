@@ -119,42 +119,10 @@ impl Member {
     pub fn new() -> Self {
         Self::default()
     }
-
-    /// Gets the member's display name (nickname or username).
-    pub fn display_name(&self) -> Option<&str> {
-        (!self.nick.is_empty())
-            .then_some(self.nick.as_str())
-            .or_else(|| self.user.as_ref().map(|u| u.username.as_str()))
-    }
-
-    /// Gets the member's username.
-    pub fn username(&self) -> Option<&str> {
-        self.user.as_ref().map(|u| u.username.as_str())
-    }
-
-    /// Gets the member's user ID.
-    pub fn user_id(&self) -> Option<&Snowflake> {
-        self.user.as_ref().map(|u| &u.id)
-    }
-
-    /// Returns true if the member is a bot.
-    pub fn is_bot(&self) -> bool {
-        self.user.as_ref().is_some_and(|u| u.is_bot())
-    }
-
-    /// Gets the member's roles.
-    pub fn role_ids(&self) -> &[Snowflake] {
-        &self.roles
-    }
-
-    /// Returns true if the member has a specific role.
-    pub fn has_role(&self, role_id: &str) -> bool {
-        self.role_ids().iter().any(|id| id == role_id)
-    }
 }
 
 impl HasId for Member {
     fn id(&self) -> Option<&Snowflake> {
-        self.user_id()
+        self.user.as_ref().map(|user| &user.id)
     }
 }

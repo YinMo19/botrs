@@ -286,7 +286,7 @@ fn test_member_creation() {
     let member = Member::new();
     assert!(member.user.is_none());
     assert_eq!(member.nick, "");
-    assert_eq!(member.role_ids().len(), 0);
+    assert!(member.roles.is_empty());
 }
 
 #[test]
@@ -294,10 +294,10 @@ fn test_member_with_roles() {
     let mut member = Member::new();
     member.roles = vec!["role1".to_string(), "role2".to_string()];
 
-    assert!(member.has_role("role1"));
-    assert!(member.has_role("role2"));
-    assert!(!member.has_role("role3"));
-    assert_eq!(member.role_ids().len(), 2);
+    assert!(member.roles.iter().any(|id| id == "role1"));
+    assert!(member.roles.iter().any(|id| id == "role2"));
+    assert!(!member.roles.iter().any(|id| id == "role3"));
+    assert_eq!(member.roles.len(), 2);
 }
 
 #[test]
