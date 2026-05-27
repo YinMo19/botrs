@@ -28,6 +28,9 @@ pub trait EventHandler: Send + Sync {
     /// Called when a message is deleted.
     async fn message_delete(&self, _ctx: Context, _message: MessageDelete) {}
 
+    /// Called when a public guild message is deleted.
+    async fn public_message_delete(&self, _ctx: Context, _message: MessageDelete) {}
+
     /// Called when a reaction is added to a message.
     async fn message_reaction_add(&self, _ctx: Context, _reaction: Reaction) {}
 

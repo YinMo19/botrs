@@ -110,7 +110,7 @@ impl<H: EventHandler + 'static> Client<H> {
                         format!("PUBLIC_MESSAGE_DELETE_{}", event.sequence.unwrap_or(0))
                     });
                     let message = MessageDelete::from_data((*ctx.api).clone(), event_id, data);
-                    self.handler.message_delete(ctx, message).await;
+                    self.handler.public_message_delete(ctx, message).await;
                 }
             }
             Some("MESSAGE_DELETE") => {
@@ -464,5 +464,70 @@ impl<H: EventHandler + 'static> Client<H> {
         }
 
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+    use std::sync::{
+        Arc,
+        atomic::{AtomicUsize, Ordering},
+    };
+
+    #[derive(Default)]
+    struct DeleteCounters {
+        message_delete: AtomicUsize,
+        public_message_delete: AtomicUsize,
+    }
+
+    struct CountingHandler(Arc<DeleteCounters>);
+
+    #[async_trait::async_trait]
+    impl EventHandler for CountingHandler {
+        async fn message_delete(&self, _ctx: Context, _message: MessageDelete) {
+            self.0.message_delete.fetch_add(1, Ordering::SeqCst);
+        }
+
+        async fn public_message_delete(&self, _ctx: Context, _message: MessageDelete) {
+            self.0.public_message_delete.fetch_add(1, Ordering::SeqCst);
+        }
+    }
+
+    #[tokio::test]
+    async fn public_message_delete_dispatches_to_public_handler() {
+        let counters = Arc::new(DeleteCounters::default());
+        let handler = CountingHandler(counters.clone());
+        let client = Client::new(
+            Token::new("test_app", "test_secret"),
+            Intents::default(),
+            handler,
+            false,
+        )
+        .expect("client");
+        let ctx = Context::new(client.api.clone(), Token::new("test_app", "test_secret"));
+        let event = GatewayEvent {
+            id: Some("event_id".to_string()),
+            event_type: Some("PUBLIC_MESSAGE_DELETE".to_string()),
+            data: Some(json!({
+                "message": {
+                    "id": "message_id",
+                    "channel_id": "channel_id",
+                    "guild_id": "guild_id"
+                },
+                "op_user": {
+                    "id": "operator_id",
+                    "username": "operator"
+                }
+            })),
+            sequence: Some(1),
+            opcode: 0,
+        };
+
+        client.handle_event(ctx, event).await.expect("dispatch");
+
+        assert_eq!(counters.message_delete.load(Ordering::SeqCst), 0);
+        assert_eq!(counters.public_message_delete.load(Ordering::SeqCst), 1);
     }
 }
