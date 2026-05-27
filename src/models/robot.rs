@@ -32,56 +32,6 @@ fn default_true() -> bool {
     true
 }
 
-impl Robot {
-    /// Creates a new robot instance.
-    pub fn new(id: impl Into<Snowflake>, username: impl Into<String>) -> Self {
-        Self {
-            id: id.into(),
-            username: username.into(),
-            avatar: None,
-            discriminator: None,
-            bot: true,
-            status: None,
-            activity: None,
-        }
-    }
-
-    /// Gets the robot's avatar URL if it has one.
-    pub fn avatar_url(&self) -> Option<String> {
-        self.avatar.as_ref().map(|_hash| {
-            format!(
-                "https://thirdqq.qlogo.cn/headimg_dl?dst_uin={}&spec=640",
-                self.id
-            )
-        })
-    }
-
-    /// Gets the robot's full tag (username#discriminator).
-    pub fn tag(&self) -> String {
-        match &self.discriminator {
-            Some(disc) => format!("{}#{}", self.username, disc),
-            None => self.username.clone(),
-        }
-    }
-
-    /// Gets the robot's mention string.
-    pub fn mention(&self) -> String {
-        format!("<@{}>", self.id)
-    }
-
-    /// Sets the robot's status.
-    pub fn with_status(mut self, status: RobotStatus) -> Self {
-        self.status = Some(status);
-        self
-    }
-
-    /// Sets the robot's activity.
-    pub fn with_activity(mut self, activity: Activity) -> Self {
-        self.activity = Some(activity);
-        self
-    }
-}
-
 impl HasId for Robot {
     fn id(&self) -> Option<&Snowflake> {
         Some(&self.id)
@@ -229,18 +179,29 @@ wire_enum!(ActivityType, u8, Unknown, {
 mod tests {
     use super::*;
 
+    fn test_robot(id: &str, username: &str) -> Robot {
+        Robot {
+            id: id.to_string(),
+            username: username.to_string(),
+            avatar: None,
+            discriminator: None,
+            bot: true,
+            status: None,
+            activity: None,
+        }
+    }
+
     #[test]
     fn test_robot_creation() {
-        let robot = Robot::new("123456789", "TestBot");
+        let robot = test_robot("123456789", "TestBot");
         assert_eq!(robot.id, "123456789");
         assert_eq!(robot.username, "TestBot");
         assert!(robot.bot);
-        assert_eq!(robot.mention(), "<@123456789>");
     }
 
     #[test]
     fn robot_omits_absent_extension_fields_like_ready_user() {
-        let robot = Robot::new("123456789", "TestBot");
+        let robot = test_robot("123456789", "TestBot");
         assert_eq!(
             serde_json::to_value(&robot).unwrap(),
             serde_json::json!({
@@ -250,9 +211,9 @@ mod tests {
             })
         );
 
-        let robot = Robot::new("123456789", "TestBot")
-            .with_status(RobotStatus::Online)
-            .with_activity(Activity::playing("Rust"));
+        let mut robot = test_robot("123456789", "TestBot");
+        robot.status = Some(RobotStatus::Online);
+        robot.activity = Some(Activity::playing("Rust"));
         assert_eq!(
             serde_json::to_value(&robot).unwrap(),
             serde_json::json!({
@@ -270,11 +231,11 @@ mod tests {
 
     #[test]
     fn test_robot_tag() {
-        let mut robot = Robot::new("123456789", "TestBot");
-        assert_eq!(robot.tag(), "TestBot");
+        let mut robot = test_robot("123456789", "TestBot");
+        assert!(robot.discriminator.is_none());
 
         robot.discriminator = Some("0001".to_string());
-        assert_eq!(robot.tag(), "TestBot#0001");
+        assert_eq!(robot.discriminator.as_deref(), Some("0001"));
     }
 
     #[test]
