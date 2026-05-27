@@ -22,7 +22,7 @@ fn test_text_creation() {
     let data = serde_json::json!({
         "text": "Hello, world!"
     });
-    let text = Text::new(&data);
+    let text: Text = serde_json::from_value(data).unwrap();
     assert_eq!(text.text, Some("Hello, world!".to_string()));
 }
 

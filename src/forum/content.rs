@@ -54,13 +54,6 @@ pub struct Text {
     pub text: Option<String>,
 }
 
-impl Text {
-    /// Create a new Text instance
-    pub fn new(data: &Value) -> Self {
-        serde_json::from_value(data.clone()).unwrap_or_default()
-    }
-}
-
 /// Platform image structure
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct PlatImage {
@@ -74,26 +67,12 @@ pub struct PlatImage {
     pub image_id: Option<String>,
 }
 
-impl PlatImage {
-    /// Create a new PlatImage instance
-    pub fn new(data: &Value) -> Self {
-        serde_json::from_value(data.clone()).unwrap_or_default()
-    }
-}
-
 /// Image element structure
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct Image {
     /// Platform image data
     #[serde(default)]
     pub plat_image: PlatImage,
-}
-
-impl Image {
-    /// Create a new Image instance
-    pub fn new(data: &Value) -> Self {
-        serde_json::from_value(data.clone()).unwrap_or_default()
-    }
 }
 
 /// Video cover structure
@@ -105,13 +84,6 @@ pub struct Cover {
     pub width: Option<u32>,
     /// Cover height
     pub height: Option<u32>,
-}
-
-impl Cover {
-    /// Create a new Cover instance
-    pub fn new(data: &Value) -> Self {
-        serde_json::from_value(data.clone()).unwrap_or_default()
-    }
 }
 
 /// Platform video structure
@@ -130,26 +102,12 @@ pub struct PlatVideo {
     pub cover: Cover,
 }
 
-impl PlatVideo {
-    /// Create a new PlatVideo instance
-    pub fn new(data: &Value) -> Self {
-        serde_json::from_value(data.clone()).unwrap_or_default()
-    }
-}
-
 /// Video element structure
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct Video {
     /// Platform video data
     #[serde(default)]
     pub plat_video: PlatVideo,
-}
-
-impl Video {
-    /// Create a new Video instance
-    pub fn new(data: &Value) -> Self {
-        serde_json::from_value(data.clone()).unwrap_or_default()
-    }
 }
 
 /// URL element structure
@@ -159,13 +117,6 @@ pub struct Url {
     pub url: Option<String>,
     /// URL description
     pub desc: Option<String>,
-}
-
-impl Url {
-    /// Create a new Url instance
-    pub fn new(data: &Value) -> Self {
-        serde_json::from_value(data.clone()).unwrap_or_default()
-    }
 }
 
 /// Element structure for forum content
@@ -188,45 +139,6 @@ pub struct Elem {
     pub url: Option<Url>,
 }
 
-impl Elem {
-    /// Create a new Elem instance
-    pub fn new(data: &Value) -> Self {
-        // Forum payloads only populate the variant matching the element type;
-        // discard payloads that disagree with the discriminator to keep wire
-        // shape stable.
-        let mut elem: Self = serde_json::from_value(data.clone()).unwrap_or_default();
-        match elem.element_type {
-            Some(1) => {
-                elem.image = None;
-                elem.video = None;
-                elem.url = None;
-            }
-            Some(2) => {
-                elem.text = None;
-                elem.video = None;
-                elem.url = None;
-            }
-            Some(3) => {
-                elem.text = None;
-                elem.image = None;
-                elem.url = None;
-            }
-            Some(4) => {
-                elem.text = None;
-                elem.image = None;
-                elem.video = None;
-            }
-            _ => {
-                elem.text = None;
-                elem.image = None;
-                elem.video = None;
-                elem.url = None;
-            }
-        }
-        elem
-    }
-}
-
 /// Paragraph structure
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct Paragraph {
@@ -237,26 +149,12 @@ pub struct Paragraph {
     pub props: Option<Value>,
 }
 
-impl Paragraph {
-    /// Create a new Paragraph instance
-    pub fn new(data: &Value) -> Self {
-        serde_json::from_value(data.clone()).unwrap_or_default()
-    }
-}
-
 /// Title structure
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct Title {
     /// Paragraphs in the title
     #[serde(default)]
     pub paragraphs: Vec<Paragraph>,
-}
-
-impl Title {
-    /// Create a new Title instance
-    pub fn new(data: &Value) -> Self {
-        serde_json::from_value(data.clone()).unwrap_or_default()
-    }
 }
 
 /// Content structure
