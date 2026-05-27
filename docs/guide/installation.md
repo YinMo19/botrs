@@ -15,7 +15,7 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
 ## Feature flags
 
-The crate ships with no default features. The only feature you may want to opt into is `examples`, which pulls in `clap` and `toml` for the binaries under `examples/`. Library users do not need it.
+The crate ships with no default features. The only feature you may want to opt into is `examples`, which pulls in `toml` and `tracing-subscriber` for the binaries under `examples/`. Library users do not need it.
 
 ```toml
 botrs = { version = "0.11.0", features = ["examples"] }

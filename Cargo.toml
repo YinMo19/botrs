@@ -35,14 +35,11 @@ futures-util = "0.3"
 
 # Error handling
 thiserror = "1.0"
-anyhow = "1.0"
 
 # Logging
 tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
 # Utilities
-uuid = { version = "1.0", features = ["v4"] }
 chrono = { version = "0.4", features = ["serde"] }
 base64 = "0.21"
 async-trait = "0.1"
@@ -50,16 +47,15 @@ ed25519-dalek = "2"
 hex = "0.4"
 
 # Optional features for examples
-clap = { version = "4.0", optional = true, features = ["derive"] }
 toml = { version = "0.8", optional = true }
+tracing-subscriber = { version = "0.3", optional = true, features = ["env-filter"] }
 
 [dev-dependencies]
-tokio-test = "0.4"
 tempfile = "3.0"
 
 [features]
 default = []
-examples = ["clap", "toml"]
+examples = ["toml", "tracing-subscriber"]
 
 [[example]]
 name = "simple_bot"

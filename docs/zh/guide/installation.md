@@ -15,7 +15,7 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
 ## 特性开关
 
-crate 默认不启用任何特性。唯一可能用到的开关是 `examples`，它会引入 `clap` 与 `toml`，用于 `examples/` 目录下的可执行示例。普通使用者不需要它。
+crate 默认不启用任何特性。唯一可能用到的开关是 `examples`，它会引入 `toml` 与 `tracing-subscriber`，用于 `examples/` 目录下的可执行示例。普通使用者不需要它。
 
 ```toml
 botrs = { version = "0.11.0", features = ["examples"] }
