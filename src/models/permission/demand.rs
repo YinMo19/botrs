@@ -27,18 +27,3 @@ impl HasId for APIPermissionDemand {
         Some(&self.guild_id)
     }
 }
-
-impl std::fmt::Display for APIPermissionDemand {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "PermissionDemand {{ guild_id: {}, api: {}, desc: {} }}",
-            self.guild_id,
-            self.api_identify
-                .as_ref()
-                .map(ToString::to_string)
-                .unwrap_or_default(),
-            self.desc.chars().take(50).collect::<String>()
-        )
-    }
-}

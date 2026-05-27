@@ -76,8 +76,10 @@ impl EventHandler for ApiPermissionHandler {
 
         if content.contains("/请求权限") {
             // Create permission demand (equivalent to self.api.post_permission_demand)
-            let demand_identity =
-                botrs::models::permission::APIPermissionDemandIdentify::guild_members();
+            let demand_identity = botrs::models::permission::APIPermissionDemandIdentify {
+                path: "/guilds/{guild_id}/members/{user_id}".to_string(),
+                method: "GET".to_string(),
+            };
 
             match ctx
                 .post_permission_demand(
