@@ -116,20 +116,6 @@ fn test_member_limit() {
 }
 
 #[test]
-fn test_icon_url() {
-    assert!(Guild::default().icon_url().is_none());
-
-    let guild = Guild {
-        id: "123456789".to_string(),
-        icon: "abc123".to_string(),
-        ..Default::default()
-    };
-    let url = guild.icon_url().unwrap();
-    assert!(url.contains("123456789"));
-    assert!(url.contains("abc123"));
-}
-
-#[test]
 fn test_role_creation() {
     let role = GuildRole::default();
     assert_eq!(role.id, "");

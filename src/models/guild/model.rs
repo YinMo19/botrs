@@ -46,18 +46,6 @@ pub struct Guild {
     pub op_user_id: Snowflake,
 }
 
-impl Guild {
-    /// Gets the guild's icon URL if it has one.
-    pub fn icon_url(&self) -> Option<String> {
-        (!self.icon.is_empty()).then(|| {
-            format!(
-                "https://groupprofile.qq.com/groupicon/{}/{}",
-                self.id, self.icon
-            )
-        })
-    }
-}
-
 impl HasId for Guild {
     fn id(&self) -> Option<&Snowflake> {
         (!self.id.is_empty()).then_some(&self.id)
