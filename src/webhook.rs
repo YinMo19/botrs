@@ -3,7 +3,7 @@
 use reqwest::header::HeaderMap;
 use serde::Serialize;
 
-use crate::models::gateway::{HTTPCallbackAck, WSHeartbeatAck};
+use crate::models::gateway::{HTTP_CALLBACK_ACK, WS_HEARTBEAT_ACK};
 use crate::models::webhook::{WHValidationReq, WHValidationRsp};
 
 #[derive(Debug, Clone, Copy, Serialize)]
@@ -14,7 +14,7 @@ struct Ack {
 
 pub fn heartbeat_ack(seq: u32) -> String {
     serde_json::to_string(&Ack {
-        op: WSHeartbeatAck,
+        op: WS_HEARTBEAT_ACK,
         d: seq,
     })
     .expect("heartbeat ack is serializable")
@@ -22,7 +22,7 @@ pub fn heartbeat_ack(seq: u32) -> String {
 
 pub fn dispatch_ack(success: bool) -> String {
     serde_json::to_string(&Ack {
-        op: HTTPCallbackAck,
+        op: HTTP_CALLBACK_ACK,
         d: u32::from(!success),
     })
     .expect("dispatch ack is serializable")
@@ -67,7 +67,7 @@ pub fn handle_http_callback(
         .and_then(|value| value.to_str().ok())
         .unwrap_or_default();
 
-    if payload.base.op_code == crate::models::gateway::HTTPCallbackValidation {
+    if payload.base.op_code == crate::models::gateway::HTTP_CALLBACK_VALIDATION {
         let data = payload
             .data
             .as_ref()
@@ -78,7 +78,7 @@ pub fn handle_http_callback(
     }
 
     match payload.base.op_code {
-        crate::models::gateway::WSHeartbeat => {
+        crate::models::gateway::WS_HEARTBEAT => {
             let seq = payload
                 .data
                 .as_ref()
@@ -86,7 +86,7 @@ pub fn handle_http_callback(
                 .unwrap_or_default() as u32;
             Ok(Some(heartbeat_ack(seq).into_bytes()))
         }
-        crate::models::gateway::WSDispatchEvent => {
+        crate::models::gateway::WS_DISPATCH_EVENT => {
             match crate::event::parse_and_handle(&mut payload) {
                 Ok(()) => Ok(Some(dispatch_ack(true).into_bytes())),
                 Err(err) => {
@@ -158,7 +158,7 @@ mod tests {
         );
 
         crate::event::register_handler(
-            crate::models::gateway::WSDispatchEvent,
+            crate::models::gateway::WS_DISPATCH_EVENT,
             "WEBHOOK_TEST",
             capture_session_app_id,
         );

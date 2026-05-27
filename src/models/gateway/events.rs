@@ -20,11 +20,12 @@ pub mod opcodes {
     pub const HEARTBEAT_ACK: u8 = 11;
 }
 
-pub fn op_means(op: OpCode) -> &'static str {
+/// Returns a human-readable name for a gateway opcode.
+pub fn op_meaning(op: OpCode) -> &'static str {
     match op {
         opcodes::DISPATCH => "Event",
         opcodes::HEARTBEAT => "Heartbeat",
-        opcodes::IDENTIFY => "Identity",
+        opcodes::IDENTIFY => "Identify",
         opcodes::RESUME => "Resume",
         opcodes::RECONNECT => "Reconnect",
         opcodes::INVALID_SESSION => "InvalidSession",
@@ -33,13 +34,6 @@ pub fn op_means(op: OpCode) -> &'static str {
         _ => "unknown",
     }
 }
-
-/// Function name for opcode descriptions.
-pub fn op_meaning(op: OpCode) -> &'static str {
-    op_means(op)
-}
-
-pub use op_meaning as OPMeans;
 
 pub fn event_to_intent(
     events: impl IntoIterator<Item = impl AsRef<str>>,

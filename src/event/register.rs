@@ -59,99 +59,111 @@ impl RegisterableHandler for PlainEventHandler {
 registerable!(
     GuildEventHandler,
     guild,
-    [EventGuildCreate, EventGuildDelete, EventGuildUpdate]
+    [EVENT_GUILD_CREATE, EVENT_GUILD_DELETE, EVENT_GUILD_UPDATE]
 );
 registerable!(
     GuildMemberEventHandler,
     guild_member,
     [
-        EventGuildMemberAdd,
-        EventGuildMemberRemove,
-        EventGuildMemberUpdate
+        EVENT_GUILD_MEMBER_ADD,
+        EVENT_GUILD_MEMBER_REMOVE,
+        EVENT_GUILD_MEMBER_UPDATE
     ]
 );
 registerable!(
     ChannelEventHandler,
     channel,
-    [EventChannelCreate, EventChannelDelete, EventChannelUpdate]
+    [
+        EVENT_CHANNEL_CREATE,
+        EVENT_CHANNEL_DELETE,
+        EVENT_CHANNEL_UPDATE
+    ]
 );
-registerable!(MessageEventHandler, message, [EventMessageCreate]);
-registerable!(ATMessageEventHandler, at_message, [EventAtMessageCreate]);
+registerable!(MessageEventHandler, message, [EVENT_MESSAGE_CREATE]);
+registerable!(ATMessageEventHandler, at_message, [EVENT_AT_MESSAGE_CREATE]);
 registerable!(
     DirectMessageEventHandler,
     direct_message,
-    [EventDirectMessageCreate]
+    [EVENT_DIRECT_MESSAGE_CREATE]
 );
 registerable!(
     MessageDeleteEventHandler,
     message_delete,
-    [EventMessageDelete]
+    [EVENT_MESSAGE_DELETE]
 );
 registerable!(
     PublicMessageDeleteEventHandler,
     public_message_delete,
-    [EventPublicMessageDelete]
+    [EVENT_PUBLIC_MESSAGE_DELETE]
 );
 registerable!(
     DirectMessageDeleteEventHandler,
     direct_message_delete,
-    [EventDirectMessageDelete]
+    [EVENT_DIRECT_MESSAGE_DELETE]
 );
 registerable!(
     MessageReactionEventHandler,
     message_reaction,
-    [EventMessageReactionAdd, EventMessageReactionRemove]
+    [EVENT_MESSAGE_REACTION_ADD, EVENT_MESSAGE_REACTION_REMOVE]
 );
 registerable!(
     MessageAuditEventHandler,
     message_audit,
-    [EventMessageAuditPass, EventMessageAuditReject]
+    [EVENT_MESSAGE_AUDIT_PASS, EVENT_MESSAGE_AUDIT_REJECT]
 );
 registerable!(
     AudioEventHandler,
     audio,
     [
-        EventAudioStart,
-        EventAudioFinish,
-        EventAudioOnMic,
-        EventAudioOffMic
+        EVENT_AUDIO_START,
+        EVENT_AUDIO_FINISH,
+        EVENT_AUDIO_ON_MIC,
+        EVENT_AUDIO_OFF_MIC
     ]
 );
 registerable!(
     ThreadEventHandler,
     thread,
     [
-        EventForumThreadCreate,
-        EventForumThreadUpdate,
-        EventForumThreadDelete
+        EVENT_FORUM_THREAD_CREATE,
+        EVENT_FORUM_THREAD_UPDATE,
+        EVENT_FORUM_THREAD_DELETE
     ]
 );
 registerable!(
     PostEventHandler,
     post,
-    [EventForumPostCreate, EventForumPostDelete]
+    [EVENT_FORUM_POST_CREATE, EVENT_FORUM_POST_DELETE]
 );
 registerable!(
     ReplyEventHandler,
     reply,
-    [EventForumReplyCreate, EventForumReplyDelete]
+    [EVENT_FORUM_REPLY_CREATE, EVENT_FORUM_REPLY_DELETE]
 );
-registerable!(ForumAuditEventHandler, forum_audit, [EventForumAuditResult]);
+registerable!(
+    ForumAuditEventHandler,
+    forum_audit,
+    [EVENT_FORUM_AUDIT_RESULT]
+);
 registerable!(
     InteractionEventHandler,
     interaction,
-    [EventInteractionCreate]
+    [EVENT_INTERACTION_CREATE]
 );
 registerable!(
     GroupATMessageEventHandler,
     group_at_message,
-    [EventGroupAtMessageCreate]
+    [EVENT_GROUP_AT_MESSAGE_CREATE]
 );
-registerable!(C2CMessageEventHandler, c2c_message, [EventC2CMessageCreate]);
+registerable!(
+    C2CMessageEventHandler,
+    c2c_message,
+    [EVENT_C2C_MESSAGE_CREATE]
+);
 registerable!(
     SubscribeMsgStatusEventHandler,
     subscribe_msg_status,
-    [EventSubscribeMsgStatus]
+    [EVENT_SUBSCRIBE_MESSAGE_STATUS]
 );
-registerable!(C2CFriendEventHandler, c2c_friend, [EventC2CFriendAdd]);
-registerable!(EnterAIOEventHandler, enter_aio, [EventEnterAIO]);
+registerable!(C2CFriendEventHandler, c2c_friend, [EVENT_C2C_FRIEND_ADD]);
+registerable!(EnterAIOEventHandler, enter_aio, [EVENT_ENTER_AIO]);

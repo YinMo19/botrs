@@ -24,9 +24,9 @@ fn parse_and_handle_dispatches_typed_handler() {
     let body = br#"{"op":0,"t":"MESSAGE_CREATE","d":{"id":"1","content":"hello"}}"#;
     let mut payload = WSPayload {
         base: WSPayloadBase {
-            op_code: WSDispatchEvent,
+            op_code: WS_DISPATCH_EVENT,
             seq: None,
-            event_type: Some(EventMessageCreate.to_string()),
+            event_type: Some(EVENT_MESSAGE_CREATE.to_string()),
             event_id: None,
         },
         data: None,

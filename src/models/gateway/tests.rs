@@ -4,13 +4,13 @@ use crate::intents::Intents;
 #[test]
 fn test_event_to_intent_matches_expected_mapping() {
     let intent = event_to_intent([
-        EventGuildCreate,
-        EventChannelDelete,
-        EventGuildMemberAdd,
-        EventMessageCreate,
-        EventGroupAtMessageCreate,
-        EventC2CFriendDel,
-        EventEnterAIO,
+        EVENT_GUILD_CREATE,
+        EVENT_CHANNEL_DELETE,
+        EVENT_GUILD_MEMBER_ADD,
+        EVENT_MESSAGE_CREATE,
+        EVENT_GROUP_AT_MESSAGE_CREATE,
+        EVENT_C2C_FRIEND_DEL,
+        EVENT_ENTER_AIO,
         "UNKNOWN_EVENT",
     ]);
 
@@ -25,7 +25,7 @@ fn test_event_to_intent_matches_expected_mapping() {
 #[test]
 fn test_event_to_intent_maps_public_and_forum_events() {
     assert_eq!(
-        event_to_intent([EventAtMessageCreate, EventForumAuditResult]),
+        event_to_intent([EVENT_AT_MESSAGE_CREATE, EVENT_FORUM_AUDIT_RESULT]),
         Intents::PUBLIC_GUILD_MESSAGES | Intents::FORUMS
     );
 }
@@ -34,10 +34,10 @@ fn test_event_to_intent_maps_public_and_forum_events() {
 fn websocket_payload_keeps_session_out_of_json() {
     let mut payload = WSPayload::from(GatewayEvent {
         id: Some("event-id".to_string()),
-        event_type: Some(EventMessageCreate.to_string()),
+        event_type: Some(EVENT_MESSAGE_CREATE.to_string()),
         data: Some(serde_json::json!({"content": "hello"})),
         sequence: Some(7),
-        opcode: WSDispatchEvent,
+        opcode: WS_DISPATCH_EVENT,
     });
     payload.session = Some(crate::session_manager::Session::new(
         "wss://example.com",
@@ -50,9 +50,9 @@ fn websocket_payload_keeps_session_out_of_json() {
     let value = serde_json::to_value(&payload).unwrap();
 
     assert!(value.get("session").is_none());
-    assert_eq!(value["op"], WSDispatchEvent);
+    assert_eq!(value["op"], WS_DISPATCH_EVENT);
     assert_eq!(value["s"], 7);
-    assert_eq!(value["t"], EventMessageCreate);
+    assert_eq!(value["t"], EVENT_MESSAGE_CREATE);
     assert_eq!(value["id"], "event-id");
 }
 
@@ -67,12 +67,12 @@ fn gateway_event_omits_absent_wire_fields() {
             "shard": [0, 1],
         })),
         sequence: None,
-        opcode: WSIdentity,
+        opcode: WS_IDENTIFY,
     };
 
     let value = serde_json::to_value(&event).unwrap();
 
-    assert_eq!(value["op"], WSIdentity);
+    assert_eq!(value["op"], WS_IDENTIFY);
     assert!(value.get("d").is_some());
     assert!(value.get("id").is_none());
     assert!(value.get("t").is_none());
