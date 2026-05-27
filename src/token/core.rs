@@ -101,7 +101,7 @@ impl Token {
 
     /// Returns the raw OAuth access token without the token type prefix.
     ///
-    /// Botgo uses the bare access token for gateway resume payloads.
+    /// Gateway resume payloads use the bare access token.
     pub(crate) async fn raw_access_token(&self) -> Result<String> {
         self.access_token().await
     }

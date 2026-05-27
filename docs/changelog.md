@@ -10,9 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 - Removed the `src/api/compat` PascalCase `BotApi` facade (`PostMessage`, `Channels`, `PostAudio`, etc.). Use the native snake_case `BotApi` methods instead.
 - Removed the top-level Go-style OpenAPI compatibility modules (`facade`, `openapi`, and `options`) and the HTTP filter registry that only existed for that facade.
-- Removed standalone Botgo helper facades (`log`, `remote`, `search`, and `version`) that were not part of the REST or gateway wire behavior.
+- Removed standalone helper facades (`log`, `remote`, `search`, and `version`) that were not part of the REST or gateway wire behavior.
 - Removed Go-style error/session helper names (`Err`, `New`, `Error`, `CanNotResume`, `CheckSessionLimit`, etc.) in favor of native Rust names.
-- Removed the unused Botgo-style `websocket` facade; use `Client`, `Gateway`, and `session_manager` for Rust-native gateway handling.
+- Removed the unused `websocket` facade; use `Client`, `Gateway`, and `session_manager` for Rust-native gateway handling.
 - Removed Go-style event, webhook, and signature helper names (`ParseData`, `RegisterHandlers`, `HTTPHandler`, `Gen*ACK`, `Generate`, `Verify`, etc.) in favor of native Rust names.
 - Removed Go-style token/API/constant helper names (`NewQQBotTokenSource`, `GetAppID`, `StartRefreshAccessToken`, `APIv1`, `HeaderTraceID`, etc.) in favor of native Rust names.
 - Removed Go-style intent constants (`IntentGuilds`, `IntentGroupMessages`, `IntentNone`, etc.); use `Intents::GUILDS`, `Intents::PUBLIC_MESSAGES`, or `0` instead.
