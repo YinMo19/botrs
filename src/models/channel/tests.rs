@@ -62,16 +62,16 @@ fn test_speak_permissions() {
 #[test]
 fn test_channel_permissions() {
     let mut perms = ChannelPermissions::new();
-    assert!(!perms.is_user_permission());
+    assert!(perms.user_id.is_empty());
 
     perms.user_id = "user123".to_string();
-    assert!(perms.is_user_permission());
+    assert_eq!(perms.user_id, "user123");
 
     let role_perms = ChannelRolesPermissions {
         role_id: "role123".to_string(),
         ..Default::default()
     };
-    assert!(role_perms.is_role_permission());
+    assert_eq!(role_perms.role_id, "role123");
 }
 
 #[test]

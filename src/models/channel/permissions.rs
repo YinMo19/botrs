@@ -21,11 +21,6 @@ impl ChannelPermissions {
     pub fn new() -> Self {
         Self::default()
     }
-
-    /// Returns true if this is for a user.
-    pub fn is_user_permission(&self) -> bool {
-        !self.user_id.is_empty()
-    }
 }
 
 /// Channel role permissions response.
@@ -40,13 +35,6 @@ pub struct ChannelRolesPermissions {
     /// The permissions string
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub permissions: String,
-}
-
-impl ChannelRolesPermissions {
-    /// Returns true if this is for a role.
-    pub fn is_role_permission(&self) -> bool {
-        !self.role_id.is_empty()
-    }
 }
 
 /// Body for updating channel user or role permissions.
