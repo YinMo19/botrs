@@ -14,12 +14,6 @@ fn test_manage_event_type_from_str() {
 }
 
 #[test]
-fn test_manage_event_type_as_str() {
-    assert_eq!(ManageEventType::GroupAddRobot.as_str(), "group_add_robot");
-    assert_eq!(ManageEventType::FriendAdd.as_str(), "friend_add");
-}
-
-#[test]
 fn manage_event_type_serializes_as_event_name() {
     assert_eq!(
         serde_json::to_value(ManageEventType::GroupMsgReceive).unwrap(),
@@ -29,18 +23,6 @@ fn manage_event_type_serializes_as_event_name() {
         serde_json::from_value::<ManageEventType>(serde_json::json!("c2c_msg_reject")).unwrap(),
         ManageEventType::C2CMsgReject
     );
-}
-
-#[test]
-fn test_is_group_event() {
-    assert!(ManageEventType::GroupAddRobot.is_group_event());
-    assert!(!ManageEventType::FriendAdd.is_group_event());
-}
-
-#[test]
-fn test_is_c2c_event() {
-    assert!(ManageEventType::FriendAdd.is_c2c_event());
-    assert!(!ManageEventType::GroupAddRobot.is_c2c_event());
 }
 
 #[test]

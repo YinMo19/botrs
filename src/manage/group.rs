@@ -25,14 +25,6 @@ impl GroupManageEvent {
             op_member_openid: wire.op_member_openid,
         }
     }
-
-    /// Get the event timestamp as a formatted string
-    pub fn formatted_timestamp(&self) -> Option<String> {
-        self.timestamp.map(|ts| {
-            let datetime = chrono::DateTime::from_timestamp(ts as i64, 0).unwrap_or_default();
-            datetime.format("%Y-%m-%d %H:%M:%S").to_string()
-        })
-    }
 }
 
 #[derive(Debug, Default, Deserialize)]
