@@ -165,7 +165,7 @@ fn schedule_keeps_official_json_shape() {
 
 #[test]
 fn schedule_wrapper_allows_empty_zero_value_body() {
-    let wrapper = ScheduleWrapper::empty();
+    let wrapper = ScheduleWrapper::default();
     let value = serde_json::to_value(&wrapper).unwrap();
 
     assert!(value.as_object().unwrap().is_empty());

@@ -47,7 +47,9 @@ impl BotApi {
             "Creating schedule '{}' in channel {}",
             schedule.name, channel_id
         );
-        let wrapper = ScheduleWrapper::new(schedule.clone());
+        let wrapper = ScheduleWrapper {
+            schedule: Some(schedule.clone()),
+        };
         let path = resource::channel_schedules(channel_id);
         let response = self
             .http
@@ -68,7 +70,9 @@ impl BotApi {
             schedule_id, channel_id
         );
 
-        let wrapper = ScheduleWrapper::new(schedule.clone());
+        let wrapper = ScheduleWrapper {
+            schedule: Some(schedule.clone()),
+        };
         let path = resource::channel_schedule(channel_id, schedule_id);
         let response = self
             .http
