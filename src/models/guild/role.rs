@@ -54,10 +54,6 @@ impl GuildRole {
     fn default_color() -> u32 {
         DEFAULT_ROLE_COLOR
     }
-
-    fn hoist_value(&self) -> u32 {
-        self.hoist
-    }
 }
 
 /// Filter identifying which role fields are being updated.
@@ -110,13 +106,6 @@ pub struct UpdateResult {
     pub guild_id: Snowflake,
     #[serde(default)]
     pub role: Option<GuildRole>,
-}
-
-impl GuildRole {
-    /// Converts the role to the numeric hoist value expected by the API.
-    pub fn hoist_as_u32(&self) -> u32 {
-        self.hoist_value()
-    }
 }
 
 impl HasId for GuildRole {
