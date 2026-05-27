@@ -24,6 +24,103 @@ impl<H: EventHandler + 'static> Client<H> {
             })
         }
 
+        fn fallback_event_id(
+            event_name: &str,
+            envelope_id: &Option<String>,
+            sequence: Option<u64>,
+        ) -> String {
+            envelope_id
+                .clone()
+                .unwrap_or_else(|| format!("{}_{}", event_name, sequence.unwrap_or(0)))
+        }
+
+        macro_rules! dispatch_from_data {
+            ($event_name:literal, $event_type:ty, $handler:ident) => {{
+                if let Some(data) = event.data {
+                    let event_id = fallback_event_id($event_name, &event.id, event.sequence);
+                    let value = <$event_type>::from_data(ctx.api_clone(), event_id, data);
+                    self.handler.$handler(ctx, value).await;
+                }
+            }};
+        }
+
+        macro_rules! dispatch_json {
+            ($event_name:literal, $event_type:ty, $handler:ident) => {{
+                if let Some(data) = event.data {
+                    match serde_json::from_value::<$event_type>(data.clone()) {
+                        Ok(value) => {
+                            self.handler.$handler(ctx, value).await;
+                        }
+                        Err(e) => {
+                            error!("Failed to parse {} event: {}", $event_name, e);
+                            debug!(
+                                "Raw event data: {}",
+                                serde_json::to_string_pretty(&data).unwrap_or_default()
+                            );
+                        }
+                    }
+                }
+            }};
+        }
+
+        macro_rules! dispatch_payload_new {
+            ($event_type:ty, $handler:ident) => {{
+                if let Some(data) = event.data {
+                    let event_id = payload_event_id(&event.id, &data);
+                    let value = <$event_type>::new(event_id, &data);
+                    self.handler.$handler(ctx, value).await;
+                }
+            }};
+        }
+
+        macro_rules! dispatch_api_payload_new {
+            ($event_type:ty, $handler:ident) => {{
+                if let Some(data) = event.data {
+                    let event_id = payload_event_id(&event.id, &data);
+                    let value = <$event_type>::new(ctx.api_clone(), event_id, &data);
+                    self.handler.$handler(ctx, value).await;
+                }
+            }};
+        }
+
+        macro_rules! dispatch_reaction {
+            ($handler:ident) => {{
+                if let Some(data) = event.data {
+                    let reaction = Reaction::new(ctx.api_clone(), event.id, &data)?;
+                    self.handler.$handler(ctx, reaction).await;
+                }
+            }};
+        }
+
+        macro_rules! dispatch_audio {
+            ($handler:ident) => {{
+                if let Some(data) = event.data {
+                    let audio_action = AudioAction::from_value(&data);
+                    let audio = Audio::new(ctx.api_clone(), event.id, audio_action);
+                    self.handler.$handler(ctx, audio).await;
+                }
+            }};
+        }
+
+        macro_rules! dispatch_forum {
+            ($event_type:ty, $handler:ident) => {{
+                if let Some(data) = event.data {
+                    let value = <$event_type>::new(ctx.api_clone(), event.id, &data);
+                    self.handler.$handler(ctx, value).await;
+                }
+            }};
+        }
+
+        macro_rules! dispatch_open_forum {
+            ($handler:ident) => {{
+                if let Some(data) = event.data {
+                    let mut thread = OpenThread::new(ctx.api_clone(), &data);
+                    thread.event_id = event.id;
+                    self.handler.$handler(ctx, thread).await;
+                }
+            }};
+        }
+
         match event_type.as_deref() {
             Some("READY") => {
                 if let Some(data) = event.data {
@@ -46,93 +143,49 @@ impl<H: EventHandler + 'static> Client<H> {
                 self.handler.resumed(ctx).await;
             }
             Some("AT_MESSAGE_CREATE") => {
-                if let Some(data) = event.data {
-                    let event_id = event.id.unwrap_or_else(|| {
-                        format!("AT_MESSAGE_CREATE_{}", event.sequence.unwrap_or(0))
-                    });
-                    let message = Message::from_data(ctx.api_clone(), event_id, data);
-                    self.handler.message_create(ctx, message).await;
-                }
+                dispatch_from_data!("AT_MESSAGE_CREATE", Message, message_create);
             }
             Some("DIRECT_MESSAGE_CREATE") => {
-                if let Some(data) = event.data {
-                    let event_id = event.id.unwrap_or_else(|| {
-                        format!("DIRECT_MESSAGE_CREATE_{}", event.sequence.unwrap_or(0))
-                    });
-                    let message = Message::from_data(ctx.api_clone(), event_id, data);
-                    self.handler.direct_message_create(ctx, message).await;
-                }
+                dispatch_from_data!("DIRECT_MESSAGE_CREATE", Message, direct_message_create);
             }
             Some("GROUP_AT_MESSAGE_CREATE") => {
-                if let Some(data) = event.data {
-                    let event_id = event.id.unwrap_or_else(|| {
-                        format!("GROUP_AT_MESSAGE_CREATE_{}", event.sequence.unwrap_or(0))
-                    });
-                    let message = GroupMessage::from_data(ctx.api_clone(), event_id, data);
-                    self.handler.group_message_create(ctx, message).await;
-                }
+                dispatch_from_data!(
+                    "GROUP_AT_MESSAGE_CREATE",
+                    GroupMessage,
+                    group_message_create
+                );
             }
             Some("C2C_MESSAGE_CREATE") => {
-                if let Some(data) = event.data {
-                    let event_id = event.id.unwrap_or_else(|| {
-                        format!("C2C_MESSAGE_CREATE_{}", event.sequence.unwrap_or(0))
-                    });
-                    let message = C2CMessage::from_data(ctx.api_clone(), event_id, data);
-                    self.handler.c2c_message_create(ctx, message).await;
-                }
+                dispatch_from_data!("C2C_MESSAGE_CREATE", C2CMessage, c2c_message_create);
             }
             Some("SUBSCRIBE_MESSAGE_STATUS") => {
-                if let Some(data) = event.data {
-                    let event_id = payload_event_id(&event.id, &data);
-                    let status = SubscribeMessageStatusData::new(event_id, &data);
-                    self.handler.subscribe_message_status(ctx, status).await;
-                }
+                dispatch_payload_new!(SubscribeMessageStatusData, subscribe_message_status);
             }
             Some("ENTER_AIO") => {
-                if let Some(data) = event.data {
-                    let event_id = payload_event_id(&event.id, &data);
-                    let aio = EnterAioEvent::new(event_id, &data);
-                    self.handler.enter_aio(ctx, aio).await;
-                }
+                dispatch_payload_new!(EnterAioEvent, enter_aio);
             }
             Some("DIRECT_MESSAGE_DELETE") => {
-                if let Some(data) = event.data {
-                    let event_id = event.id.unwrap_or_else(|| {
-                        format!("DIRECT_MESSAGE_DELETE_{}", event.sequence.unwrap_or(0))
-                    });
-                    let message = MessageDelete::from_data(ctx.api_clone(), event_id, data);
-                    self.handler.direct_message_delete(ctx, message).await;
-                }
+                dispatch_from_data!(
+                    "DIRECT_MESSAGE_DELETE",
+                    MessageDelete,
+                    direct_message_delete
+                );
             }
             Some("PUBLIC_MESSAGE_DELETE") => {
-                if let Some(data) = event.data {
-                    let event_id = event.id.unwrap_or_else(|| {
-                        format!("PUBLIC_MESSAGE_DELETE_{}", event.sequence.unwrap_or(0))
-                    });
-                    let message = MessageDelete::from_data(ctx.api_clone(), event_id, data);
-                    self.handler.public_message_delete(ctx, message).await;
-                }
+                dispatch_from_data!(
+                    "PUBLIC_MESSAGE_DELETE",
+                    MessageDelete,
+                    public_message_delete
+                );
             }
             Some("MESSAGE_DELETE") => {
-                if let Some(data) = event.data {
-                    let event_id = event.id.unwrap_or_else(|| {
-                        format!("MESSAGE_DELETE_{}", event.sequence.unwrap_or(0))
-                    });
-                    let message = MessageDelete::from_data(ctx.api_clone(), event_id, data);
-                    self.handler.message_delete(ctx, message).await;
-                }
+                dispatch_from_data!("MESSAGE_DELETE", MessageDelete, message_delete);
             }
             Some("MESSAGE_REACTION_ADD") => {
-                if let Some(data) = event.data {
-                    let reaction = Reaction::new(ctx.api_clone(), event.id, &data)?;
-                    self.handler.message_reaction_add(ctx, reaction).await;
-                }
+                dispatch_reaction!(message_reaction_add);
             }
             Some("MESSAGE_REACTION_REMOVE") => {
-                if let Some(data) = event.data {
-                    let reaction = Reaction::new(ctx.api_clone(), event.id, &data)?;
-                    self.handler.message_reaction_remove(ctx, reaction).await;
-                }
+                dispatch_reaction!(message_reaction_remove);
             }
             Some("INTERACTION_CREATE") => {
                 if let Some(data) = event.data {
@@ -141,208 +194,73 @@ impl<H: EventHandler + 'static> Client<H> {
                 }
             }
             Some("AUDIO_START") => {
-                if let Some(data) = event.data {
-                    let audio_action = AudioAction::from_value(&data);
-                    let audio = Audio::new(ctx.api_clone(), event.id, audio_action);
-                    self.handler.audio_start(ctx, audio).await;
-                }
+                dispatch_audio!(audio_start);
             }
             Some("AUDIO_FINISH") => {
-                if let Some(data) = event.data {
-                    let audio_action = AudioAction::from_value(&data);
-                    let audio = Audio::new(ctx.api_clone(), event.id, audio_action);
-                    self.handler.audio_finish(ctx, audio).await;
-                }
+                dispatch_audio!(audio_finish);
             }
             Some("ON_MIC") => {
-                if let Some(data) = event.data {
-                    let audio_action = AudioAction::from_value(&data);
-                    let audio = Audio::new(ctx.api_clone(), event.id, audio_action);
-                    self.handler.on_mic(ctx, audio).await;
-                }
+                dispatch_audio!(on_mic);
             }
             Some("OFF_MIC") => {
-                if let Some(data) = event.data {
-                    let audio_action = AudioAction::from_value(&data);
-                    let audio = Audio::new(ctx.api_clone(), event.id, audio_action);
-                    self.handler.off_mic(ctx, audio).await;
-                }
+                dispatch_audio!(off_mic);
             }
             Some("GUILD_CREATE") => {
-                if let Some(data) = event.data {
-                    let event_id = event
-                        .id
-                        .unwrap_or_else(|| format!("GUILD_CREATE_{}", event.sequence.unwrap_or(0)));
-                    let guild = Guild::from_data(ctx.api_clone(), event_id, data);
-                    self.handler.guild_create(ctx, guild).await;
-                }
+                dispatch_from_data!("GUILD_CREATE", Guild, guild_create);
             }
             Some("GUILD_UPDATE") => {
-                if let Some(data) = event.data {
-                    let event_id = event
-                        .id
-                        .unwrap_or_else(|| format!("GUILD_UPDATE_{}", event.sequence.unwrap_or(0)));
-                    let guild = Guild::from_data(ctx.api_clone(), event_id, data);
-                    self.handler.guild_update(ctx, guild).await;
-                }
+                dispatch_from_data!("GUILD_UPDATE", Guild, guild_update);
             }
             Some("GUILD_DELETE") => {
-                if let Some(data) = event.data {
-                    let event_id = event
-                        .id
-                        .unwrap_or_else(|| format!("GUILD_DELETE_{}", event.sequence.unwrap_or(0)));
-                    let guild = Guild::from_data(ctx.api_clone(), event_id, data);
-                    self.handler.guild_delete(ctx, guild).await;
-                }
+                dispatch_from_data!("GUILD_DELETE", Guild, guild_delete);
             }
             Some("CHANNEL_CREATE") => {
-                if let Some(data) = event.data {
-                    let event_id = event.id.unwrap_or_else(|| {
-                        format!("CHANNEL_CREATE_{}", event.sequence.unwrap_or(0))
-                    });
-                    let channel = Channel::from_data(ctx.api_clone(), event_id, data);
-                    self.handler.channel_create(ctx, channel).await;
-                }
+                dispatch_from_data!("CHANNEL_CREATE", Channel, channel_create);
             }
             Some("CHANNEL_UPDATE") => {
-                if let Some(data) = event.data {
-                    let event_id = event.id.unwrap_or_else(|| {
-                        format!("CHANNEL_UPDATE_{}", event.sequence.unwrap_or(0))
-                    });
-                    let channel = Channel::from_data(ctx.api_clone(), event_id, data);
-                    self.handler.channel_update(ctx, channel).await;
-                }
+                dispatch_from_data!("CHANNEL_UPDATE", Channel, channel_update);
             }
             Some("CHANNEL_DELETE") => {
-                if let Some(data) = event.data {
-                    let event_id = event.id.unwrap_or_else(|| {
-                        format!("CHANNEL_DELETE_{}", event.sequence.unwrap_or(0))
-                    });
-                    let channel = Channel::from_data(ctx.api_clone(), event_id, data);
-                    self.handler.channel_delete(ctx, channel).await;
-                }
+                dispatch_from_data!("CHANNEL_DELETE", Channel, channel_delete);
             }
             Some("GUILD_MEMBER_ADD") => {
-                if let Some(data) = event.data {
-                    match serde_json::from_value::<Member>(data.clone()) {
-                        Ok(member) => {
-                            self.handler.guild_member_add(ctx, member).await;
-                        }
-                        Err(e) => {
-                            error!("Failed to parse GUILD_MEMBER_ADD event: {}", e);
-                            debug!(
-                                "Raw event data: {}",
-                                serde_json::to_string_pretty(&data).unwrap_or_default()
-                            );
-                        }
-                    }
-                }
+                dispatch_json!("GUILD_MEMBER_ADD", Member, guild_member_add);
             }
             Some("GUILD_MEMBER_UPDATE") => {
-                if let Some(data) = event.data {
-                    match serde_json::from_value::<Member>(data.clone()) {
-                        Ok(member) => {
-                            self.handler.guild_member_update(ctx, member).await;
-                        }
-                        Err(e) => {
-                            error!("Failed to parse GUILD_MEMBER_UPDATE event: {}", e);
-                            debug!(
-                                "Raw event data: {}",
-                                serde_json::to_string_pretty(&data).unwrap_or_default()
-                            );
-                        }
-                    }
-                }
+                dispatch_json!("GUILD_MEMBER_UPDATE", Member, guild_member_update);
             }
             Some("GUILD_MEMBER_REMOVE") => {
-                if let Some(data) = event.data {
-                    match serde_json::from_value::<Member>(data.clone()) {
-                        Ok(member) => {
-                            self.handler.guild_member_remove(ctx, member).await;
-                        }
-                        Err(e) => {
-                            error!("Failed to parse GUILD_MEMBER_REMOVE event: {}", e);
-                            debug!(
-                                "Raw event data: {}",
-                                serde_json::to_string_pretty(&data).unwrap_or_default()
-                            );
-                        }
-                    }
-                }
+                dispatch_json!("GUILD_MEMBER_REMOVE", Member, guild_member_remove);
             }
             Some("MESSAGE_AUDIT_PASS") => {
-                if let Some(data) = event.data {
-                    let event_id = event.id.unwrap_or_else(|| {
-                        format!("MESSAGE_AUDIT_PASS_{}", event.sequence.unwrap_or(0))
-                    });
-                    let audit = MessageAudit::from_data(ctx.api_clone(), event_id, data);
-                    self.handler.message_audit_pass(ctx, audit).await;
-                }
+                dispatch_from_data!("MESSAGE_AUDIT_PASS", MessageAudit, message_audit_pass);
             }
             Some("MESSAGE_AUDIT_REJECT") => {
-                if let Some(data) = event.data {
-                    let event_id = event.id.unwrap_or_else(|| {
-                        format!("MESSAGE_AUDIT_REJECT_{}", event.sequence.unwrap_or(0))
-                    });
-                    let audit = MessageAudit::from_data(ctx.api_clone(), event_id, data);
-                    self.handler.message_audit_reject(ctx, audit).await;
-                }
+                dispatch_from_data!("MESSAGE_AUDIT_REJECT", MessageAudit, message_audit_reject);
             }
             Some("FRIEND_ADD") => {
-                if let Some(data) = event.data {
-                    let event_id = payload_event_id(&event.id, &data);
-                    let event = C2CManageEvent::new(ctx.api_clone(), event_id, &data);
-                    self.handler.friend_add(ctx, event).await;
-                }
+                dispatch_api_payload_new!(C2CManageEvent, friend_add);
             }
             Some("FRIEND_DEL") => {
-                if let Some(data) = event.data {
-                    let event_id = payload_event_id(&event.id, &data);
-                    let event = C2CManageEvent::new(ctx.api_clone(), event_id, &data);
-                    self.handler.friend_del(ctx, event).await;
-                }
+                dispatch_api_payload_new!(C2CManageEvent, friend_del);
             }
             Some("C2C_MSG_REJECT") => {
-                if let Some(data) = event.data {
-                    let event_id = payload_event_id(&event.id, &data);
-                    let event = C2CManageEvent::new(ctx.api_clone(), event_id, &data);
-                    self.handler.c2c_msg_reject(ctx, event).await;
-                }
+                dispatch_api_payload_new!(C2CManageEvent, c2c_msg_reject);
             }
             Some("C2C_MSG_RECEIVE") => {
-                if let Some(data) = event.data {
-                    let event_id = payload_event_id(&event.id, &data);
-                    let event = C2CManageEvent::new(ctx.api_clone(), event_id, &data);
-                    self.handler.c2c_msg_receive(ctx, event).await;
-                }
+                dispatch_api_payload_new!(C2CManageEvent, c2c_msg_receive);
             }
             Some("GROUP_ADD_ROBOT") => {
-                if let Some(data) = event.data {
-                    let event_id = payload_event_id(&event.id, &data);
-                    let event = GroupManageEvent::new(ctx.api_clone(), event_id, &data);
-                    self.handler.group_add_robot(ctx, event).await;
-                }
+                dispatch_api_payload_new!(GroupManageEvent, group_add_robot);
             }
             Some("GROUP_DEL_ROBOT") => {
-                if let Some(data) = event.data {
-                    let event_id = payload_event_id(&event.id, &data);
-                    let event = GroupManageEvent::new(ctx.api_clone(), event_id, &data);
-                    self.handler.group_del_robot(ctx, event).await;
-                }
+                dispatch_api_payload_new!(GroupManageEvent, group_del_robot);
             }
             Some("GROUP_MSG_REJECT") => {
-                if let Some(data) = event.data {
-                    let event_id = payload_event_id(&event.id, &data);
-                    let event = GroupManageEvent::new(ctx.api_clone(), event_id, &data);
-                    self.handler.group_msg_reject(ctx, event).await;
-                }
+                dispatch_api_payload_new!(GroupManageEvent, group_msg_reject);
             }
             Some("GROUP_MSG_RECEIVE") => {
-                if let Some(data) = event.data {
-                    let event_id = payload_event_id(&event.id, &data);
-                    let event = GroupManageEvent::new(ctx.api_clone(), event_id, &data);
-                    self.handler.group_msg_receive(ctx, event).await;
-                }
+                dispatch_api_payload_new!(GroupManageEvent, group_msg_receive);
             }
             Some("AUDIO_OR_LIVE_CHANNEL_MEMBER_ENTER") => {
                 if let Some(data) = event.data {
@@ -361,46 +279,25 @@ impl<H: EventHandler + 'static> Client<H> {
                 }
             }
             Some("FORUM_THREAD_CREATE") => {
-                if let Some(data) = event.data {
-                    let thread = Thread::new(ctx.api_clone(), event.id, &data);
-                    self.handler.forum_thread_create(ctx, thread).await;
-                }
+                dispatch_forum!(Thread, forum_thread_create);
             }
             Some("FORUM_THREAD_UPDATE") => {
-                if let Some(data) = event.data {
-                    let thread = Thread::new(ctx.api_clone(), event.id, &data);
-                    self.handler.forum_thread_update(ctx, thread).await;
-                }
+                dispatch_forum!(Thread, forum_thread_update);
             }
             Some("FORUM_THREAD_DELETE") => {
-                if let Some(data) = event.data {
-                    let thread = Thread::new(ctx.api_clone(), event.id, &data);
-                    self.handler.forum_thread_delete(ctx, thread).await;
-                }
+                dispatch_forum!(Thread, forum_thread_delete);
             }
             Some("FORUM_POST_CREATE") => {
-                if let Some(data) = event.data {
-                    let post = Post::new(ctx.api_clone(), event.id, &data);
-                    self.handler.forum_post_create(ctx, post).await;
-                }
+                dispatch_forum!(Post, forum_post_create);
             }
             Some("FORUM_POST_DELETE") => {
-                if let Some(data) = event.data {
-                    let post = Post::new(ctx.api_clone(), event.id, &data);
-                    self.handler.forum_post_delete(ctx, post).await;
-                }
+                dispatch_forum!(Post, forum_post_delete);
             }
             Some("FORUM_REPLY_CREATE") => {
-                if let Some(data) = event.data {
-                    let reply = Reply::new(ctx.api_clone(), event.id, &data);
-                    self.handler.forum_reply_create(ctx, reply).await;
-                }
+                dispatch_forum!(Reply, forum_reply_create);
             }
             Some("FORUM_REPLY_DELETE") => {
-                if let Some(data) = event.data {
-                    let reply = Reply::new(ctx.api_clone(), event.id, &data);
-                    self.handler.forum_reply_delete(ctx, reply).await;
-                }
+                dispatch_forum!(Reply, forum_reply_delete);
             }
             Some("FORUM_PUBLISH_AUDIT_RESULT") => {
                 if let Some(data) = event.data {
@@ -409,53 +306,25 @@ impl<H: EventHandler + 'static> Client<H> {
                 }
             }
             Some("OPEN_FORUM_THREAD_CREATE") => {
-                if let Some(data) = event.data {
-                    let mut thread = OpenThread::new(ctx.api_clone(), &data);
-                    thread.event_id = event.id;
-                    self.handler.open_forum_thread_create(ctx, thread).await;
-                }
+                dispatch_open_forum!(open_forum_thread_create);
             }
             Some("OPEN_FORUM_THREAD_UPDATE") => {
-                if let Some(data) = event.data {
-                    let mut thread = OpenThread::new(ctx.api_clone(), &data);
-                    thread.event_id = event.id;
-                    self.handler.open_forum_thread_update(ctx, thread).await;
-                }
+                dispatch_open_forum!(open_forum_thread_update);
             }
             Some("OPEN_FORUM_THREAD_DELETE") => {
-                if let Some(data) = event.data {
-                    let mut thread = OpenThread::new(ctx.api_clone(), &data);
-                    thread.event_id = event.id;
-                    self.handler.open_forum_thread_delete(ctx, thread).await;
-                }
+                dispatch_open_forum!(open_forum_thread_delete);
             }
             Some("OPEN_FORUM_POST_CREATE") => {
-                if let Some(data) = event.data {
-                    let mut thread = OpenThread::new(ctx.api_clone(), &data);
-                    thread.event_id = event.id;
-                    self.handler.open_forum_post_create(ctx, thread).await;
-                }
+                dispatch_open_forum!(open_forum_post_create);
             }
             Some("OPEN_FORUM_POST_DELETE") => {
-                if let Some(data) = event.data {
-                    let mut thread = OpenThread::new(ctx.api_clone(), &data);
-                    thread.event_id = event.id;
-                    self.handler.open_forum_post_delete(ctx, thread).await;
-                }
+                dispatch_open_forum!(open_forum_post_delete);
             }
             Some("OPEN_FORUM_REPLY_CREATE") => {
-                if let Some(data) = event.data {
-                    let mut thread = OpenThread::new(ctx.api_clone(), &data);
-                    thread.event_id = event.id;
-                    self.handler.open_forum_reply_create(ctx, thread).await;
-                }
+                dispatch_open_forum!(open_forum_reply_create);
             }
             Some("OPEN_FORUM_REPLY_DELETE") => {
-                if let Some(data) = event.data {
-                    let mut thread = OpenThread::new(ctx.api_clone(), &data);
-                    thread.event_id = event.id;
-                    self.handler.open_forum_reply_delete(ctx, thread).await;
-                }
+                dispatch_open_forum!(open_forum_reply_delete);
             }
             _ => {
                 debug!("Unknown event type: {:?}", event.event_type);
@@ -480,18 +349,36 @@ mod tests {
     struct DeleteCounters {
         message_delete: AtomicUsize,
         public_message_delete: AtomicUsize,
+        at_message_create: AtomicUsize,
+        friend_add: AtomicUsize,
+        inline_event_id_seen: AtomicUsize,
+        fallback_event_id_seen: AtomicUsize,
     }
 
     struct CountingHandler(Arc<DeleteCounters>);
 
     #[async_trait::async_trait]
     impl EventHandler for CountingHandler {
+        async fn message_create(&self, _ctx: Context, message: Message) {
+            self.0.at_message_create.fetch_add(1, Ordering::SeqCst);
+            if message.event_id.as_deref() == Some("AT_MESSAGE_CREATE_42") {
+                self.0.fallback_event_id_seen.fetch_add(1, Ordering::SeqCst);
+            }
+        }
+
         async fn message_delete(&self, _ctx: Context, _message: MessageDelete) {
             self.0.message_delete.fetch_add(1, Ordering::SeqCst);
         }
 
         async fn public_message_delete(&self, _ctx: Context, _message: MessageDelete) {
             self.0.public_message_delete.fetch_add(1, Ordering::SeqCst);
+        }
+
+        async fn friend_add(&self, _ctx: Context, event: C2CManageEvent) {
+            self.0.friend_add.fetch_add(1, Ordering::SeqCst);
+            if event.event_id.as_deref() == Some("inline-event-id") {
+                self.0.inline_event_id_seen.fetch_add(1, Ordering::SeqCst);
+            }
         }
     }
 
@@ -529,5 +416,60 @@ mod tests {
 
         assert_eq!(counters.message_delete.load(Ordering::SeqCst), 0);
         assert_eq!(counters.public_message_delete.load(Ordering::SeqCst), 1);
+    }
+
+    #[tokio::test]
+    async fn generated_dispatch_keeps_event_id_fallbacks() {
+        let counters = Arc::new(DeleteCounters::default());
+        let handler = CountingHandler(counters.clone());
+        let client = Client::new(
+            Token::new("test_app", "test_secret"),
+            Intents::default(),
+            handler,
+            false,
+        )
+        .expect("client");
+        let ctx = Context::new(client.api.clone());
+
+        client
+            .handle_event(
+                ctx.clone(),
+                GatewayEvent {
+                    id: None,
+                    event_type: Some("AT_MESSAGE_CREATE".to_string()),
+                    data: Some(json!({
+                        "id": "message_id",
+                        "channel_id": "channel_id",
+                        "guild_id": "guild_id"
+                    })),
+                    sequence: Some(42),
+                    opcode: 0,
+                },
+            )
+            .await
+            .expect("dispatch at message");
+
+        client
+            .handle_event(
+                ctx,
+                GatewayEvent {
+                    id: None,
+                    event_type: Some("FRIEND_ADD".to_string()),
+                    data: Some(json!({
+                        "id": "inline-event-id",
+                        "openid": "openid-1",
+                        "timestamp": 1710000000
+                    })),
+                    sequence: Some(7),
+                    opcode: 0,
+                },
+            )
+            .await
+            .expect("dispatch friend add");
+
+        assert_eq!(counters.at_message_create.load(Ordering::SeqCst), 1);
+        assert_eq!(counters.fallback_event_id_seen.load(Ordering::SeqCst), 1);
+        assert_eq!(counters.friend_add.load(Ordering::SeqCst), 1);
+        assert_eq!(counters.inline_event_id_seen.load(Ordering::SeqCst), 1);
     }
 }
