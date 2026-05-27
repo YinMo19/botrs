@@ -35,7 +35,7 @@ pub struct Member {
 }
 ```
 
-`Timestamp` 是 RFC 3339 字符串。`display_name()` 优先返回 `nick`，否则返回 `user.username`；`has_role(&id)`/`has_any_role(&ids)`/`has_all_roles(&ids)` 用于角色判断。
+`Timestamp` 是 RFC 3339 字符串。需要展示名称或判断角色时，直接检查 `nick`、`user.username` 与 `roles` 字段。
 
 > 注：成员相关网关事件使用另一份 `Member` —— 见 [`models::guild::Member`](./guilds-channels.md)，它把 `guild_id` 和 `op_user_id` 单独保留为字段。
 
@@ -81,7 +81,7 @@ pub struct BotInfo {
 
 ```rust
 let member = ctx.get_guild_member(guild_id, user_id).await?;
-if member.has_role(&moderator_role_id) {
+if member.roles.contains(&moderator_role_id) {
     // 执行管理操作
 }
 ```

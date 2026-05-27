@@ -35,39 +35,14 @@ impl Member {
         }
     }
 
-    /// Gets the member's display name (nickname if set, otherwise username).
-    pub fn display_name(&self) -> &str {
-        self.nick.as_deref().unwrap_or(&self.user.username)
-    }
-
     /// Gets the member's mention string.
     pub fn mention(&self) -> String {
         self.user.mention()
     }
 
-    /// Returns true if the member has the specified role.
-    pub fn has_role(&self, role_id: &Snowflake) -> bool {
-        self.roles.contains(role_id)
-    }
-
-    /// Returns true if the member has any of the specified roles.
-    pub fn has_any_role(&self, role_ids: &[Snowflake]) -> bool {
-        role_ids.iter().any(|role_id| self.has_role(role_id))
-    }
-
-    /// Returns true if the member has all of the specified roles.
-    pub fn has_all_roles(&self, role_ids: &[Snowflake]) -> bool {
-        role_ids.iter().all(|role_id| self.has_role(role_id))
-    }
-
     /// Gets the member's avatar URL.
     pub fn avatar_url(&self) -> Option<String> {
         self.user.avatar_url()
-    }
-
-    /// Returns true if this member is a bot.
-    pub fn is_bot(&self) -> bool {
-        self.user.is_bot()
     }
 }
 

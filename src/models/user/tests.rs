@@ -8,8 +8,7 @@ fn test_user_creation() {
     assert_eq!(user.avatar, "");
     assert_eq!(user.union_openid, "");
     assert_eq!(user.union_user_account, "");
-    assert!(!user.is_bot());
-    assert!(user.is_human());
+    assert!(!user.bot);
 }
 
 #[test]
@@ -74,16 +73,20 @@ fn test_user_mention() {
 }
 
 #[test]
-fn test_member_display_name() {
+fn test_member_name_fallback() {
     let user = User::new("123456789", "TestUser");
     let mut member = Member::new(user, "2024-01-01T00:00:00Z".to_string());
 
-    // Without nickname, should return username
-    assert_eq!(member.display_name(), "TestUser");
+    assert_eq!(
+        member.nick.as_deref().unwrap_or(&member.user.username),
+        "TestUser"
+    );
 
-    // With nickname, should return nickname
     member.nick = Some("Nickname".to_string());
-    assert_eq!(member.display_name(), "Nickname");
+    assert_eq!(
+        member.nick.as_deref().unwrap_or(&member.user.username),
+        "Nickname"
+    );
 }
 
 #[test]
@@ -93,12 +96,24 @@ fn test_member_roles() {
 
     member.roles = vec!["role1".to_string(), "role2".to_string()];
 
-    assert!(member.has_role(&"role1".to_string()));
-    assert!(!member.has_role(&"role3".to_string()));
+    assert!(member.roles.contains(&"role1".to_string()));
+    assert!(!member.roles.contains(&"role3".to_string()));
 
-    assert!(member.has_any_role(&["role1".to_string(), "role3".to_string()]));
-    assert!(member.has_all_roles(&["role1".to_string(), "role2".to_string()]));
-    assert!(!member.has_all_roles(&["role1".to_string(), "role3".to_string()]));
+    assert!(
+        ["role1".to_string(), "role3".to_string()]
+            .iter()
+            .any(|role_id| member.roles.contains(role_id))
+    );
+    assert!(
+        ["role1".to_string(), "role2".to_string()]
+            .iter()
+            .all(|role_id| member.roles.contains(role_id))
+    );
+    assert!(
+        ["role1".to_string(), "role3".to_string()]
+            .iter()
+            .any(|role_id| !member.roles.contains(role_id))
+    );
 }
 
 #[test]

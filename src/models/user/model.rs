@@ -50,23 +50,6 @@ impl User {
         })
     }
 
-    /// Gets the user's display name.
-    ///
-    /// This is the same as the username for regular users.
-    pub fn display_name(&self) -> &str {
-        &self.username
-    }
-
-    /// Returns true if this user is a bot.
-    pub fn is_bot(&self) -> bool {
-        self.bot
-    }
-
-    /// Returns true if this user is a human.
-    pub fn is_human(&self) -> bool {
-        !self.bot
-    }
-
     /// Gets the user's mention string.
     ///
     /// Returns a string that can be used to mention this user in messages.

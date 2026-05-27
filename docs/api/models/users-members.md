@@ -35,7 +35,7 @@ pub struct Member {
 }
 ```
 
-`Timestamp` is `String` (RFC 3339). `display_name()` returns `nick` when set, otherwise `user.username`. `has_role(&id)` / `has_any_role(&ids)` / `has_all_roles(&ids)` answer membership questions.
+`Timestamp` is `String` (RFC 3339). Inspect `nick`, `user.username`, and `roles` directly when deriving display labels or checking role membership.
 
 > Note: gateway events deserialize a different `Member` shape — see [`models::guild::Member`](./guilds-channels.md), which keeps `guild_id` and `op_user_id` as separate fields used by member-add/remove events.
 
@@ -81,7 +81,7 @@ Each method returns `Result<T>` and propagates QQ API errors as `BotError`.
 
 ```rust
 let member = ctx.get_guild_member(guild_id, user_id).await?;
-if member.has_role(&moderator_role_id) {
+if member.roles.contains(&moderator_role_id) {
     // perform privileged action
 }
 ```
