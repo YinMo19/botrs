@@ -13,25 +13,6 @@ fn test_remind_type_conversion() {
 }
 
 #[test]
-fn test_remind_type_description() {
-    assert_eq!(RemindType::None.description(), "No reminder");
-    assert_eq!(
-        RemindType::Before30Minutes.description(),
-        "30 minutes before"
-    );
-    assert_eq!(RemindType::Before1Day.description(), "1 day before");
-}
-
-#[test]
-fn test_remind_type_minutes_before() {
-    assert_eq!(RemindType::None.minutes_before(), None);
-    assert_eq!(RemindType::OnStart.minutes_before(), None);
-    assert_eq!(RemindType::Before5Minutes.minutes_before(), Some(5));
-    assert_eq!(RemindType::Before1Hour.minutes_before(), Some(60));
-    assert_eq!(RemindType::Before1Day.minutes_before(), Some(24 * 60));
-}
-
-#[test]
 fn test_schedule_creation() {
     let schedule = Schedule::new(
         "Team Meeting",
@@ -49,36 +30,6 @@ fn test_schedule_creation() {
 }
 
 #[test]
-fn test_schedule_with_description() {
-    let schedule = Schedule::new(
-        "Daily Standup",
-        "1640995200",
-        "1640996400",
-        None,
-        RemindType::Before5Minutes,
-    )
-    .with_description("Daily team standup meeting");
-
-    assert_eq!(
-        schedule.description,
-        "Daily team standup meeting".to_string()
-    );
-}
-
-#[test]
-fn test_schedule_duration() {
-    let schedule = Schedule::new(
-        "Test Event",
-        "1640995200", // Start
-        "1640998800", // End (1 hour later)
-        None,
-        RemindType::None,
-    );
-
-    assert_eq!(schedule.duration_seconds(), Some(3600)); // 1 hour = 3600 seconds
-}
-
-#[test]
 fn test_schedule_no_reminder() {
     let schedule = Schedule::new(
         "No Reminder Event",
@@ -89,38 +40,6 @@ fn test_schedule_no_reminder() {
     );
 
     assert_eq!(schedule.remind_type, "0");
-    assert_eq!(schedule.reminder_description(), "No reminder");
-}
-
-#[test]
-fn test_schedule_display() {
-    let schedule = Schedule::new(
-        "Test Meeting",
-        "1640995200",
-        "1640998800",
-        Some("channel456".to_string()),
-        RemindType::Before30Minutes,
-    );
-
-    let display = format!("{}", schedule);
-    assert!(display.contains("Test Meeting"));
-    assert!(display.contains("1640995200"));
-    assert!(display.contains("30 minutes before"));
-}
-
-#[test]
-fn test_schedule_timestamp_parsing() {
-    let schedule = Schedule::new(
-        "Parse Test",
-        "1640995200",
-        "invalid_timestamp",
-        None,
-        RemindType::None,
-    );
-
-    assert!(schedule.start_timestamp_parsed().is_ok());
-    assert!(schedule.end_timestamp_parsed().is_err());
-    assert_eq!(schedule.duration_seconds(), None);
 }
 
 #[test]

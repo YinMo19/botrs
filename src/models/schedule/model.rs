@@ -51,50 +51,6 @@ impl Schedule {
             creator: None,
         }
     }
-
-    /// Sets the description for this schedule.
-    pub fn with_description(mut self, description: impl Into<String>) -> Self {
-        self.description = description.into();
-        self
-    }
-
-    /// Sets the creator for this schedule.
-    pub fn with_creator(mut self, creator: UserMember) -> Self {
-        self.creator = Some(creator);
-        self
-    }
-
-    /// Sets the ID for this schedule.
-    pub fn with_id(mut self, id: impl Into<String>) -> Self {
-        self.id = id.into();
-        self
-    }
-
-    /// Gets the reminder description.
-    pub fn reminder_description(&self) -> &'static str {
-        self.remind_type
-            .parse::<u8>()
-            .map(RemindType::from)
-            .map(|remind_type| remind_type.description())
-            .unwrap_or("No reminder")
-    }
-
-    /// Attempts to parse the start timestamp as a Unix timestamp.
-    pub fn start_timestamp_parsed(&self) -> Result<i64, std::num::ParseIntError> {
-        self.start_timestamp.parse::<i64>()
-    }
-
-    /// Attempts to parse the end timestamp as a Unix timestamp.
-    pub fn end_timestamp_parsed(&self) -> Result<i64, std::num::ParseIntError> {
-        self.end_timestamp.parse::<i64>()
-    }
-
-    /// Returns the duration of the event in seconds, if timestamps can be parsed.
-    pub fn duration_seconds(&self) -> Option<i64> {
-        let start = self.start_timestamp_parsed().ok()?;
-        let end = self.end_timestamp_parsed().ok()?;
-        Some(end - start)
-    }
 }
 
 impl HasId for Schedule {
@@ -106,19 +62,5 @@ impl HasId for Schedule {
 impl HasName for Schedule {
     fn name(&self) -> &str {
         &self.name
-    }
-}
-
-impl std::fmt::Display for Schedule {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "Schedule {{ id: {:?}, name: {}, start: {}, end: {}, reminder: {} }}",
-            self.id(),
-            self.name,
-            self.start_timestamp,
-            self.end_timestamp,
-            self.reminder_description()
-        )
     }
 }
