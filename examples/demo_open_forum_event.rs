@@ -4,7 +4,8 @@
 
 mod common;
 
-use botrs::{Client, Context, EventHandler, Intents, OpenThread, Ready, Token};
+use botrs::forum::OpenThread;
+use botrs::{Client, Context, EventHandler, Intents, Ready, Token};
 use common::{Config, init_logging};
 use std::env;
 use tracing::{info, warn};
