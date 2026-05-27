@@ -4,7 +4,7 @@
 
 ## 构造方式
 
-- `Intents::new()` / `Intents::none()` —— 空集。
+- `Intents::new()` —— 空集。
 - `Intents::default()` —— 除两个特权 intent（`GUILD_MESSAGES` 与 `FORUMS`）之外的全部公开 intent，适合大多数公域机器人。
 - `Intents::all()` —— 全部标志，包括特权位。
 

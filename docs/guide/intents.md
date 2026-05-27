@@ -4,7 +4,7 @@
 
 ## Constructors
 
-- `Intents::new()` / `Intents::none()` — empty set.
+- `Intents::new()` — empty set.
 - `Intents::default()` — every public intent except the two privileged ones (`GUILD_MESSAGES` and `FORUMS`). Suitable for most public bots.
 - `Intents::all()` — every flag, including privileged ones.
 

@@ -186,7 +186,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     info!("Token validated successfully");
 
     // Set up intents - we want to receive public guild messages (@ mentions)
-    let intents = Intents::none().with_public_guild_messages();
+    let intents = Intents::new().with_public_guild_messages();
 
     info!("Configured intents: {}", intents);
 

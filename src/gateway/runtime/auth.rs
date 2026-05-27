@@ -80,7 +80,7 @@ mod tests {
         let gateway = Gateway::new(
             "wss://example.com",
             token,
-            Intents::none().with_public_messages(),
+            Intents::new().with_public_messages(),
             Some([0, 1]),
         );
 
@@ -102,7 +102,7 @@ mod tests {
         let gateway = Gateway::new(
             "wss://example.com",
             token,
-            Intents::none().with_public_messages(),
+            Intents::new().with_public_messages(),
             Some([0, 1]),
         )
         .with_resume_state("SESSION_XXXXXX", 42);

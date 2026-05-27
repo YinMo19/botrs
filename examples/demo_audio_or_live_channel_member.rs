@@ -96,7 +96,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     info!("Token validated successfully");
 
     // Set up intents - we want to receive audio or live channel member events
-    let intents = Intents::none().with_audio_or_live_channel_member();
+    let intents = Intents::new().with_audio_or_live_channel_member();
 
     info!("Configured intents: {}", intents);
 

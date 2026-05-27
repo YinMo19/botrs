@@ -40,7 +40,7 @@ macro_rules! intent_accessors {
 /// let intents = Intents::all();
 ///
 /// // Start with no intents and selectively enable
-/// let intents = Intents::none()
+/// let intents = Intents::new()
 ///     .with_public_guild_messages();
 /// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -53,11 +53,6 @@ impl Intents {
     /// Create a new empty set of intents.
     pub const fn new() -> Self {
         Self { bits: 0 }
-    }
-
-    /// Create an intent set with no intents enabled.
-    pub const fn none() -> Self {
-        Self::new()
     }
 
     /// Create an intent set with all standard public intents enabled.

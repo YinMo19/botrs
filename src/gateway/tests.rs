@@ -31,7 +31,7 @@ fn test_gateway_with_shard() {
 #[test]
 fn identify_intents_fall_back_to_guilds_when_empty() {
     let token = Token::new("test_app_id", "test_secret");
-    let gateway = Gateway::new("wss://example.com", token, Intents::none(), Some([0, 1]));
+    let gateway = Gateway::new("wss://example.com", token, Intents::new(), Some([0, 1]));
 
     assert_eq!(gateway.identify_intents(), Intents::GUILDS);
 }
@@ -39,7 +39,7 @@ fn identify_intents_fall_back_to_guilds_when_empty() {
 #[test]
 fn identify_intents_keep_configured_bits() {
     let token = Token::new("test_app_id", "test_secret");
-    let intents = Intents::none().with_public_messages();
+    let intents = Intents::new().with_public_messages();
     let gateway = Gateway::new("wss://example.com", token, intents, Some([0, 1]));
 
     assert_eq!(gateway.identify_intents(), Intents::PUBLIC_MESSAGES);

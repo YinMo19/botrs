@@ -11,7 +11,6 @@ pub struct Intents { pub bits: u32 }
 ## 构造
 
 - `Intents::new()` —— 空集合（`bits == 0`）。
-- `Intents::none()` —— `new()` 的别名，便于按需逐个开启。
 - `Intents::default()` —— `all()` 去掉特权 intent (`GUILD_MESSAGES` 和 `FORUMS`)，多数机器人都从这里开始。
 - `Intents::all()` —— 框架已知的全部位。仅当机器人拥有所有特权时使用。
 - `Intents::from_bits(bits)` —— 把配置或外部传入的整数包成 `Intents`。
@@ -57,7 +56,7 @@ pub struct Intents { pub bits: u32 }
 let default_intents = Intents::default();
 
 // 2. 通过 builder 自定义订阅。
-let custom = Intents::none()
+let custom = Intents::new()
     .with_guilds()
     .with_public_guild_messages()
     .with_direct_message();

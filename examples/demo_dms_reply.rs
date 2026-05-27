@@ -160,7 +160,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     info!("Token validated successfully");
 
     // Set up intents - we want both direct messages and public guild messages
-    let intents = Intents::none()
+    let intents = Intents::new()
         .with_direct_message()
         .with_public_guild_messages();
 

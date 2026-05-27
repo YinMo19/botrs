@@ -11,7 +11,6 @@ pub struct Intents { pub bits: u32 }
 ## Constructors
 
 - `Intents::new()` — empty (`bits == 0`).
-- `Intents::none()` — alias for `new()`, used when you want to opt in field-by-field.
 - `Intents::default()` — `all()` with the privileged intents (`GUILD_MESSAGES` and `FORUMS`) cleared. The right starting point for most bots.
 - `Intents::all()` — every flag the framework knows about. Use only if your bot has every privilege approved.
 - `Intents::from_bits(bits)` — wrap a raw integer received from configuration.
@@ -57,7 +56,7 @@ For each flag there's a matching predicate (no parameters): `intents.guilds()`, 
 let default_intents = Intents::default();
 
 // 2. Custom subscription via builder.
-let custom = Intents::none()
+let custom = Intents::new()
     .with_guilds()
     .with_public_guild_messages()
     .with_direct_message();

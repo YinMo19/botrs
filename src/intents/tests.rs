@@ -13,13 +13,13 @@ fn test_intent_creation() {
 
 #[test]
 fn test_intent_operations() {
-    let mut intents = Intents::none();
+    let mut intents = Intents::new();
     assert!(!intents.guilds());
 
     intents = intents.with_guilds();
     assert!(intents.guilds());
 
-    let other = Intents::none().with_public_guild_messages();
+    let other = Intents::new().with_public_guild_messages();
     let combined = intents | other;
     assert!(combined.guilds());
     assert!(combined.public_guild_messages());
@@ -27,22 +27,22 @@ fn test_intent_operations() {
 
 #[test]
 fn test_privileged_intents() {
-    let intents = Intents::none().with_guild_messages();
+    let intents = Intents::new().with_guild_messages();
     assert!(intents.has_privileged());
 
-    let intents = Intents::none().with_forums();
+    let intents = Intents::new().with_forums();
     assert!(intents.has_privileged());
 
-    let intents = Intents::none().with_public_guild_messages();
+    let intents = Intents::new().with_public_guild_messages();
     assert!(!intents.has_privileged());
 }
 
 #[test]
 fn test_display() {
-    let intents = Intents::none();
+    let intents = Intents::new();
     assert_eq!(format!("{}", intents), "Intents(NONE)");
 
-    let intents = Intents::none().with_guilds().with_public_guild_messages();
+    let intents = Intents::new().with_guilds().with_public_guild_messages();
     let display = format!("{}", intents);
     assert!(display.contains("GUILDS"));
     assert!(display.contains("PUBLIC_GUILD_MESSAGES"));
