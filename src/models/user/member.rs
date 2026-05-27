@@ -22,18 +22,6 @@ pub struct Member {
     pub mute: bool,
 }
 
-impl Member {
-    /// Gets the member's mention string.
-    pub fn mention(&self) -> String {
-        self.user.mention()
-    }
-
-    /// Gets the member's avatar URL.
-    pub fn avatar_url(&self) -> Option<String> {
-        self.user.avatar_url()
-    }
-}
-
 impl HasId for Member {
     fn id(&self) -> Option<&Snowflake> {
         Some(&self.user.id)

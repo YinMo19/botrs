@@ -17,7 +17,7 @@ pub struct User {
 }
 ```
 
-`Snowflake` is a type alias for `String`. Use `User::avatar_url()` to build a CDN URL from the hash, and `User::mention()` for `<@!id>`.
+`Snowflake` is a type alias for `String`. Inspect `avatar` and `id` directly when building UI links or message content.
 
 ## `Member`
 

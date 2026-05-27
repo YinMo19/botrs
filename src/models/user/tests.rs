@@ -32,7 +32,6 @@ fn user_uses_required_zero_value_fields() {
     assert!(!user.bot);
     assert_eq!(user.union_openid, "");
     assert_eq!(user.union_user_account, "");
-    assert!(user.avatar_url().is_none());
 }
 
 #[test]
@@ -53,7 +52,6 @@ fn user_keeps_official_json_shape() {
     assert_eq!(value["bot"], true);
     assert_eq!(value["union_openid"], "union-openid");
     assert_eq!(value["union_user_account"], "union-account");
-    assert!(user.avatar_url().is_some());
 }
 
 #[test]
@@ -75,12 +73,6 @@ fn user_from_bot_info_preserves_union_fields() {
     assert!(user.bot);
     assert_eq!(user.union_openid, "UNION_OPENID_XXXXXX");
     assert_eq!(user.union_user_account, "UNION_ACCOUNT_XXXXXX");
-}
-
-#[test]
-fn test_user_mention() {
-    let user = test_user("123456789", "TestUser");
-    assert_eq!(user.mention(), "<@!123456789>");
 }
 
 #[test]

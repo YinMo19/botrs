@@ -25,27 +25,6 @@ pub struct User {
     pub union_user_account: String,
 }
 
-impl User {
-    /// Gets the user's avatar URL if they have one.
-    ///
-    /// Returns the full URL to the user's avatar image.
-    pub fn avatar_url(&self) -> Option<String> {
-        (!self.avatar.is_empty()).then(|| {
-            format!(
-                "https://thirdqq.qlogo.cn/headimg_dl?dst_uin={}&spec=640",
-                self.id
-            )
-        })
-    }
-
-    /// Gets the user's mention string.
-    ///
-    /// Returns a string that can be used to mention this user in messages.
-    pub fn mention(&self) -> String {
-        format!("<@!{}>", self.id)
-    }
-}
-
 impl HasId for User {
     fn id(&self) -> Option<&Snowflake> {
         Some(&self.id)

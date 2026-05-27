@@ -17,7 +17,7 @@ pub struct User {
 }
 ```
 
-`Snowflake` 是 `String` 的类型别名。`User::avatar_url()` 用哈希拼出 CDN 地址，`User::mention()` 返回 `<@!id>` 的 mention 串。
+`Snowflake` 是 `String` 的类型别名。构造 UI 链接或消息内容时，直接检查 `avatar` 与 `id` 字段。
 
 ## `Member`
 
