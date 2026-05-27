@@ -23,23 +23,6 @@ wire_enum!(EmojiType, u8, Unknown, {
     Custom = 2,
 });
 
-impl EmojiType {
-    /// Returns a human-readable description of the emoji type.
-    pub fn description(&self) -> &'static str {
-        match self {
-            EmojiType::System => "System emoji",
-            EmojiType::Custom => "Custom emoji",
-            EmojiType::Unknown(_) => "Unknown emoji type",
-        }
-    }
-}
-
-impl std::fmt::Display for EmojiType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.description())
-    }
-}
-
 /// Represents an emoji used in reactions or messages.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Emoji {
@@ -62,16 +45,6 @@ impl HasId for Emoji {
     }
 }
 
-impl std::fmt::Display for Emoji {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if let Some(name) = &self.name {
-            write!(f, ":{}: ({})", name, self.emoji_type)
-        } else {
-            write!(f, "Emoji {} ({})", self.id, self.emoji_type)
-        }
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -85,13 +58,6 @@ mod tests {
 
         assert_eq!(EmojiType::from(99), EmojiType::Unknown(99));
         assert_eq!(u8::from(EmojiType::Unknown(99)), 99);
-    }
-
-    #[test]
-    fn test_emoji_type_description() {
-        assert_eq!(EmojiType::System.description(), "System emoji");
-        assert_eq!(EmojiType::Custom.description(), "Custom emoji");
-        assert_eq!(EmojiType::Unknown(5).description(), "Unknown emoji type");
     }
 
     #[test]
@@ -136,28 +102,5 @@ mod tests {
             url: None,
         };
         assert_eq!(emoji.id(), Some(&"test_id".to_string()));
-    }
-
-    #[test]
-    fn test_emoji_display() {
-        let named_emoji = Emoji {
-            id: "123".to_string(),
-            emoji_type: EmojiType::Custom,
-            name: Some("happy".to_string()),
-            url: None,
-        };
-        let display = format!("{}", named_emoji);
-        assert!(display.contains(":happy:"));
-        assert!(display.contains("Custom emoji"));
-
-        let unnamed_emoji = Emoji {
-            id: "456".to_string(),
-            emoji_type: EmojiType::System,
-            name: None,
-            url: None,
-        };
-        let display = format!("{}", unnamed_emoji);
-        assert!(display.contains("Emoji 456"));
-        assert!(display.contains("System emoji"));
     }
 }
