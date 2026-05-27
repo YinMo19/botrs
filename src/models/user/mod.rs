@@ -1,12 +1,12 @@
 //! User-related data models for the QQ Guild Bot API.
 
 mod member;
+mod model;
 mod role;
-mod user;
 
 pub use member::Member;
+pub use model::User;
 pub use role::Role;
-pub use user::User;
 
 #[cfg(test)]
 mod tests;

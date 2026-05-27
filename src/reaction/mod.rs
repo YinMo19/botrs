@@ -5,16 +5,16 @@
 
 mod emoji;
 mod event;
+mod model;
 mod pager;
-mod reaction;
 mod target;
 mod target_type;
 mod users;
 
 pub use emoji::Emoji;
 pub use event::MessageReaction;
+pub use model::Reaction;
 pub use pager::MessageReactionPager;
-pub use reaction::Reaction;
 pub use target::ReactionTarget;
 pub use target_type::{
     REACTION_TARGET_TYPE_COMMENT, REACTION_TARGET_TYPE_FEED, REACTION_TARGET_TYPE_MSG,

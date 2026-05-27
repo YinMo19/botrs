@@ -3,12 +3,12 @@
 //! This module provides the `Token` struct for managing bot authentication
 //! credentials including app ID and secret, with access token management.
 
+mod core;
 mod display;
 mod refresh;
-mod token;
 
+pub use core::Token;
 pub use refresh::start_access_token_refresh;
-pub use token::Token;
 
 #[cfg(test)]
 use refresh::get_refresh_millis;
