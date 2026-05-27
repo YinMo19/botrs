@@ -1,15 +1,12 @@
-use super::QQBotTokenSource;
+use super::Token;
 use crate::error::Result;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 const DEFAULT_EXPIRY_DELTA_MILLIS: u64 = 9_000;
 const RAND_TIME_UPPER_LIMIT_MILLIS: u64 = 500;
 
-#[allow(non_snake_case)]
-pub async fn StartRefreshAccessToken(
-    token_source: QQBotTokenSource,
-) -> Result<tokio::task::JoinHandle<()>> {
-    token_source.ensure_valid_token().await?;
+pub async fn start_access_token_refresh(token: Token) -> Result<tokio::task::JoinHandle<()>> {
+    token.ensure_valid_token().await?;
 
     Ok(tokio::spawn(async move {
         let mut consecutive_failures = 0;
@@ -20,7 +17,7 @@ pub async fn StartRefreshAccessToken(
                 }
                 1_000
             } else {
-                token_source
+                token
                     .cached_expires_in()
                     .await
                     .map(get_refresh_millis)
@@ -30,7 +27,7 @@ pub async fn StartRefreshAccessToken(
             tracing::debug!("refresh after {} milli sec", refresh_millis);
             tokio::time::sleep(Duration::from_millis(refresh_millis)).await;
 
-            match token_source.force_refresh_access_token().await {
+            match token.force_refresh_access_token().await {
                 Ok(()) => consecutive_failures = 0,
                 Err(err) => {
                     consecutive_failures += 1;

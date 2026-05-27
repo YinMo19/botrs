@@ -1,4 +1,4 @@
-use super::{BotApi, HeaderCallbackAppID, resource};
+use super::{BotApi, HEADER_CALLBACK_APP_ID, resource};
 use crate::error::Result;
 use crate::token::Token;
 use reqwest::header::{HeaderMap, HeaderValue};
@@ -43,7 +43,7 @@ impl BotApi {
         };
         let app_id = HeaderValue::from_str(app_id)
             .map_err(|e| crate::BotError::invalid_data(format!("Invalid app ID header: {e}")))?;
-        headers.insert(HeaderCallbackAppID, app_id);
+        headers.insert(HEADER_CALLBACK_APP_ID, app_id);
 
         let path = resource::interaction(interaction_id);
         self.http

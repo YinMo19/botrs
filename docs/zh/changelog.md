@@ -14,6 +14,7 @@ BotRS 的所有重要更改都将记录在此文件中。
 - 移除 Go 风格错误与 session helper 名称（`Err`、`New`、`Error`、`CanNotResume`、`CheckSessionLimit` 等），改用原生 Rust 命名。
 - 移除未被运行路径使用的 Go 风格 `websocket` 门面；网关处理请使用 Rust 原生的 `Client`、`Gateway` 和 `session_manager`。
 - 移除 Go 风格 event、webhook 和 signature helper 名称（`ParseData`、`RegisterHandlers`、`HTTPHandler`、`Gen*ACK`、`Generate`、`Verify` 等），改用原生 Rust 命名。
+- 移除 Go 风格 token/API/constant helper 名称（`NewQQBotTokenSource`、`GetAppID`、`StartRefreshAccessToken`、`APIv1`、`HeaderTraceID` 等），改用原生 Rust 命名。
 - 移除已弃用的多 `Option` 消息发送方法（`post_message`、`post_group_message`、`post_c2c_message`、`post_dms`）及其 `Context` wrapper。请使用 `*_with_params` 方法。
 - 移除冗余的 `post_message_api` 和 `patch_message_api` 别名。
 

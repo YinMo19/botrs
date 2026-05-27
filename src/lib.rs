@@ -67,10 +67,7 @@ pub use session_manager::{
     new_session_manager, set_session_manager_factory,
 };
 pub use signature::{HEADER_SIGNATURE, HEADER_TIMESTAMP, generate, verify};
-pub use token::{
-    NewQQBotTokenSource, QQBotCredentials, QQBotTokenSource, StartRefreshAccessToken, Token,
-    TypeBearer, TypeQQBot,
-};
+pub use token::{Token, start_access_token_refresh};
 pub use webhook::{dispatch_ack, handle_http_callback, heartbeat_ack, validation_ack};
 
 /// The current version of the library

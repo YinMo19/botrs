@@ -69,12 +69,6 @@ impl Token {
         &self.secret
     }
 
-    /// App ID accessor.
-    #[allow(non_snake_case)]
-    pub fn GetAppID(&self) -> &str {
-        self.app_id()
-    }
-
     /// Generates the authorization header value for API requests.
     ///
     /// Returns `QQBot {access_token}`, refreshing the cached access token when
@@ -147,8 +141,9 @@ impl Token {
             "clientSecret": self.secret
         });
 
+        let token_url = format!("{}/app/getAppAccessToken", crate::constant::TOKEN_API_URL);
         let response = client
-            .post("https://bots.qq.com/app/getAppAccessToken")
+            .post(token_url)
             .json(&request_body)
             .timeout(std::time::Duration::from_secs(20))
             .send()

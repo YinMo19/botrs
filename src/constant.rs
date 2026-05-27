@@ -1,19 +1,13 @@
-//! Botgo-compatible constants.
+//! Constants shared across the QQ Bot API client.
 
-#![allow(non_upper_case_globals)]
-
-pub const HeaderTraceID: &str = "X-Tps-trace-ID";
-pub const APIDomain: &str = crate::DEFAULT_API_URL;
-pub const SandBoxAPIDomain: &str = crate::SANDBOX_API_URL;
-pub const TokenDomain: &str = "https://bots.qq.com";
+pub const HEADER_TRACE_ID: &str = "X-Tps-trace-ID";
+pub const TOKEN_API_URL: &str = "https://bots.qq.com";
 
 #[cfg(test)]
 mod tests {
     #[test]
     fn test_constants() {
-        assert_eq!(super::HeaderTraceID, "X-Tps-trace-ID");
-        assert_eq!(super::APIDomain, crate::DEFAULT_API_URL);
-        assert_eq!(super::SandBoxAPIDomain, crate::SANDBOX_API_URL);
-        assert_eq!(super::TokenDomain, "https://bots.qq.com");
+        assert_eq!(super::HEADER_TRACE_ID, "X-Tps-trace-ID");
+        assert_eq!(super::TOKEN_API_URL, "https://bots.qq.com");
     }
 }

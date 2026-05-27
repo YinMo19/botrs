@@ -105,17 +105,3 @@ fn test_debug_format() {
     assert!(debug_str.contains("[REDACTED]"));
     assert!(!debug_str.contains("secret123"));
 }
-
-#[test]
-fn test_token_source_alias() {
-    let credentials = QQBotCredentials {
-        app_id: "123456".to_string(),
-        app_secret: "secret123".to_string(),
-    };
-    let token = NewQQBotTokenSource(&credentials);
-    assert_eq!(token.app_id(), "123456");
-    assert_eq!(token.GetAppID(), "123456");
-    assert_eq!(token.secret(), "secret123");
-    assert_eq!(TypeQQBot, "QQBot");
-    assert_eq!(TypeBearer, "Bearer");
-}

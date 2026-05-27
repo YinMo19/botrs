@@ -3,17 +3,11 @@
 //! This module provides the `Token` struct for managing bot authentication
 //! credentials including app ID and secret, with access token management.
 
-#![allow(non_upper_case_globals)]
-
-mod credentials;
 mod display;
 mod refresh;
 mod token;
 
-pub use credentials::{
-    NewQQBotTokenSource, QQBotCredentials, QQBotTokenSource, TypeBearer, TypeQQBot,
-};
-pub use refresh::StartRefreshAccessToken;
+pub use refresh::start_access_token_refresh;
 pub use token::Token;
 
 #[cfg(test)]

@@ -29,17 +29,13 @@ use crate::http::HttpClient;
 use crate::token::Token;
 
 pub type APIVersion = u32;
-#[allow(non_upper_case_globals)]
-pub const APIv1: APIVersion = 1;
+pub const API_V1: APIVersion = 1;
 /// Default idle connection count for the OpenAPI v1 client.
-#[allow(non_upper_case_globals)]
-pub const MaxIdleConns: usize = 3000;
+pub const DEFAULT_MAX_IDLE_CONNS: usize = 3000;
 /// HTTP header carrying the bot app id for interaction callbacks.
-#[allow(non_upper_case_globals)]
-pub const HeaderCallbackAppID: &str = "X-Callback-AppID";
+pub const HEADER_CALLBACK_APP_ID: &str = "X-Callback-AppID";
 
-#[allow(non_snake_case)]
-pub fn APIVersionString(version: APIVersion) -> String {
+pub fn api_version_string(version: APIVersion) -> String {
     format!("v{version}")
 }
 
@@ -87,7 +83,7 @@ mod tests {
     use crate::http::HttpClient;
     use std::time::Duration;
 
-    use super::{APIVersionString, APIv1, BotApi};
+    use super::{API_V1, BotApi, api_version_string};
 
     #[test]
     fn test_api_creation() {
@@ -99,8 +95,8 @@ mod tests {
     #[test]
     fn test_base_helpers() {
         let (api, token) = BotApi::setup("app-id", "secret", true).unwrap();
-        assert_eq!(api.version(), APIv1);
-        assert_eq!(APIVersionString(api.version()), "v1");
+        assert_eq!(api.version(), API_V1);
+        assert_eq!(api_version_string(api.version()), "v1");
         assert_eq!(token.app_id(), "app-id");
         assert_eq!(api.get_app_id(), "app-id");
         assert_eq!(api.http().union_app_id(), Some("app-id"));

@@ -63,7 +63,7 @@ pub fn handle_http_callback(
     payload.raw_message = Some(body.to_vec());
     payload.session = Some(crate::session_manager::Session::from_app_id(app_id));
     let trace_id = headers
-        .get(crate::constant::HeaderTraceID)
+        .get(crate::constant::HEADER_TRACE_ID)
         .and_then(|value| value.to_str().ok())
         .unwrap_or_default();
 
