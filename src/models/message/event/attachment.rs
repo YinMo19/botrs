@@ -29,11 +29,6 @@ pub struct MessageAttachment {
 }
 
 impl MessageAttachment {
-    /// Creates a new message attachment from API data.
-    pub fn from_data(data: serde_json::Value) -> Self {
-        serde_json::from_value(data).unwrap_or_default()
-    }
-
     /// Returns true if this attachment is an image.
     pub fn is_image(&self) -> bool {
         self.content_type

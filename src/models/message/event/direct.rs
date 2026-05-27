@@ -33,15 +33,9 @@ impl DirectMessageToCreate {
         }
     }
 }
-
 impl DirectMessage {
     /// Creates a new direct-message session.
     pub fn new() -> Self {
         Self::default()
-    }
-
-    /// Creates a new direct-message session from API data.
-    pub fn from_data(data: serde_json::Value) -> Self {
-        serde_json::from_value(data).unwrap_or_default()
     }
 }

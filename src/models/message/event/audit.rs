@@ -35,11 +35,4 @@ impl MessageAudit {
     pub fn new() -> Self {
         Self::default()
     }
-
-    /// Creates a new message audit from API data.
-    pub fn from_data(event_id: String, data: serde_json::Value) -> Self {
-        let mut audit: Self = serde_json::from_value(data).unwrap_or_default();
-        audit.event_id = Some(event_id);
-        audit
-    }
 }

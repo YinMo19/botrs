@@ -136,14 +136,12 @@ fn channel_decodes_large_type_values() {
 }
 
 #[test]
-fn channel_from_data_does_not_use_gateway_event_id_as_channel_id() {
-    let channel = Channel::from_data(
-        "event-1".to_string(),
-        serde_json::json!({
+fn channel_deserialization_does_not_use_gateway_event_id_as_channel_id() {
+    let channel: Channel = serde_json::from_value(serde_json::json!({
             "guild_id": "guild-1",
             "name": "general"
-        }),
-    );
+    }))
+    .unwrap();
 
     assert_eq!(channel.id, "");
     assert_eq!(channel.guild_id, "guild-1");

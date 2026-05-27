@@ -9,10 +9,3 @@ pub struct MessageReference {
     /// Whether reference message fetch errors should be ignored
     pub ignore_get_message_error: Option<bool>,
 }
-
-impl MessageReference {
-    /// Creates a new message reference from API data.
-    pub fn from_data(data: serde_json::Value) -> Self {
-        serde_json::from_value(data).unwrap_or_default()
-    }
-}

@@ -52,11 +52,6 @@ impl Guild {
         Self::default()
     }
 
-    /// Creates a new guild from API data.
-    pub fn from_data(_event_id: String, data: serde_json::Value) -> Self {
-        serde_json::from_value::<Self>(data).unwrap_or_default()
-    }
-
     /// Gets the guild's icon URL if it has one.
     pub fn icon_url(&self) -> Option<String> {
         (!self.icon.is_empty()).then(|| {

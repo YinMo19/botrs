@@ -33,9 +33,7 @@ fn test_guild_with_data() {
 
 #[test]
 fn guild_fields_use_official_json_names() {
-    let guild = Guild::from_data(
-        "event-1".to_string(),
-        serde_json::json!({
+    let guild: Guild = serde_json::from_value(serde_json::json!({
             "id": "guild-1",
             "name": "Guild",
             "owner": true,
@@ -50,8 +48,8 @@ fn guild_fields_use_official_json_names() {
             "union_world_id": "world-1",
             "union_org_id": "org-1",
             "op_user_id": "operator-1"
-        }),
-    );
+    }))
+    .unwrap();
 
     assert_eq!(guild.id, "guild-1");
     assert!(guild.is_owner);
@@ -69,13 +67,11 @@ fn guild_fields_use_official_json_names() {
 }
 
 #[test]
-fn guild_from_data_does_not_use_gateway_event_id_as_guild_id() {
-    let guild = Guild::from_data(
-        "event-1".to_string(),
-        serde_json::json!({
+fn guild_deserialization_does_not_use_gateway_event_id_as_guild_id() {
+    let guild: Guild = serde_json::from_value(serde_json::json!({
             "name": "Guild"
-        }),
-    );
+    }))
+    .unwrap();
 
     assert_eq!(guild.id, "");
 }

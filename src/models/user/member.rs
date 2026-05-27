@@ -35,19 +35,6 @@ impl Member {
         }
     }
 
-    /// Creates a new member from API data.
-    pub fn from_data(data: serde_json::Value) -> Self {
-        let wire: MemberWire = serde_json::from_value(data).unwrap_or_default();
-        Self {
-            user: wire.user,
-            nick: wire.nick,
-            roles: wire.roles,
-            joined_at: wire.joined_at,
-            deaf: wire.deaf,
-            mute: wire.mute,
-        }
-    }
-
     /// Gets the member's display name (nickname if set, otherwise username).
     pub fn display_name(&self) -> &str {
         self.nick.as_deref().unwrap_or(&self.user.username)
@@ -88,22 +75,6 @@ impl HasId for Member {
     fn id(&self) -> Option<&Snowflake> {
         Some(&self.user.id)
     }
-}
-
-#[derive(Debug, Default, Deserialize)]
-struct MemberWire {
-    #[serde(default)]
-    user: User,
-    #[serde(default)]
-    nick: Option<String>,
-    #[serde(default)]
-    roles: Vec<Snowflake>,
-    #[serde(default)]
-    joined_at: Timestamp,
-    #[serde(default)]
-    deaf: bool,
-    #[serde(default)]
-    mute: bool,
 }
 
 impl std::ops::Deref for Member {

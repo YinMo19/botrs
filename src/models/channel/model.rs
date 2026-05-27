@@ -56,11 +56,6 @@ impl Channel {
         Self::default()
     }
 
-    /// Creates a new channel from API data.
-    pub fn from_data(_event_id: String, data: serde_json::Value) -> Self {
-        serde_json::from_value::<Self>(data).unwrap_or_default()
-    }
-
     /// Gets the channel's mention string.
     pub fn mention(&self) -> String {
         format!("<#{}>", self.id)

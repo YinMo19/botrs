@@ -89,13 +89,6 @@ impl Message {
         }
     }
 
-    /// Creates a new message from API data.
-    pub fn from_data(event_id: String, data: serde_json::Value) -> Self {
-        let mut message: Self = serde_json::from_value(data).unwrap_or_default();
-        message.event_id = Some(event_id);
-        message
-    }
-
     /// Reply to this message
     pub async fn reply(
         &self,

@@ -38,11 +38,6 @@ impl User {
         }
     }
 
-    /// Creates a new user from API data.
-    pub fn from_data(data: serde_json::Value) -> Self {
-        serde_json::from_value(data).unwrap_or_default()
-    }
-
     /// Gets the user's avatar URL if they have one.
     ///
     /// Returns the full URL to the user's avatar image.

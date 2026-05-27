@@ -34,12 +34,63 @@ impl<H: EventHandler + 'static> Client<H> {
                 .unwrap_or_else(|| format!("{}_{}", event_name, sequence.unwrap_or(0)))
         }
 
-        macro_rules! dispatch_from_data {
+        fn parse_event_json<T>(event_name: &str, data: &serde_json::Value) -> Option<T>
+        where
+            T: serde::de::DeserializeOwned,
+        {
+            match serde_json::from_value::<T>(data.clone()) {
+                Ok(value) => Some(value),
+                Err(e) => {
+                    error!("Failed to parse {} event: {}", event_name, e);
+                    debug!(
+                        "Raw event data: {}",
+                        serde_json::to_string_pretty(data).unwrap_or_default()
+                    );
+                    None
+                }
+            }
+        }
+
+        fn parse_message_delete(
+            event_name: &str,
+            event_id: String,
+            data: &serde_json::Value,
+        ) -> Option<MessageDelete> {
+            let mut value = if data.get("message").is_some() {
+                parse_event_json::<MessageDelete>(event_name, data)?
+            } else {
+                let message = parse_event_json::<Message>(event_name, data)?;
+                MessageDelete {
+                    message,
+                    op_user: User::default(),
+                    event_id: None,
+                }
+            };
+
+            value.event_id = Some(event_id.clone());
+            value.message.event_id = Some(event_id);
+            Some(value)
+        }
+
+        macro_rules! dispatch_with_event_id {
             ($event_name:literal, $event_type:ty, $handler:ident) => {{
                 if let Some(data) = event.data {
                     let event_id = fallback_event_id($event_name, &event.id, event.sequence);
-                    let value = <$event_type>::from_data(event_id, data);
-                    self.handler.$handler(ctx, value).await;
+                    if let Some(mut value) = parse_event_json::<$event_type>($event_name, &data) {
+                        value.event_id = Some(event_id);
+                        self.handler.$handler(ctx, value).await;
+                    }
+                }
+            }};
+        }
+
+        macro_rules! dispatch_message_delete {
+            ($event_name:literal, $handler:ident) => {{
+                if let Some(data) = event.data {
+                    let event_id = fallback_event_id($event_name, &event.id, event.sequence);
+                    if let Some(value) = parse_message_delete($event_name, event_id, &data) {
+                        self.handler.$handler(ctx, value).await;
+                    }
                 }
             }};
         }
@@ -47,17 +98,8 @@ impl<H: EventHandler + 'static> Client<H> {
         macro_rules! dispatch_json {
             ($event_name:literal, $event_type:ty, $handler:ident) => {{
                 if let Some(data) = event.data {
-                    match serde_json::from_value::<$event_type>(data.clone()) {
-                        Ok(value) => {
-                            self.handler.$handler(ctx, value).await;
-                        }
-                        Err(e) => {
-                            error!("Failed to parse {} event: {}", $event_name, e);
-                            debug!(
-                                "Raw event data: {}",
-                                serde_json::to_string_pretty(&data).unwrap_or_default()
-                            );
-                        }
+                    if let Some(value) = parse_event_json::<$event_type>($event_name, &data) {
+                        self.handler.$handler(ctx, value).await;
                     }
                 }
             }};
@@ -133,20 +175,20 @@ impl<H: EventHandler + 'static> Client<H> {
                 self.handler.resumed(ctx).await;
             }
             Some("AT_MESSAGE_CREATE") => {
-                dispatch_from_data!("AT_MESSAGE_CREATE", Message, message_create);
+                dispatch_with_event_id!("AT_MESSAGE_CREATE", Message, message_create);
             }
             Some("DIRECT_MESSAGE_CREATE") => {
-                dispatch_from_data!("DIRECT_MESSAGE_CREATE", Message, direct_message_create);
+                dispatch_with_event_id!("DIRECT_MESSAGE_CREATE", Message, direct_message_create);
             }
             Some("GROUP_AT_MESSAGE_CREATE") => {
-                dispatch_from_data!(
+                dispatch_with_event_id!(
                     "GROUP_AT_MESSAGE_CREATE",
                     GroupMessage,
                     group_message_create
                 );
             }
             Some("C2C_MESSAGE_CREATE") => {
-                dispatch_from_data!("C2C_MESSAGE_CREATE", C2CMessage, c2c_message_create);
+                dispatch_with_event_id!("C2C_MESSAGE_CREATE", C2CMessage, c2c_message_create);
             }
             Some("SUBSCRIBE_MESSAGE_STATUS") => {
                 dispatch_payload_new!(SubscribeMessageStatusData, subscribe_message_status);
@@ -155,21 +197,13 @@ impl<H: EventHandler + 'static> Client<H> {
                 dispatch_payload_new!(EnterAioEvent, enter_aio);
             }
             Some("DIRECT_MESSAGE_DELETE") => {
-                dispatch_from_data!(
-                    "DIRECT_MESSAGE_DELETE",
-                    MessageDelete,
-                    direct_message_delete
-                );
+                dispatch_message_delete!("DIRECT_MESSAGE_DELETE", direct_message_delete);
             }
             Some("PUBLIC_MESSAGE_DELETE") => {
-                dispatch_from_data!(
-                    "PUBLIC_MESSAGE_DELETE",
-                    MessageDelete,
-                    public_message_delete
-                );
+                dispatch_message_delete!("PUBLIC_MESSAGE_DELETE", public_message_delete);
             }
             Some("MESSAGE_DELETE") => {
-                dispatch_from_data!("MESSAGE_DELETE", MessageDelete, message_delete);
+                dispatch_message_delete!("MESSAGE_DELETE", message_delete);
             }
             Some("MESSAGE_REACTION_ADD") => {
                 dispatch_reaction!(message_reaction_add);
@@ -196,22 +230,22 @@ impl<H: EventHandler + 'static> Client<H> {
                 dispatch_audio!(off_mic);
             }
             Some("GUILD_CREATE") => {
-                dispatch_from_data!("GUILD_CREATE", Guild, guild_create);
+                dispatch_json!("GUILD_CREATE", Guild, guild_create);
             }
             Some("GUILD_UPDATE") => {
-                dispatch_from_data!("GUILD_UPDATE", Guild, guild_update);
+                dispatch_json!("GUILD_UPDATE", Guild, guild_update);
             }
             Some("GUILD_DELETE") => {
-                dispatch_from_data!("GUILD_DELETE", Guild, guild_delete);
+                dispatch_json!("GUILD_DELETE", Guild, guild_delete);
             }
             Some("CHANNEL_CREATE") => {
-                dispatch_from_data!("CHANNEL_CREATE", Channel, channel_create);
+                dispatch_json!("CHANNEL_CREATE", Channel, channel_create);
             }
             Some("CHANNEL_UPDATE") => {
-                dispatch_from_data!("CHANNEL_UPDATE", Channel, channel_update);
+                dispatch_json!("CHANNEL_UPDATE", Channel, channel_update);
             }
             Some("CHANNEL_DELETE") => {
-                dispatch_from_data!("CHANNEL_DELETE", Channel, channel_delete);
+                dispatch_json!("CHANNEL_DELETE", Channel, channel_delete);
             }
             Some("GUILD_MEMBER_ADD") => {
                 dispatch_json!("GUILD_MEMBER_ADD", Member, guild_member_add);
@@ -223,10 +257,10 @@ impl<H: EventHandler + 'static> Client<H> {
                 dispatch_json!("GUILD_MEMBER_REMOVE", Member, guild_member_remove);
             }
             Some("MESSAGE_AUDIT_PASS") => {
-                dispatch_from_data!("MESSAGE_AUDIT_PASS", MessageAudit, message_audit_pass);
+                dispatch_with_event_id!("MESSAGE_AUDIT_PASS", MessageAudit, message_audit_pass);
             }
             Some("MESSAGE_AUDIT_REJECT") => {
-                dispatch_from_data!("MESSAGE_AUDIT_REJECT", MessageAudit, message_audit_reject);
+                dispatch_with_event_id!("MESSAGE_AUDIT_REJECT", MessageAudit, message_audit_reject);
             }
             Some("FRIEND_ADD") => {
                 dispatch_payload_new!(C2CManageEvent, friend_add);
