@@ -25,40 +25,6 @@ pub struct Role {
     pub mentionable: bool,
 }
 
-impl Role {
-    /// Creates a new role.
-    pub fn new(id: impl Into<Snowflake>, name: impl Into<String>) -> Self {
-        Self {
-            id: id.into(),
-            name: name.into(),
-            color: 0,
-            hoist: false,
-            position: 0,
-            permissions: "0".to_string(),
-            managed: false,
-            mentionable: false,
-        }
-    }
-
-    /// Gets the role's mention string.
-    pub fn mention(&self) -> String {
-        format!("<@&{}>", self.id)
-    }
-
-    /// Gets the role's color as RGB values.
-    pub fn rgb(&self) -> (u8, u8, u8) {
-        let r = ((self.color >> 16) & 0xFF) as u8;
-        let g = ((self.color >> 8) & 0xFF) as u8;
-        let b = (self.color & 0xFF) as u8;
-        (r, g, b)
-    }
-
-    /// Gets the role's color as a hex string.
-    pub fn hex_color(&self) -> String {
-        format!("#{:06X}", self.color)
-    }
-}
-
 impl HasId for Role {
     fn id(&self) -> Option<&Snowflake> {
         Some(&self.id)

@@ -118,21 +118,18 @@ fn test_member_roles() {
 
 #[test]
 fn test_role_creation() {
-    let role = Role::new("123456789", "TestRole");
+    let role = Role {
+        id: "123456789".to_string(),
+        name: "TestRole".to_string(),
+        color: 0,
+        hoist: false,
+        position: 0,
+        permissions: "0".to_string(),
+        managed: false,
+        mentionable: false,
+    };
+
     assert_eq!(role.id, "123456789");
     assert_eq!(role.name, "TestRole");
-    assert_eq!(role.mention(), "<@&123456789>");
-}
-
-#[test]
-fn test_role_color() {
-    let mut role = Role::new("123456789", "TestRole");
-    role.color = 0xFF5733; // Orange color
-
-    let (r, g, b) = role.rgb();
-    assert_eq!(r, 255);
-    assert_eq!(g, 87);
-    assert_eq!(b, 51);
-
-    assert_eq!(role.hex_color(), "#FF5733");
+    assert_eq!(role.permissions, "0");
 }
