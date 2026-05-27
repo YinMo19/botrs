@@ -11,15 +11,19 @@ pub struct Robot {
     /// The bot's username
     pub username: String,
     /// The bot's avatar hash
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub avatar: Option<String>,
     /// The bot's discriminator (usually #0000 for bots)
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub discriminator: Option<String>,
     /// Whether this is a bot account
     #[serde(default = "default_true")]
     pub bot: bool,
     /// The bot's status
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub status: Option<RobotStatus>,
     /// The bot's activity
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub activity: Option<Activity>,
 }
 
@@ -142,10 +146,13 @@ pub struct Activity {
     #[serde(rename = "type")]
     pub activity_type: ActivityType,
     /// The activity URL (for streaming)
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub url: Option<String>,
     /// Custom status text
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub state: Option<String>,
     /// Activity details
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub details: Option<String>,
 }
 
@@ -246,6 +253,36 @@ mod tests {
         assert_eq!(robot.username, "TestBot");
         assert!(robot.bot);
         assert_eq!(robot.mention(), "<@123456789>");
+    }
+
+    #[test]
+    fn robot_omits_absent_extension_fields_like_ready_user() {
+        let robot = Robot::new("123456789", "TestBot");
+        assert_eq!(
+            serde_json::to_value(&robot).unwrap(),
+            serde_json::json!({
+                "id": "123456789",
+                "username": "TestBot",
+                "bot": true
+            })
+        );
+
+        let robot = Robot::new("123456789", "TestBot")
+            .with_status(RobotStatus::Online)
+            .with_activity(Activity::playing("Rust"));
+        assert_eq!(
+            serde_json::to_value(&robot).unwrap(),
+            serde_json::json!({
+                "id": "123456789",
+                "username": "TestBot",
+                "bot": true,
+                "status": 1,
+                "activity": {
+                    "name": "Rust",
+                    "type": 0
+                }
+            })
+        );
     }
 
     #[test]
