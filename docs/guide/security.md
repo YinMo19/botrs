@@ -20,10 +20,10 @@ tracing::info!("starting with {}", token.safe_display());
 If you accept QQ's HTTP callbacks (instead of running a gateway connection), every dispatch carries an Ed25519 signature in `X-Signature-Ed25519`, with the timestamp in `X-Signature-Timestamp`. The framework exposes verification helpers in `botrs::signature`:
 
 ```rust
-use botrs::signature::{Verify, HeaderSig, HeaderTimestamp};
+use botrs::signature::{HEADER_SIGNATURE, HEADER_TIMESTAMP, verify};
 
 fn handle(headers: &reqwest::header::HeaderMap, body: &[u8], bot_secret: &str) -> botrs::Result<()> {
-    if !Verify(bot_secret, headers, body)? {
+    if !verify(bot_secret, headers, body)? {
         return Err(botrs::BotError::auth("bad signature"));
     }
     // signature is valid; deserialize body and dispatch
@@ -31,9 +31,9 @@ fn handle(headers: &reqwest::header::HeaderMap, body: &[u8], bot_secret: &str) -
 }
 ```
 
-`Verify` reads `X-Signature-Ed25519` (hex-encoded signature) and `X-Signature-Timestamp` from the header map, derives a signing key from your bot secret using the scheme QQ documents for interaction callbacks, and returns `Ok(true)` only when the signature checks out. `Generate(secret, headers, body)` is the inverse, useful for tests or when you mirror QQ's signing scheme yourself. The header-name constants `HeaderSig` and `HeaderTimestamp` are exported so you don't hard-code them.
+`verify` reads `X-Signature-Ed25519` (hex-encoded signature) and `X-Signature-Timestamp` from the header map, derives a signing key from your bot secret using the scheme QQ documents for interaction callbacks, and returns `Ok(true)` only when the signature checks out. `generate(secret, headers, body)` is the inverse, useful for tests or when you mirror QQ's signing scheme yourself. The header-name constants `HEADER_SIGNATURE` and `HEADER_TIMESTAMP` are exported so you don't hard-code them.
 
-Reject any request that fails `Verify` immediately. Accepting an unsigned or wrongly signed body lets an attacker forge dispatches in your handler.
+Reject any request that fails `verify` immediately. Accepting an unsigned or wrongly signed body lets an attacker forge dispatches in your handler.
 
 ## Sandbox vs production
 

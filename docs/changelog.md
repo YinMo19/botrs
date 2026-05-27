@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed standalone Botgo helper facades (`log`, `remote`, `search`, and `version`) that were not part of the REST or gateway wire behavior.
 - Removed Go-style error/session helper names (`Err`, `New`, `Error`, `CanNotResume`, `CheckSessionLimit`, etc.) in favor of native Rust names.
 - Removed the unused Botgo-style `websocket` facade; use `Client`, `Gateway`, and `session_manager` for Rust-native gateway handling.
+- Removed Go-style event, webhook, and signature helper names (`ParseData`, `RegisterHandlers`, `HTTPHandler`, `Gen*ACK`, `Generate`, `Verify`, etc.) in favor of native Rust names.
 - Removed the deprecated multi-`Option` message sending methods (`post_message`, `post_group_message`, `post_c2c_message`, `post_dms`) and their `Context` wrappers. Use the `*_with_params` methods instead.
 - Removed the redundant `post_message_api` and `patch_message_api` aliases.
 

@@ -22,7 +22,7 @@ pub trait EventHandler: Send + Sync {
 - `ready(ctx, Ready)` —— identify 握手成功后调用一次；此时 `ctx.bot_info` 已被填充。
 - `resumed(ctx)` —— resume 成功后调用。
 - `error_notify(ctx, BotError)` —— 网关层错误被捕获时触发。
-- `plain_event(ctx, GatewayEvent)` —— 通过 `RegisterHandlers` 注册的全量原始事件兜底回调。
+- `plain_event(ctx, GatewayEvent)` —— 通过 `register_handlers` 注册的全量原始事件兜底回调。
 
 ### 频道消息
 

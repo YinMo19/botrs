@@ -1,12 +1,10 @@
-//! Botgo-compatible ed25519 signature helpers for interaction callbacks.
-
-#![allow(non_snake_case, non_upper_case_globals)]
+//! Ed25519 signature helpers for interaction callbacks.
 
 use ed25519_dalek::{Signature, Signer, SigningKey, Verifier, VerifyingKey};
 use reqwest::header::HeaderMap;
 
-pub const HeaderSig: &str = "X-Signature-Ed25519";
-pub const HeaderTimestamp: &str = "X-Signature-Timestamp";
+pub const HEADER_SIGNATURE: &str = "X-Signature-Ed25519";
+pub const HEADER_TIMESTAMP: &str = "X-Signature-Timestamp";
 
 fn seed(secret: &str) -> crate::Result<[u8; 32]> {
     if secret.is_empty() {
@@ -41,14 +39,14 @@ fn header_value(headers: &HeaderMap, name: &str) -> String {
         .to_string()
 }
 
-pub fn Generate(secret: &str, headers: &HeaderMap, http_body: &[u8]) -> crate::Result<String> {
+pub fn generate(secret: &str, headers: &HeaderMap, http_body: &[u8]) -> crate::Result<String> {
     let key = SigningKey::from_bytes(&seed(secret)?);
-    let content = original_content(&header_value(headers, HeaderTimestamp), http_body)?;
+    let content = original_content(&header_value(headers, HEADER_TIMESTAMP), http_body)?;
     Ok(hex::encode(key.sign(&content).to_bytes()))
 }
 
-pub fn Verify(secret: &str, headers: &HeaderMap, http_body: &[u8]) -> crate::Result<bool> {
-    let signature = header_value(headers, HeaderSig);
+pub fn verify(secret: &str, headers: &HeaderMap, http_body: &[u8]) -> crate::Result<bool> {
+    let signature = header_value(headers, HEADER_SIGNATURE);
     if signature.is_empty() {
         return Err(crate::BotError::invalid_data("not found signature"));
     }
@@ -59,7 +57,7 @@ pub fn Verify(secret: &str, headers: &HeaderMap, http_body: &[u8]) -> crate::Res
     let signature = Signature::from_slice(&signature)
         .map_err(|_| crate::BotError::invalid_data("signature decode result is not a valid buf"))?;
     let verifying_key = VerifyingKey::from(&SigningKey::from_bytes(&seed(secret)?));
-    let content = original_content(&header_value(headers, HeaderTimestamp), http_body)?;
+    let content = original_content(&header_value(headers, HEADER_TIMESTAMP), http_body)?;
 
     Ok(verifying_key.verify(&content, &signature).is_ok())
 }
@@ -71,13 +69,13 @@ mod tests {
     #[test]
     fn generated_signature_verifies() {
         let mut headers = HeaderMap::new();
-        headers.insert(HeaderTimestamp, "123456".parse().unwrap());
+        headers.insert(HEADER_TIMESTAMP, "123456".parse().unwrap());
         let body = br#"{"hello":"world"}"#;
 
-        let signature = Generate("secret", &headers, body).unwrap();
-        headers.insert(HeaderSig, signature.parse().unwrap());
+        let signature = generate("secret", &headers, body).unwrap();
+        headers.insert(HEADER_SIGNATURE, signature.parse().unwrap());
 
-        assert!(Verify("secret", &headers, body).unwrap());
-        assert!(!Verify("secret", &headers, b"changed").unwrap());
+        assert!(verify("secret", &headers, body).unwrap());
+        assert!(!verify("secret", &headers, b"changed").unwrap());
     }
 }

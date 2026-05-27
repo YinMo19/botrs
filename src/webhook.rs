@@ -1,8 +1,4 @@
-//! Botgo-compatible interaction webhook helpers.
-
-#![allow(non_snake_case, non_upper_case_globals)]
-
-use std::sync::{LazyLock, RwLock};
+//! Interaction webhook helpers.
 
 use reqwest::header::HeaderMap;
 use serde::Serialize;
@@ -16,12 +12,7 @@ struct Ack {
     d: u32,
 }
 
-pub type GetSecretFunc = fn() -> String;
-
-pub static DefaultGetSecretFunc: LazyLock<RwLock<GetSecretFunc>> =
-    LazyLock::new(|| RwLock::new(|| std::env::var("QQBotSecret").unwrap_or_default()));
-
-pub fn GenHeartbeatACK(seq: u32) -> String {
+pub fn heartbeat_ack(seq: u32) -> String {
     serde_json::to_string(&Ack {
         op: WSHeartbeatAck,
         d: seq,
@@ -29,7 +20,7 @@ pub fn GenHeartbeatACK(seq: u32) -> String {
     .expect("heartbeat ack is serializable")
 }
 
-pub fn GenDispatchACK(success: bool) -> String {
+pub fn dispatch_ack(success: bool) -> String {
     serde_json::to_string(&Ack {
         op: HTTPCallbackAck,
         d: u32::from(!success),
@@ -37,19 +28,19 @@ pub fn GenDispatchACK(success: bool) -> String {
     .expect("dispatch ack is serializable")
 }
 
-pub fn GenValidationACK(
+pub fn validation_ack(
     req: &WHValidationReq,
     headers: &HeaderMap,
     secret: &str,
 ) -> crate::Result<Vec<u8>> {
     let mut headers = headers.clone();
     headers.insert(
-        crate::signature::HeaderTimestamp,
+        crate::signature::HEADER_TIMESTAMP,
         req.event_ts
             .parse()
             .map_err(|_| crate::BotError::invalid_data("invalid event timestamp header"))?,
     );
-    let signature = crate::signature::Generate(secret, &headers, req.plain_token.as_bytes())?;
+    let signature = crate::signature::generate(secret, &headers, req.plain_token.as_bytes())?;
     serde_json::to_vec(&WHValidationRsp {
         plain_token: req.plain_token.clone(),
         signature,
@@ -58,13 +49,13 @@ pub fn GenValidationACK(
     .map_err(Into::into)
 }
 
-pub fn HTTPHandler(
+pub fn handle_http_callback(
     body: &[u8],
     headers: &HeaderMap,
     app_id: impl Into<String>,
     secret: &str,
 ) -> crate::Result<Option<Vec<u8>>> {
-    if !crate::signature::Verify(secret, headers, body)? {
+    if !crate::signature::verify(secret, headers, body)? {
         return Err(crate::BotError::auth("signature verify failed"));
     }
 
@@ -83,7 +74,7 @@ pub fn HTTPHandler(
             .cloned()
             .unwrap_or(serde_json::Value::Null);
         let req: WHValidationReq = serde_json::from_value(data)?;
-        return GenValidationACK(&req, headers, secret).map(Some);
+        return validation_ack(&req, headers, secret).map(Some);
     }
 
     match payload.base.op_code {
@@ -93,16 +84,17 @@ pub fn HTTPHandler(
                 .as_ref()
                 .and_then(|value| value.as_u64())
                 .unwrap_or_default() as u32;
-            Ok(Some(GenHeartbeatACK(seq).into_bytes()))
+            Ok(Some(heartbeat_ack(seq).into_bytes()))
         }
-        crate::models::gateway::WSDispatchEvent => match crate::event::ParseAndHandle(&mut payload)
-        {
-            Ok(()) => Ok(Some(GenDispatchACK(true).into_bytes())),
-            Err(err) => {
-                tracing::error!("parseAndHandle failed, {}, traceID:{}", err, trace_id);
-                Ok(Some(GenDispatchACK(false).into_bytes()))
+        crate::models::gateway::WSDispatchEvent => {
+            match crate::event::parse_and_handle(&mut payload) {
+                Ok(()) => Ok(Some(dispatch_ack(true).into_bytes())),
+                Err(err) => {
+                    tracing::error!("parse_and_handle failed, {}, traceID:{}", err, trace_id);
+                    Ok(Some(dispatch_ack(false).into_bytes()))
+                }
             }
-        },
+        }
         _ => Ok(None),
     }
 }
@@ -130,21 +122,21 @@ mod tests {
 
     #[test]
     fn ack_payloads_match_expected_shape() {
-        assert_eq!(GenHeartbeatACK(7), r#"{"op":11,"d":7}"#);
-        assert_eq!(GenDispatchACK(true), r#"{"op":12,"d":0}"#);
-        assert_eq!(GenDispatchACK(false), r#"{"op":12,"d":1}"#);
+        assert_eq!(heartbeat_ack(7), r#"{"op":11,"d":7}"#);
+        assert_eq!(dispatch_ack(true), r#"{"op":12,"d":0}"#);
+        assert_eq!(dispatch_ack(false), r#"{"op":12,"d":1}"#);
     }
 
     #[test]
     fn validation_ack_contains_signature() {
         let mut headers = HeaderMap::new();
-        headers.insert(crate::signature::HeaderTimestamp, "1".parse().unwrap());
+        headers.insert(crate::signature::HEADER_TIMESTAMP, "1".parse().unwrap());
         let req = WHValidationReq {
             plain_token: "plain".to_string(),
             event_ts: "2".to_string(),
         };
 
-        let body = GenValidationACK(&req, &headers, "secret").unwrap();
+        let body = validation_ack(&req, &headers, "secret").unwrap();
         let rsp: WHValidationRsp = serde_json::from_slice(&body).unwrap();
         assert_eq!(rsp.plain_token, "plain");
         assert!(!rsp.signature.is_empty());
@@ -155,20 +147,26 @@ mod tests {
         let secret = "secret";
         let body = br#"{"op":0,"t":"WEBHOOK_TEST","d":{"hello":"world"}}"#;
         let mut headers = HeaderMap::new();
-        headers.insert(crate::signature::HeaderTimestamp, "123456".parse().unwrap());
-        let signature = crate::signature::Generate(secret, &headers, body).unwrap();
-        headers.insert(crate::signature::HeaderSig, signature.parse().unwrap());
+        headers.insert(
+            crate::signature::HEADER_TIMESTAMP,
+            "123456".parse().unwrap(),
+        );
+        let signature = crate::signature::generate(secret, &headers, body).unwrap();
+        headers.insert(
+            crate::signature::HEADER_SIGNATURE,
+            signature.parse().unwrap(),
+        );
 
-        crate::event::RegisterHandler(
+        crate::event::register_handler(
             crate::models::gateway::WSDispatchEvent,
             "WEBHOOK_TEST",
             capture_session_app_id,
         );
         *captured_app_id().lock().unwrap() = None;
 
-        let response = HTTPHandler(body, &headers, "app-id-1", secret).unwrap();
+        let response = handle_http_callback(body, &headers, "app-id-1", secret).unwrap();
 
-        assert_eq!(response, Some(GenDispatchACK(true).into_bytes()));
+        assert_eq!(response, Some(dispatch_ack(true).into_bytes()));
         assert_eq!(
             captured_app_id().lock().unwrap().as_deref(),
             Some("app-id-1")

@@ -6,7 +6,7 @@ pub trait RegisterableHandler {
     fn register(self) -> Intent;
 }
 
-pub fn RegisterHandlers<H: RegisterableHandler>(handlers: impl IntoIterator<Item = H>) -> Intent {
+pub fn register_handlers<H: RegisterableHandler>(handlers: impl IntoIterator<Item = H>) -> Intent {
     handlers
         .into_iter()
         .fold(crate::intents::IntentNone, |intent, handler| {
@@ -18,7 +18,7 @@ macro_rules! registerable {
     ($ty:ident, $field:ident, [$($event:expr),+]) => {
         impl RegisterableHandler for $ty {
             fn register(self) -> Intent {
-                DefaultHandlers
+                DEFAULT_HANDLERS
                     .write()
                     .expect("default handlers lock poisoned")
                     .$field = Some(self);
@@ -30,7 +30,7 @@ macro_rules! registerable {
 
 impl RegisterableHandler for ReadyHandler {
     fn register(self) -> Intent {
-        DefaultHandlers
+        DEFAULT_HANDLERS
             .write()
             .expect("default handlers lock poisoned")
             .ready = Some(self);
@@ -40,7 +40,7 @@ impl RegisterableHandler for ReadyHandler {
 
 impl RegisterableHandler for ErrorNotifyHandler {
     fn register(self) -> Intent {
-        DefaultHandlers
+        DEFAULT_HANDLERS
             .write()
             .expect("default handlers lock poisoned")
             .error_notify = Some(self);
@@ -50,7 +50,7 @@ impl RegisterableHandler for ErrorNotifyHandler {
 
 impl RegisterableHandler for PlainEventHandler {
     fn register(self) -> Intent {
-        DefaultHandlers
+        DEFAULT_HANDLERS
             .write()
             .expect("default handlers lock poisoned")
             .plain = Some(self);

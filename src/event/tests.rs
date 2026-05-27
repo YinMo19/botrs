@@ -11,7 +11,7 @@ fn message_handler(_: &mut WSPayload, _: &mut WSMessageData) -> crate::Result<()
 
 #[test]
 fn register_handlers_returns_intents() {
-    let intent = RegisterHandlers([MessageEventHandler(message_handler)]);
+    let intent = register_handlers([MessageEventHandler(message_handler)]);
     assert_eq!(
         intent & crate::intents::IntentGuildMessages,
         crate::intents::IntentGuildMessages
@@ -20,7 +20,7 @@ fn register_handlers_returns_intents() {
 
 #[test]
 fn parse_and_handle_dispatches_typed_handler() {
-    RegisterHandlers([MessageEventHandler(message_handler)]);
+    register_handlers([MessageEventHandler(message_handler)]);
     let body = br#"{"op":0,"t":"MESSAGE_CREATE","d":{"id":"1","content":"hello"}}"#;
     let mut payload = WSPayload {
         base: WSPayloadBase {
@@ -34,7 +34,7 @@ fn parse_and_handle_dispatches_typed_handler() {
         session: None,
     };
 
-    ParseAndHandle(&mut payload).unwrap();
+    parse_and_handle(&mut payload).unwrap();
     assert!(MESSAGE_COUNT.load(Ordering::Relaxed) > 0);
 }
 
@@ -42,7 +42,7 @@ fn parse_and_handle_dispatches_typed_handler() {
 fn parse_data_reads_c2c_friend_dto() {
     let body =
         br#"{"op":0,"t":"FRIEND_ADD","d":{"openid":"u1","timestamp":123,"nick":"n","avatar":"a"}}"#;
-    let data: WSC2CFriendData = ParseData(body).unwrap();
+    let data: WSC2CFriendData = parse_data(body).unwrap();
 
     assert_eq!(data.openid, "u1");
     assert_eq!(data.timestamp, 123);

@@ -22,7 +22,7 @@ Methods are grouped by the gateway category that produces them.
 - `ready(ctx, Ready)` — called once after a successful identify handshake; `ctx.bot_info` is populated.
 - `resumed(ctx)` — called after a successful resume.
 - `error_notify(ctx, BotError)` — fires when a gateway-level error is captured.
-- `plain_event(ctx, GatewayEvent)` — catch-all for raw events (only invoked when registered via `RegisterHandlers`).
+- `plain_event(ctx, GatewayEvent)` — catch-all for raw events (only invoked when registered via `register_handlers`).
 
 ### Channel messages
 

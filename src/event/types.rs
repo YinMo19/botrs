@@ -1,7 +1,7 @@
 use crate::models::gateway::*;
 use std::sync::{LazyLock, RwLock};
 
-pub type EventParseFunc = fn(&mut WSPayload, &[u8]) -> crate::Result<()>;
+pub type EventParseFn = fn(&mut WSPayload, &[u8]) -> crate::Result<()>;
 pub type ReadyHandler = fn(&mut WSPayload, &mut WSReadyData);
 pub type ErrorNotifyHandler = fn(crate::error::SdkError);
 pub type PlainEventHandler = fn(&mut WSPayload, &[u8]) -> crate::Result<()>;
@@ -65,5 +65,5 @@ pub struct HandlerRegistry {
     pub enter_aio: Option<EnterAIOEventHandler>,
 }
 
-pub static DefaultHandlers: LazyLock<RwLock<HandlerRegistry>> =
+pub static DEFAULT_HANDLERS: LazyLock<RwLock<HandlerRegistry>> =
     LazyLock::new(|| RwLock::new(HandlerRegistry::default()));

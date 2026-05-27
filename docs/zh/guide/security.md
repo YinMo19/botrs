@@ -20,10 +20,10 @@ tracing::info!("starting with {}", token.safe_display());
 若你选择走 QQ 的 HTTP 回调（而非网关连接），每条分派都会带 `X-Signature-Ed25519` 与 `X-Signature-Timestamp`。框架在 `botrs::signature` 提供校验辅助：
 
 ```rust
-use botrs::signature::{Verify, HeaderSig, HeaderTimestamp};
+use botrs::signature::{HEADER_SIGNATURE, HEADER_TIMESTAMP, verify};
 
 fn handle(headers: &reqwest::header::HeaderMap, body: &[u8], bot_secret: &str) -> botrs::Result<()> {
-    if !Verify(bot_secret, headers, body)? {
+    if !verify(bot_secret, headers, body)? {
         return Err(botrs::BotError::auth("bad signature"));
     }
     // 签名通过；继续反序列化并分派
@@ -31,7 +31,7 @@ fn handle(headers: &reqwest::header::HeaderMap, body: &[u8], bot_secret: &str) -
 }
 ```
 
-`Verify` 会从 header 中读取 `X-Signature-Ed25519`（hex 编码签名）与 `X-Signature-Timestamp`，按 QQ 互动回调文档描述的方案从机器人 secret 推导签名密钥，仅在签名通过时返回 `Ok(true)`。`Generate(secret, headers, body)` 是其反向函数，常用于测试或你自行实现签名时。`HeaderSig` 与 `HeaderTimestamp` 常量也已导出，避免硬编码。
+`verify` 会从 header 中读取 `X-Signature-Ed25519`（hex 编码签名）与 `X-Signature-Timestamp`，按 QQ 互动回调文档描述的方案从机器人 secret 推导签名密钥，仅在签名通过时返回 `Ok(true)`。`generate(secret, headers, body)` 是其反向函数，常用于测试或你自行实现签名时。`HEADER_SIGNATURE` 与 `HEADER_TIMESTAMP` 常量也已导出，避免硬编码。
 
 校验失败的请求必须立即拒绝。一旦放行未签名或签名错误的载荷，攻击者就能伪造事件触达你的处理器。
 

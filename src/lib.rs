@@ -37,10 +37,10 @@ pub use event::{
     ChannelEventHandler, DirectMessageDeleteEventHandler, DirectMessageEventHandler,
     EnterAIOEventHandler, ErrorNotifyHandler, ForumAuditEventHandler, GroupATMessageEventHandler,
     GuildEventHandler, GuildMemberEventHandler, InteractionEventHandler, MessageAuditEventHandler,
-    MessageDeleteEventHandler, MessageEventHandler, MessageReactionEventHandler, ParseAndHandle,
-    ParseData, PlainEventHandler, PostEventHandler, PublicMessageDeleteEventHandler, ReadyHandler,
-    RegisterHandler, RegisterHandlers, ReplyEventHandler, SubscribeMsgStatusEventHandler,
-    ThreadEventHandler,
+    MessageDeleteEventHandler, MessageEventHandler, MessageReactionEventHandler, PlainEventHandler,
+    PostEventHandler, PublicMessageDeleteEventHandler, ReadyHandler, ReplyEventHandler,
+    SubscribeMsgStatusEventHandler, ThreadEventHandler, parse_and_handle, parse_data,
+    register_handler, register_handlers,
 };
 pub use forum::{
     Content, Format, ForumAuditResult, ForumRsp, OpenThread, Post, PostInfo, PostThreadRsp, Reply,
@@ -66,14 +66,12 @@ pub use session_manager::{
     SessionManager, calc_interval, can_not_identify, can_not_resume, check_session_limit,
     new_session_manager, set_session_manager_factory,
 };
-pub use signature::{Generate, HeaderSig, HeaderTimestamp, Verify};
+pub use signature::{HEADER_SIGNATURE, HEADER_TIMESTAMP, generate, verify};
 pub use token::{
     NewQQBotTokenSource, QQBotCredentials, QQBotTokenSource, StartRefreshAccessToken, Token,
     TypeBearer, TypeQQBot,
 };
-pub use webhook::{
-    DefaultGetSecretFunc, GenDispatchACK, GenHeartbeatACK, GenValidationACK, HTTPHandler,
-};
+pub use webhook::{dispatch_ack, handle_http_callback, heartbeat_ack, validation_ack};
 
 /// The current version of the library
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");

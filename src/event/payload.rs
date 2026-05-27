@@ -3,7 +3,7 @@ use crate::http::HttpClient;
 use crate::models::gateway::*;
 use serde::de::DeserializeOwned;
 
-pub fn ParseData<T: DeserializeOwned>(message: &[u8]) -> crate::Result<T> {
+pub fn parse_data<T: DeserializeOwned>(message: &[u8]) -> crate::Result<T> {
     let value: serde_json::Value = serde_json::from_slice(message)?;
     serde_json::from_value(value.get("d").cloned().unwrap_or(serde_json::Value::Null))
         .map_err(Into::into)
@@ -18,7 +18,7 @@ where
     T: DeserializeOwned,
 {
     fn parse_from_payload(_payload: &WSPayload, message: &[u8]) -> crate::Result<Self> {
-        ParseData(message)
+        parse_data(message)
     }
 }
 
@@ -48,7 +48,7 @@ macro_rules! impl_constructed_payload_data {
 
 impl PayloadData for crate::reaction::Reaction {
     fn parse_from_payload(payload: &WSPayload, message: &[u8]) -> crate::Result<Self> {
-        let data = ParseData(message)?;
+        let data = parse_data(message)?;
         Ok(crate::reaction::Reaction::from_message_reaction(
             event_api(),
             payload_event_id(payload),

@@ -1,11 +1,11 @@
-use super::{DefaultHandlers, PayloadData};
+use super::{DEFAULT_HANDLERS, PayloadData};
 use crate::models::gateway::*;
 
 macro_rules! typed_handler {
     ($fn_name:ident, $field:ident, $data:ty) => {
         pub(super) fn $fn_name(payload: &mut WSPayload, message: &[u8]) -> crate::Result<()> {
             let mut data: $data = <$data as PayloadData>::parse_from_payload(payload, message)?;
-            if let Some(handler) = DefaultHandlers
+            if let Some(handler) = DEFAULT_HANDLERS
                 .read()
                 .expect("default handlers lock poisoned")
                 .$field

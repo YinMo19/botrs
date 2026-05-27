@@ -1,14 +1,14 @@
 use super::handlers::*;
-use super::{DefaultHandlers, EventParseFunc};
+use super::{DEFAULT_HANDLERS, EventParseFn};
 use crate::models::gateway::*;
 use std::sync::{LazyLock, RwLock};
 
-static EVENT_PARSE_FUNC_MAP: LazyLock<RwLock<Vec<(OpCode, EventType, EventParseFunc)>>> =
+static EVENT_PARSE_HANDLERS: LazyLock<RwLock<Vec<(OpCode, EventType, EventParseFn)>>> =
     LazyLock::new(|| RwLock::new(default_event_handlers()));
 
-fn default_event_handlers() -> Vec<(OpCode, EventType, EventParseFunc)> {
+fn default_event_handlers() -> Vec<(OpCode, EventType, EventParseFn)> {
     [
-        (EventGuildCreate, guild_handler as EventParseFunc),
+        (EventGuildCreate, guild_handler as EventParseFn),
         (EventGuildUpdate, guild_handler),
         (EventGuildDelete, guild_handler),
         (EventChannelCreate, channel_handler),
@@ -52,9 +52,9 @@ fn default_event_handlers() -> Vec<(OpCode, EventType, EventParseFunc)> {
     .collect()
 }
 
-pub fn RegisterHandler(op_code: OpCode, event_type: impl Into<EventType>, handler: EventParseFunc) {
+pub fn register_handler(op_code: OpCode, event_type: impl Into<EventType>, handler: EventParseFn) {
     let event_type = event_type.into();
-    let mut handlers = EVENT_PARSE_FUNC_MAP
+    let mut handlers = EVENT_PARSE_HANDLERS
         .write()
         .expect("event handler map lock poisoned");
     if let Some((_, _, existing)) = handlers
@@ -67,13 +67,13 @@ pub fn RegisterHandler(op_code: OpCode, event_type: impl Into<EventType>, handle
     }
 }
 
-pub fn ParseAndHandle(payload: &mut WSPayload) -> crate::Result<()> {
+pub fn parse_and_handle(payload: &mut WSPayload) -> crate::Result<()> {
     let raw = payload
         .raw_message
         .clone()
         .unwrap_or_else(|| serde_json::to_vec(payload).unwrap_or_default());
     let handler = {
-        let handlers = EVENT_PARSE_FUNC_MAP
+        let handlers = EVENT_PARSE_HANDLERS
             .read()
             .expect("event handler map lock poisoned");
         payload.base.event_type.as_ref().and_then(|event_type| {
@@ -86,7 +86,7 @@ pub fn ParseAndHandle(payload: &mut WSPayload) -> crate::Result<()> {
 
     if let Some(handler) = handler {
         handler(payload, &raw)
-    } else if let Some(plain) = DefaultHandlers
+    } else if let Some(plain) = DEFAULT_HANDLERS
         .read()
         .expect("default handlers lock poisoned")
         .plain
