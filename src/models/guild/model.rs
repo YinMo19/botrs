@@ -47,11 +47,6 @@ pub struct Guild {
 }
 
 impl Guild {
-    /// Creates a new guild.
-    pub fn new() -> Self {
-        Self::default()
-    }
-
     /// Gets the guild's icon URL if it has one.
     pub fn icon_url(&self) -> Option<String> {
         (!self.icon.is_empty()).then(|| {

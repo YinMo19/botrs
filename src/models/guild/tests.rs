@@ -3,7 +3,7 @@ use crate::models::{HasId, HasName};
 
 #[test]
 fn test_guild_creation() {
-    let guild = Guild::new();
+    let guild = Guild::default();
     assert_eq!(guild.id, "");
     assert_eq!(guild.name, "");
     assert!(!guild.is_owner);
@@ -13,13 +13,15 @@ fn test_guild_creation() {
 
 #[test]
 fn test_guild_with_data() {
-    let mut guild = Guild::new();
-    guild.id = "123456789".to_string();
-    guild.name = "Test Guild".to_string();
-    guild.is_owner = true;
-    guild.member_count = 100;
-    guild.max_members = 500;
-    guild.description = "A test guild".to_string();
+    let guild = Guild {
+        id: "123456789".to_string(),
+        name: "Test Guild".to_string(),
+        is_owner: true,
+        member_count: 100,
+        max_members: 500,
+        description: "A test guild".to_string(),
+        ..Default::default()
+    };
 
     assert_eq!(guild.id(), Some(&"123456789".to_string()));
     assert_eq!(guild.name(), "Test Guild");
@@ -99,9 +101,11 @@ fn guild_uses_required_zero_value_fields() {
 
 #[test]
 fn test_member_limit() {
-    let mut guild = Guild::new();
-    guild.member_count = 500;
-    guild.max_members = 500;
+    let mut guild = Guild {
+        member_count: 500,
+        max_members: 500,
+        ..Default::default()
+    };
     assert!(i64::from(guild.member_count) >= guild.max_members);
 
     guild.member_count = 499;
@@ -113,11 +117,13 @@ fn test_member_limit() {
 
 #[test]
 fn test_icon_url() {
-    let mut guild = Guild::new();
-    assert!(guild.icon_url().is_none());
+    assert!(Guild::default().icon_url().is_none());
 
-    guild.id = "123456789".to_string();
-    guild.icon = "abc123".to_string();
+    let guild = Guild {
+        id: "123456789".to_string(),
+        icon: "abc123".to_string(),
+        ..Default::default()
+    };
     let url = guild.icon_url().unwrap();
     assert!(url.contains("123456789"));
     assert!(url.contains("abc123"));
