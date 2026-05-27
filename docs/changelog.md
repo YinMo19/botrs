@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed Go-style message payload and keyboard constant aliases (`TextMsg`, `MarkdownMsg`, `RichMedia`, `ActionTypeURL`, `PermissionTypAll`, etc.); use `MessageCreateType`, `SendType`, and Rust-style `ACTION_TYPE_*` / `PERMISSION_TYPE_*` constants.
 - Removed Go-style and botpy-style message content type aliases (`ArkKV`, `ArkObjKV`, `MessageKeyboard`, `CustomKeyboard`, `TemplateID`, `MarkdownParams`, etc.); use the concrete Rust types such as `ArkKv`, `Keyboard`, `KeyboardContent`, `KeyboardTemplateId`, and `MarkdownParam`.
 - Renamed Go-style error code constants (`CodeNeedReConnect`, `WSCodeBackendAuthenticationFail`, `APICodeTokenExpireOrNotExist`, etc.) to Rust-style `CODE_*`, `WS_CODE_*`, and `API_CODE_*` names.
+- Removed Go-style channel enum aliases and duplicate enum-value constants (`ChannelTypeText`, `ChannelSubTypeChat`, `ChannelPrivateTypePublic`, `SpeakPermissionTypePublic`, `CHANNEL_TYPE_TEXT`, etc.); use enum variants such as `ChannelType::Text`.
 - Removed the deprecated multi-`Option` message sending methods (`post_message`, `post_group_message`, `post_c2c_message`, `post_dms`) and their `Context` wrappers. Use the `*_with_params` methods instead.
 - Removed the redundant `post_message_api` and `patch_message_api` aliases.
 

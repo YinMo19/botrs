@@ -22,25 +22,6 @@ pub enum ChannelType {
     Unknown(u32),
 }
 
-pub const CHANNEL_TYPE_TEXT: ChannelType = ChannelType::Text;
-pub const CHANNEL_TYPE_VOICE: ChannelType = ChannelType::Voice;
-pub const CHANNEL_TYPE_CATEGORY: ChannelType = ChannelType::Category;
-pub const CHANNEL_TYPE_LIVE: ChannelType = ChannelType::Live;
-pub const CHANNEL_TYPE_APPLICATION: ChannelType = ChannelType::Application;
-pub const CHANNEL_TYPE_FORUM: ChannelType = ChannelType::Forum;
-#[allow(non_upper_case_globals)]
-pub const ChannelTypeText: ChannelType = CHANNEL_TYPE_TEXT;
-#[allow(non_upper_case_globals)]
-pub const ChannelTypeVoice: ChannelType = CHANNEL_TYPE_VOICE;
-#[allow(non_upper_case_globals)]
-pub const ChannelTypeCategory: ChannelType = CHANNEL_TYPE_CATEGORY;
-#[allow(non_upper_case_globals)]
-pub const ChannelTypeLive: ChannelType = CHANNEL_TYPE_LIVE;
-#[allow(non_upper_case_globals)]
-pub const ChannelTypeApplication: ChannelType = CHANNEL_TYPE_APPLICATION;
-#[allow(non_upper_case_globals)]
-pub const ChannelTypeForum: ChannelType = CHANNEL_TYPE_FORUM;
-
 wire_enum!(ChannelType, u32, Unknown, {
     Text = 0,
     Voice = 2,
@@ -80,19 +61,6 @@ pub enum ChannelSubType {
     Unknown(u32),
 }
 
-pub const CHANNEL_SUB_TYPE_CHAT: ChannelSubType = ChannelSubType::Chat;
-pub const CHANNEL_SUB_TYPE_NOTICE: ChannelSubType = ChannelSubType::Notice;
-pub const CHANNEL_SUB_TYPE_GUIDE: ChannelSubType = ChannelSubType::Guide;
-pub const CHANNEL_SUB_TYPE_TEAM_GAME: ChannelSubType = ChannelSubType::TeamGame;
-#[allow(non_upper_case_globals)]
-pub const ChannelSubTypeChat: ChannelSubType = CHANNEL_SUB_TYPE_CHAT;
-#[allow(non_upper_case_globals)]
-pub const ChannelSubTypeNotice: ChannelSubType = CHANNEL_SUB_TYPE_NOTICE;
-#[allow(non_upper_case_globals)]
-pub const ChannelSubTypeGuide: ChannelSubType = CHANNEL_SUB_TYPE_GUIDE;
-#[allow(non_upper_case_globals)]
-pub const ChannelSubTypeTeamGame: ChannelSubType = CHANNEL_SUB_TYPE_TEAM_GAME;
-
 wire_enum!(ChannelSubType, u32, Unknown, {
     Chat = 0,
     Notice = 1,
@@ -122,18 +90,6 @@ pub enum PrivateType {
     /// Unknown private type
     Unknown(u8),
 }
-
-pub type ChannelPrivateType = PrivateType;
-pub const CHANNEL_PRIVATE_TYPE_PUBLIC: ChannelPrivateType = PrivateType::Public;
-pub const CHANNEL_PRIVATE_TYPE_ONLY_ADMIN: ChannelPrivateType = PrivateType::OnlyAdmin;
-pub const CHANNEL_PRIVATE_TYPE_ADMIN_AND_MEMBER: ChannelPrivateType = PrivateType::AdminAndMember;
-#[allow(non_upper_case_globals)]
-pub const ChannelPrivateTypePublic: ChannelPrivateType = CHANNEL_PRIVATE_TYPE_PUBLIC;
-#[allow(non_upper_case_globals)]
-pub const ChannelPrivateTypeOnlyAdmin: ChannelPrivateType = CHANNEL_PRIVATE_TYPE_ONLY_ADMIN;
-#[allow(non_upper_case_globals)]
-pub const ChannelPrivateTypeAdminAndMember: ChannelPrivateType =
-    CHANNEL_PRIVATE_TYPE_ADMIN_AND_MEMBER;
 
 wire_enum!(PrivateType, u8, Unknown, {
     Public = 0,
@@ -174,16 +130,6 @@ pub enum SpeakPermission {
     /// Unknown speak permission
     Unknown(u8),
 }
-
-pub type SpeakPermissionType = SpeakPermission;
-pub const SPEAK_PERMISSION_TYPE_PUBLIC: SpeakPermissionType = SpeakPermission::Public;
-pub const SPEAK_PERMISSION_TYPE_ADMIN_AND_MEMBER: SpeakPermissionType =
-    SpeakPermission::AdminAndMember;
-#[allow(non_upper_case_globals)]
-pub const SpeakPermissionTypePublic: SpeakPermissionType = SPEAK_PERMISSION_TYPE_PUBLIC;
-#[allow(non_upper_case_globals)]
-pub const SpeakPermissionTypeAdminAndMember: SpeakPermissionType =
-    SPEAK_PERMISSION_TYPE_ADMIN_AND_MEMBER;
 
 wire_enum!(SpeakPermission, u8, Unknown, {
     Invalid = 0,

@@ -22,6 +22,7 @@ BotRS 的所有重要更改都将记录在此文件中。
 - 移除 Go 风格消息 payload 与 keyboard 常量别名（`TextMsg`、`MarkdownMsg`、`RichMedia`、`ActionTypeURL`、`PermissionTypAll` 等）；请使用 `MessageCreateType`、`SendType` 以及 Rust 风格 `ACTION_TYPE_*` / `PERMISSION_TYPE_*` 常量。
 - 移除 Go 风格和 botpy 风格消息内容类型别名（`ArkKV`、`ArkObjKV`、`MessageKeyboard`、`CustomKeyboard`、`TemplateID`、`MarkdownParams` 等）；请使用具体 Rust 类型，例如 `ArkKv`、`Keyboard`、`KeyboardContent`、`KeyboardTemplateId` 和 `MarkdownParam`。
 - 将 Go 风格错误码常量（`CodeNeedReConnect`、`WSCodeBackendAuthenticationFail`、`APICodeTokenExpireOrNotExist` 等）改名为 Rust 风格 `CODE_*`、`WS_CODE_*` 和 `API_CODE_*`。
+- 移除 Go 风格 channel enum 别名和重复 enum-value 常量（`ChannelTypeText`、`ChannelSubTypeChat`、`ChannelPrivateTypePublic`、`SpeakPermissionTypePublic`、`CHANNEL_TYPE_TEXT` 等）；请使用 `ChannelType::Text` 这类枚举 variant。
 - 移除已弃用的多 `Option` 消息发送方法（`post_message`、`post_group_message`、`post_c2c_message`、`post_dms`）及其 `Context` wrapper。请使用 `*_with_params` 方法。
 - 移除冗余的 `post_message_api` 和 `patch_message_api` 别名。
 

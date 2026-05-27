@@ -61,7 +61,7 @@ pub struct Channel {
 | `PrivateType`         | `Public=0`、`OnlyAdmin=1`、`AdminAndMember=2`                              |
 | `SpeakPermission`     | `Invalid=0`、`Public=1`、`AdminAndMember=2`                                |
 
-每个枚举都实现了 `From<u8>`/`From<u32>` 用于数值往返，并提供 Go 风格的常量别名（如 `ChannelTypeText`），方便从官方 Go SDK 迁移过来的用户。
+每个枚举都实现了 `From<u8>`/`From<u32>` 用于数值往返。请直接使用枚举 variant，例如 `ChannelType::Text` 或 `SpeakPermission::Public`。
 
 `Channel` 上的常用判断：`is_text()`、`is_voice()`、`is_group()`、`is_live()`、`is_application()`、`is_discussion()`、`is_public()`、`is_admin_only()`、`everyone_can_speak()`、`mention()`（返回 `<#id>`）。
 
