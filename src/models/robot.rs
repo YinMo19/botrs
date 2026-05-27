@@ -120,23 +120,6 @@ wire_enum!(RobotStatus, u8, Unknown, {
     Invisible = 4,
 });
 
-impl RobotStatus {
-    /// Returns true if the status indicates the robot is available.
-    pub fn is_available(self) -> bool {
-        matches!(self, RobotStatus::Online | RobotStatus::Idle)
-    }
-
-    /// Returns true if the status indicates the robot is busy.
-    pub fn is_busy(self) -> bool {
-        matches!(self, RobotStatus::Dnd)
-    }
-
-    /// Returns true if the status indicates the robot is offline.
-    pub fn is_offline(self) -> bool {
-        matches!(self, RobotStatus::Offline | RobotStatus::Invisible)
-    }
-}
-
 /// Represents the robot's activity/presence.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Activity {
@@ -296,11 +279,11 @@ mod tests {
 
     #[test]
     fn test_robot_status() {
-        assert!(RobotStatus::Online.is_available());
-        assert!(RobotStatus::Idle.is_available());
-        assert!(RobotStatus::Dnd.is_busy());
-        assert!(RobotStatus::Offline.is_offline());
-        assert!(RobotStatus::Invisible.is_offline());
+        assert_eq!(RobotStatus::from(0), RobotStatus::Offline);
+        assert_eq!(RobotStatus::from(1), RobotStatus::Online);
+        assert_eq!(RobotStatus::from(2), RobotStatus::Idle);
+        assert_eq!(RobotStatus::from(3), RobotStatus::Dnd);
+        assert_eq!(RobotStatus::from(4), RobotStatus::Invisible);
     }
 
     #[test]
