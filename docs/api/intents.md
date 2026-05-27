@@ -37,8 +37,6 @@ Each row lists the public Rust constant, the underlying bit, the `with_*` builde
 | `Intents::AUDIO_ACTION`                 | `1 << 29` | `with_audio_action`                  | Audio start / finish / on-mic / off-mic.                |
 | `Intents::PUBLIC_GUILD_MESSAGES`        | `1 << 30` | `with_public_guild_messages`         | `@bot` mentions and public message-delete events.       |
 
-The Go-style aliases `IntentGuilds`, `IntentGuildMembers`, `IntentGuildMessages`, `IntentGroupMessages`, `IntentInteraction`, … are kept for users porting from the official Go SDK; they map to the same bits.
-
 ## Inspection
 
 For each flag there's a matching predicate (no parameters): `intents.guilds()`, `intents.public_guild_messages()`, etc. Two helpers cover common groupings:
@@ -64,8 +62,10 @@ let custom = Intents::none()
     .with_public_guild_messages()
     .with_direct_message();
 
-// 3. Bitwise composition (matches the Go-style aliases too).
-let public = Intents::from_bits(IntentGuilds | IntentGuildAtMessage | IntentDirectMessages);
+// 3. Bitwise composition.
+let public = Intents::from_bits(
+    Intents::GUILDS | Intents::PUBLIC_GUILD_MESSAGES | Intents::DIRECT_MESSAGE,
+);
 
 // 4. Drop a flag at runtime.
 let trimmed = Intents::all().without_intent(Intents::FORUMS);

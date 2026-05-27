@@ -37,8 +37,6 @@ pub struct Intents { pub bits: u32 }
 | `Intents::AUDIO_ACTION`                 | `1 << 29` | `with_audio_action`                  | 音频开始/结束/上麦/下麦事件。                           |
 | `Intents::PUBLIC_GUILD_MESSAGES`        | `1 << 30` | `with_public_guild_messages`         | `@bot` 消息及公域消息删除事件。                         |
 
-Go 风格别名 `IntentGuilds`、`IntentGuildMembers`、`IntentGuildMessages`、`IntentGroupMessages`、`IntentInteraction`…… 仍然保留，方便从官方 Go SDK 迁移过来的用户使用，对应的位完全一致。
-
 ## 查询
 
 对每个标志都有匹配的无参谓词：`intents.guilds()`、`intents.public_guild_messages()` 等。两个常用的辅助方法：
@@ -64,8 +62,10 @@ let custom = Intents::none()
     .with_public_guild_messages()
     .with_direct_message();
 
-// 3. 直接位组合（也可以用 Go 风格的别名）。
-let public = Intents::from_bits(IntentGuilds | IntentGuildAtMessage | IntentDirectMessages);
+// 3. 直接位组合。
+let public = Intents::from_bits(
+    Intents::GUILDS | Intents::PUBLIC_GUILD_MESSAGES | Intents::DIRECT_MESSAGE,
+);
 
 // 4. 运行时摘除某个标志。
 let trimmed = Intents::all().without_intent(Intents::FORUMS);

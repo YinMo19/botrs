@@ -13,8 +13,8 @@ fn message_handler(_: &mut WSPayload, _: &mut WSMessageData) -> crate::Result<()
 fn register_handlers_returns_intents() {
     let intent = register_handlers([MessageEventHandler(message_handler)]);
     assert_eq!(
-        intent & crate::intents::IntentGuildMessages,
-        crate::intents::IntentGuildMessages
+        intent & crate::intents::Intents::GUILD_MESSAGES,
+        crate::intents::Intents::GUILD_MESSAGES
     );
 }
 

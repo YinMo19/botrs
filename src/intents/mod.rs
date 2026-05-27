@@ -4,13 +4,13 @@
 //! which gateway events your bot will receive. Intents act as a permission system
 //! for gateway events.
 
-mod aliases;
 mod core;
 mod display;
 mod ops;
 
-pub use aliases::*;
 pub use core::Intents;
+
+pub type Intent = u32;
 
 #[cfg(test)]
 mod tests;

@@ -67,7 +67,7 @@ impl Gateway {
 #[cfg(test)]
 mod tests {
     use crate::gateway::Gateway;
-    use crate::intents::{IntentGroupMessages, Intents};
+    use crate::intents::Intents;
     use crate::models::gateway::opcodes;
     use crate::token::Token;
 
@@ -89,7 +89,7 @@ mod tests {
 
         assert_eq!(event.opcode, opcodes::IDENTIFY);
         assert_eq!(data["token"], "QQBot ACCESS_TOKEN_XXXXXX");
-        assert_eq!(data["intents"], IntentGroupMessages);
+        assert_eq!(data["intents"], Intents::PUBLIC_MESSAGES);
         assert_eq!(data["shard"], serde_json::json!([0, 1]));
     }
 

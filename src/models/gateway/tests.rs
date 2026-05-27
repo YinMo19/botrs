@@ -1,8 +1,5 @@
 use super::*;
-use crate::intents::{
-    IntentEnterAIO, IntentForum, IntentGroupMessages, IntentGuildAtMessage, IntentGuildMembers,
-    IntentGuildMessages, IntentGuilds, IntentNone,
-};
+use crate::intents::Intents;
 
 #[test]
 fn test_event_to_intent_matches_expected_mapping() {
@@ -17,19 +14,19 @@ fn test_event_to_intent_matches_expected_mapping() {
         "UNKNOWN_EVENT",
     ]);
 
-    assert_eq!(intent & IntentGuilds, IntentGuilds);
-    assert_eq!(intent & IntentGuildMembers, IntentGuildMembers);
-    assert_eq!(intent & IntentGuildMessages, IntentGuildMessages);
-    assert_eq!(intent & IntentGroupMessages, IntentGroupMessages);
-    assert_eq!(intent & IntentEnterAIO, IntentEnterAIO);
-    assert_eq!(event_to_intent(["UNKNOWN_EVENT"]), IntentNone);
+    assert_eq!(intent & Intents::GUILDS, Intents::GUILDS);
+    assert_eq!(intent & Intents::GUILD_MEMBERS, Intents::GUILD_MEMBERS);
+    assert_eq!(intent & Intents::GUILD_MESSAGES, Intents::GUILD_MESSAGES);
+    assert_eq!(intent & Intents::PUBLIC_MESSAGES, Intents::PUBLIC_MESSAGES);
+    assert_eq!(intent & Intents::ENTER_AIO, Intents::ENTER_AIO);
+    assert_eq!(event_to_intent(["UNKNOWN_EVENT"]), 0);
 }
 
 #[test]
-fn test_event_to_intent_function_name() {
+fn test_event_to_intent_maps_public_and_forum_events() {
     assert_eq!(
-        EventToIntent([EventAtMessageCreate, EventForumAuditResult]),
-        IntentGuildAtMessage | IntentForum
+        event_to_intent([EventAtMessageCreate, EventForumAuditResult]),
+        Intents::PUBLIC_GUILD_MESSAGES | Intents::FORUMS
     );
 }
 
@@ -66,7 +63,7 @@ fn gateway_event_omits_absent_wire_fields() {
         event_type: None,
         data: Some(serde_json::json!({
             "token": "QQBot token",
-            "intents": crate::intents::IntentGroupMessages,
+            "intents": Intents::PUBLIC_MESSAGES,
             "shard": [0, 1],
         })),
         sequence: None,
@@ -86,7 +83,7 @@ fn gateway_event_omits_absent_wire_fields() {
 fn identify_properties_default_to_botgo_zero_value() {
     let identify = Identify {
         token: "QQBot ACCESS_TOKEN_XXXXXX".to_string(),
-        intents: crate::intents::IntentGroupMessages,
+        intents: Intents::PUBLIC_MESSAGES,
         shard: Some([0, 1]),
         properties: IdentifyProperties::default(),
     };
@@ -97,7 +94,7 @@ fn identify_properties_default_to_botgo_zero_value() {
         value,
         serde_json::json!({
             "token": "QQBot ACCESS_TOKEN_XXXXXX",
-            "intents": crate::intents::IntentGroupMessages,
+            "intents": Intents::PUBLIC_MESSAGES,
             "shard": [0, 1],
             "properties": {}
         })

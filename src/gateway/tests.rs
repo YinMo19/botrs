@@ -33,7 +33,7 @@ fn identify_intents_fall_back_to_guilds_when_empty() {
     let token = Token::new("test_app_id", "test_secret");
     let gateway = Gateway::new("wss://example.com", token, Intents::none(), Some([0, 1]));
 
-    assert_eq!(gateway.identify_intents(), crate::intents::IntentGuilds);
+    assert_eq!(gateway.identify_intents(), Intents::GUILDS);
 }
 
 #[test]
@@ -42,10 +42,7 @@ fn identify_intents_keep_configured_bits() {
     let intents = Intents::none().with_public_messages();
     let gateway = Gateway::new("wss://example.com", token, intents, Some([0, 1]));
 
-    assert_eq!(
-        gateway.identify_intents(),
-        crate::intents::IntentGroupMessages
-    );
+    assert_eq!(gateway.identify_intents(), Intents::PUBLIC_MESSAGES);
 }
 
 #[test]

@@ -9,9 +9,7 @@ pub trait RegisterableHandler {
 pub fn register_handlers<H: RegisterableHandler>(handlers: impl IntoIterator<Item = H>) -> Intent {
     handlers
         .into_iter()
-        .fold(crate::intents::IntentNone, |intent, handler| {
-            intent | handler.register()
-        })
+        .fold(0, |intent, handler| intent | handler.register())
 }
 
 macro_rules! registerable {
@@ -22,7 +20,7 @@ macro_rules! registerable {
                     .write()
                     .expect("default handlers lock poisoned")
                     .$field = Some(self);
-                crate::models::gateway::EventToIntent([$($event),+])
+                crate::models::gateway::event_to_intent([$($event),+])
             }
         }
     };
@@ -34,7 +32,7 @@ impl RegisterableHandler for ReadyHandler {
             .write()
             .expect("default handlers lock poisoned")
             .ready = Some(self);
-        crate::intents::IntentNone
+        0
     }
 }
 
@@ -44,7 +42,7 @@ impl RegisterableHandler for ErrorNotifyHandler {
             .write()
             .expect("default handlers lock poisoned")
             .error_notify = Some(self);
-        crate::intents::IntentNone
+        0
     }
 }
 
@@ -54,7 +52,7 @@ impl RegisterableHandler for PlainEventHandler {
             .write()
             .expect("default handlers lock poisoned")
             .plain = Some(self);
-        crate::intents::IntentNone
+        0
     }
 }
 

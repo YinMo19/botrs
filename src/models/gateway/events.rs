@@ -49,33 +49,32 @@ pub fn event_to_intent(
         .fold(0, |intents, event| intents | event_intent(event.as_ref()))
 }
 
-#[allow(non_snake_case)]
-pub fn EventToIntent(events: impl IntoIterator<Item = impl AsRef<str>>) -> crate::intents::Intent {
-    event_to_intent(events)
-}
-
 fn event_intent(event: &str) -> crate::intents::Intent {
     match event {
         "GUILD_CREATE" | "GUILD_UPDATE" | "GUILD_DELETE" | "CHANNEL_CREATE" | "CHANNEL_UPDATE"
-        | "CHANNEL_DELETE" => crate::intents::IntentGuilds,
+        | "CHANNEL_DELETE" => crate::intents::Intents::GUILDS,
         "GUILD_MEMBER_ADD" | "GUILD_MEMBER_UPDATE" | "GUILD_MEMBER_REMOVE" => {
-            crate::intents::IntentGuildMembers
+            crate::intents::Intents::GUILD_MEMBERS
         }
-        "MESSAGE_CREATE" | "MESSAGE_DELETE" => crate::intents::IntentGuildMessages,
+        "MESSAGE_CREATE" | "MESSAGE_DELETE" => crate::intents::Intents::GUILD_MESSAGES,
         "GROUP_AT_MESSAGE_CREATE"
         | "C2C_MESSAGE_CREATE"
         | "SUBSCRIBE_MESSAGE_STATUS"
         | "FRIEND_ADD"
-        | "FRIEND_DEL" => crate::intents::IntentGroupMessages,
+        | "FRIEND_DEL" => crate::intents::Intents::PUBLIC_MESSAGES,
         "MESSAGE_REACTION_ADD" | "MESSAGE_REACTION_REMOVE" => {
-            crate::intents::IntentGuildMessageReactions
+            crate::intents::Intents::GUILD_MESSAGE_REACTIONS
         }
-        "AT_MESSAGE_CREATE" | "PUBLIC_MESSAGE_DELETE" => crate::intents::IntentGuildAtMessage,
-        "DIRECT_MESSAGE_CREATE" | "DIRECT_MESSAGE_DELETE" => crate::intents::IntentDirectMessages,
+        "AT_MESSAGE_CREATE" | "PUBLIC_MESSAGE_DELETE" => {
+            crate::intents::Intents::PUBLIC_GUILD_MESSAGES
+        }
+        "DIRECT_MESSAGE_CREATE" | "DIRECT_MESSAGE_DELETE" => {
+            crate::intents::Intents::DIRECT_MESSAGE
+        }
         "AUDIO_START" | "AUDIO_FINISH" | "AUDIO_ON_MIC" | "AUDIO_OFF_MIC" => {
-            crate::intents::IntentAudio
+            crate::intents::Intents::AUDIO_ACTION
         }
-        "MESSAGE_AUDIT_PASS" | "MESSAGE_AUDIT_REJECT" => crate::intents::IntentAudit,
+        "MESSAGE_AUDIT_PASS" | "MESSAGE_AUDIT_REJECT" => crate::intents::Intents::MESSAGE_AUDIT,
         "FORUM_THREAD_CREATE"
         | "FORUM_THREAD_UPDATE"
         | "FORUM_THREAD_DELETE"
@@ -83,10 +82,10 @@ fn event_intent(event: &str) -> crate::intents::Intent {
         | "FORUM_POST_DELETE"
         | "FORUM_REPLY_CREATE"
         | "FORUM_REPLY_DELETE"
-        | "FORUM_PUBLISH_AUDIT_RESULT" => crate::intents::IntentForum,
-        "INTERACTION_CREATE" => crate::intents::IntentInteraction,
-        "ENTER_AIO" => crate::intents::IntentEnterAIO,
-        _ => crate::intents::IntentNone,
+        | "FORUM_PUBLISH_AUDIT_RESULT" => crate::intents::Intents::FORUMS,
+        "INTERACTION_CREATE" => crate::intents::Intents::INTERACTION,
+        "ENTER_AIO" => crate::intents::Intents::ENTER_AIO,
+        _ => 0,
     }
 }
 
