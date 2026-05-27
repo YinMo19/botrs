@@ -14,15 +14,3 @@ pub struct ReactionUsers {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub is_end: bool,
 }
-
-impl ReactionUsers {
-    /// Check if there are more pages available
-    pub fn has_more_pages(&self) -> bool {
-        !self.is_end
-    }
-
-    /// Get the number of users in this page
-    pub fn user_count(&self) -> usize {
-        self.users.len()
-    }
-}

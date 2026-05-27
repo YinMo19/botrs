@@ -63,16 +63,6 @@ impl Reaction {
     pub fn is_reply_reaction(&self) -> bool {
         self.target.target_type == ReactionTargetType::Reply
     }
-
-    /// Get the target ID
-    pub fn target_id(&self) -> &str {
-        &self.target.id
-    }
-
-    /// Get the emoji ID
-    pub fn emoji_id(&self) -> &str {
-        &self.emoji.id
-    }
 }
 
 impl std::fmt::Display for Reaction {

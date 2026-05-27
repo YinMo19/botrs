@@ -19,9 +19,4 @@ impl Emoji {
             emoji_type,
         }
     }
-
-    /// Creates a new Emoji instance.
-    pub fn with_type(id: impl Into<String>, emoji_type: i32) -> Self {
-        Self::new(id, emoji_type)
-    }
 }
