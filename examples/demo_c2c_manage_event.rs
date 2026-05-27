@@ -4,7 +4,8 @@
 
 mod common;
 
-use botrs::{C2CManageEvent, Client, Context, EventHandler, Intents, Ready, Token};
+use botrs::manage::C2CManageEvent;
+use botrs::{Client, Context, EventHandler, Intents, Ready, Token};
 use common::{Config, init_logging};
 use std::env;
 use tracing::{info, warn};

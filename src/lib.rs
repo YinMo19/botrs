@@ -35,10 +35,6 @@ pub use interaction::{
     Interaction, InteractionData, InteractionDataType, InteractionType, SearchInputResolved,
     SearchLayout, SearchRecord, SearchRsp,
 };
-pub use manage::{
-    C2CManageEvent, EnterAioEvent, GroupManageEvent, ManageEventType, SubscribeMessageStatusData,
-    SubscribeMsgTemplateResult,
-};
 pub use models::gateway::Ready;
 pub use models::*;
 pub use signature::{HEADER_SIGNATURE, HEADER_TIMESTAMP, generate, verify};
