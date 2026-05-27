@@ -14,8 +14,6 @@ fn test_api_permission() {
     assert_eq!(permission.method, "GET");
     assert_eq!(permission.desc, "Get guild member");
     assert_eq!(permission.auth_status, 1);
-    assert!(permission.is_authorized());
-    assert!(!permission.is_unauthorized());
     assert_eq!(permission.auth_status_string(), "Authorized");
 }
 
@@ -28,8 +26,7 @@ fn test_api_permission_unauthorized() {
         Some(0),
     );
 
-    assert!(!permission.is_authorized());
-    assert!(permission.is_unauthorized());
+    assert_eq!(permission.auth_status, 0);
     assert_eq!(permission.auth_status_string(), "Unauthorized");
 }
 
@@ -37,8 +34,7 @@ fn test_api_permission_unauthorized() {
 fn test_api_permission_unknown_status() {
     let permission = APIPermission::new("/guilds/123/channels", "GET", None, Some(2));
 
-    assert!(!permission.is_authorized());
-    assert!(!permission.is_unauthorized());
+    assert_eq!(permission.auth_status, 2);
     assert_eq!(permission.auth_status_string(), "Unknown");
 }
 

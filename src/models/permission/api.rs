@@ -43,16 +43,6 @@ impl APIPermission {
         }
     }
 
-    /// Returns true if this API is authorized for use.
-    pub fn is_authorized(&self) -> bool {
-        self.auth_status == 1
-    }
-
-    /// Returns true if this API is unauthorized.
-    pub fn is_unauthorized(&self) -> bool {
-        self.auth_status == 0
-    }
-
     /// Gets the authorization status as a string.
     pub fn auth_status_string(&self) -> &'static str {
         match self.auth_status {
