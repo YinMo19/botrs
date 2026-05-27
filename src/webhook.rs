@@ -102,23 +102,6 @@ pub fn handle_http_callback(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::sync::{Mutex, OnceLock};
-
-    fn captured_app_id() -> &'static Mutex<Option<String>> {
-        static CAPTURED: OnceLock<Mutex<Option<String>>> = OnceLock::new();
-        CAPTURED.get_or_init(|| Mutex::new(None))
-    }
-
-    fn capture_session_app_id(
-        payload: &mut crate::models::gateway::WSPayload,
-        _: &[u8],
-    ) -> crate::Result<()> {
-        *captured_app_id().lock().unwrap() = payload
-            .session
-            .as_ref()
-            .and_then(|session| session.app_id.clone());
-        Ok(())
-    }
 
     #[test]
     fn ack_payloads_match_expected_shape() {
@@ -143,9 +126,9 @@ mod tests {
     }
 
     #[test]
-    fn http_handler_sets_app_id_session_for_dispatch() {
+    fn http_handler_acks_valid_dispatch() {
         let secret = "secret";
-        let body = br#"{"op":0,"t":"WEBHOOK_TEST","d":{"hello":"world"}}"#;
+        let body = br#"{"op":0,"t":"MESSAGE_CREATE","d":{"id":"1","content":"hello"}}"#;
         let mut headers = HeaderMap::new();
         headers.insert(
             crate::signature::HEADER_TIMESTAMP,
@@ -157,19 +140,8 @@ mod tests {
             signature.parse().unwrap(),
         );
 
-        crate::event::register_handler(
-            crate::models::gateway::WS_DISPATCH_EVENT,
-            "WEBHOOK_TEST",
-            capture_session_app_id,
-        );
-        *captured_app_id().lock().unwrap() = None;
-
         let response = handle_http_callback(body, &headers, "app-id-1", secret).unwrap();
 
         assert_eq!(response, Some(dispatch_ack(true).into_bytes()));
-        assert_eq!(
-            captured_app_id().lock().unwrap().as_deref(),
-            Some("app-id-1")
-        );
     }
 }

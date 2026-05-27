@@ -1,5 +1,5 @@
+use super::EventParseFn;
 use super::handlers::*;
-use super::{DEFAULT_HANDLERS, EventParseFn};
 use crate::models::gateway::*;
 use std::sync::{LazyLock, RwLock};
 
@@ -52,22 +52,6 @@ fn default_event_handlers() -> Vec<(OpCode, EventType, EventParseFn)> {
     .collect()
 }
 
-#[cfg(test)]
-pub fn register_handler(op_code: OpCode, event_type: impl Into<EventType>, handler: EventParseFn) {
-    let event_type = event_type.into();
-    let mut handlers = EVENT_PARSE_HANDLERS
-        .write()
-        .expect("event handler map lock poisoned");
-    if let Some((_, _, existing)) = handlers
-        .iter_mut()
-        .find(|(op, event, _)| *op == op_code && *event == event_type)
-    {
-        *existing = handler;
-    } else {
-        handlers.push((op_code, event_type, handler));
-    }
-}
-
 pub fn parse_and_handle(payload: &mut WSPayload) -> crate::Result<()> {
     let raw = payload
         .raw_message
@@ -85,15 +69,5 @@ pub fn parse_and_handle(payload: &mut WSPayload) -> crate::Result<()> {
         })
     };
 
-    if let Some(handler) = handler {
-        handler(payload, &raw)
-    } else if let Some(plain) = DEFAULT_HANDLERS
-        .read()
-        .expect("default handlers lock poisoned")
-        .plain
-    {
-        plain(payload, &raw)
-    } else {
-        Ok(())
-    }
+    handler.map_or(Ok(()), |handler| handler(payload, &raw))
 }
