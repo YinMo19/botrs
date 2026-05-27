@@ -29,8 +29,8 @@ impl Reaction {
         Ok(Self::from_message_reaction(event_id, message_reaction))
     }
 
-    /// Creates a new Reaction instance from the structured DTO.
-    pub fn from_message_reaction(
+    /// Creates a Reaction from the structured gateway DTO.
+    pub(crate) fn from_message_reaction(
         event_id: Option<String>,
         message_reaction: MessageReaction,
     ) -> Self {
