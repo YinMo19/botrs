@@ -64,7 +64,6 @@
 //! Each struct provides:
 //! - `new_text(content)` - Create simple text message
 //! - `with_reply(message_id)` - Add reply reference
-//! - `with_file_image(&bytes)` - Add file attachment (MessageParams/DirectMessageParams only)
 //! - `Default` implementation for easy struct building
 //!
 //! See the examples in `/examples` directory for comprehensive usage patterns.

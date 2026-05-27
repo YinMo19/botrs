@@ -100,7 +100,6 @@ mod tests {
             content: Some("hello".to_string()),
             image: Some("https://example.com/image.png".to_string()),
             msg_id: Some("message-1".to_string()),
-            file_image: Some("aW1hZ2U=".to_string()),
             ..Default::default()
         };
         assert_eq!(
@@ -108,8 +107,7 @@ mod tests {
             serde_json::json!({
                 "content": "hello",
                 "image": "https://example.com/image.png",
-                "msg_id": "message-1",
-                "file_image": "aW1hZ2U="
+                "msg_id": "message-1"
             })
         );
 
@@ -199,7 +197,6 @@ mod tests {
             image: Some(String::new()),
             msg_id: Some(String::new()),
             event_id: Some(String::new()),
-            timestamp: Some(0),
             msg_seq: Some(0),
             subscribe_id: Some(String::new()),
             feature_id: Some(0),
@@ -239,7 +236,6 @@ mod tests {
             "image",
             "msg_id",
             "event_id",
-            "timestamp",
             "msg_seq",
             "subscribe_id",
             "feature_id",
@@ -270,7 +266,6 @@ mod tests {
             image: Some("https://example.com/image.png".to_string()),
             msg_id: Some("msg-1".to_string()),
             event_id: Some("event-1".to_string()),
-            timestamp: Some(42),
             msg_seq: Some(1),
             subscribe_id: Some("sub-1".to_string()),
             feature_id: Some(7),
@@ -319,7 +314,6 @@ mod tests {
                 "image": "https://example.com/image.png",
                 "msg_id": "msg-1",
                 "event_id": "event-1",
-                "timestamp": 42,
                 "msg_seq": 1,
                 "subscribe_id": "sub-1",
                 "input_notify": {

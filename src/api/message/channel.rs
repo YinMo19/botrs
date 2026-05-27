@@ -201,32 +201,4 @@ mod tests {
         );
         server.await.unwrap();
     }
-
-    #[tokio::test]
-    async fn send_message_file_image_uses_json_body() {
-        let (base_url, request, server) = spawn_capture_server().await;
-        let api = test_api(base_url).await;
-        let response = api
-            .send_message(
-                "channel-1",
-                MessageParams::new_text("hello")
-                    .with_file_image(b"image-bytes")
-                    .with_reply("message-1"),
-            )
-            .await
-            .unwrap();
-
-        assert_eq!(response.id.as_deref(), Some("message-1"));
-        let request = request.await.unwrap();
-        assert!(request.starts_with("POST /channels/channel-1/messages HTTP/1.1"));
-        assert_eq!(
-            request_body(&request),
-            serde_json::json!({
-                "content": "hello",
-                "msg_id": "message-1",
-                "file_image": "aW1hZ2UtYnl0ZXM="
-            })
-        );
-        server.await.unwrap();
-    }
 }

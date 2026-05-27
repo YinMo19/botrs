@@ -56,5 +56,3 @@ ctx.send_group_message(&group_openid, params).await?;
 ```
 
 The C2C surface mirrors this with `post_c2c_file(openid, file_type, url, srv_send_msg)`. Pass `srv_send_msg = Some(true)` to have the platform forward the upload as a message immediately, otherwise reuse the returned `Media` descriptor in your own `*MessageParams`.
-
-For guild channel messages with raw image bytes already in memory, prefer `MessageParams::with_file_image(&bytes)` — the framework base64-encodes them into the `file_image` field for you.

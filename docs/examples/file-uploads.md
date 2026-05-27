@@ -2,14 +2,17 @@
 
 Two distinct flows depending on the destination:
 
-- **Channel @-reply with an image attachment** — read the file into a `Vec<u8>` and call `MessageParams::new_text(...).with_file_image(&bytes)`. See [`demo_at_reply_file_data.rs`](https://github.com/YinMo19/botrs/blob/main/examples/demo_at_reply_file_data.rs).
+- **Channel image by URL** — set `MessageParams::image` to a remote image URL.
 - **Group / C2C rich media** — upload a URL via `BotApi::post_group_file` / `BotApi::post_c2c_file`, then send the returned `Media` in a follow-up message with `msg_type: 7`. See [`demo_group_reply_file.rs`](https://github.com/YinMo19/botrs/blob/main/examples/demo_group_reply_file.rs) and [`demo_c2c_reply_file.rs`](https://github.com/YinMo19/botrs/blob/main/examples/demo_c2c_reply_file.rs).
 
-## Channel attachment
+## Channel Image
 
 ```rust
-let bytes = std::fs::read("examples/resource/test.png")?;
-let params = MessageParams::new_text("here you go").with_file_image(&bytes);
+let params = MessageParams {
+    content: Some("here you go".into()),
+    image: Some("https://example.com/image.png".into()),
+    ..Default::default()
+};
 ctx.send_message(channel_id, params).await?;
 ```
 
@@ -31,4 +34,4 @@ ctx.send_group_message(group_openid, params).await?;
 ## See also
 
 - Guide: [`docs/guide/messages.md`](../guide/messages.md)
-- Demos: `examples/demo_at_reply_file_data.rs`, `examples/demo_group_reply_file.rs`, `examples/demo_c2c_reply_file.rs`
+- Demos: `examples/demo_group_reply_file.rs`, `examples/demo_c2c_reply_file.rs`

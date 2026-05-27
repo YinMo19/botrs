@@ -41,7 +41,6 @@ tracing = "0.1"
 
 # Utilities
 chrono = { version = "0.4", features = ["serde"] }
-base64 = "0.21"
 async-trait = "0.1"
 ed25519-dalek = "2"
 hex = "0.4"
@@ -95,10 +94,6 @@ required-features = ["examples"]
 
 [[example]]
 name = "demo_recall"
-required-features = ["examples"]
-
-[[example]]
-name = "demo_at_reply_file_data"
 required-features = ["examples"]
 
 [[example]]

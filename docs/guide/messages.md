@@ -7,7 +7,7 @@ Every send method on `BotApi` accepts a typed builder rather than a long list of
 - `C2CMessageParams` — single-user C2C messages.
 - `DirectMessageParams` — DM (private chat) messages.
 
-All four expose `new_text(content)` for the common case, `with_reply(message_id)` to set the `msg_id` reference, and (on `MessageParams` / `DirectMessageParams`) `with_file_image(&bytes)` to attach raw image bytes — they are base64-encoded into the `file_image` field for you. Anything else (embed, ark, markdown, keyboard, media, prompt keyboard, action button, stream) is set with struct-update syntax.
+All four expose `new_text(content)` for the common case and `with_reply(message_id)` to set the `msg_id` reference. Anything else (embed, ark, markdown, keyboard, image URL, media, prompt keyboard, action button, stream) is set with struct-update syntax.
 
 ```rust
 use botrs::models::message::MessageParams;
@@ -30,7 +30,7 @@ let params = MessageParams {
 ctx.send_message(&channel_id, params).await?;
 ```
 
-`with_file_image` takes `&[u8]`, not a URL, and is the right way to send bytes you already have in memory. To reference a remote image instead, set `params.image = Some(url.into())`.
+To include an image in a guild channel message, set `params.image = Some(url.into())` with a remote image URL.
 
 ## Sending in each context
 

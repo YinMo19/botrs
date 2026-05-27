@@ -7,7 +7,7 @@
 - `C2CMessageParams` —— 单聊 C2C 消息。
 - `DirectMessageParams` —— 私信（DM）消息。
 
-四者都提供 `new_text(content)`、`with_reply(message_id)`（设置 `msg_id`），其中 `MessageParams` 与 `DirectMessageParams` 还提供 `with_file_image(&bytes)` —— 字节会被自动 base64 编码到 `file_image` 字段。其余字段（embed、ark、markdown、keyboard、media、prompt keyboard、action button、stream 等）通过结构体字段直接赋值。
+四者都提供 `new_text(content)`、`with_reply(message_id)`（设置 `msg_id`）。其余字段（embed、ark、markdown、keyboard、图片 URL、media、prompt keyboard、action button、stream 等）通过结构体字段直接赋值。
 
 ```rust
 use botrs::models::message::MessageParams;
@@ -30,7 +30,7 @@ let params = MessageParams {
 ctx.send_message(&channel_id, params).await?;
 ```
 
-`with_file_image` 接收 `&[u8]`（原始字节，不是 URL），适合发送本地已有的图片字节。若要引用远程图片，把 `params.image` 设为 URL 字符串即可。
+频道消息需要带图片时，把远程图片 URL 写入 `params.image = Some(url.into())`。
 
 ## 各场景的发送方法
 

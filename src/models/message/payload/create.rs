@@ -1,5 +1,4 @@
 use crate::models::serde_helpers::option_is_none_or_default;
-use base64::Engine;
 use serde::{Deserialize, Serialize};
 
 use super::{
@@ -41,9 +40,6 @@ pub struct MessageToCreate {
     /// Event ID to reply to
     #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub event_id: Option<String>,
-    /// Deprecated timestamp field kept for backwards compatibility
-    #[serde(skip_serializing_if = "option_is_none_or_default")]
-    pub timestamp: Option<i64>,
     /// Message sequence number
     #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub msg_seq: Option<u32>,
@@ -68,9 +64,6 @@ pub struct MessageToCreate {
     /// Feature control ID
     #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub feature_id: Option<u32>,
-    /// Base64 encoded file image, supported by the legacy Rust API.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub file_image: Option<String>,
 }
 
 impl MessageToCreate {
@@ -80,12 +73,6 @@ impl MessageToCreate {
             content: Some(content.into()),
             ..Default::default()
         }
-    }
-
-    /// Sets file image data, automatically encoding to base64.
-    pub fn with_file_image(mut self, data: &[u8]) -> Self {
-        self.file_image = Some(base64::engine::general_purpose::STANDARD.encode(data));
-        self
     }
 
     /// Sets the message ID to reply to.

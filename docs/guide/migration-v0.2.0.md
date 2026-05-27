@@ -12,7 +12,7 @@ The message-sending surface moved from positional `Option` arguments to typed bu
 | `post_dms`                      | `send_direct_message`                     | `DirectMessageParams`  |
 | `patch_message` (legacy)        | `edit_message`                | `MessageParams`        |
 
-All builders provide `new_text(content)` and `with_reply(message_id)`. `MessageParams` and `DirectMessageParams` additionally have `with_file_image(&bytes)`. Anything else (embed, ark, markdown, keyboard, media, etc.) is set with struct-update syntax.
+All builders provide `new_text(content)` and `with_reply(message_id)`. Anything else (embed, ark, markdown, keyboard, image URL, media, etc.) is set with struct-update syntax.
 
 ## Mechanical rewrite
 

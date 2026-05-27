@@ -1,5 +1,4 @@
 use crate::models::serde_helpers::{is_zero_u32, option_is_none_or_default};
-use base64::Engine;
 use serde::{Deserialize, Serialize};
 
 use super::{
@@ -34,9 +33,6 @@ macro_rules! channel_like_message_params_struct {
             /// Image URL
             #[serde(skip_serializing_if = "option_is_none_or_default")]
             pub image: Option<String>,
-            /// Base64 encoded file image
-            #[serde(skip_serializing_if = "Option::is_none")]
-            pub file_image: Option<String>,
             /// Message ID to reply to
             #[serde(skip_serializing_if = "option_is_none_or_default")]
             pub msg_id: Option<String>,
@@ -49,9 +45,6 @@ macro_rules! channel_like_message_params_struct {
             /// Keyboard payload
             #[serde(skip_serializing_if = "Option::is_none")]
             pub keyboard: Option<Keyboard>,
-            /// Deprecated timestamp field kept for backwards compatibility
-            #[serde(skip_serializing_if = "option_is_none_or_default")]
-            pub timestamp: Option<i64>,
             /// Message sequence number
             #[serde(skip_serializing_if = "option_is_none_or_default")]
             pub msg_seq: Option<u32>,
@@ -121,9 +114,6 @@ macro_rules! open_message_params_struct {
             /// Keyboard payload
             #[serde(skip_serializing_if = "Option::is_none")]
             pub keyboard: Option<KeyboardPayload>,
-            /// Deprecated timestamp field kept for backwards compatibility
-            #[serde(skip_serializing_if = "option_is_none_or_default")]
-            pub timestamp: Option<i64>,
             /// Subscription ID
             #[serde(skip_serializing_if = "option_is_none_or_default")]
             pub subscribe_id: Option<String>,
@@ -177,12 +167,6 @@ macro_rules! impl_channel_like_message_params {
                 }
             }
 
-            /// Sets file image data, automatically encoding to base64.
-            pub fn with_file_image(mut self, data: &[u8]) -> Self {
-                self.file_image = Some(base64::engine::general_purpose::STANDARD.encode(data));
-                self
-            }
-
             /// Sets the message reference for replying.
             pub fn with_reply(mut self, message_id: impl Into<String>) -> Self {
                 self.msg_id = Some(message_id.into());
@@ -208,7 +192,6 @@ macro_rules! impl_channel_like_message_params {
                     markdown: params.markdown,
                     keyboard: params.keyboard,
                     event_id: params.event_id,
-                    timestamp: params.timestamp,
                     msg_seq: params.msg_seq,
                     subscribe_id: params.subscribe_id,
                     input_notify: params.input_notify,
@@ -217,7 +200,6 @@ macro_rules! impl_channel_like_message_params {
                     action_button: params.action_button,
                     stream: params.stream,
                     feature_id: params.feature_id,
-                    file_image: params.file_image,
                 }
             }
         }
@@ -260,7 +242,6 @@ macro_rules! impl_open_message_params {
                     markdown: params.markdown,
                     keyboard: params.keyboard.map(Into::into),
                     event_id: params.event_id,
-                    timestamp: params.timestamp,
                     msg_seq: params.msg_seq,
                     subscribe_id: params.subscribe_id,
                     input_notify: params.input_notify,

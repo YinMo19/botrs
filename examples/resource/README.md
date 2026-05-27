@@ -15,7 +15,7 @@ A sample image file for testing image upload functionality.
 
 ### Usage in Examples
 
-The file upload examples (`demo_at_reply_file_data.rs`) will look for files in this directory:
+The rich media examples use remote URLs. You can keep local test assets in this directory when experimenting manually:
 
 ```rust
 // Method 1: Read file as bytes

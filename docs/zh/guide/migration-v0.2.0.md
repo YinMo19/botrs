@@ -12,7 +12,7 @@
 | `post_dms`                      | `send_direct_message`                      | `DirectMessageParams`  |
 | `patch_message`（旧版）         | `edit_message`                 | `MessageParams`        |
 
-所有构建器都提供 `new_text(content)` 与 `with_reply(message_id)`。`MessageParams` 与 `DirectMessageParams` 额外提供 `with_file_image(&bytes)`。其余字段（embed、ark、markdown、keyboard、media 等）通过结构体字段赋值。
+所有构建器都提供 `new_text(content)` 与 `with_reply(message_id)`。其余字段（embed、ark、markdown、keyboard、图片 URL、media 等）通过结构体字段赋值。
 
 ## 机械替换
 

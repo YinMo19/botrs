@@ -56,5 +56,3 @@ ctx.send_group_message(&group_openid, params).await?;
 ```
 
 C2C 与之对应的方法是 `post_c2c_file(openid, file_type, url, srv_send_msg)`。传入 `srv_send_msg = Some(true)` 时平台会直接转发为消息，否则把返回的 `Media` 描述塞进自己的 `*MessageParams`。
-
-频道消息若手上已有图片字节，使用 `MessageParams::with_file_image(&bytes)` 最方便 —— 框架会自动 base64 编码到 `file_image` 字段。

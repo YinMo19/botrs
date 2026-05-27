@@ -193,22 +193,15 @@ impl NewApiDemoHandler {
     }
 
     async fn demo_file_message(&self, ctx: &botrs::Context, channel_id: &str) {
-        // Simulate a small image file (1x1 PNG)
-        let png_data = vec![
-            0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00, 0x00, 0x00, 0x0D, 0x49, 0x48,
-            0x44, 0x52, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x08, 0x02, 0x00, 0x00,
-            0x00, 0x90, 0x77, 0x53, 0xDE, 0x00, 0x00, 0x00, 0x0C, 0x49, 0x44, 0x41, 0x54, 0x08,
-            0xD7, 0x63, 0xF8, 0x0F, 0x00, 0x00, 0x01, 0x00, 0x01, 0x5C, 0xCD, 0x90, 0x0C, 0x00,
-            0x00, 0x00, 0x00, 0x49, 0x45, 0x4E, 0x44, 0xAE, 0x42, 0x60, 0x82,
-        ];
-
-        // Using the convenience method for file images
-        let params = MessageParams::new_text("Here's a file sent with the new API! 📎")
-            .with_file_image(&png_data);
+        let params = MessageParams {
+            content: Some("Here's an image URL sent with the message API!".to_string()),
+            image: Some("https://example.com/image.png".to_string()),
+            ..Default::default()
+        };
 
         match ctx.send_message(channel_id, params).await {
-            Ok(_) => info!("Sent file message using new API"),
-            Err(e) => warn!("Failed to send file message: {}", e),
+            Ok(_) => info!("Sent image URL message using new API"),
+            Err(e) => warn!("Failed to send image URL message: {}", e),
         }
     }
 

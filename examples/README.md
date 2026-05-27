@@ -17,7 +17,6 @@ examples/
 ├── demo_at_reply_embed.rs       # Bot @ reply with embed messages
 ├── demo_at_reply_markdown.rs    # Bot @ reply with markdown messages
 ├── demo_at_reply_keyboard.rs    # Bot @ reply with keyboard messages
-├── demo_at_reply_file_data.rs   # Bot @ reply with file uploads
 ├── demo_at_reply_reference.rs   # Bot @ reply with message references
 ├── demo_group_reply_text.rs     # Bot group message reply example
 ├── demo_group_reply_ark.rs      # Bot group ARK message reply example
@@ -109,11 +108,6 @@ cargo run --example demo_group_reply_ark --features examples
 cargo run --example demo_c2c_reply_text --features examples
 ```
 
-### File Upload Bot
-```bash
-cargo run --example demo_at_reply_file_data --features examples
-```
-
 ### Message Recall Bot
 ```bash
 cargo run --example demo_recall --features examples
@@ -178,12 +172,6 @@ cargo run --example simple_bot --features examples
 - **Python equivalent**: `demo_c2c_reply_text.py`
 - **Features**: C2C (private/friend) message handling and replies
 - **Intents**: `public_messages`
-
-### demo_at_reply_file_data.rs
-- **Python equivalent**: `demo_at_reply_file_data.py`
-- **Features**: File upload functionality with multiple methods (bytes, direct, path-based)
-- **File types**: Images, documents, media files
-- **Intents**: `public_guild_messages`
 
 ### demo_recall.rs
 - **Python equivalent**: `demo_recall.py`

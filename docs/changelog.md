@@ -145,7 +145,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - **Breaking**: Moved from multiple `None` parameters to structured parameter objects
-- Improved API ergonomics with builder patterns (`.with_reply()`, `.with_file_image()`, etc.)
+- Improved API ergonomics with builder patterns such as `.with_reply()`
 - Better type safety with compile-time parameter validation
 - Enhanced error messages with more context
 - Optimized memory usage in message handling
