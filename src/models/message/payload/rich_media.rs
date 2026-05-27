@@ -6,9 +6,6 @@ use super::SendType;
 /// Rich media upload/direct-send payload.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct RichMediaMessage {
-    /// Deprecated event ID field, kept for API compatibility
-    #[serde(skip_serializing_if = "option_is_none_or_default")]
-    pub event_id: Option<String>,
     /// File type, 1=image, 2=video, 3=audio
     #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub file_type: Option<u64>,

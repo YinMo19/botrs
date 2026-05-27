@@ -74,10 +74,7 @@ mod tests {
             event_id: Some("event-1".to_string()),
             ..Default::default()
         };
-        let rich_media = RichMediaMessage {
-            event_id: Some("ignored".to_string()),
-            ..Default::default()
-        };
+        let rich_media = RichMediaMessage::default();
         let reference = Reference {
             message_id: Some("message-1".to_string()),
             ignore_get_message_error: Some(true),
@@ -358,7 +355,6 @@ mod tests {
     #[test]
     fn rich_media_omits_go_zero_values() {
         let message = RichMediaMessage {
-            event_id: Some(String::new()),
             file_type: Some(0),
             url: Some(String::new()),
             srv_send_msg: Some(false),
@@ -372,7 +368,6 @@ mod tests {
         );
 
         let message = RichMediaMessage {
-            event_id: Some("event-1".to_string()),
             file_type: Some(1),
             url: Some("https://example.com/file.png".to_string()),
             srv_send_msg: Some(true),
@@ -383,7 +378,6 @@ mod tests {
         assert_eq!(
             serde_json::to_value(&message).unwrap(),
             serde_json::json!({
-                "event_id": "event-1",
                 "file_type": 1,
                 "url": "https://example.com/file.png",
                 "srv_send_msg": true,
