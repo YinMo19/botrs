@@ -124,11 +124,6 @@ pub struct UpdateResult {
 }
 
 impl GuildRole {
-    /// Creates a new role.
-    pub fn new() -> Self {
-        Self::default()
-    }
-
     /// Converts the role to the numeric hoist value expected by the API.
     pub fn hoist_as_u32(&self) -> u32 {
         self.hoist_value()
