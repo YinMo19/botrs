@@ -92,6 +92,6 @@ impl UpdateGuildMute {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct UpdateGuildMuteResponse {
     /// Successfully muted user IDs
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "is_empty_vec")]
     pub user_ids: Vec<String>,
 }

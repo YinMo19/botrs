@@ -233,6 +233,22 @@ fn update_guild_mute_uses_zero_value_omitempty_shape() {
 }
 
 #[test]
+fn update_guild_mute_response_omits_empty_user_ids() {
+    let empty = serde_json::to_value(UpdateGuildMuteResponse::default()).unwrap();
+    assert_eq!(empty, serde_json::json!({}));
+
+    let response = UpdateGuildMuteResponse {
+        user_ids: vec!["user-1".to_string()],
+    };
+    assert_eq!(
+        serde_json::to_value(&response).unwrap(),
+        serde_json::json!({
+            "user_ids": ["user-1"]
+        })
+    );
+}
+
+#[test]
 fn botpy_update_guild_mute_keeps_null_inline_fields() {
     let single = BotpyUpdateGuildMute::new(None, Some("20"));
     assert_eq!(
