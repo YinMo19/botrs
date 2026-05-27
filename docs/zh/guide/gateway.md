@@ -9,7 +9,7 @@
 1. 校验 `Token` 并通过 `BotApi::get_bot_info` 拉取当前机器人信息。
 2. 调用 `BotApi::get_gateway` 获取 WebSocket URL、推荐 shard 数与会话启动限额。
 3. 用 `check_session_limit` 校验限额（若当日额度已耗尽返回 `BotError::Sdk`）。
-4. 根据 `session_start_limit.max_concurrency` 调用 `calc_interval` 计算重连间隔。
+4. 根据 `session_start_limit.max_concurrency` 调用 `Gateway::session_start_interval` 计算重连间隔。
 5. 启动会话管理器，为每个 shard 打开一个 `Gateway`，把事件汇聚到客户端读取的通道。
 
 客户端进入主循环：每个分派事件都会被解码为对应的载荷类型，并路由到 `EventHandler` 中的回调。

@@ -5,9 +5,7 @@ use std::sync::Arc;
 use tokio::sync::mpsc;
 use tracing::{debug, error, info};
 
-use super::{
-    Session, SessionManager, calc_interval, can_not_identify, can_not_resume, check_session_limit,
-};
+use super::{Session, SessionManager, can_not_identify, can_not_resume, check_session_limit};
 use crate::error::BotError;
 use crate::gateway::Gateway;
 use crate::intents::Intents;
@@ -112,7 +110,8 @@ impl SessionManager for ChanManager {
         event_sender: mpsc::UnboundedSender<GatewayEvent>,
     ) -> crate::Result<()> {
         check_session_limit(ap_info)?;
-        let start_interval = calc_interval(ap_info.session_start_limit.max_concurrency);
+        let start_interval =
+            Gateway::session_start_interval(ap_info.session_start_limit.max_concurrency);
         info!(
             "[ws/session/local] will start {} sessions and per session start interval is {:?}",
             ap_info.shards, start_interval

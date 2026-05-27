@@ -51,7 +51,7 @@ pub use reaction::{
 };
 pub use session_manager::{
     CANNOT_IDENTIFY_ERROR_CODES, CANNOT_RESUME_ERROR_CODES, ChanManager, Session, SessionManager,
-    calc_interval, can_not_identify, can_not_resume, check_session_limit, new_session_manager,
+    can_not_identify, can_not_resume, check_session_limit, new_session_manager,
     set_session_manager_factory,
 };
 pub use signature::{HEADER_SIGNATURE, HEADER_TIMESTAMP, generate, verify};

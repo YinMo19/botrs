@@ -9,7 +9,7 @@ When you call `client.start().await`, the framework:
 1. Validates your `Token` and fetches the current bot user via `BotApi::get_bot_info`.
 2. Calls `BotApi::get_gateway` to obtain the WebSocket URL, the recommended shard count, and the session-start limits.
 3. Validates the limits via `check_session_limit` (returns `BotError::Sdk` if you've already exhausted your daily start budget).
-4. Computes a reconnect interval from `session_start_limit.max_concurrency` using `calc_interval`.
+4. Computes a reconnect interval from `session_start_limit.max_concurrency` using `Gateway::session_start_interval`.
 5. Spawns a session manager that opens one `Gateway` per shard and pumps events into the channel the client reads.
 
 The client then loops on the receiver: every dispatched event is decoded into the typed payload and routed to the matching `EventHandler` callback.

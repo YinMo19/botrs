@@ -1,5 +1,6 @@
 use super::prelude::*;
 use super::{Client, Context, EventHandler};
+use crate::gateway::Gateway;
 use crate::http::HttpClient;
 
 impl<H: EventHandler + 'static> Client<H> {
@@ -110,7 +111,7 @@ impl<H: EventHandler + 'static> Client<H> {
         let (event_sender, mut event_receiver) = mpsc::unbounded_channel();
 
         let reconnect_interval =
-            crate::session_manager::calc_interval(gateway_info.session_start_limit.max_concurrency);
+            Gateway::session_start_interval(gateway_info.session_start_limit.max_concurrency);
         debug!(
             "Gateway reconnect interval: {:?} (max_concurrency: {})",
             reconnect_interval, gateway_info.session_start_limit.max_concurrency

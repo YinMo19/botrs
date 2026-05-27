@@ -1,5 +1,3 @@
-use std::time::Duration;
-
 use tokio::sync::mpsc;
 
 use super::channel::SessionFuture;
@@ -22,15 +20,6 @@ fn ap_info(shards: u32, remaining: u32, max_concurrency: u32) -> GatewayResponse
             max_concurrency,
         },
     }
-}
-
-#[test]
-fn calc_interval_matches_expected() {
-    assert_eq!(calc_interval(0), Duration::from_secs(2));
-    assert_eq!(calc_interval(1), Duration::from_secs(2));
-    assert_eq!(calc_interval(2), Duration::from_secs(1));
-    assert_eq!(calc_interval(3), Duration::from_secs(1));
-    assert_eq!(calc_interval(100), Duration::from_secs(1));
 }
 
 #[test]
