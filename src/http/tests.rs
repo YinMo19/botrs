@@ -1,7 +1,6 @@
 use super::*;
 use crate::token::Token;
 use reqwest::StatusCode;
-use std::time::Duration;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpListener;
 
@@ -9,7 +8,6 @@ use tokio::net::TcpListener;
 fn test_http_client_creation() {
     let client = HttpClient::new(30, false).unwrap();
     assert!(!client.is_sandbox());
-    assert_eq!(client.timeout(), Duration::from_secs(30));
     assert_eq!(client.base_url(), crate::DEFAULT_API_URL);
 
     let sandbox_client = HttpClient::new(60, true).unwrap();

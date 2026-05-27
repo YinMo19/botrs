@@ -6,7 +6,6 @@ use reqwest::Method;
 use serde::Serialize;
 use serde_json::Value;
 use std::collections::HashMap;
-use std::time::Duration;
 
 impl BotApi {
     /// Creates a Bot API client backed by the provided HTTP client and token.
@@ -39,15 +38,6 @@ impl BotApi {
         let token = Token::new(bot_app_id, secret);
         let http = HttpClient::new(crate::DEFAULT_TIMEOUT, in_sandbox)?;
         Ok(Self::new(http, token))
-    }
-
-    /// Returns a client configured with the given request timeout.
-    pub fn with_timeout(&self, duration: Duration) -> Result<Self> {
-        Ok(Self {
-            http: self.http.with_timeout(duration)?,
-            app_id: self.app_id.clone(),
-            token: self.token.clone(),
-        })
     }
 
     /// Returns the token stored for OpenAPI calls.

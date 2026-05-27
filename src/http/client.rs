@@ -12,8 +12,6 @@ pub struct HttpClient {
     pub(crate) base_url: String,
     /// Whether to use sandbox environment
     pub(crate) is_sandbox: bool,
-    /// Request timeout
-    pub(crate) timeout: Duration,
     /// Last trace ID returned by OpenAPI.
     pub(crate) last_trace_id: Arc<RwLock<Option<String>>>,
     /// OpenAPI instance app ID used by the X-Union-Appid header.
@@ -47,37 +45,9 @@ impl HttpClient {
             client,
             base_url,
             is_sandbox,
-            timeout: Duration::from_secs(timeout),
             last_trace_id: Arc::new(RwLock::new(None)),
             union_app_id: None,
         })
-    }
-
-    pub(crate) fn clone_with_client(&self, client: Client, timeout: Duration) -> Self {
-        Self {
-            client,
-            base_url: self.base_url.clone(),
-            is_sandbox: self.is_sandbox,
-            timeout,
-            last_trace_id: Arc::clone(&self.last_trace_id),
-            union_app_id: self.union_app_id.clone(),
-        }
-    }
-
-    /// Returns a client with a different request timeout.
-    pub fn with_timeout(&self, timeout: Duration) -> Result<Self> {
-        let client = Client::builder()
-            .timeout(timeout)
-            .user_agent(format!("BotRS/{}", crate::VERSION))
-            .build()
-            .map_err(BotError::Http)?;
-        Ok(self.clone_with_client(client, timeout))
-    }
-
-    /// Returns a client for the requested API environment while preserving
-    /// timeout settings.
-    pub fn with_sandbox(&self, is_sandbox: bool) -> Result<Self> {
-        Self::new(self.timeout.as_secs(), is_sandbox)
     }
 
     /// Returns a client that sends the X-Union-Appid header for OpenAPI calls.
@@ -96,11 +66,6 @@ impl HttpClient {
     /// Returns true if this client is using the sandbox environment.
     pub fn is_sandbox(&self) -> bool {
         self.is_sandbox
-    }
-
-    /// Gets the configured timeout.
-    pub fn timeout(&self) -> Duration {
-        self.timeout
     }
 
     /// Returns the most recent OpenAPI trace ID.
@@ -123,7 +88,6 @@ impl std::fmt::Debug for HttpClient {
         f.debug_struct("HttpClient")
             .field("base_url", &self.base_url)
             .field("is_sandbox", &self.is_sandbox)
-            .field("timeout", &self.timeout)
             .finish()
     }
 }

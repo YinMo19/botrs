@@ -75,7 +75,6 @@ impl std::fmt::Debug for BotApi {
 #[cfg(test)]
 mod tests {
     use crate::http::HttpClient;
-    use std::time::Duration;
 
     use super::BotApi;
 
@@ -91,9 +90,6 @@ mod tests {
     fn test_base_helpers() {
         let api = BotApi::setup("app-id", "secret", true).unwrap();
         assert_eq!(api.token().app_id(), "app-id");
-        assert_eq!(api.get_app_id(), "app-id");
-
-        let api = api.with_timeout(Duration::from_secs(7)).unwrap();
         assert_eq!(api.get_app_id(), "app-id");
         assert_eq!(api.trace_id(), "");
     }
