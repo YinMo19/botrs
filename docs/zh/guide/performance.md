@@ -4,7 +4,7 @@
 
 ## 收紧 Intents
 
-每开启一个 `Intents` 标志，就多一类事件需要网关推送、处理器忽略或处理。`Intents::default()` 已经过滤掉特权标志；正式机器人最好显式列出真正消费的事件：
+每开启一个 `Intents` 标志，就多一类事件需要网关推送、处理器忽略或处理。`Intents::default()` 是方便使用的公域预设；正式机器人最好显式列出真正消费的事件：
 
 ```rust
 let intents = Intents::new()

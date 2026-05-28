@@ -19,7 +19,7 @@ pub(super) fn default_state() -> Arc<Mutex<TokenState>> {
 ///
 /// The token contains the app ID and secret required for authenticating
 /// with the QQ Guild Bot API. It can generate the appropriate authorization
-/// headers for API requests.
+/// header value for API requests.
 ///
 /// # Examples
 ///
@@ -27,7 +27,7 @@ pub(super) fn default_state() -> Arc<Mutex<TokenState>> {
 /// use botrs::Token;
 ///
 /// let token = Token::new("your_app_id", "your_secret");
-/// let auth_header = token.authorization_header();
+/// let app_id = token.app_id();
 /// ```
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Token {
@@ -92,9 +92,10 @@ impl Token {
         Ok(format!("QQBot {access_token}"))
     }
 
-    /// Generates the WebSocket authentication token.
+    /// Generates the WebSocket identify authentication value.
     ///
-    /// The gateway uses the same `QQBot {access_token}` value as HTTP requests.
+    /// The gateway identify payload uses the same `QQBot {access_token}` value
+    /// as HTTP requests. Resume payloads use the raw access token internally.
     pub async fn bot_token(&self) -> Result<String> {
         self.authorization_header().await
     }

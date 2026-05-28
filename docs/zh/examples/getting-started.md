@@ -1,6 +1,6 @@
 # 入门
 
-最小的端到端机器人在 [`examples/simple_bot.rs`](https://github.com/YinMo19/botrs/blob/main/examples/simple_bot.rs)。它创建 `Token`、构造 `Intents`、实现 `EventHandler::message_create` / `group_message_create`，然后启动 `Client`。看一遍即可——其他所有 demo 都遵循同样的骨架。
+最小的端到端机器人在 [`examples/simple_bot.rs`](https://github.com/YinMo19/botrs/blob/main/examples/simple_bot.rs)。它创建 `Token`、构造 `Intents`、实现消息回调，然后启动 `Client`。看一遍即可——其他所有 demo 都遵循同样的骨架。
 
 ## 一个机器人的结构
 
@@ -26,7 +26,7 @@ impl EventHandler for Handler {
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let token = Token::new(std::env::var("QQ_BOT_APP_ID")?, std::env::var("QQ_BOT_SECRET")?);
-    let intents = Intents::default().with_public_guild_messages().with_direct_message();
+    let intents = Intents::new().with_public_guild_messages();
     Client::new(token, intents, Handler, true)?.start().await?;
     Ok(())
 }

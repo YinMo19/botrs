@@ -1,12 +1,12 @@
 # Intents
 
-`Intents` 是传给 `Client::new` 的位标志集合，用于告诉网关需要投递哪些事件类别。只有显式开启的事件才会被推送，因此选择最小够用的集合既能减少流量，也能避免你不消费的事件触发处理器。
+`Intents` 是传给 `Client::new` 的位标志集合，用于告诉网关需要投递哪些事件类别。`Intents::default()` 是公域预设；如果想要严格的最小订阅集合，请从 `Intents::new()` 开始，只开启自己列出的标志。
 
 ## 构造方式
 
 - `Intents::new()` —— 空集。
-- `Intents::default()` —— 除两个特权 intent（`GUILD_MESSAGES` 与 `FORUMS`）之外的全部公开 intent，适合大多数公域机器人。
-- `Intents::all()` —— 全部标志，包括特权位。
+- `Intents::default()` —— 标准公域预设，包含非特权公开事件类别，但不包含 `GUILD_MESSAGES`、`FORUMS` 和 `ENTER_AIO`。
+- `Intents::all()` —— 框架表示的全部标准标志，但不包含 `ENTER_AIO`。它会包含特权位，请只在权限已审批时使用；需要 AIO 进入事件时再额外调用 `with_enter_aio()`。
 
 ## 切换标志
 
@@ -15,7 +15,7 @@
 ```rust
 use botrs::Intents;
 
-let intents = Intents::default()
+let intents = Intents::new()
     .with_public_guild_messages()
     .with_direct_message()
     .with_guilds();

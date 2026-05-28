@@ -18,25 +18,26 @@ macro_rules! intent_accessors {
 
 /// Represents the intents that control which gateway events the bot receives.
 ///
-/// Intents are a system that allows you to control which events your bot receives
-/// over the gateway connection. This helps reduce bandwidth and processing overhead
-/// by only receiving events your bot actually needs.
+/// `Intents::new()` starts empty. `Intents::default()` is the standard public
+/// preset and excludes privileged categories. `Intents::all()` includes the
+/// standard categories represented by this type except `ENTER_AIO`, which stays
+/// opt-in.
 ///
 /// # Examples
 ///
 /// ```rust
 /// use botrs::Intents;
 ///
-/// // Create intents for basic guild and message events
+/// // Use the standard public preset.
 /// let intents = Intents::default();
 ///
-/// // Create intents with specific events enabled
+/// // Create a strict custom subscription from an empty set.
 /// let intents = Intents::new()
 ///     .with_guilds()
 ///     .with_public_guild_messages()
 ///     .with_direct_message();
 ///
-/// // Enable all available intents
+/// // Enable all standard intents except ENTER_AIO.
 /// let intents = Intents::all();
 ///
 /// // Start with no intents and selectively enable
@@ -55,9 +56,11 @@ impl Intents {
         Self { bits: 0 }
     }
 
-    /// Create an intent set with all standard public intents enabled.
+    /// Create an intent set with all standard intents except `ENTER_AIO`.
     ///
-    /// `ENTER_AIO` remains opt-in through [`Self::with_enter_aio`].
+    /// This includes privileged intents such as [`Self::GUILD_MESSAGES`] and
+    /// [`Self::FORUMS`]. `ENTER_AIO` remains opt-in through
+    /// [`Self::with_enter_aio`].
     pub const fn all() -> Self {
         Self {
             bits: Self::GUILDS
@@ -78,8 +81,8 @@ impl Intents {
 
     /// Create the default set of intents for most bots.
     ///
-    /// This includes all standard public intents except the privileged
-    /// `guild_messages` and `forums` intents. `ENTER_AIO` remains explicitly
+    /// This includes non-privileged public intents and excludes the privileged
+    /// `GUILD_MESSAGES` and `FORUMS` intents. `ENTER_AIO` remains explicitly
     /// opt-in.
     pub const fn default() -> Self {
         Self::all()

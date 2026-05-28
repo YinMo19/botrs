@@ -4,7 +4,7 @@ The framework is a thin layer on top of `reqwest` and `tokio-tungstenite`; the t
 
 ## Narrow your intents
 
-Every `Intents` flag you enable adds another category of dispatch the gateway has to push and your handler has to ignore (or handle). `Intents::default()` is already trimmed to public flags; for non-trivial bots, replace it with the explicit set you actually consume:
+Every `Intents` flag you enable adds another category of dispatch the gateway has to push and your handler has to ignore (or handle). `Intents::default()` is a convenient public preset; for non-trivial bots, replace it with the explicit set you actually consume:
 
 ```rust
 let intents = Intents::new()

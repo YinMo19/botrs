@@ -1,12 +1,12 @@
 # Intents
 
-`Intents` is a bitflag set you pass to `Client::new`. It tells the gateway which event categories to deliver. You only receive events for categories you opted into, so picking the smallest set you need keeps payload volume down and avoids handlers firing for events you do not consume.
+`Intents` is the bitflag set you pass to `Client::new`. It tells the gateway which event categories to deliver. `Intents::default()` is a public preset; use `Intents::new()` when you want a strictly minimal subscription built only from the flags you name.
 
 ## Constructors
 
 - `Intents::new()` — empty set.
-- `Intents::default()` — every public intent except the two privileged ones (`GUILD_MESSAGES` and `FORUMS`). Suitable for most public bots.
-- `Intents::all()` — every flag, including privileged ones.
+- `Intents::default()` — the standard public preset. It includes non-privileged public categories and excludes `GUILD_MESSAGES`, `FORUMS`, and `ENTER_AIO`.
+- `Intents::all()` — every standard flag represented by the framework except `ENTER_AIO`. It includes privileged flags, so use it only when those permissions are approved; call `with_enter_aio()` separately if you need AIO entry events.
 
 ## Toggling flags
 
@@ -15,7 +15,7 @@ Intent flags are exposed as `pub const` `u32` values on the `Intents` type, plus
 ```rust
 use botrs::Intents;
 
-let intents = Intents::default()
+let intents = Intents::new()
     .with_public_guild_messages()
     .with_direct_message()
     .with_guilds();

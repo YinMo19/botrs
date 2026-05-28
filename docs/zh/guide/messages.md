@@ -45,7 +45,7 @@ ctx.send_message(&channel_id, params).await?;
 
 ## 在事件中回复
 
-`Message::reply(&api, content)` 是回复入站 `Message` 同频道纯文本的便捷方法。`GroupMessage` 和 `C2CMessage` 也提供相同形态的方法。框架内部会构造相应的 `*Params` 并把 `msg_id` 指向入站消息。
+`message.reply(&ctx, content)` 是回复入站 `Message` 同频道纯文本的便捷方法。`GroupMessage` 和 `C2CMessage` 也提供相同形态的方法。框架内部会构造相应的 `*Params`，并带上入站消息 id 和 event id。
 
 ```rust
 async fn message_create(&self, ctx: Context, message: Message) {

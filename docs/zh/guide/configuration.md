@@ -4,7 +4,7 @@
 
 ## Token
 
-`Token::new(app_id, secret)` 是基础构造函数。`Token::from_env()` 从进程环境变量读取 `QQ_BOT_APP_ID` 与 `QQ_BOT_SECRET`，校验后返回 token，缺字段时返回 `BotError::Config`。
+`Token::new(app_id, secret)` 是基础构造函数。`Token::from_env()` 从进程环境变量读取 `QQ_BOT_APP_ID` 与 `QQ_BOT_SECRET`，校验后返回 token；缺变量时返回 `BotError::Config`，变量存在但为空时返回 `BotError::Auth`。
 
 ```rust
 let token = Token::from_env()?;
@@ -24,12 +24,12 @@ tracing::info!("loaded {}", token.safe_display());
 详见 [Intents](/zh/guide/intents)。配置形态如下：
 
 ```rust
-let intents = Intents::default()
+let intents = Intents::new()
     .with_public_guild_messages()
     .with_direct_message();
 ```
 
-按需开启即可，网关只投递启用标志对应的事件。
+这会从空集合开始，只添加 handler 真正消费的事件类别。需要公域预设时再使用 `Intents::default()`。
 
 ## 沙箱与正式
 

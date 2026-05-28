@@ -41,15 +41,15 @@ let token = Token::from_env()?;
 
 ## Intents
 
-Python 中常见的 `Intents.default() | Intents.public_guild_messages`，在 `botrs` 中改用链式构建：
+Python 中常见的 `Intents.default() | Intents.public_guild_messages`，在 `botrs` 中改用具名构造函数和链式标志构建：
 
 ```rust
-let intents = Intents::default()
+let intents = Intents::new()
     .with_public_guild_messages()
     .with_direct_message();
 ```
 
-`Intents::default()` 对应 Python 的“全部公开、不含特权”预设。完整表见 [Intents](/zh/guide/intents)。
+`Intents::new()` 得到的是只包含上面列出标志的精确集合。`Intents::default()` 也可用作公域、非特权预设；`ENTER_AIO` 仍需显式开启。完整表见 [Intents](/zh/guide/intents)。
 
 ## 发送消息
 

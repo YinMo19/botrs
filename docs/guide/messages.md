@@ -45,7 +45,7 @@ The send call has a different name and a different ID parameter for each surface
 
 ## Replying from an event
 
-`Message::reply(&api, content)` is the convenience for replying with plain text in the same channel as the inbound `Message`. `GroupMessage` and `C2CMessage` provide the same shape for their surfaces. Internally these construct the matching `*Params` value with `with_reply` set to the inbound message id.
+`message.reply(&ctx, content)` is the convenience for replying with plain text in the same channel as the inbound `Message`. `GroupMessage` and `C2CMessage` provide the same shape for their surfaces. Internally these construct the matching `*Params` value with the inbound message id and event id.
 
 ```rust
 async fn message_create(&self, ctx: Context, message: Message) {

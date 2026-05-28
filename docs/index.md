@@ -94,7 +94,7 @@ impl EventHandler for MyBot {
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let token = Token::from_env()?;
-    let intents = Intents::default().with_public_guild_messages();
+    let intents = Intents::new().with_public_guild_messages();
     let mut client = Client::new(token, intents, MyBot, true)?;
 
     client.start().await?;

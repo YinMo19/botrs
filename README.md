@@ -71,8 +71,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // 创建令牌
     let token = Token::new("your_app_id", "your_secret");
 
-    // 设置意图
-    let intents = Intents::default();
+    // 订阅频道 @ 消息事件
+    let intents = Intents::new().with_public_guild_messages();
 
     // 创建客户端
     let mut client = Client::new(token, intents, MyBot, false)?;

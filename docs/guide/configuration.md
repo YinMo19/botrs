@@ -4,7 +4,7 @@
 
 ## Token
 
-`Token::new(app_id, secret)` is the basic constructor. `Token::from_env()` reads `QQ_BOT_APP_ID` and `QQ_BOT_SECRET` from the process environment, validates them, and returns `BotError::Config` if either is missing.
+`Token::new(app_id, secret)` is the basic constructor. `Token::from_env()` reads `QQ_BOT_APP_ID` and `QQ_BOT_SECRET` from the process environment, validates them, and returns `BotError::Config` for missing variables or `BotError::Auth` for empty values.
 
 ```rust
 let token = Token::from_env()?;
@@ -24,12 +24,12 @@ tracing::info!("loaded {}", token.safe_display());
 `Intents` is described in detail in [intents](/guide/intents). The relevant configuration shape is:
 
 ```rust
-let intents = Intents::default()
+let intents = Intents::new()
     .with_public_guild_messages()
     .with_direct_message();
 ```
 
-Choose the smallest set you need; the gateway only delivers events for enabled flags.
+This starts from an empty set and adds only the event categories your handler consumes. Use `Intents::default()` when you want the public preset instead.
 
 ## Sandbox vs production
 

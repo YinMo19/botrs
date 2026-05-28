@@ -13,7 +13,7 @@
 每个事件族都有专属 intent 标志，没开标志不会报错，只是 handler 拿不到事件。按需组合：
 
 ```rust
-let intents = Intents::default()
+let intents = Intents::new()
     .with_guild_members()                 // demo_guild_member_event.rs
     .with_open_forum_event()              // demo_open_forum_event.rs
     .with_audio_or_live_channel_member()  // demo_audio_or_live_channel_member.rs

@@ -11,7 +11,7 @@ pub struct Token { /* private fields */ }
 ## Construction
 
 - `Token::new(app_id, secret)` — explicit credentials.
-- `Token::from_env()` — read `QQ_BOT_APP_ID` / `QQ_BOT_SECRET`. Returns `BotError::Config` if either variable is missing.
+- `Token::from_env()` — read `QQ_BOT_APP_ID` / `QQ_BOT_SECRET`. Missing variables return `BotError::Config`; present but empty values fail validation with `BotError::Auth`.
 
 ```rust
 let token = Token::new("123456789", "abcdef...");
@@ -21,18 +21,18 @@ let token = Token::from_env()?;       // env-driven
 ## Accessors
 
 - `app_id()` / `secret()` — borrow the credential strings (returns `&str`).
-- `safe_display()` — returns a redacted human-readable form for logs (`Token { app_id: "1234***", secret: "***" }`). Use this anywhere you would otherwise be tempted to print the raw token.
+- `safe_display()` — returns a redacted human-readable form for logs (`Token { app_id: 123456789, secret: abcd****wxyz }`). Use this anywhere you would otherwise be tempted to print the raw token.
 
 ## Authentication
 
-- `authorization_header().await` — `Authorization: QQBot <access-token>` string suitable for HTTP requests; refreshes the cached token if it has expired.
-- `bot_token().await` — just the bot token portion (without the `QQBot ` prefix), used by the gateway `Identify` payload.
+- `authorization_header().await` — `QQBot <access-token>` value suitable for the HTTP `Authorization` header; refreshes the cached token if it has expired.
+- `bot_token().await` — the same `QQBot <access-token>` value used by the gateway `Identify` payload.
 
 Both methods share the same access-token cache. Concurrent callers will block briefly on the refresh mutex when a renewal is needed and then race-free read the freshly minted token.
 
 ## Validation
 
-`validate()` runs lightweight syntactic checks (non-empty app id, sane lengths) and returns `BotError::Config` on failure. Use it after `Token::new(...)` to fail fast before issuing any request.
+`validate()` checks that the app id and secret are non-empty and returns `BotError::Auth` on failure. Use it after `Token::new(...)` to fail fast before issuing any request.
 
 ## Refresh behaviour
 

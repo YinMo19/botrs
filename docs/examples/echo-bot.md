@@ -1,10 +1,10 @@
 # Echo Bot
 
-The plain "@-me, I reply" pattern is implemented in [`examples/demo_at_reply.rs`](https://github.com/YinMo19/botrs/blob/main/examples/demo_at_reply.rs). It registers `Intents::default().with_public_guild_messages()`, implements `EventHandler::message_create`, and uses `Message::reply` to send a string back. That is the entire surface of an echo bot in BotRS.
+The plain "@-me, I reply" pattern is implemented in [`examples/demo_at_reply.rs`](https://github.com/YinMo19/botrs/blob/main/examples/demo_at_reply.rs). It registers `Intents::new().with_public_guild_messages()`, implements `EventHandler::message_create`, and uses `Message::reply` to send a string back. That is the entire surface of an echo bot in BotRS.
 
 ## The one call you need
 
-`Message::reply(&ctx, &reply_content)` posts a reply that is automatically threaded to the inbound message. There is no builder for the simple case — pass three arguments and you are done.
+`message.reply(&ctx, &reply_content)` posts a reply that is automatically threaded to the inbound message. There is no builder for the simple case.
 
 ```rust
 async fn message_create(&self, ctx: Context, message: Message) {

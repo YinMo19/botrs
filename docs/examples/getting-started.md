@@ -1,6 +1,6 @@
 # Getting Started
 
-The smallest end-to-end bot lives in [`examples/simple_bot.rs`](https://github.com/YinMo19/botrs/blob/main/examples/simple_bot.rs). It wires up a `Token`, builds an `Intents` set, implements `EventHandler::message_create` / `group_message_create`, and starts the `Client`. Read it once — every other demo follows the same skeleton.
+The smallest end-to-end bot lives in [`examples/simple_bot.rs`](https://github.com/YinMo19/botrs/blob/main/examples/simple_bot.rs). It wires up a `Token`, builds an `Intents` set, implements message callbacks, and starts the `Client`. Read it once — every other demo follows the same skeleton.
 
 ## The shape of a bot
 
@@ -26,7 +26,7 @@ impl EventHandler for Handler {
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let token = Token::new(std::env::var("QQ_BOT_APP_ID")?, std::env::var("QQ_BOT_SECRET")?);
-    let intents = Intents::default().with_public_guild_messages().with_direct_message();
+    let intents = Intents::new().with_public_guild_messages();
     Client::new(token, intents, Handler, true)?.start().await?;
     Ok(())
 }

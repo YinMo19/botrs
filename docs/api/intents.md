@@ -11,8 +11,8 @@ pub struct Intents { pub bits: u32 }
 ## Constructors
 
 - `Intents::new()` — empty (`bits == 0`).
-- `Intents::default()` — `all()` with the privileged intents (`GUILD_MESSAGES` and `FORUMS`) cleared. The right starting point for most bots.
-- `Intents::all()` — every flag the framework knows about. Use only if your bot has every privilege approved.
+- `Intents::default()` — the standard public preset: `all()` with `GUILD_MESSAGES` and `FORUMS` cleared. `ENTER_AIO` also remains opt-in.
+- `Intents::all()` — every standard flag represented by the framework except `ENTER_AIO`. It includes privileged flags, so use it only if those permissions are approved.
 - `Intents::from_bits(bits)` — wrap a raw integer received from configuration.
 
 ## Flag catalogue
@@ -52,10 +52,10 @@ For each flag there's a matching predicate (no parameters): `intents.guilds()`, 
 ## Examples
 
 ```rust
-// 1. Sensible defaults — no privileged events.
+// 1. Public preset — no privileged events and no ENTER_AIO.
 let default_intents = Intents::default();
 
-// 2. Custom subscription via builder.
+// 2. Strict custom subscription via builder.
 let custom = Intents::new()
     .with_guilds()
     .with_public_guild_messages()
@@ -72,7 +72,7 @@ let trimmed = Intents::all().without_intent(Intents::FORUMS);
 
 ## Privileged intents
 
-`GUILD_MESSAGES` and `FORUMS` require manual approval in the QQ Developer Portal. Bots without that approval will be disconnected by the gateway when they identify with these bits set. `Intents::default()` deliberately omits them so the same code path works for all bots.
+`GUILD_MESSAGES` and `FORUMS` require manual approval in the QQ Developer Portal. Bots without that approval will be disconnected by the gateway when they identify with these bits set. `Intents::default()` deliberately omits them so the same code path works for all bots. `ENTER_AIO` is separate from the public preset and is enabled only by `with_enter_aio()`.
 
 ```rust
 if intents.has_privileged() && !your_bot_is_approved {

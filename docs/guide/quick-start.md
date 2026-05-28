@@ -52,7 +52,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let secret = std::env::var("QQ_BOT_SECRET")?;
     let token = Token::new(app_id, secret);
 
-    let intents = Intents::default()
+    let intents = Intents::new()
         .with_public_guild_messages()
         .with_guilds();
 
@@ -65,9 +65,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 ## What the pieces do
 
 - `Token` carries the App ID and Secret. `Token::from_env()` is also available; it reads `QQ_BOT_APP_ID` and `QQ_BOT_SECRET`.
-- `Intents` is a bitflag set. `Intents::default()` is empty; chain `with_*` methods for the categories you need. The bot receives only events you opted into.
+- `Intents` is a bitflag set. `Intents::new()` starts empty, and each `with_*` method enables one event category. `Intents::default()` is the standard public preset: it enables public, non-privileged event categories while leaving privileged events and `ENTER_AIO` opt-in.
 - `Client::new(token, intents, handler, is_sandbox)` — pass `true` for the sandbox base URL while developing, `false` for production.
-- `Message::reply(&api, text)` is the convenience for replying to the same channel; for richer payloads use `BotApi::send_message` (see [Messages](/guide/messages)).
+- `message.reply(&ctx, text)` is the convenience for replying to the same channel; for richer payloads use `ctx.send_message` with `MessageParams` (see [Messages](/guide/messages)).
 
 ## Next
 

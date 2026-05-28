@@ -11,8 +11,8 @@ pub struct Intents { pub bits: u32 }
 ## 构造
 
 - `Intents::new()` —— 空集合（`bits == 0`）。
-- `Intents::default()` —— `all()` 去掉特权 intent (`GUILD_MESSAGES` 和 `FORUMS`)，多数机器人都从这里开始。
-- `Intents::all()` —— 框架已知的全部位。仅当机器人拥有所有特权时使用。
+- `Intents::default()` —— 标准公域预设：`all()` 去掉 `GUILD_MESSAGES` 和 `FORUMS`。`ENTER_AIO` 仍需显式开启。
+- `Intents::all()` —— 框架表示的全部标准标志，但不包含 `ENTER_AIO`。它会包含特权位，请只在权限已审批时使用。
 - `Intents::from_bits(bits)` —— 把配置或外部传入的整数包成 `Intents`。
 
 ## 标志位一览
@@ -52,10 +52,10 @@ pub struct Intents { pub bits: u32 }
 ## 示例
 
 ```rust
-// 1. 推荐默认值，不开启特权事件。
+// 1. 公域预设，不开启特权事件，也不包含 ENTER_AIO。
 let default_intents = Intents::default();
 
-// 2. 通过 builder 自定义订阅。
+// 2. 从空集合开始，用 builder 自定义订阅。
 let custom = Intents::new()
     .with_guilds()
     .with_public_guild_messages()
@@ -72,7 +72,7 @@ let trimmed = Intents::all().without_intent(Intents::FORUMS);
 
 ## 特权 intent
 
-`GUILD_MESSAGES` 和 `FORUMS` 需要 QQ 开放平台手动审批通过。未获得审批的机器人在 identify 阶段会被网关断开。`Intents::default()` 默认不开启它们，方便所有机器人共用同一份代码路径。
+`GUILD_MESSAGES` 和 `FORUMS` 需要 QQ 开放平台手动审批通过。未获得审批的机器人在 identify 阶段会被网关断开。`Intents::default()` 默认不开启它们，方便所有机器人共用同一份代码路径。`ENTER_AIO` 不属于公域预设，需要通过 `with_enter_aio()` 单独开启。
 
 ```rust
 if intents.has_privileged() && !your_bot_is_approved {

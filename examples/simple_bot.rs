@@ -161,11 +161,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     info!("Token validated successfully");
 
-    // Set up intents - we want to receive guild messages and direct messages
+    // Set up intents for public guild @ messages and group/C2C messages.
     let intents = Intents::new()
         .with_public_guild_messages()
-        .with_direct_message()
-        .with_guilds();
+        .with_public_messages();
 
     info!("Configured intents: {}", intents);
 

@@ -25,7 +25,7 @@ impl CommandRegistry {
 }
 ```
 
-The demo registers two commands (`你好` / `hello` and `晚安`) and demonstrates two ways to send the response: the convenience `Message::reply(&ctx, &response)` and the explicit `MessageParams { content: Some(response), msg_id: message.id.clone(), ..Default::default() }` followed by `ctx.send_message(...)`. Use whichever fits — they hit the same endpoint.
+The demo registers two commands (`你好` / `hello` and `晚安`) and demonstrates two ways to send the response: the convenience `message.reply(&ctx, &response)` and the explicit `MessageParams { content: Some(response), msg_id: message.id.clone(), ..Default::default() }` followed by `ctx.send_message(...)`. Use whichever fits — they hit the same endpoint.
 
 ## See also
 

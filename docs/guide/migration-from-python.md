@@ -41,15 +41,15 @@ let token = Token::from_env()?;
 
 ## Intents
 
-Where Python uses something like `Intents.default() | Intents.public_guild_messages`, `botrs` uses bitflag constructors:
+Where Python uses something like `Intents.default() | Intents.public_guild_messages`, `botrs` uses named constructors and chainable flag builders:
 
 ```rust
-let intents = Intents::default()
+let intents = Intents::new()
     .with_public_guild_messages()
     .with_direct_message();
 ```
 
-`Intents::default()` matches the Python "all public, no privileged" preset. The full table is in [intents](/guide/intents).
+`Intents::new()` gives you an exact set made only of the flags listed above. `Intents::default()` is also available as the public, non-privileged preset; `ENTER_AIO` remains opt-in. The full table is in [intents](/guide/intents).
 
 ## Sending a message
 

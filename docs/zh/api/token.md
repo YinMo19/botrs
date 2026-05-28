@@ -11,7 +11,7 @@ pub struct Token { /* 私有字段 */ }
 ## 构造
 
 - `Token::new(app_id, secret)` —— 显式凭证。
-- `Token::from_env()` —— 读取 `QQ_BOT_APP_ID` / `QQ_BOT_SECRET`，缺失时返回 `BotError::Config`。
+- `Token::from_env()` —— 读取 `QQ_BOT_APP_ID` / `QQ_BOT_SECRET`。变量缺失时返回 `BotError::Config`；变量存在但为空时会在校验阶段返回 `BotError::Auth`。
 
 ```rust
 let token = Token::new("123456789", "abcdef...");
@@ -21,18 +21,18 @@ let token = Token::from_env()?;       // 走环境变量
 ## 访问器
 
 - `app_id()` / `secret()` —— 借用凭证字符串（`&str`）。
-- `safe_display()` —— 返回适合日志的脱敏字符串（如 `Token { app_id: "1234***", secret: "***" }`），任何想打印 token 的地方都应改用这个。
+- `safe_display()` —— 返回适合日志的脱敏字符串（如 `Token { app_id: 123456789, secret: abcd****wxyz }`），任何想打印 token 的地方都应改用这个。
 
 ## 鉴权
 
-- `authorization_header().await` —— 构造 `Authorization: QQBot <access-token>`，过期时会自动刷新。
-- `bot_token().await` —— 只返回 bot token 本体（不含 `QQBot ` 前缀），由网关 `Identify` 载荷使用。
+- `authorization_header().await` —— 构造适合 HTTP `Authorization` 头使用的 `QQBot <access-token>` 值，过期时会自动刷新。
+- `bot_token().await` —— 返回同一个 `QQBot <access-token>` 值，由网关 `Identify` 载荷使用。
 
 两者共用同一份访问令牌缓存。并发调用方在需要刷新时会短暂地等待 refresh mutex，然后无竞争地读到最新值。
 
 ## 校验
 
-`validate()` 做轻量的语法检查（app id 非空、长度合理等），失败时返回 `BotError::Config`。建议在 `Token::new(...)` 之后立即调用，启动阶段就把凭证错误暴露出来。
+`validate()` 检查 app id 与 secret 是否非空，失败时返回 `BotError::Auth`。建议在 `Token::new(...)` 之后立即调用，启动阶段就把凭证错误暴露出来。
 
 ## 刷新机制
 

@@ -4,7 +4,7 @@
 
 ```rust
 let token = Token::new("app_id", "secret");
-let intents = Intents::default().with_public_guild_messages();
+let intents = Intents::new().with_public_guild_messages();
 let mut client = Client::new(token, intents, MyHandler, /* is_sandbox: */ false)?;
 
 client.start().await?;

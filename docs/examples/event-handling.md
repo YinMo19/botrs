@@ -13,7 +13,7 @@ Each gateway event is one method on `EventHandler`. You implement only the ones 
 Each event family has its own intent flag. Forgetting the flag means the handler is silent, not an error. Mix the flags you need:
 
 ```rust
-let intents = Intents::default()
+let intents = Intents::new()
     .with_guild_members()                 // demo_guild_member_event.rs
     .with_open_forum_event()              // demo_open_forum_event.rs
     .with_audio_or_live_channel_member()  // demo_audio_or_live_channel_member.rs
