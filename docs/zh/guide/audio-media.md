@@ -20,7 +20,7 @@
 `BotApi::post_audio(channel_id, &AudioControl)` 用于更新某语音子频道的音频会话，`AudioControl` 即请求体：
 
 ```rust
-use botrs::audio::{AudioControl, AudioStatus};
+use botrs::{AudioControl, AudioStatus};
 
 let control = AudioControl {
     audio_url: "https://example.com/track.mp3".into(),

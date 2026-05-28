@@ -7,7 +7,7 @@ mod macros;
 
 #[path = "api/mod.rs"]
 mod api_impl;
-pub mod audio;
+mod audio;
 pub mod client;
 mod constant;
 pub mod error;
@@ -28,6 +28,7 @@ pub mod webhook;
 
 // Re-export main types for convenience
 pub use api_impl::BotApi;
+pub use audio::{Audio, AudioControl, AudioStatus, PublicAudio, PublicAudioType};
 pub use client::{Client, Context, EventHandler};
 pub use error::{BotError, Result};
 pub use intents::Intents;

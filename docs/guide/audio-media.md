@@ -20,7 +20,7 @@ For voice / live-channel member traffic, enable `Intents::AUDIO_OR_LIVE_CHANNEL_
 `BotApi::post_audio(channel_id, &AudioControl)` updates an audio session in a voice channel. `AudioControl` is the request body:
 
 ```rust
-use botrs::audio::{AudioControl, AudioStatus};
+use botrs::{AudioControl, AudioStatus};
 
 let control = AudioControl {
     audio_url: "https://example.com/track.mp3".into(),
