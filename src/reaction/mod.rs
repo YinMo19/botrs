@@ -16,10 +16,7 @@ pub use event::MessageReaction;
 pub use model::Reaction;
 pub use pager::MessageReactionPager;
 pub use target::ReactionTarget;
-pub use target_type::{
-    REACTION_TARGET_TYPE_COMMENT, REACTION_TARGET_TYPE_FEED, REACTION_TARGET_TYPE_MSG,
-    REACTION_TARGET_TYPE_REPLY, ReactionTargetType,
-};
+pub use target_type::ReactionTargetType;
 pub use users::ReactionUsers;
 
 #[cfg(test)]

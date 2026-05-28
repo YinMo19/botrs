@@ -18,11 +18,6 @@ pub enum ReactionTargetType {
     Unknown(i32),
 }
 
-pub const REACTION_TARGET_TYPE_MSG: i32 = 0;
-pub const REACTION_TARGET_TYPE_FEED: i32 = 1;
-pub const REACTION_TARGET_TYPE_COMMENT: i32 = 2;
-pub const REACTION_TARGET_TYPE_REPLY: i32 = 3;
-
 wire_enum!(ReactionTargetType, i32, Unknown, {
     Message = 0,
     Post = 1,
