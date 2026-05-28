@@ -14,7 +14,7 @@ pub use handler::EventHandler;
 
 #[allow(unused_imports)]
 mod prelude {
-    pub(super) use crate::api::BotApi;
+    pub(super) use crate::api_impl::BotApi;
     pub(super) use crate::audio::{Audio, AudioControl, PublicAudio};
     pub(super) use crate::error::{BotError, Result};
     pub(super) use crate::forum::{

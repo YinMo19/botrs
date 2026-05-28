@@ -13,7 +13,7 @@ impl BotApi {
     /// # Examples
     ///
     /// ```rust,no_run
-    /// use botrs::api::BotApi;
+    /// use botrs::BotApi;
     /// use botrs::http::HttpClient;
     ///
     /// let http = HttpClient::new(30, false).unwrap();

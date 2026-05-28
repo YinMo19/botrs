@@ -63,7 +63,7 @@ impl Message {
     /// Reply to this message
     pub async fn reply(
         &self,
-        api: &crate::api::BotApi,
+        api: &crate::api_impl::BotApi,
         content: &str,
     ) -> Result<crate::models::api::MessageResponse, crate::error::BotError> {
         if let (Some(channel_id), Some(msg_id)) = (&self.channel_id, &self.id) {

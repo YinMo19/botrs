@@ -36,7 +36,7 @@ impl GroupMessage {
     /// Reply to this group message
     pub async fn reply(
         &self,
-        api: &crate::api::BotApi,
+        api: &crate::api_impl::BotApi,
         content: &str,
     ) -> Result<crate::models::api::MessageResponse, crate::error::BotError> {
         if let (Some(group_openid), Some(msg_id)) = (&self.group_openid, &self.id) {

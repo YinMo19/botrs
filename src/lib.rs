@@ -5,7 +5,8 @@
 #[macro_use]
 mod macros;
 
-pub mod api;
+#[path = "api/mod.rs"]
+mod api_impl;
 pub mod audio;
 pub mod client;
 mod constant;
@@ -25,7 +26,7 @@ pub mod token;
 pub mod webhook;
 
 // Re-export main types for convenience
-pub use api::BotApi;
+pub use api_impl::BotApi;
 pub use client::{Client, Context, EventHandler};
 pub use error::{BotError, Result};
 pub use intents::Intents;

@@ -37,7 +37,7 @@ impl C2CMessage {
     /// Reply to this C2C message
     pub async fn reply(
         &self,
-        api: &crate::api::BotApi,
+        api: &crate::api_impl::BotApi,
         content: &str,
     ) -> Result<crate::models::api::MessageResponse, crate::error::BotError> {
         if let (Some(user_openid), Some(msg_id)) = (

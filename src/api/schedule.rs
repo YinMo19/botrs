@@ -101,14 +101,14 @@ mod tests {
     use tokio::net::TcpListener;
     use tokio::sync::oneshot;
 
-    async fn test_api(base_url: String) -> crate::api::BotApi {
+    async fn test_api(base_url: String) -> crate::api_impl::BotApi {
         let token = crate::Token::new("APPID_XXXXXX", "SECRET_XXXXXX");
         token
             .set_cached_access_token_for_test("ACCESS_TOKEN_XXXXXX")
             .await;
         let mut http = crate::http::HttpClient::new(30, false).unwrap();
         http.base_url = base_url;
-        crate::api::BotApi::new(http, token)
+        crate::api_impl::BotApi::new(http, token)
     }
 
     async fn spawn_capture_server() -> (

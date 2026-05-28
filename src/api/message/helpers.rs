@@ -1,4 +1,4 @@
-use crate::api::BotApi;
+use crate::api_impl::BotApi;
 use crate::error::Result;
 use crate::models::{
     api::MessageResponse,
