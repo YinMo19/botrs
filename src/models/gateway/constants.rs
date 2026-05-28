@@ -1,20 +1,15 @@
-/// Event type alias.
-pub type EventType = String;
-/// Websocket opcode alias.
-pub type OpCode = u8;
-
 use super::events::opcodes;
 
-pub const WS_DISPATCH_EVENT: OpCode = opcodes::DISPATCH;
-pub const WS_HEARTBEAT: OpCode = opcodes::HEARTBEAT;
-pub const WS_IDENTIFY: OpCode = opcodes::IDENTIFY;
-pub const WS_RESUME: OpCode = opcodes::RESUME;
-pub const WS_RECONNECT: OpCode = opcodes::RECONNECT;
-pub const WS_INVALID_SESSION: OpCode = opcodes::INVALID_SESSION;
-pub const WS_HELLO: OpCode = opcodes::HELLO;
-pub const WS_HEARTBEAT_ACK: OpCode = opcodes::HEARTBEAT_ACK;
-pub const HTTP_CALLBACK_ACK: OpCode = 12;
-pub const HTTP_CALLBACK_VALIDATION: OpCode = 13;
+pub const WS_DISPATCH_EVENT: u8 = opcodes::DISPATCH;
+pub const WS_HEARTBEAT: u8 = opcodes::HEARTBEAT;
+pub const WS_IDENTIFY: u8 = opcodes::IDENTIFY;
+pub const WS_RESUME: u8 = opcodes::RESUME;
+pub const WS_RECONNECT: u8 = opcodes::RECONNECT;
+pub const WS_INVALID_SESSION: u8 = opcodes::INVALID_SESSION;
+pub const WS_HELLO: u8 = opcodes::HELLO;
+pub const WS_HEARTBEAT_ACK: u8 = opcodes::HEARTBEAT_ACK;
+pub const HTTP_CALLBACK_ACK: u8 = 12;
+pub const HTTP_CALLBACK_VALIDATION: u8 = 13;
 
 pub const EVENT_GUILD_CREATE: &str = "GUILD_CREATE";
 pub const EVENT_GUILD_UPDATE: &str = "GUILD_UPDATE";

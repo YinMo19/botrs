@@ -1,4 +1,3 @@
-use super::{EventType, OpCode};
 use serde::{Deserialize, Serialize};
 
 /// Gateway event payload.
@@ -44,11 +43,11 @@ impl PartialEq for WSPayload {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct WSPayloadBase {
     #[serde(rename = "op")]
-    pub op_code: OpCode,
+    pub op_code: u8,
     #[serde(rename = "s", skip_serializing_if = "Option::is_none")]
     pub seq: Option<u32>,
     #[serde(rename = "t", skip_serializing_if = "Option::is_none")]
-    pub event_type: Option<EventType>,
+    pub event_type: Option<String>,
     #[serde(rename = "id", skip_serializing_if = "Option::is_none")]
     pub event_id: Option<String>,
 }

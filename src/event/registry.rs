@@ -4,10 +4,10 @@ use std::sync::{LazyLock, RwLock};
 
 type EventParseFn = fn(&mut WSPayload, &[u8]) -> crate::Result<()>;
 
-static EVENT_PARSE_HANDLERS: LazyLock<RwLock<Vec<(OpCode, EventType, EventParseFn)>>> =
+static EVENT_PARSE_HANDLERS: LazyLock<RwLock<Vec<(u8, String, EventParseFn)>>> =
     LazyLock::new(|| RwLock::new(default_event_handlers()));
 
-fn default_event_handlers() -> Vec<(OpCode, EventType, EventParseFn)> {
+fn default_event_handlers() -> Vec<(u8, String, EventParseFn)> {
     [
         (EVENT_GUILD_CREATE, guild_handler as EventParseFn),
         (EVENT_GUILD_UPDATE, guild_handler),
