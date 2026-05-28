@@ -1,7 +1,7 @@
 //! Constants shared across the QQ Bot API client.
 
-pub const HEADER_TRACE_ID: &str = "X-Tps-trace-ID";
-pub const TOKEN_API_URL: &str = "https://bots.qq.com";
+pub(crate) const HEADER_TRACE_ID: &str = "X-Tps-trace-ID";
+pub(crate) const TOKEN_API_URL: &str = "https://bots.qq.com";
 
 #[cfg(test)]
 mod tests {

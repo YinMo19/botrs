@@ -28,10 +28,8 @@
 use crate::http::HttpClient;
 use crate::token::Token;
 
-/// Default idle connection count for the OpenAPI v1 client.
-pub const DEFAULT_MAX_IDLE_CONNS: usize = 3000;
 /// HTTP header carrying the bot app id for interaction callbacks.
-pub const HEADER_CALLBACK_APP_ID: &str = "X-Callback-AppID";
+pub(crate) const HEADER_CALLBACK_APP_ID: &str = "X-Callback-AppID";
 
 /// Bot API client for the QQ Guild Bot API.
 #[derive(Clone)]

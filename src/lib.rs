@@ -8,7 +8,7 @@ mod macros;
 pub mod api;
 pub mod audio;
 pub mod client;
-pub mod constant;
+mod constant;
 pub mod error;
 mod event;
 pub mod forum;
@@ -27,7 +27,6 @@ pub mod webhook;
 // Re-export main types for convenience
 pub use api::BotApi;
 pub use client::{Client, Context, EventHandler};
-pub use constant::*;
 pub use error::{BotError, Result};
 pub use intents::Intents;
 pub use models::gateway::Ready;
