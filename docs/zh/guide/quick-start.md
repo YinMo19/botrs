@@ -65,7 +65,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 ## 各部分说明
 
 - `Token` 保存 App ID 与 Secret。也可以用 `Token::from_env()`，它会读取 `QQ_BOT_APP_ID` 和 `QQ_BOT_SECRET`。
-- `Intents` 是位标志集合。`Intents::new()` 才是空集合，链式调用 `with_*` 方法会启用对应事件类别。`Intents::default()` 是标准公域预设：默认开启非特权的公开事件类别，但特权事件和 `ENTER_AIO` 仍需显式开启。
+- `Intents` 是位标志集合。`Intents::new()` 是空集合，链式调用 `with_*` 方法会启用对应事件类别。`Intents::default()` 是标准公域预设：默认开启非特权的公开事件类别，但特权事件和 `ENTER_AIO` 仍需显式开启。
 - `Client::new(token, intents, handler, is_sandbox)` —— 开发期传 `true` 走沙箱地址，正式环境传 `false`。
 - `message.reply(&ctx, text)` 是回复同频道的便捷方法；要发送更复杂的内容，使用 `ctx.send_message` 与 `MessageParams`（详见 [消息](/zh/guide/messages)）。
 
