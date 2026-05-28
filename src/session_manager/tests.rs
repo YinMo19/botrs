@@ -2,9 +2,7 @@ use tokio::sync::mpsc;
 
 use super::channel::SessionFuture;
 use super::*;
-use crate::error::{
-    CODE_CONN_CLOSE_CANT_IDENTIFY, CODE_CONN_CLOSE_CANT_RESUME, CODE_NEED_RECONNECT, sdk_error,
-};
+use crate::error::{CODE_CONN_CLOSE_CANT_IDENTIFY, CODE_CONN_CLOSE_CANT_RESUME, sdk_error};
 use crate::intents::Intents;
 use crate::models::api::{GatewayResponse, SessionStartLimit};
 use crate::token::Token;
@@ -34,13 +32,13 @@ fn check_session_limit_matches_expected() {
 fn resume_and_identify_error_sets_match_expected() {
     let resume = sdk_error(CODE_CONN_CLOSE_CANT_RESUME, "invalid session");
     let identify = sdk_error(CODE_CONN_CLOSE_CANT_IDENTIFY, "bot banned");
-    let reconnect = sdk_error(CODE_NEED_RECONNECT, "need reconnect");
+    let other = sdk_error(9999, "unknown sdk error");
 
     assert!(can_not_resume(&resume));
     assert!(!can_not_resume(&identify));
     assert!(can_not_identify(&identify));
     assert!(!can_not_identify(&resume));
-    assert!(!can_not_identify(&reconnect));
+    assert!(!can_not_identify(&other));
 }
 
 #[test]

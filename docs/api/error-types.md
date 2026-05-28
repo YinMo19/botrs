@@ -36,7 +36,7 @@ pub type Result<T> = std::result::Result<T, BotError>;
 | `Io(std::io::Error)`                         | Local I/O (e.g. file uploads).                           |
 | `NotImplemented(String)`                     | Endpoint reachable but not yet wired up.                 |
 
-`Sdk` wraps `SdkError`, the framework's internal error code carrier. It exposes `code()`, `message()`, and `trace_id()`. The framework uses it as the catch-all for QQ-defined codes (e.g. 9999 for "unknown SDK error", `CODE_NEED_RECONNECT`, `CODE_CONN_CLOSE_CANT_RESUME`).
+`Sdk` wraps `SdkError`, the framework's internal error code carrier. It exposes `code()`, `message()`, and `trace_id()`. The framework uses it as the catch-all for QQ-defined codes (e.g. 9999 for "unknown SDK error", `CODE_CONN_CLOSE_CANT_RESUME`, `CODE_CONN_CLOSE_CANT_IDENTIFY`).
 
 ## Construction helpers
 
@@ -67,8 +67,8 @@ For protocol-defined codes carried inside `Sdk`, use:
 ```rust
 if let BotError::Sdk(ref err) = e {
     match err.code() {
-        CODE_NEED_RECONNECT => /* drop session and reconnect */,
         CODE_CONN_CLOSE_CANT_RESUME => /* discard session, identify fresh */,
+        CODE_CONN_CLOSE_CANT_IDENTIFY => /* stop identifying until state changes */,
         _ => {}
     }
 }
