@@ -76,7 +76,12 @@ mod payload;
 pub use content::*;
 pub use event::*;
 pub use params::*;
-pub use payload::*;
+pub use payload::MessageCreateType;
+
+pub(crate) use payload::MessageToCreate;
+
+#[cfg(test)]
+pub(crate) use payload::MediaInfo;
 
 #[cfg(test)]
 mod tests;

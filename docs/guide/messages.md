@@ -7,7 +7,7 @@ Every send method on `BotApi` accepts a typed builder rather than a long list of
 - `C2CMessageParams` — single-user C2C messages.
 - `DirectMessageParams` — DM (private chat) messages.
 
-All four expose `new_text(content)` for the common case and `with_reply(message_id)` to set the `msg_id` reference. Anything else (embed, ark, markdown, keyboard, image URL, media, prompt keyboard, action button, stream) is set with struct-update syntax.
+All four expose `new_text(content)` for the common case and `with_reply(message_id)` to set the `msg_id` reference. Rich payloads (embed, ark, markdown, keyboard, image URL, or group/C2C media) are set with struct-update syntax.
 
 ```rust
 use botrs::models::message::MessageParams;

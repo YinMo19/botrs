@@ -12,7 +12,7 @@ mod sdk;
 /// A specialized Result type for BotRS operations.
 pub type Result<T> = std::result::Result<T, BotError>;
 
-pub use bot_error::{BotError, IntoBotError};
+pub use bot_error::BotError;
 pub use codes::*;
 pub(crate) use http::http_error_from_status;
 pub use sdk::SdkError;

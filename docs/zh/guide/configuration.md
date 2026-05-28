@@ -33,15 +33,14 @@ let intents = Intents::new()
 
 ## 沙箱与正式
 
-`Client::new(token, intents, handler, is_sandbox: bool)` —— 传 `true` 指向 QQ 沙箱地址，传 `false` 指向正式环境。两个端点常量也对外暴露：
+`Client::new(token, intents, handler, is_sandbox: bool)` —— 传 `true` 使用 QQ 沙箱 OpenAPI 地址，传 `false` 使用正式环境。REST 端点常量也对外暴露：
 
 ```rust
 botrs::DEFAULT_API_URL  // "https://api.sgroup.qq.com"
 botrs::SANDBOX_API_URL  // "https://sandbox.api.sgroup.qq.com"
-botrs::DEFAULT_WS_URL   // "wss://api.sgroup.qq.com/websocket"
 ```
 
-客户端内部用 `HttpClient::new(timeout_secs, is_sandbox)` 构造 HTTP 客户端。如果你在 `Client` 之外单独构造 `BotApi` 调用 REST，请用同一构造函数选择环境。
+客户端内部用 `HttpClient::new(timeout_secs, is_sandbox)` 构造 HTTP 客户端，再通过 `get_gateway` 获取实际 WebSocket URL 后连接。如果你在 `Client` 之外单独构造 `BotApi` 调用 REST，请用同一构造函数选择环境。
 
 ## HTTP 超时
 

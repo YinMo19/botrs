@@ -33,15 +33,14 @@ This starts from an empty set and adds only the event categories your handler co
 
 ## Sandbox vs production
 
-`Client::new(token, intents, handler, is_sandbox: bool)` — pass `true` to point the HTTP client and gateway at QQ's sandbox endpoints. The two endpoint constants are exported for reference:
+`Client::new(token, intents, handler, is_sandbox: bool)` — pass `true` to use QQ's sandbox OpenAPI endpoint. The REST endpoint constants are exported for reference:
 
 ```rust
 botrs::DEFAULT_API_URL  // "https://api.sgroup.qq.com"
 botrs::SANDBOX_API_URL  // "https://sandbox.api.sgroup.qq.com"
-botrs::DEFAULT_WS_URL   // "wss://api.sgroup.qq.com/websocket"
 ```
 
-Internally, the client builds an `HttpClient` with `HttpClient::new(timeout_secs, is_sandbox)`. If you construct a `BotApi` outside of `Client` (for one-off REST calls), use the same constructor to pick the environment.
+Internally, the client builds an `HttpClient` with `HttpClient::new(timeout_secs, is_sandbox)`, then asks `get_gateway` for the actual WebSocket URL before connecting. If you construct a `BotApi` outside of `Client` (for one-off REST calls), use the same constructor to pick the environment.
 
 ## HTTP timeout
 

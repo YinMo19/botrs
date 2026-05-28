@@ -34,7 +34,6 @@ pub type Result<T> = std::result::Result<T, BotError>;
 | `Session(String)`                            | Gateway session bookkeeping failure.                     |
 | `Internal(String)`                           | Bug-style internal invariant violation.                  |
 | `Io(std::io::Error)`                         | Local I/O (e.g. file uploads).                           |
-| `NotImplemented(String)`                     | Endpoint reachable but not yet wired up.                 |
 
 `Sdk` wraps `SdkError`, the framework's internal error code carrier. It exposes `code()`, `message()`, and `trace_id()`. The framework uses it as the catch-all for QQ-defined codes (e.g. 9999 for "unknown SDK error", `CODE_CONN_CLOSE_CANT_RESUME`, `CODE_CONN_CLOSE_CANT_IDENTIFY`).
 
@@ -74,7 +73,7 @@ if let BotError::Sdk(ref err) = e {
 }
 ```
 
-Constants for these codes live in `crate::constant`.
+Constants for these codes are exposed from `botrs::error`, for example `botrs::error::CODE_CONN_CLOSE_CANT_RESUME`.
 
 ## Conversions
 

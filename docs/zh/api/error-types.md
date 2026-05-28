@@ -34,7 +34,6 @@ pub type Result<T> = std::result::Result<T, BotError>;
 | `Session(String)`                             | 网关会话状态机错误。                                    |
 | `Internal(String)`                            | 框架自身的不变量被破坏（视为 bug）。                    |
 | `Io(std::io::Error)`                          | 本地 I/O，例如文件上传。                                |
-| `NotImplemented(String)`                      | 接口可达，但尚未在框架里实现。                          |
 
 `Sdk` 包装的是框架内部的错误码载体 `SdkError`，其方法包括 `code()`、`message()`、`trace_id()`。框架将 QQ 定义的所有数值错误码（例如 9999、`CODE_CONN_CLOSE_CANT_RESUME`、`CODE_CONN_CLOSE_CANT_IDENTIFY` 等）经 `Sdk` 派发。
 
@@ -74,7 +73,7 @@ if let BotError::Sdk(ref err) = e {
 }
 ```
 
-这些常量定义在 `crate::constant` 模块。
+这些常量从 `botrs::error` 暴露，例如 `botrs::error::CODE_CONN_CLOSE_CANT_RESUME`。
 
 ## 自动转换
 

@@ -17,12 +17,6 @@ pub enum MessageCreateType {
     Ark = 3,
     /// Embed message
     Embed = 4,
-    /// Mention message
-    At = 5,
-    /// Input status notification
-    InputNotify = 6,
-    /// Rich media message
-    RichMedia = 7,
     /// Unknown message type
     Unknown(u32),
 }
@@ -32,7 +26,4 @@ wire_enum!(MessageCreateType, u32, Unknown, {
     Markdown = 2,
     Ark = 3,
     Embed = 4,
-    At = 5,
-    InputNotify = 6,
-    RichMedia = 7,
 });

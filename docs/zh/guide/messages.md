@@ -7,7 +7,7 @@
 - `C2CMessageParams` —— 单聊 C2C 消息。
 - `DirectMessageParams` —— 私信（DM）消息。
 
-四者都提供 `new_text(content)` 和 `with_reply(message_id)`。其余字段（embed、ark、markdown、keyboard、图片 URL、media、prompt keyboard、action button、stream 等）通过结构体字段直接赋值。
+四者都提供 `new_text(content)` 和 `with_reply(message_id)`。富文本载荷（embed、ark、markdown、keyboard、图片 URL、群/C2C media）通过结构体字段直接赋值。
 
 ```rust
 use botrs::models::message::MessageParams;

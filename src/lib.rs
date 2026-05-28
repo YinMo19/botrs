@@ -48,9 +48,6 @@ pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 /// Default timeout for HTTP requests in seconds
 pub const DEFAULT_TIMEOUT: u64 = 30;
 
-/// Default WebSocket URL for QQ Guild API
-pub const DEFAULT_WS_URL: &str = "wss://api.sgroup.qq.com/websocket";
-
 /// Default API base URL for QQ Guild API
 pub const DEFAULT_API_URL: &str = "https://api.sgroup.qq.com";
 

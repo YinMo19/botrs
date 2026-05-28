@@ -1,10 +1,10 @@
 use crate::models::serde_helpers::{is_zero_u32, option_is_none_or_default};
 use serde::{Deserialize, Serialize};
 
+use super::payload::option_message_type_is_none_or_zero;
 use super::{
-    ActionButton, Ark, Embed, InputNotify, Keyboard, KeyboardPayload, MarkdownPayload, Media,
-    MediaInfo, MessageCreateType, MessageToCreate, PromptKeyboard, Reference, Stream,
-    option_message_type_is_none_or_zero,
+    Ark, Embed, Keyboard, KeyboardPayload, MarkdownPayload, Media, MessageCreateType,
+    MessageToCreate, Reference,
 };
 
 macro_rules! channel_like_message_params_struct {
@@ -48,27 +48,6 @@ macro_rules! channel_like_message_params_struct {
             /// Message sequence number
             #[serde(skip_serializing_if = "option_is_none_or_default")]
             pub msg_seq: Option<u32>,
-            /// Subscription ID
-            #[serde(skip_serializing_if = "option_is_none_or_default")]
-            pub subscribe_id: Option<String>,
-            /// Input status notification
-            #[serde(skip_serializing_if = "Option::is_none")]
-            pub input_notify: Option<InputNotify>,
-            /// Rich media info
-            #[serde(skip_serializing_if = "Option::is_none")]
-            pub media: Option<MediaInfo>,
-            /// Prompt keyboard
-            #[serde(skip_serializing_if = "Option::is_none")]
-            pub prompt_keyboard: Option<PromptKeyboard>,
-            /// Action button
-            #[serde(skip_serializing_if = "Option::is_none")]
-            pub action_button: Option<ActionButton>,
-            /// Stream info
-            #[serde(skip_serializing_if = "Option::is_none")]
-            pub stream: Option<Stream>,
-            /// Feature control ID
-            #[serde(skip_serializing_if = "option_is_none_or_default")]
-            pub feature_id: Option<u32>,
         }
     };
 }
@@ -114,24 +93,6 @@ macro_rules! open_message_params_struct {
             /// Keyboard payload
             #[serde(skip_serializing_if = "Option::is_none")]
             pub keyboard: Option<KeyboardPayload>,
-            /// Subscription ID
-            #[serde(skip_serializing_if = "option_is_none_or_default")]
-            pub subscribe_id: Option<String>,
-            /// Input status notification
-            #[serde(skip_serializing_if = "Option::is_none")]
-            pub input_notify: Option<InputNotify>,
-            /// Prompt keyboard
-            #[serde(skip_serializing_if = "Option::is_none")]
-            pub prompt_keyboard: Option<PromptKeyboard>,
-            /// Action button
-            #[serde(skip_serializing_if = "Option::is_none")]
-            pub action_button: Option<ActionButton>,
-            /// Stream info
-            #[serde(skip_serializing_if = "Option::is_none")]
-            pub stream: Option<Stream>,
-            /// Feature control ID
-            #[serde(skip_serializing_if = "option_is_none_or_default")]
-            pub feature_id: Option<u32>,
         }
     };
 }
@@ -172,11 +133,6 @@ macro_rules! impl_channel_like_message_params {
                 self.msg_id = Some(message_id.into());
                 self
             }
-
-            /// Converts this payload into the message create body.
-            pub fn into_message_to_create(self) -> MessageToCreate {
-                self.into()
-            }
         }
 
         impl From<$name> for MessageToCreate {
@@ -193,13 +149,7 @@ macro_rules! impl_channel_like_message_params {
                     keyboard: params.keyboard,
                     event_id: params.event_id,
                     msg_seq: params.msg_seq,
-                    subscribe_id: params.subscribe_id,
-                    input_notify: params.input_notify,
-                    media: params.media,
-                    prompt_keyboard: params.prompt_keyboard,
-                    action_button: params.action_button,
-                    stream: params.stream,
-                    feature_id: params.feature_id,
+                    media: None,
                 }
             }
         }
@@ -223,11 +173,6 @@ macro_rules! impl_open_message_params {
                 self.msg_id = Some(message_id.into());
                 self
             }
-
-            /// Converts this payload into the message create body.
-            pub fn into_message_to_create(self) -> MessageToCreate {
-                self.into()
-            }
         }
 
         impl From<$name> for MessageToCreate {
@@ -243,13 +188,7 @@ macro_rules! impl_open_message_params {
                     keyboard: params.keyboard.map(Into::into),
                     event_id: params.event_id,
                     msg_seq: params.msg_seq,
-                    subscribe_id: params.subscribe_id,
-                    input_notify: params.input_notify,
                     media: params.media.map(Into::into),
-                    prompt_keyboard: params.prompt_keyboard,
-                    action_button: params.action_button,
-                    stream: params.stream,
-                    feature_id: params.feature_id,
                     ..Default::default()
                 }
             }

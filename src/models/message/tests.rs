@@ -1,11 +1,10 @@
 use super::{
-    ActionButton, Ark, ArkKv, ArkObj, ArkObjKv, C2CMessageParams, DirectMessage, Embed,
-    GroupMessageParams, InputNotify, Keyboard, KeyboardButton, KeyboardButtonAction,
-    KeyboardButtonPermission, KeyboardButtonRenderData, KeyboardContent, KeyboardModal,
-    KeyboardRow, KeyboardStyle, KeyboardSubscribeData, KeyboardTemplateId, MarkdownParam,
-    MarkdownPayload, MarkdownStyle, Media, MediaInfo, Message, MessageAttachment, MessageAudit,
-    MessageCreateType, MessageParams, MessageReference, MessageToCreate, MessageUser, Reference,
-    Stream,
+    Ark, ArkKv, ArkObj, ArkObjKv, C2CMessageParams, DirectMessage, Embed, GroupMessageParams,
+    Keyboard, KeyboardButton, KeyboardButtonAction, KeyboardButtonPermission,
+    KeyboardButtonRenderData, KeyboardContent, KeyboardModal, KeyboardRow, KeyboardStyle,
+    KeyboardSubscribeData, KeyboardTemplateId, MarkdownParam, MarkdownPayload, MarkdownStyle,
+    Media, MediaInfo, Message, MessageAttachment, MessageAudit, MessageCreateType, MessageParams,
+    MessageReference, MessageToCreate, MessageUser, Reference,
 };
 
 #[test]
@@ -139,28 +138,8 @@ fn message_create_omits_go_zero_values() {
         msg_id: Some(String::new()),
         event_id: Some(String::new()),
         msg_seq: Some(0),
-        subscribe_id: Some(String::new()),
-        feature_id: Some(0),
-        input_notify: Some(InputNotify {
-            input_type: Some(0),
-            input_second: Some(0),
-        }),
         media: Some(MediaInfo {
             file_info: Some(String::new()),
-        }),
-        action_button: Some(ActionButton {
-            template_id: Some(0),
-            callback_data: Some(String::new()),
-            feedback: Some(false),
-            tts: Some(false),
-            re_generate: Some(false),
-            stop_generate: Some(false),
-        }),
-        stream: Some(Stream {
-            state: Some(0),
-            id: Some(String::new()),
-            index: Some(0),
-            reset: Some(false),
         }),
         ark: Some(Ark {
             template_id: Some(0),
@@ -172,21 +151,11 @@ fn message_create_omits_go_zero_values() {
 
     let value = serde_json::to_value(&message).unwrap();
     for key in [
-        "content",
-        "msg_type",
-        "image",
-        "msg_id",
-        "event_id",
-        "msg_seq",
-        "subscribe_id",
-        "feature_id",
+        "content", "msg_type", "image", "msg_id", "event_id", "msg_seq",
     ] {
         assert!(value.get(key).is_none(), "{key} should be omitted");
     }
-    assert_eq!(value["input_notify"], serde_json::json!({}));
     assert_eq!(value["media"], serde_json::json!({}));
-    assert_eq!(value["action_button"], serde_json::json!({}));
-    assert_eq!(value["stream"], serde_json::json!({}));
     assert_eq!(value["ark"], serde_json::json!({}));
     assert_eq!(
         value["embed"],
@@ -208,28 +177,8 @@ fn message_create_keeps_non_zero_omitempty_values() {
         msg_id: Some("msg-1".to_string()),
         event_id: Some("event-1".to_string()),
         msg_seq: Some(1),
-        subscribe_id: Some("sub-1".to_string()),
-        feature_id: Some(7),
-        input_notify: Some(InputNotify {
-            input_type: Some(1),
-            input_second: Some(3),
-        }),
         media: Some(MediaInfo {
             file_info: Some("file-info".to_string()),
-        }),
-        action_button: Some(ActionButton {
-            template_id: Some(2),
-            callback_data: Some("callback".to_string()),
-            feedback: Some(true),
-            tts: Some(true),
-            re_generate: Some(true),
-            stop_generate: Some(true),
-        }),
-        stream: Some(Stream {
-            state: Some(1),
-            id: Some("stream-1".to_string()),
-            index: Some(1),
-            reset: Some(true),
         }),
         ark: Some(Ark {
             template_id: Some(23),
@@ -256,11 +205,6 @@ fn message_create_keeps_non_zero_omitempty_values() {
             "msg_id": "msg-1",
             "event_id": "event-1",
             "msg_seq": 1,
-            "subscribe_id": "sub-1",
-            "input_notify": {
-                "input_type": 1,
-                "input_second": 3
-            },
             "media": {
                 "file_info": "file-info"
             },
@@ -277,21 +221,6 @@ fn message_create_keeps_non_zero_omitempty_values() {
                     }]
                 }]
             },
-            "action_button": {
-                "template_id": 2,
-                "callback_data": "callback",
-                "feedback": true,
-                "tts": true,
-                "re_generate": true,
-                "stop_generate": true
-            },
-            "stream": {
-                "state": 1,
-                "id": "stream-1",
-                "index": 1,
-                "reset": true
-            },
-            "feature_id": 7
         })
     );
 }

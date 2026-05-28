@@ -1,5 +1,3 @@
-use std::fmt;
-
 use super::SdkError;
 
 /// The main error type for BotRS operations.
@@ -92,10 +90,6 @@ pub enum BotError {
     /// IO errors
     #[error("IO error: {0}")]
     Io(#[from] std::io::Error),
-
-    /// Not implemented errors
-    #[error("Not implemented: {0}")]
-    NotImplemented(String),
 }
 
 impl BotError {
@@ -147,11 +141,6 @@ impl BotError {
         Self::RateLimit { retry_after }
     }
 
-    /// Creates a new not implemented error.
-    pub fn not_implemented(message: impl Into<String>) -> Self {
-        Self::NotImplemented(message.into())
-    }
-
     /// Returns true if this error is retryable.
     pub fn is_retryable(&self) -> bool {
         match self {
@@ -175,21 +164,6 @@ impl BotError {
             _ if self.is_retryable() => Some(1),
             _ => None,
         }
-    }
-}
-
-/// Extension trait for converting generic errors to BotError.
-pub trait IntoBotError<T> {
-    /// Converts the result into a BotError with context.
-    fn with_context(self, context: &str) -> super::Result<T>;
-}
-
-impl<T, E> IntoBotError<T> for std::result::Result<T, E>
-where
-    E: fmt::Display,
-{
-    fn with_context(self, context: &str) -> super::Result<T> {
-        self.map_err(|e| BotError::internal(format!("{context}: {e}")))
     }
 }
 
