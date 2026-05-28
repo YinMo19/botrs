@@ -22,7 +22,7 @@ impl EventHandler for GroupManageEventHandler {
 
     /// Called when robot is added to group.
     async fn group_add_robot(&self, ctx: Context, event: GroupManageEvent) {
-        info!("机器人被添加到群聊：{}", event);
+        info!("机器人被添加到群聊：{:?}", event);
 
         // Get group OpenID
         let group_openid = match &event.group_openid {
@@ -52,17 +52,17 @@ impl EventHandler for GroupManageEventHandler {
 
     /// Called when robot is deleted from group.
     async fn group_del_robot(&self, _ctx: Context, event: GroupManageEvent) {
-        info!("机器人被移除群聊：{}", event);
+        info!("机器人被移除群聊：{:?}", event);
     }
 
     /// Called when group message is rejected.
     async fn group_msg_reject(&self, _ctx: Context, event: GroupManageEvent) {
-        info!("群聊关闭机器人主动消息：{}", event);
+        info!("群聊关闭机器人主动消息：{:?}", event);
     }
 
     /// Called when group message is received.
     async fn group_msg_receive(&self, _ctx: Context, event: GroupManageEvent) {
-        info!("群聊打开机器人主动消息：{}", event);
+        info!("群聊打开机器人主动消息：{:?}", event);
     }
 
     /// Called when an error occurs during event processing.

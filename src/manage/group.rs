@@ -36,13 +36,3 @@ struct GroupManageWire {
     #[serde(default)]
     op_member_openid: Option<String>,
 }
-
-impl std::fmt::Display for GroupManageEvent {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "GroupManageEvent {{ event_id: {:?}, timestamp: {:?}, group_openid: {:?}, op_member_openid: {:?} }}",
-            self.event_id, self.timestamp, self.group_openid, self.op_member_openid
-        )
-    }
-}

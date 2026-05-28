@@ -58,13 +58,3 @@ struct C2CManageWire {
     #[serde(default)]
     avatar: Option<String>,
 }
-
-impl std::fmt::Display for C2CManageEvent {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "C2CManageEvent {{ event_id: {:?}, timestamp: {:?}, openid: {:?}, nick: {:?}, avatar: {:?} }}",
-            self.event_id, self.timestamp, self.openid, self.nick, self.avatar
-        )
-    }
-}

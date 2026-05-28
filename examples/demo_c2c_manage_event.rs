@@ -22,7 +22,7 @@ impl EventHandler for C2CManageEventHandler {
 
     /// Called when a friend is added.
     async fn friend_add(&self, ctx: Context, event: C2CManageEvent) {
-        info!("用户添加机器人：{}", event);
+        info!("用户添加机器人：{:?}", event);
 
         // Get user OpenID
         let openid = match &event.openid {
@@ -52,17 +52,17 @@ impl EventHandler for C2CManageEventHandler {
 
     /// Called when a friend is deleted.
     async fn friend_del(&self, _ctx: Context, event: C2CManageEvent) {
-        info!("用户删除机器人：{}", event);
+        info!("用户删除机器人：{:?}", event);
     }
 
     /// Called when C2C message is rejected.
     async fn c2c_msg_reject(&self, _ctx: Context, event: C2CManageEvent) {
-        info!("用户关闭机器人主动消息：{}", event);
+        info!("用户关闭机器人主动消息：{:?}", event);
     }
 
     /// Called when C2C message is received.
     async fn c2c_msg_receive(&self, _ctx: Context, event: C2CManageEvent) {
-        info!("用户打开机器人主动消息：{}", event);
+        info!("用户打开机器人主动消息：{:?}", event);
     }
 
     /// Called when an error occurs during event processing.
