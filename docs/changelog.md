@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed Go-style event, webhook, and signature helper names (`ParseData`, `RegisterHandlers`, `HTTPHandler`, `Gen*ACK`, `Generate`, `Verify`, etc.) in favor of native Rust names.
 - Removed Go-style token/API/constant helper names (`NewQQBotTokenSource`, `GetAppID`, `StartRefreshAccessToken`, `APIv1`, `HeaderTraceID`, etc.) in favor of native Rust names.
 - Removed Go-style intent constants (`IntentGuilds`, `IntentGroupMessages`, `IntentNone`, etc.); use `Intents::GUILDS`, `Intents::PUBLIC_MESSAGES`, or `0` instead.
-- Removed Go-style enum constant aliases (`AudioStatusStart`, `InteractionTypePing`, `LayoutTypeImageText`, etc.); use enum variants or Rust-style constants instead.
+- Removed Go-style enum constant aliases (`AudioStatusStart`, `InteractionTypePing`, `LayoutTypeImageText`, etc.); use enum variants where the SDK models them, or raw protocol values for integer-only fields.
 - Removed Go-style pager, member-delete option, and message helper names (`QueryParams`, `WithAddBlackList`, `GetEventID`, `GetSendType`, `APIMessage`, etc.) in favor of native Rust methods.
 - Removed Go-style message mention helper names (`MentionUser`, `MentionAllUser`, `MentionChannel`, `Emoji`, `ETLInput`, `ParseCommand`) and the redundant Rust helper functions (`mention_user`, `mention_all_user`, `mention_channel`, `emoji`, `etl_input`, `parse_command`).
 - Removed Go-style message payload and keyboard constant aliases (`TextMsg`, `MarkdownMsg`, `RichMedia`, `ActionTypeURL`, `PermissionTypAll`, etc.); use `MessageCreateType` and Rust-style `ACTION_TYPE_*` / `PERMISSION_TYPE_*` constants.

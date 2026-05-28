@@ -57,11 +57,6 @@ pub enum InteractionDataType {
     ClearSessionClick = 14,
 }
 
-pub type LayoutType = u32;
-pub const LAYOUT_TYPE_IMAGE_TEXT: LayoutType = 0;
-pub type ActionType = u32;
-pub const ACTION_TYPE_SEND_ARK: ActionType = 0;
-
 wire_enum_with_default!(InteractionDataType, u8, ChatInputSearch, {
     ChatInputSearch = 9,
     HttpProxy = 10,

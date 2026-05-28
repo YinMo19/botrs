@@ -11,10 +11,7 @@ mod types;
 pub use data::{InteractionData, Resolved};
 pub use model::Interaction;
 pub use search::{SearchInputResolved, SearchLayout, SearchRecord, SearchRsp};
-pub use types::{
-    ACTION_TYPE_SEND_ARK, ActionType, InteractionDataType, InteractionType, LAYOUT_TYPE_IMAGE_TEXT,
-    LayoutType,
-};
+pub use types::{InteractionDataType, InteractionType};
 
 #[cfg(test)]
 mod tests;

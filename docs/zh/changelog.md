@@ -16,7 +16,7 @@ BotRS 的所有重要更改都将记录在此文件中。
 - 移除 Go 风格 event、webhook 和 signature helper 名称（`ParseData`、`RegisterHandlers`、`HTTPHandler`、`Gen*ACK`、`Generate`、`Verify` 等），改用原生 Rust 命名。
 - 移除 Go 风格 token/API/constant helper 名称（`NewQQBotTokenSource`、`GetAppID`、`StartRefreshAccessToken`、`APIv1`、`HeaderTraceID` 等），改用原生 Rust 命名。
 - 移除 Go 风格 intent 常量（`IntentGuilds`、`IntentGroupMessages`、`IntentNone` 等）；请使用 `Intents::GUILDS`、`Intents::PUBLIC_MESSAGES` 或 `0`。
-- 移除 Go 风格 enum 常量别名（`AudioStatusStart`、`InteractionTypePing`、`LayoutTypeImageText` 等）；请使用 enum variant 或 Rust 风格常量。
+- 移除 Go 风格 enum 常量别名（`AudioStatusStart`、`InteractionTypePing`、`LayoutTypeImageText` 等）；SDK 有建模时请使用 enum variant，仅为整数协议字段时直接使用协议值。
 - 移除 Go 风格 pager、成员删除 option 和消息辅助名称（`QueryParams`、`WithAddBlackList`、`GetEventID`、`GetSendType`、`APIMessage` 等），改用原生 Rust 方法。
 - 移除 Go 风格消息 mention 辅助名称（`MentionUser`、`MentionAllUser`、`MentionChannel`、`Emoji`、`ETLInput`、`ParseCommand`）以及冗余 Rust 辅助函数（`mention_user`、`mention_all_user`、`mention_channel`、`emoji`、`etl_input`、`parse_command`）。
 - 移除 Go 风格消息 payload 与 keyboard 常量别名（`TextMsg`、`MarkdownMsg`、`RichMedia`、`ActionTypeURL`、`PermissionTypAll` 等）；请使用 `MessageCreateType` 以及 Rust 风格 `ACTION_TYPE_*` / `PERMISSION_TYPE_*` 常量。

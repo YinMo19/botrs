@@ -1,4 +1,3 @@
-use super::{ActionType, LayoutType};
 use serde::{Deserialize, Serialize};
 
 /// Search input resolved data.
@@ -22,10 +21,10 @@ pub struct SearchRsp {
 pub struct SearchLayout {
     /// Layout type
     #[serde(rename = "LayoutType")]
-    pub layout_type: LayoutType,
+    pub layout_type: u32,
     /// Action type
     #[serde(rename = "ActionType")]
-    pub action_type: ActionType,
+    pub action_type: u32,
     /// Layout title
     #[serde(rename = "Title")]
     pub title: String,
