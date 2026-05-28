@@ -87,26 +87,6 @@ impl HasId for Announce {
     }
 }
 
-impl std::fmt::Display for Announce {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if !self.message_id.is_empty() {
-            write!(
-                f,
-                "MessageAnnounce {{ guild_id: {:?}, channel_id: {:?}, message_id: {:?} }}",
-                self.guild_id, self.channel_id, self.message_id
-            )
-        } else {
-            write!(
-                f,
-                "RecommendAnnounce {{ guild_id: {:?}, type: {:?}, channels: {} }}",
-                self.guild_id,
-                self.announces_type,
-                self.recommend_channels.len()
-            )
-        }
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -235,34 +215,5 @@ mod tests {
                 "recommend_channels": []
             })
         );
-    }
-
-    #[test]
-    fn test_announce_display() {
-        let message_announce = Announce {
-            guild_id: "guild1".to_string(),
-            channel_id: "channel1".to_string(),
-            message_id: "message1".to_string(),
-            announces_type: u8::from(AnnouncesType::Member) as u32,
-            recommend_channels: Vec::new(),
-        };
-        let display = format!("{}", message_announce);
-        assert!(display.contains("MessageAnnounce"));
-        assert!(display.contains("guild1"));
-
-        let recommend_announce = Announce {
-            guild_id: "guild2".to_string(),
-            channel_id: String::new(),
-            message_id: String::new(),
-            announces_type: u8::from(AnnouncesType::Member) as u32,
-            recommend_channels: vec![RecommendChannel {
-                channel_id: "channel1".to_string(),
-                introduce: String::new(),
-            }],
-        };
-        let display = format!("{}", recommend_announce);
-        assert!(display.contains("RecommendAnnounce"));
-        assert!(display.contains("guild2"));
-        assert!(display.contains("channels: 1"));
     }
 }
