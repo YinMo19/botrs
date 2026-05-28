@@ -114,10 +114,6 @@ pub struct Session           { pub id: String, pub url: String, pub token: Token
 pub struct SessionStartLimit { pub total: u32, pub remaining: u32, pub reset_after: u64, pub max_concurrency: u32 }
 ```
 
-## Traits
-
-`HasId` exposes `fn id(&self) -> Option<&Snowflake>` for any DTO that owns an id; `HasName` is the parallel trait for displayable types. Both are blanket-implemented for the relevant guild, channel, role, schedule, member, and emoji types.
-
 ## See also
 
 - [Messages](./messages.md) — message-side support types (embeds, ark, keyboards).

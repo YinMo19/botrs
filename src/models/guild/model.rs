@@ -1,4 +1,4 @@
-use crate::models::{HasId, HasName, Snowflake, Timestamp, channel::Channel};
+use crate::models::{Snowflake, Timestamp, channel::Channel};
 use serde::{Deserialize, Serialize};
 
 /// Represents a guild (server) in the QQ Guild system.
@@ -44,16 +44,4 @@ pub struct Guild {
     /// Operator user ID
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub op_user_id: Snowflake,
-}
-
-impl HasId for Guild {
-    fn id(&self) -> Option<&Snowflake> {
-        (!self.id.is_empty()).then_some(&self.id)
-    }
-}
-
-impl HasName for Guild {
-    fn name(&self) -> &str {
-        &self.name
-    }
 }

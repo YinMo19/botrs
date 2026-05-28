@@ -1,5 +1,4 @@
 use super::*;
-use crate::models::{HasId, HasName};
 
 #[test]
 fn test_guild_creation() {
@@ -23,8 +22,8 @@ fn test_guild_with_data() {
         ..Default::default()
     };
 
-    assert_eq!(guild.id(), Some(&"123456789".to_string()));
-    assert_eq!(guild.name(), "Test Guild");
+    assert_eq!(guild.id, "123456789");
+    assert_eq!(guild.name, "Test Guild");
     assert!(guild.is_owner);
     assert_eq!(guild.member_count, 100);
     assert_eq!(guild.max_members, 500);
@@ -135,8 +134,8 @@ fn test_role_with_data() {
         member_limit: 10,
     };
 
-    assert_eq!(role.id(), Some(&"role123".to_string()));
-    assert_eq!(role.name(), "Admin");
+    assert_eq!(role.id, "role123");
+    assert_eq!(role.name, "Admin");
     assert_eq!(role.color, 0xFF0000);
     assert_eq!(role.hoist, 1);
     assert_eq!(role.member_count, 5);

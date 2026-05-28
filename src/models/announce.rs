@@ -3,7 +3,7 @@
 //! This module contains structures for creating and managing guild announcements,
 //! including both message-type and recommended channel announcements.
 
-use crate::models::{HasId, Snowflake};
+use crate::models::Snowflake;
 use serde::{Deserialize, Serialize};
 
 /// Represents a recommended channel for guild announcements.
@@ -15,12 +15,6 @@ pub struct RecommendChannel {
     /// Description or introduction for the recommended channel
     #[serde(default)]
     pub introduce: String,
-}
-
-impl HasId for RecommendChannel {
-    fn id(&self) -> Option<&Snowflake> {
-        Some(&self.channel_id)
-    }
 }
 
 /// Types of announcements that can be created.
@@ -81,12 +75,6 @@ pub struct GuildAnnouncesToCreate {
     pub recommend_channels: Vec<RecommendChannel>,
 }
 
-impl HasId for Announce {
-    fn id(&self) -> Option<&Snowflake> {
-        Some(&self.guild_id)
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -112,7 +100,6 @@ mod tests {
         };
         assert_eq!(channel.channel_id, "123456");
         assert_eq!(channel.introduce, "Test channel");
-        assert_eq!(channel.id(), Some(&"123456".to_string()));
     }
 
     #[test]

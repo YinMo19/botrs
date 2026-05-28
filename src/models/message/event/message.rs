@@ -1,5 +1,5 @@
 use super::{MessageAttachment, MessageMember, MessageReference, MessageScene, MessageUser};
-use crate::models::{HasId, Snowflake, Timestamp};
+use crate::models::{Snowflake, Timestamp};
 use serde::{Deserialize, Serialize};
 
 use crate::models::message::{Ark, Embed, MessageParams};
@@ -79,11 +79,5 @@ impl Message {
                 "Missing channel_id or message_id for reply".to_string(),
             ))
         }
-    }
-}
-
-impl HasId for Message {
-    fn id(&self) -> Option<&Snowflake> {
-        self.id.as_ref()
     }
 }

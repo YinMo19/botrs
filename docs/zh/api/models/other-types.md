@@ -114,10 +114,6 @@ pub struct Session           { pub id: String, pub url: String, pub token: Token
 pub struct SessionStartLimit { pub total: u32, pub remaining: u32, pub reset_after: u64, pub max_concurrency: u32 }
 ```
 
-## Trait
-
-`HasId` 定义 `fn id(&self) -> Option<&Snowflake>`，所有持有 ID 的 DTO 都实现了它；`HasName` 是与之并列的可显示名称 trait。两者在频道、子频道、角色、日程、成员、表情等类型上有完整实现。
-
 ## 参见
 
 - [消息](./messages.md) —— 消息侧的辅助类型（embed、ark、keyboard）。

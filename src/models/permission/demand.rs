@@ -1,5 +1,5 @@
 use super::APIPermissionDemandIdentify;
-use crate::models::{HasId, Snowflake};
+use crate::models::Snowflake;
 use serde::{Deserialize, Serialize};
 
 /// Represents a permission demand request.
@@ -20,10 +20,4 @@ pub struct APIPermissionDemand {
     /// Description explaining why the permission is needed
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub desc: String,
-}
-
-impl HasId for APIPermissionDemand {
-    fn id(&self) -> Option<&Snowflake> {
-        Some(&self.guild_id)
-    }
 }

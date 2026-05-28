@@ -1,6 +1,6 @@
 //! Robot (bot) related data models for the QQ Guild Bot API.
 
-use crate::models::{HasId, HasName, Snowflake};
+use crate::models::Snowflake;
 use serde::{Deserialize, Serialize};
 
 /// Represents the bot/robot information.
@@ -30,18 +30,6 @@ pub struct Robot {
 /// Helper function for default bot value
 fn default_true() -> bool {
     true
-}
-
-impl HasId for Robot {
-    fn id(&self) -> Option<&Snowflake> {
-        Some(&self.id)
-    }
-}
-
-impl HasName for Robot {
-    fn name(&self) -> &str {
-        &self.username
-    }
 }
 
 /// Represents the robot's online status.

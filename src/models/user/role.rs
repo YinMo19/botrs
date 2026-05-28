@@ -1,4 +1,4 @@
-use crate::models::{HasId, Snowflake};
+use crate::models::Snowflake;
 use serde::{Deserialize, Serialize};
 
 /// Represents a role in a guild.
@@ -23,16 +23,4 @@ pub struct Role {
     /// Whether this role is mentionable
     #[serde(default)]
     pub mentionable: bool,
-}
-
-impl HasId for Role {
-    fn id(&self) -> Option<&Snowflake> {
-        Some(&self.id)
-    }
-}
-
-impl crate::models::HasName for Role {
-    fn name(&self) -> &str {
-        &self.name
-    }
 }

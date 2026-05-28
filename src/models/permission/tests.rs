@@ -1,5 +1,4 @@
 use super::*;
-use crate::models::HasId;
 
 #[test]
 fn test_api_permission() {
@@ -130,7 +129,7 @@ fn test_api_permission_demand_with_title() {
     };
 
     assert_eq!(demand.title, "Message Posting Permission");
-    assert_eq!(demand.id(), Some(&"guild123".to_string()));
+    assert_eq!(demand.guild_id, "guild123");
 }
 
 #[test]

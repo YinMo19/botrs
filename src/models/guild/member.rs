@@ -1,4 +1,4 @@
-use crate::models::{HasId, Snowflake, Timestamp, channel::Channel};
+use crate::models::{Snowflake, Timestamp, channel::Channel};
 use serde::{Deserialize, Serialize};
 
 /// Response returned by the guild role members endpoint.
@@ -77,10 +77,4 @@ pub struct Member {
     /// Operator user ID
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub op_user_id: Snowflake,
-}
-
-impl HasId for Member {
-    fn id(&self) -> Option<&Snowflake> {
-        self.user.as_ref().map(|user| &user.id)
-    }
 }

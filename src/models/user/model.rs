@@ -1,5 +1,5 @@
+use crate::models::Snowflake;
 use crate::models::api::BotInfo;
-use crate::models::{HasId, Snowflake};
 use serde::{Deserialize, Serialize};
 
 /// Represents a user in the QQ Guild system.
@@ -23,12 +23,6 @@ pub struct User {
     /// The user's union user account
     #[serde(default)]
     pub union_user_account: String,
-}
-
-impl HasId for User {
-    fn id(&self) -> Option<&Snowflake> {
-        Some(&self.id)
-    }
 }
 
 impl From<BotInfo> for User {

@@ -2,7 +2,7 @@
 //!
 //! This module contains structures for handling emojis in reactions and messages.
 
-use crate::models::{HasId, Snowflake};
+use crate::models::Snowflake;
 use serde::{Deserialize, Serialize};
 
 /// Types of emojis supported by the QQ Guild API.
@@ -37,12 +37,6 @@ pub struct Emoji {
     /// URL to the emoji image (for custom emojis)
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub url: Option<String>,
-}
-
-impl HasId for Emoji {
-    fn id(&self) -> Option<&Snowflake> {
-        Some(&self.id)
-    }
 }
 
 #[cfg(test)]
@@ -94,13 +88,13 @@ mod tests {
     }
 
     #[test]
-    fn test_emoji_has_id() {
+    fn test_emoji_id() {
         let emoji = Emoji {
             id: "test_id".to_string(),
             emoji_type: EmojiType::System,
             name: None,
             url: None,
         };
-        assert_eq!(emoji.id(), Some(&"test_id".to_string()));
+        assert_eq!(emoji.id, "test_id");
     }
 }

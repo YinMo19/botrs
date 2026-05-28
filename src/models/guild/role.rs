@@ -1,5 +1,5 @@
+use crate::models::Snowflake;
 use crate::models::serde_helpers::is_zero_u32;
-use crate::models::{HasId, HasName, Snowflake};
 use serde::{Deserialize, Serialize};
 
 /// Guild roles response wrapper.
@@ -106,16 +106,4 @@ pub struct UpdateResult {
     pub guild_id: Snowflake,
     #[serde(default)]
     pub role: Option<GuildRole>,
-}
-
-impl HasId for GuildRole {
-    fn id(&self) -> Option<&Snowflake> {
-        (!self.id.is_empty()).then_some(&self.id)
-    }
-}
-
-impl HasName for GuildRole {
-    fn name(&self) -> &str {
-        &self.name
-    }
 }

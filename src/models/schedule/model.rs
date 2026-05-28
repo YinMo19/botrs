@@ -1,5 +1,5 @@
 use super::RemindType;
-use crate::models::{HasId, HasName, Snowflake, UserMember};
+use crate::models::{Snowflake, UserMember};
 use serde::{Deserialize, Serialize};
 
 /// Represents a schedule event in a channel.
@@ -50,17 +50,5 @@ impl Schedule {
             remind_type: remind_type.to_wire_string(),
             creator: None,
         }
-    }
-}
-
-impl HasId for Schedule {
-    fn id(&self) -> Option<&Snowflake> {
-        (!self.id.is_empty()).then_some(&self.id)
-    }
-}
-
-impl HasName for Schedule {
-    fn name(&self) -> &str {
-        &self.name
     }
 }

@@ -101,23 +101,6 @@ pub trait Pager {
     fn query_params(&self) -> HashMap<String, String>;
 }
 
-/// Common trait for objects that have a snowflake ID.
-pub trait HasId {
-    /// Returns the object's ID, or None if not set.
-    fn id(&self) -> Option<&Snowflake>;
-
-    /// Returns the object's ID as a string, or empty string if not set.
-    fn id_string(&self) -> String {
-        self.id().cloned().unwrap_or_default()
-    }
-}
-
-/// Common trait for objects that have a name.
-pub trait HasName {
-    /// Returns the object's name.
-    fn name(&self) -> &str;
-}
-
 /// Represents the type of a message.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(from = "u8", into = "u8")]

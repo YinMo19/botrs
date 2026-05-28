@@ -1,5 +1,5 @@
 use super::User;
-use crate::models::{HasId, Snowflake, Timestamp};
+use crate::models::{Snowflake, Timestamp};
 use serde::{Deserialize, Serialize};
 
 /// Represents a guild member.
@@ -20,12 +20,6 @@ pub struct Member {
     /// Whether the user is muted in voice channels
     #[serde(default)]
     pub mute: bool,
-}
-
-impl HasId for Member {
-    fn id(&self) -> Option<&Snowflake> {
-        Some(&self.user.id)
-    }
 }
 
 impl std::ops::Deref for Member {

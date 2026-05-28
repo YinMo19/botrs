@@ -1,6 +1,6 @@
 use super::{ChannelSubType, ChannelType, PrivateType, SpeakPermission};
+use crate::models::Snowflake;
 use crate::models::serde_helpers::is_default;
-use crate::models::{HasId, HasName, Snowflake};
 use serde::{Deserialize, Serialize};
 
 /// Represents a channel in a guild.
@@ -48,16 +48,4 @@ pub struct Channel {
     /// The operator user ID
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub op_user_id: Snowflake,
-}
-
-impl HasId for Channel {
-    fn id(&self) -> Option<&Snowflake> {
-        (!self.id.is_empty()).then_some(&self.id)
-    }
-}
-
-impl HasName for Channel {
-    fn name(&self) -> &str {
-        &self.name
-    }
 }
