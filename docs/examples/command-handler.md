@@ -1,6 +1,6 @@
 # Command Handler
 
-BotRS does not ship a command framework. The reference pattern is in [`examples/demo_at_reply_command.rs`](https://github.com/YinMo19/botrs/blob/main/examples/demo_at_reply_command.rs): a small `CommandRegistry` mapping `Vec<&str>` aliases to a `fn(&str) -> Option<String>`, dispatched from `EventHandler::message_create`.
+BotRS does not ship a command framework. The reference pattern is in [`examples/guild/command.rs`](https://github.com/YinMo19/botrs/blob/main/examples/guild/command.rs): a small `CommandRegistry` mapping aliases to a `fn(&str) -> Option<String>`, dispatched from `EventHandler::message_create`.
 
 ## The pattern
 
@@ -25,10 +25,10 @@ impl CommandRegistry {
 }
 ```
 
-The demo registers two commands (`你好` / `hello` and `晚安`) and demonstrates two ways to send the response: the convenience `message.reply(&ctx, &response)` and the explicit `MessageParams { content: Some(response), msg_id: message.id.clone(), ..Default::default() }` followed by `ctx.send_message(...)`. Use whichever fits — they hit the same endpoint.
+The example registers two commands (`你好` / `hello` and `晚安`) and demonstrates two ways to send the response: the convenience `message.reply(&ctx, &response)` and the explicit `MessageParams { content: Some(response), msg_id: message.id.clone(), ..Default::default() }` followed by `ctx.send_message(...)`. Use whichever fits; they hit the same endpoint.
 
 ## See also
 
 - Guide: [`docs/guide/messages.md`](../guide/messages.md)
 - Related: [Interactive Messages](./interactive-messages.md) for keyboard-driven UI
-- Demo: [`examples/demo_at_reply_command.rs`](https://github.com/YinMo19/botrs/blob/main/examples/demo_at_reply_command.rs)
+- Example: [`examples/guild/command.rs`](https://github.com/YinMo19/botrs/blob/main/examples/guild/command.rs)

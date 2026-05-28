@@ -1,32 +1,33 @@
 # Calling Other QQ Open APIs
 
-These demos show how to use `BotApi` for resources beyond plain message posting. Each one is a self-contained event handler that triggers the API call from a chat command.
+These examples show how to use `BotApi` for resources beyond plain message posting. Each one is a self-contained event handler that triggers the API call from a chat command.
 
-| Demo                                                                                                                  | API surface                                                                                                                          |
+| Example                                                                                                               | API surface                                                                                                                          |
 |-----------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------|
-| [`demo_api_permission.rs`](https://github.com/YinMo19/botrs/blob/main/examples/demo_api_permission.rs)                | `BotApi::get_api_permissions`, `BotApi::post_permission_demand`, `APIPermissionDemandIdentify`                                        |
-| [`demo_announce.rs`](https://github.com/YinMo19/botrs/blob/main/examples/demo_announce.rs)                            | `BotApi::create_announce`, `BotApi::delete_announce`, `BotApi::create_recommend_announce`, `RecommendChannel`, `AnnouncesType`       |
-| [`demo_schedule.rs`](https://github.com/YinMo19/botrs/blob/main/examples/demo_schedule.rs)                            | `BotApi::create_schedule`, `get_schedule`, `update_schedule`, `delete_schedule`, `RemindType`                                        |
-| [`demo_pins_message.rs`](https://github.com/YinMo19/botrs/blob/main/examples/demo_pins_message.rs)                    | `BotApi::get_pins`, `BotApi::put_pin`, `BotApi::delete_pin`                                                                          |
-| [`demo_get_reaction_users.rs`](https://github.com/YinMo19/botrs/blob/main/examples/demo_get_reaction_users.rs)        | `BotApi::get_reaction_users`, `EmojiType::System`, paginates with the `cookie` field                                                  |
-| [`demo_recall.rs`](https://github.com/YinMo19/botrs/blob/main/examples/demo_recall.rs)                                | `Context::recall_message` (also available as `BotApi::recall_message`)                                                               |
+| [`guild/api_permission.rs`](https://github.com/YinMo19/botrs/blob/main/examples/guild/api_permission.rs)              | `BotApi::get_api_permissions`, `BotApi::post_permission_demand`, `APIPermissionDemandIdentify`                                        |
+| [`guild/announce.rs`](https://github.com/YinMo19/botrs/blob/main/examples/guild/announce.rs)                          | `BotApi::create_announce`, `BotApi::delete_announce`, `BotApi::create_recommend_announce`, `RecommendChannel`, `AnnouncesType`       |
+| [`guild/schedule.rs`](https://github.com/YinMo19/botrs/blob/main/examples/guild/schedule.rs)                          | `BotApi::create_schedule`, `get_schedule`, `update_schedule`, `delete_schedule`, `RemindType`                                        |
+| [`guild/pins_message.rs`](https://github.com/YinMo19/botrs/blob/main/examples/guild/pins_message.rs)                  | `BotApi::get_pins`, `BotApi::put_pin`, `BotApi::delete_pin`                                                                          |
+| [`guild/reaction_users.rs`](https://github.com/YinMo19/botrs/blob/main/examples/guild/reaction_users.rs)              | `BotApi::get_reaction_users`, `EmojiType::System`, paginates with the `cookie` field                                                  |
+| [`guild/recall.rs`](https://github.com/YinMo19/botrs/blob/main/examples/guild/recall.rs)                              | `Context::recall_message` (also available as `BotApi::recall_message`)                                                               |
+| [`api/message_params.rs`](https://github.com/YinMo19/botrs/blob/main/examples/api/message_params.rs)                  | `MessageParams`, `GroupMessageParams`, `C2CMessageParams`, `DirectMessageParams`                                                     |
 
 ## Pattern
 
 Every REST call is available directly on `ctx` because `Context` dereferences to `BotApi`; the token is stored inside `BotApi`. Errors come back as `botrs::BotError`. Handle them locally — the framework does not wrap calls in retries.
 
 ```rust
-// demo_recall.rs — send, then immediately delete
+// examples/guild/recall.rs — send, then immediately delete
 let resp = message.reply(&ctx, "this will vanish").await?;
 if let Some(message_id) = resp.id {
     ctx.recall_message(channel_id, &message_id, /* hidetip */ true).await?;
 }
 ```
 
-For paginated APIs like `get_reaction_users`, drive the loop yourself with the returned `cookie` and `is_end` fields, exactly as the demo does.
+For paginated APIs like `get_reaction_users`, drive the loop yourself with the returned `cookie` and `is_end` fields, exactly as the example does.
 
 ## See also
 
 - Guide: [`docs/guide/api-client.md`](../guide/api-client.md)
 - Source of truth for available methods: `src/api/mod.rs` and the files under `src/api/`
-- Demo paths listed above under `examples/`
+- Example paths listed above under `examples/`

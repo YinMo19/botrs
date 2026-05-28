@@ -1,10 +1,13 @@
 # Rich Messages
 
-Embeds, Markdown, and ARK templates are all sent through the same `MessageParams` struct — set the relevant optional field, leave the others `None`. Working demos:
+Embeds, Markdown, ARK templates, and keyboards use the message parameter struct for the destination you are sending to. Guild channel and direct messages use `MessageParams` / `DirectMessageParams`; group and C2C messages use `GroupMessageParams` / `C2CMessageParams` with a numeric `msg_type`.
 
-- Embed: [`demo_at_reply_embed.rs`](https://github.com/YinMo19/botrs/blob/main/examples/demo_at_reply_embed.rs)
-- Markdown (template + free content): [`demo_at_reply_markdown.rs`](https://github.com/YinMo19/botrs/blob/main/examples/demo_at_reply_markdown.rs)
-- ARK card: [`demo_at_reply_ark.rs`](https://github.com/YinMo19/botrs/blob/main/examples/demo_at_reply_ark.rs)
+Working examples:
+
+- Guild channel: [`reply_embed.rs`](https://github.com/YinMo19/botrs/blob/main/examples/guild/reply_embed.rs), [`reply_markdown.rs`](https://github.com/YinMo19/botrs/blob/main/examples/guild/reply_markdown.rs), [`reply_ark.rs`](https://github.com/YinMo19/botrs/blob/main/examples/guild/reply_ark.rs)
+- Group: [`reply_embed.rs`](https://github.com/YinMo19/botrs/blob/main/examples/group/reply_embed.rs), [`reply_markdown.rs`](https://github.com/YinMo19/botrs/blob/main/examples/group/reply_markdown.rs), [`reply_ark.rs`](https://github.com/YinMo19/botrs/blob/main/examples/group/reply_ark.rs)
+- C2C: [`reply_embed.rs`](https://github.com/YinMo19/botrs/blob/main/examples/c2c/reply_embed.rs), [`reply_markdown.rs`](https://github.com/YinMo19/botrs/blob/main/examples/c2c/reply_markdown.rs), [`reply_ark.rs`](https://github.com/YinMo19/botrs/blob/main/examples/c2c/reply_ark.rs)
+- Direct messages: [`reply_rich.rs`](https://github.com/YinMo19/botrs/blob/main/examples/direct/reply_rich.rs)
 
 ## Pattern
 
@@ -23,10 +26,10 @@ let params = MessageParams { embed: Some(embed), ..Default::default() };
 ctx.send_message(channel_id, params).await?;
 ```
 
-The same shape works for `markdown: Some(MarkdownPayload { ... })` and `ark: Some(Ark { template_id: Some(37), kv: Some(vec![ArkKv { ... }]) })`. Markdown supports both `custom_template_id` + `params` (template form) and a raw `content: Some("# title …".into())` (free form); both styles appear side-by-side in `demo_at_reply_markdown.rs`.
+The same shape works for `markdown: Some(MarkdownPayload { ... })` and `ark: Some(Ark { template_id: Some(37), kv: Some(vec![ArkKv { ... }]) })`. Markdown supports both `custom_template_id` + `params` (template form) and raw `content`. For group and C2C sends, set `msg_type` to `2` for Markdown, `3` for ARK, and `4` for Embed.
 
 ## See also
 
 - Guide: [`docs/guide/messages.md`](../guide/messages.md)
 - Combined Markdown + Keyboard: [Interactive Messages](./interactive-messages.md)
-- Demos: `demo_at_reply_embed.rs`, `demo_at_reply_markdown.rs`, `demo_at_reply_ark.rs`
+- Examples: `examples/guild`, `examples/group`, `examples/c2c`, and `examples/direct/reply_rich.rs`

@@ -1,6 +1,6 @@
 # Error Recovery
 
-There is no specific demo for error recovery in `examples/` — the framework does the recovery you actually need (gateway reconnect, session resume, heartbeat) automatically inside `Client::start`. What is left to your code is checking the `Result` of each `BotApi` call and deciding whether to log, ignore, or retry.
+There is no specific example for error recovery in `examples/`; the framework does the recovery you actually need (gateway reconnect, session resume, heartbeat) automatically inside `Client::start`. What is left to your code is checking the `Result` of each `BotApi` call and deciding whether to log, ignore, or retry.
 
 ## What the framework already handles
 
@@ -9,7 +9,7 @@ There is no specific demo for error recovery in `examples/` — the framework do
 - Heartbeat keepalive
 - Token validation on `Token::validate()`
 
-You implement `EventHandler::error(&self, error: BotError)` if you want to observe handler-level errors (it has a default impl that just logs). Every demo in `examples/` does exactly this: a one-line `warn!("…: {}", e)`.
+You implement `EventHandler::error(&self, error: BotError)` if you want to observe handler-level errors (it has a default impl that just logs). Every example in `examples/` does exactly this: a one-line `warn!("…: {}", e)`.
 
 ## Per-call
 

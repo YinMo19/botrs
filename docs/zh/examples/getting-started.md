@@ -1,6 +1,6 @@
 # 入门
 
-最小的端到端机器人在 [`examples/simple_bot.rs`](https://github.com/YinMo19/botrs/blob/main/examples/simple_bot.rs)。它创建 `Token`、构造 `Intents`、实现消息回调，然后启动 `Client`。看一遍即可——其他所有 demo 都遵循同样的骨架。
+最小的端到端机器人在 [`examples/basic/simple_bot.rs`](https://github.com/YinMo19/botrs/blob/main/examples/basic/simple_bot.rs)。它创建 `Token`、构造 `Intents`、实现消息回调，然后启动 `Client`。看一遍即可；`examples/guild`、`examples/group`、`examples/c2c`、`examples/direct` 下的场景示例都遵循同样的运行骨架。
 
 ## 一个机器人的结构
 
@@ -35,5 +35,5 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 ## 参见
 
 - 指南：[`docs/zh/guide/quick-start.md`](../guide/quick-start.md)、[`docs/zh/guide/intents.md`](../guide/intents.md)
-- 实际源码：[`examples/simple_bot.rs`](https://github.com/YinMo19/botrs/blob/main/examples/simple_bot.rs)
+- 实际源码：[`examples/basic/simple_bot.rs`](https://github.com/YinMo19/botrs/blob/main/examples/basic/simple_bot.rs)
 - 运行：`cargo run --example simple_bot --features examples -- $APP_ID $SECRET`

@@ -2,8 +2,8 @@
 
 Two distinct flows depending on the destination:
 
-- **Channel image by URL** — set `MessageParams::image` to a remote image URL.
-- **Group / C2C rich media** — upload a URL via `BotApi::post_group_file` / `BotApi::post_c2c_file`, then send the returned `Media` in a follow-up message with `msg_type: 7`. See [`demo_group_reply_file.rs`](https://github.com/YinMo19/botrs/blob/main/examples/demo_group_reply_file.rs) and [`demo_c2c_reply_file.rs`](https://github.com/YinMo19/botrs/blob/main/examples/demo_c2c_reply_file.rs).
+- **Channel image by URL** — set `MessageParams::image` to a remote image URL. See [`examples/guild/reply_image.rs`](https://github.com/YinMo19/botrs/blob/main/examples/guild/reply_image.rs).
+- **Group / C2C rich media** — upload a URL via `BotApi::post_group_file` / `BotApi::post_c2c_file`, then send the returned `Media` in a follow-up message with `msg_type: 7`. See [`examples/group/reply_file.rs`](https://github.com/YinMo19/botrs/blob/main/examples/group/reply_file.rs) and [`examples/c2c/reply_file.rs`](https://github.com/YinMo19/botrs/blob/main/examples/c2c/reply_file.rs).
 
 ## Channel Image
 
@@ -29,9 +29,9 @@ let params = botrs::models::message::GroupMessageParams {
 ctx.send_group_message(group_openid, params).await?;
 ```
 
-`post_c2c_file` + `send_c2c_message` follow the exact same pattern. `file_type` is `1` for image, see the demo file for other constants.
+`post_c2c_file` + `send_c2c_message` follow the exact same pattern. `file_type` is `1` for image; see the example source for other constants.
 
 ## See also
 
 - Guide: [`docs/guide/messages.md`](../guide/messages.md)
-- Demos: `examples/demo_group_reply_file.rs`, `examples/demo_c2c_reply_file.rs`
+- Examples: `examples/guild/reply_image.rs`, `examples/group/reply_file.rs`, `examples/c2c/reply_file.rs`

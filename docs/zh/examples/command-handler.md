@@ -1,6 +1,6 @@
 # 命令处理器
 
-BotRS 自身不带命令框架。参考实现在 [`examples/demo_at_reply_command.rs`](https://github.com/YinMo19/botrs/blob/main/examples/demo_at_reply_command.rs)：一个极小的 `CommandRegistry`，把 `Vec<&str>` 别名映射到 `fn(&str) -> Option<String>`，由 `EventHandler::message_create` 分发。
+BotRS 自身不带命令框架。参考实现在 [`examples/guild/command.rs`](https://github.com/YinMo19/botrs/blob/main/examples/guild/command.rs)：一个极小的 `CommandRegistry`，把别名映射到 `fn(&str) -> Option<String>`，由 `EventHandler::message_create` 分发。
 
 ## 套路
 
@@ -25,10 +25,10 @@ impl CommandRegistry {
 }
 ```
 
-Demo 注册了两个命令（`你好` / `hello` 与 `晚安`），并演示了两种回复写法：方便的 `message.reply(&ctx, &response)` 与显式的 `MessageParams { content: Some(response), msg_id: message.id.clone(), ..Default::default() }` + `ctx.send_message(...)`。两种写法落到同一个接口，按需选择。
+示例注册了两个命令（`你好` / `hello` 与 `晚安`），并演示了两种回复写法：方便的 `message.reply(&ctx, &response)` 与显式的 `MessageParams { content: Some(response), msg_id: message.id.clone(), ..Default::default() }` + `ctx.send_message(...)`。两种写法落到同一个接口，按需选择。
 
 ## 参见
 
 - 指南：[`docs/zh/guide/messages.md`](../guide/messages.md)
 - 相关：[交互式消息](./interactive-messages.md)（按钮驱动的 UI）
-- Demo：[`examples/demo_at_reply_command.rs`](https://github.com/YinMo19/botrs/blob/main/examples/demo_at_reply_command.rs)
+- 示例：[`examples/guild/command.rs`](https://github.com/YinMo19/botrs/blob/main/examples/guild/command.rs)

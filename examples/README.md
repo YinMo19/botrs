@@ -1,263 +1,168 @@
 # BotRS Examples
 
-This directory contains complete examples for developing QQ Guild bots using the BotRS framework.
+This directory contains runnable examples for the BotRS public API surface. The examples are grouped by message scene so it is clear which event, intent, parameter type, and send API belong together.
 
-## Directory Structure
+## Layout
 
-```
+```text
 examples/
-├── README.md                    # This file
-├── config.example.toml          # Example configuration file
-├── common/                      # Common utilities for examples
-│   ├── mod.rs                   # Common module exports
-│   └── config.rs                # Configuration loading utilities
-├── simple_bot.rs                # Basic bot with simple message handling
-├── demo_at_reply.rs             # Bot @ reply example
-├── demo_at_reply_command.rs     # Bot @ reply with command system
-├── demo_at_reply_embed.rs       # Bot @ reply with embed messages
-├── demo_at_reply_markdown.rs    # Bot @ reply with markdown messages
-├── demo_at_reply_keyboard.rs    # Bot @ reply with keyboard messages
-├── demo_at_reply_reference.rs   # Bot @ reply with message references
-├── demo_group_reply_text.rs     # Bot group message reply example
-├── demo_group_reply_ark.rs      # Bot group ARK message reply example
-├── demo_c2c_reply_text.rs       # Bot C2C (private) message reply example
-├── demo_dms_reply.rs            # Bot direct message reply example
-└── demo_recall.rs               # Bot message recall (delete) example
+├── api/        # Cross-scene message parameter API examples
+├── basic/      # Minimal bot skeleton
+├── c2c/        # C2C single-user messages and management events
+├── common/     # Shared config and logging helpers
+├── direct/     # Guild direct messages
+├── events/     # Non-message gateway events
+├── group/      # QQ group messages and management events
+├── guild/      # Guild channel messages and channel APIs
+└── resource/   # Local notes for media examples
 ```
 
-## Setup
+All examples use `examples/common` except `basic/simple_bot.rs`, which stays standalone as the smallest skeleton.
 
-### 1. Install Dependencies
+## Configuration
 
-Make sure you have Rust installed, then build the project:
+Examples load credentials in this order:
+
+1. `examples/config.toml` if present.
+2. `config.toml` from the repository root.
+3. `QQ_BOT_APP_ID`, `QQ_BOT_SECRET`, and optional `QQ_BOT_SANDBOX` environment variables.
+4. Command-line arguments: `cargo run --example <name> --features examples -- <app_id> <secret>`.
+
+Create a local config from the template:
 
 ```bash
-cargo build --features examples
+cp examples/config.example.toml examples/config.toml
 ```
 
-### 2. Configuration
-
-Copy the example configuration file and fill in your bot credentials:
-
-```bash
-cp config.example.toml config.toml
-```
-
-Edit `config.toml` and provide your bot's App ID and Secret:
+Then fill in:
 
 ```toml
 [bot]
 app_id = "your_bot_app_id"
 secret = "your_bot_secret"
+sandbox = false
 ```
 
-### 3. Alternative Configuration Methods
+## Running
 
-You can also configure the bot using:
+Build all examples:
 
-#### Environment Variables:
 ```bash
-export QQ_BOT_APP_ID="your_bot_app_id"
-export QQ_BOT_SECRET="your_bot_secret"
+cargo check --examples --features examples
 ```
 
-#### Command Line Arguments:
+Run one example:
+
 ```bash
-cargo run --example demo_at_reply --features examples your_bot_app_id your_bot_secret
+cargo run --example guild_reply_text --features examples
 ```
 
-## Running Examples
+Pass credentials directly:
 
-### Basic AT Reply Bot
 ```bash
-cargo run --example demo_at_reply --features examples
+cargo run --example guild_reply_text --features examples -- your_bot_app_id your_bot_secret
 ```
 
-### Command-based AT Reply Bot
+Enable detailed logs:
+
 ```bash
-cargo run --example demo_at_reply_command --features examples
+RUST_LOG=debug cargo run --example guild_reply_text --features examples
 ```
 
-### Embed Message Bot
-```bash
-cargo run --example demo_at_reply_embed --features examples
-```
+## Guild Channel Examples
 
-### Markdown Message Bot
-```bash
-cargo run --example demo_at_reply_markdown --features examples
-```
+| Example | Source | Shows |
+|---|---|---|
+| `simple_bot` | `basic/simple_bot.rs` | Minimal `Client`, `Token`, `Intents`, and handler wiring |
+| `guild_reply_text` | `guild/reply_text.rs` | Replying to guild channel @ messages with `Message::reply` |
+| `guild_reply_reference` | `guild/reply_reference.rs` | Quoted channel replies with `MessageParams::message_reference` |
+| `guild_command` | `guild/command.rs` | Lightweight text command dispatch in `message_create` |
+| `guild_reply_embed` | `guild/reply_embed.rs` | `Embed` payloads |
+| `guild_reply_markdown` | `guild/reply_markdown.rs` | Markdown content and template payloads |
+| `guild_reply_keyboard` | `guild/reply_keyboard.rs` | Markdown plus keyboard templates or inline keyboard content |
+| `guild_reply_ark` | `guild/reply_ark.rs` | ARK template payloads |
+| `guild_reply_image` | `guild/reply_image.rs` | Channel image URL messages |
+| `guild_recall` | `guild/recall.rs` | Sending and recalling a channel message |
+| `guild_pins_message` | `guild/pins_message.rs` | Pin list, add pin, and delete pin |
+| `guild_announce` | `guild/announce.rs` | Channel and guild announcements |
+| `guild_schedule` | `guild/schedule.rs` | Schedule create, get, update, and delete |
+| `guild_api_permission` | `guild/api_permission.rs` | API permission list and permission demand creation |
+| `guild_reaction_users` | `guild/reaction_users.rs` | Reaction user pagination |
 
-### Keyboard Message Bot
-```bash
-cargo run --example demo_at_reply_keyboard --features examples
-```
+Guild channel message examples generally use `Intents::new().with_public_guild_messages()` and send through `Message::reply`, `Context::send_message`, or other `BotApi` methods exposed through `Context`.
 
-### Group Message Bot
-```bash
-cargo run --example demo_group_reply_text --features examples
-```
+## Group Examples
 
-### Group ARK Message Bot
-```bash
-cargo run --example demo_group_reply_ark --features examples
-```
+| Example | Source | Shows |
+|---|---|---|
+| `group_reply_text` | `group/reply_text.rs` | Plain text group replies with `GroupMessageParams` |
+| `group_reply_file` | `group/reply_file.rs` | `post_group_file` followed by `msg_type: 7` media sending |
+| `group_reply_ark` | `group/reply_ark.rs` | Group ARK payloads with `msg_type: 3` |
+| `group_reply_markdown` | `group/reply_markdown.rs` | Group Markdown payloads with `msg_type: 2` |
+| `group_reply_embed` | `group/reply_embed.rs` | Group Embed payloads with `msg_type: 4` |
+| `group_reply_keyboard` | `group/reply_keyboard.rs` | Group Markdown plus keyboard template payloads |
+| `group_manage_event` | `group/manage_event.rs` | Robot add/remove and group active-message toggles |
 
-### C2C (Private) Message Bot
-```bash
-cargo run --example demo_c2c_reply_text --features examples
-```
+Group examples use `Intents::new().with_public_messages()`. Replies should preserve `msg_id` and `event_id` from the inbound event when those fields are present.
 
-### Message Recall Bot
-```bash
-cargo run --example demo_recall --features examples
-```
+## C2C Examples
 
-### Direct Message Bot
-```bash
-cargo run --example demo_dms_reply --features examples
-```
+| Example | Source | Shows |
+|---|---|---|
+| `c2c_reply_text` | `c2c/reply_text.rs` | Plain text C2C replies with `C2CMessageParams` |
+| `c2c_reply_file` | `c2c/reply_file.rs` | `post_c2c_file` followed by `msg_type: 7` media sending |
+| `c2c_reply_ark` | `c2c/reply_ark.rs` | C2C ARK payloads with `msg_type: 3` |
+| `c2c_reply_markdown` | `c2c/reply_markdown.rs` | C2C Markdown payloads with `msg_type: 2` |
+| `c2c_reply_embed` | `c2c/reply_embed.rs` | C2C Embed payloads with `msg_type: 4` |
+| `c2c_reply_keyboard` | `c2c/reply_keyboard.rs` | C2C Markdown plus keyboard template payloads |
+| `c2c_manage_event` | `c2c/manage_event.rs` | Friend add/remove and C2C active-message toggles |
 
-### Message Reference Bot
-```bash
-cargo run --example demo_at_reply_reference --features examples
-```
+C2C examples also use `with_public_messages()`. The target openid comes from `message.author.user_openid`.
 
-### Simple Bot (Original)
-```bash
-cargo run --example simple_bot --features examples
-```
+## Direct Message Examples
 
-## Example Descriptions
+| Example | Source | Shows |
+|---|---|---|
+| `direct_reply` | `direct/reply.rs` | Direct message replies and creating a direct-message session |
+| `direct_reply_rich` | `direct/reply_rich.rs` | Direct Markdown, keyboard, ARK, and Embed replies |
 
-### demo_at_reply.rs
-- **Python equivalent**: `demo_at_reply.py`
-- **Features**: Basic @ mention handling, async message processing, sleep command
-- **Intents**: `public_guild_messages`
+Direct-message receive handlers use `Intents::new().with_direct_message()`. If an example creates a DM session from a guild channel command, it also enables `with_public_guild_messages()`.
 
-### demo_at_reply_command.rs
-- **Python equivalent**: `demo_at_reply_command.py`
-- **Features**: Command system with aliases, parameter parsing, dual sending methods
-- **Commands**: `你好/hello`, `晚安`
-- **Intents**: `public_guild_messages`
+## Event Examples
 
-### demo_at_reply_embed.rs
-- **Python equivalent**: `demo_at_reply_embed.py`
-- **Features**: Rich embed messages with fields, colors, and formatting
-- **Intents**: `public_guild_messages`
+| Example | Source | Shows |
+|---|---|---|
+| `event_guild_member` | `events/guild_member.rs` | Guild member add, update, and remove |
+| `event_open_forum` | `events/open_forum.rs` | Open forum thread, post, and reply events |
+| `event_audio_or_live_channel_member` | `events/audio_or_live_channel_member.rs` | Audio/live channel member enter and exit |
 
-### demo_at_reply_markdown.rs
-- **Python equivalent**: `demo_at_reply_markdown.py`
-- **Features**: Markdown messages with templates and custom content
-- **Methods**: Template-based and content-based markdown
-- **Intents**: `public_guild_messages`
+These examples focus on gateway event parsing and the corresponding `EventHandler` callback names.
 
-### demo_at_reply_keyboard.rs
-- **Python equivalent**: `demo_at_reply_keyboard.py`
-- **Features**: Interactive keyboard messages with buttons and actions
-- **Methods**: Template keyboards and custom-defined keyboards
-- **Intents**: `public_guild_messages`
+## API Example
 
-### demo_group_reply_text.rs
-- **Python equivalent**: `demo_group_reply_text.py`
-- **Features**: Group message handling and replies
-- **Intents**: `public_messages`
+| Example | Source | Shows |
+|---|---|---|
+| `api_message_params` | `api/message_params.rs` | `MessageParams`, `GroupMessageParams`, `C2CMessageParams`, and `DirectMessageParams` in one process |
 
-### demo_group_reply_ark.rs
-- **Python equivalent**: `demo_group_reply_ark.py`
-- **Features**: Group message handling and ARK replies
-- **Intents**: `public_messages`
+Use `/params` commands in the relevant scene to trigger the API example.
 
-### demo_c2c_reply_text.rs
-- **Python equivalent**: `demo_c2c_reply_text.py`
-- **Features**: C2C (private/friend) message handling and replies
-- **Intents**: `public_messages`
+## Message Type Notes
 
-### demo_recall.rs
-- **Python equivalent**: `demo_recall.py`
-- **Features**: Message sending and immediate recall (deletion)
-- **Methods**: Reply and recall with hide tip option
-- **Intents**: `public_guild_messages`
+Open-platform group and C2C messages use numeric `msg_type` values:
 
-### demo_dms_reply.rs
-- **Python equivalent**: `demo_dms_reply.py`
-- **Features**: Direct message handling, DM session creation, private message replies
-- **Commands**: `/私信` to trigger DM session creation
-- **Intents**: `direct_message`, `public_guild_messages`
+| `msg_type` | Meaning |
+|---|---|
+| `0` | Plain text |
+| `2` | Markdown |
+| `3` | ARK |
+| `4` | Embed |
+| `7` | Rich media returned by file upload |
 
-### demo_at_reply_reference.rs
-- **Python equivalent**: `demo_at_reply_reference.py`
-- **Features**: Message references (replies to specific messages), emoji support
-- **Methods**: Reference creation and reply with message context
-- **Intents**: `public_guild_messages`
+Guild channel and direct-message params use `MessageCreateType` for explicit rich types when needed. Plain text can usually omit the type and set only `content`.
 
-## Intent Types
+## Troubleshooting
 
-Different examples use different intent types to receive specific event types:
-
-- **`public_guild_messages`**: For receiving @ mentions in guild channels
-- **`public_messages`**: For receiving group and C2C messages
-- **`direct_message`**: For receiving direct messages (DMs)
-- **`guilds`**: For receiving guild-related events
-
-## Message Types
-
-The examples demonstrate various message types:
-
-- **Text messages**: Plain text content
-- **Embed messages**: Rich embeds with titles, descriptions, fields, and colors
-- **Markdown messages**: Formatted messages using markdown syntax
-- **Keyboard messages**: Interactive messages with clickable buttons
-- **ARK messages**: Template-based rich messages
-- **Media messages**: Messages with attachments (files, images, etc.)
-
-## Error Handling
-
-All examples include proper error handling:
-- Token validation
-- API call error handling
-- Event processing error handling
-- Graceful degradation when optional data is missing
-
-## Logging
-
-Examples use the `tracing` crate for structured logging:
-- Debug level for BotRS internal operations
-- Info level for bot operations and successful actions
-- Warn level for recoverable errors
-- Error level for serious issues
-
-You can control logging with the `RUST_LOG` environment variable:
-```bash
-RUST_LOG=debug cargo run --example demo_at_reply --features examples
-```
-
-## Development Tips
-
-1. **Testing**: Use the sandbox environment by setting `sandbox = true` in your config
-2. **Debugging**: Enable debug logging to see detailed API interactions
-3. **Hot Reloading**: The bot will automatically reconnect on network issues
-4. **Rate Limiting**: The framework handles rate limiting automatically
-
-## Common Issues
-
-### Invalid Token
-- Ensure your App ID and Secret are correct
-- Check that your bot has the necessary permissions
-- Verify you're using the correct environment (production vs sandbox)
-
-### No Events Received
-- Check your intent configuration
-- Ensure your bot is added to the target guild/group
-- Verify network connectivity
-
-### Message Send Failures
-- Check bot permissions in the target channel/group
-- Ensure the message content meets platform requirements
-- Verify the target ID (channel_id, group_openid, user_openid) is correct
-
-## Further Reading
-
-- [BotRS Documentation](https://docs.rs/botrs)
-- [QQ Guild Bot API Documentation](https://bot.q.qq.com/wiki/)
-- [Rust Async Programming](https://rust-lang.github.io/async-book/)
+- Invalid token: check `app_id`, `secret`, and sandbox setting.
+- No events received: check that the example enabled the intent matching the scene you are testing.
+- Message send failure: verify bot permissions, target IDs, message type, and platform-side template IDs such as keyboard id `62`.
+- File examples: replace the placeholder `file_url` with a reachable URL before running.

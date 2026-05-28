@@ -1,6 +1,6 @@
 # Echo Bot
 
-The plain "@-me, I reply" pattern is implemented in [`examples/demo_at_reply.rs`](https://github.com/YinMo19/botrs/blob/main/examples/demo_at_reply.rs). It registers `Intents::new().with_public_guild_messages()`, implements `EventHandler::message_create`, and uses `Message::reply` to send a string back. That is the entire surface of an echo bot in BotRS.
+The plain "@-me, I reply" pattern is implemented in [`examples/guild/reply_text.rs`](https://github.com/YinMo19/botrs/blob/main/examples/guild/reply_text.rs). It registers `Intents::new().with_public_guild_messages()`, implements `EventHandler::message_create`, and uses `Message::reply` to send a string back. That is the entire surface of a guild-channel echo bot in BotRS.
 
 ## The one call you need
 
@@ -16,10 +16,10 @@ async fn message_create(&self, ctx: Context, message: Message) {
 }
 ```
 
-If you want the reply quoted as a reference instead of a plain mention, use `MessageParams` with `message_reference` — see [Text Messages](./text-messages.md) and [`demo_at_reply_reference.rs`](https://github.com/YinMo19/botrs/blob/main/examples/demo_at_reply_reference.rs).
+If you want the reply quoted as a reference instead of a plain mention, use `MessageParams` with `message_reference`; see [Text Messages](./text-messages.md) and [`examples/guild/reply_reference.rs`](https://github.com/YinMo19/botrs/blob/main/examples/guild/reply_reference.rs).
 
 ## See also
 
 - Guide: [`docs/guide/messages.md`](../guide/messages.md)
-- Demo: [`examples/demo_at_reply.rs`](https://github.com/YinMo19/botrs/blob/main/examples/demo_at_reply.rs)
-- Run with `cargo run --example demo_at_reply --features examples`
+- Example: [`examples/guild/reply_text.rs`](https://github.com/YinMo19/botrs/blob/main/examples/guild/reply_text.rs)
+- Run with `cargo run --example guild_reply_text --features examples`

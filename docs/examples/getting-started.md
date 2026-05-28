@@ -1,6 +1,6 @@
 # Getting Started
 
-The smallest end-to-end bot lives in [`examples/simple_bot.rs`](https://github.com/YinMo19/botrs/blob/main/examples/simple_bot.rs). It wires up a `Token`, builds an `Intents` set, implements message callbacks, and starts the `Client`. Read it once — every other demo follows the same skeleton.
+The smallest end-to-end bot lives in [`examples/basic/simple_bot.rs`](https://github.com/YinMo19/botrs/blob/main/examples/basic/simple_bot.rs). It wires up a `Token`, builds an `Intents` set, implements message callbacks, and starts the `Client`. Read it once; the scene-specific examples in `examples/guild`, `examples/group`, `examples/c2c`, and `examples/direct` follow the same runtime shape.
 
 ## The shape of a bot
 
@@ -35,5 +35,5 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 ## See also
 
 - Guide: [`docs/guide/quick-start.md`](../guide/quick-start.md), [`docs/guide/intents.md`](../guide/intents.md)
-- Working source: [`examples/simple_bot.rs`](https://github.com/YinMo19/botrs/blob/main/examples/simple_bot.rs)
+- Working source: [`examples/basic/simple_bot.rs`](https://github.com/YinMo19/botrs/blob/main/examples/basic/simple_bot.rs)
 - Run with `cargo run --example simple_bot --features examples -- $APP_ID $SECRET`

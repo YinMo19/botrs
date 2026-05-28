@@ -1,6 +1,6 @@
 # 错误恢复
 
-`examples/` 下没有专门讲错误恢复的 demo——你真正需要的恢复逻辑（网关重连、会话恢复、心跳）由 `Client::start` 内部自动处理。剩下的只是检查每次 `BotApi` 调用的 `Result`，决定记日志、忽略，还是重试。
+`examples/` 下没有专门讲错误恢复的示例；你真正需要的恢复逻辑（网关重连、会话恢复、心跳）由 `Client::start` 内部自动处理。剩下的只是检查每次 `BotApi` 调用的 `Result`，决定记日志、忽略，还是重试。
 
 ## 框架已经做了什么
 
@@ -9,7 +9,7 @@
 - 心跳保活
 - `Token::validate()` 校验 token
 
-如果想观察 handler 级错误，实现 `EventHandler::error(&self, error: BotError)`（默认实现只打日志）。`examples/` 中的每个 demo 都是一行 `warn!("…: {}", e)`。
+如果想观察 handler 级错误，实现 `EventHandler::error(&self, error: BotError)`（默认实现只打日志）。`examples/` 中的每个示例都用一行 `warn!("…: {}", e)` 记录错误。
 
 ## 单次调用
 

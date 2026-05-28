@@ -1,10 +1,10 @@
 # Interactive Messages
 
-Inline keyboards (buttons under a Markdown card) live in [`demo_at_reply_keyboard.rs`](https://github.com/YinMo19/botrs/blob/main/examples/demo_at_reply_keyboard.rs). Lightweight slash-style command parsing on incoming text is in [`demo_at_reply_command.rs`](https://github.com/YinMo19/botrs/blob/main/examples/demo_at_reply_command.rs).
+Inline keyboards are sent together with Markdown. Guild channel keyboards live in [`examples/guild/reply_keyboard.rs`](https://github.com/YinMo19/botrs/blob/main/examples/guild/reply_keyboard.rs); group and C2C keyboard templates live in [`examples/group/reply_keyboard.rs`](https://github.com/YinMo19/botrs/blob/main/examples/group/reply_keyboard.rs) and [`examples/c2c/reply_keyboard.rs`](https://github.com/YinMo19/botrs/blob/main/examples/c2c/reply_keyboard.rs). Lightweight slash-style command parsing on incoming text is in [`examples/guild/command.rs`](https://github.com/YinMo19/botrs/blob/main/examples/guild/command.rs).
 
 ## Keyboards
 
-A keyboard is sent as part of a normal `MessageParams` alongside Markdown. You can either reference a server-side template by id, or define rows + buttons inline using `KeyboardContent`, `KeyboardRow`, `KeyboardButton`, `KeyboardButtonRenderData`, `KeyboardButtonAction`, `KeyboardButtonPermission`. Both flavours appear in the demo's `send_template_keyboard` and `send_self_defined_keyboard` helpers.
+A guild channel keyboard is sent as part of `MessageParams` alongside Markdown. You can either reference a server-side template by id, or define rows + buttons inline using `KeyboardContent`, `KeyboardRow`, `KeyboardButton`, `KeyboardButtonRenderData`, `KeyboardButtonAction`, and `KeyboardButtonPermission`. Group and C2C examples use `KeyboardPayload` with `msg_type: 2`.
 
 ```rust
 use botrs::models::message::{
@@ -34,10 +34,10 @@ ctx.send_message(channel_id, params).await?;
 
 ## Command dispatch
 
-`demo_at_reply_command.rs` shows a tiny `CommandRegistry` that maps `Vec<&str>` aliases to handler functions and dispatches inside `message_create`. There is no built-in command framework — the demo is the recommended pattern: split on prefix, run the matched handler, then reply via `Message::reply` or `MessageParams`.
+`examples/guild/command.rs` shows a tiny `CommandRegistry` that maps aliases to handler functions and dispatches inside `message_create`. BotRS does not include a command framework; split on prefix, run the matched handler, then reply via `Message::reply` or `MessageParams`.
 
 ## See also
 
 - Guide: [`docs/guide/messages.md`](../guide/messages.md)
 - Command details: [Command Handler](./command-handler.md)
-- Demos: `examples/demo_at_reply_keyboard.rs`, `examples/demo_at_reply_command.rs`
+- Examples: `examples/guild/reply_keyboard.rs`, `examples/group/reply_keyboard.rs`, `examples/c2c/reply_keyboard.rs`, `examples/guild/command.rs`

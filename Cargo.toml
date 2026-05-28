@@ -56,106 +56,177 @@ examples = ["toml", "tracing-subscriber"]
 
 [[example]]
 name = "simple_bot"
+path = "examples/basic/simple_bot.rs"
 required-features = ["examples"]
 
 [[example]]
-name = "demo_at_reply"
+name = "guild_reply_text"
+path = "examples/guild/reply_text.rs"
 required-features = ["examples"]
 
 [[example]]
-name = "demo_at_reply_command"
+name = "guild_command"
+path = "examples/guild/command.rs"
 required-features = ["examples"]
 
 [[example]]
-name = "demo_at_reply_embed"
+name = "guild_reply_embed"
+path = "examples/guild/reply_embed.rs"
 required-features = ["examples"]
 
 [[example]]
-name = "demo_at_reply_markdown"
+name = "guild_reply_markdown"
+path = "examples/guild/reply_markdown.rs"
 required-features = ["examples"]
 
 [[example]]
-name = "demo_at_reply_keyboard"
+name = "guild_reply_keyboard"
+path = "examples/guild/reply_keyboard.rs"
 required-features = ["examples"]
 
 [[example]]
-name = "demo_group_reply_text"
+name = "guild_reply_reference"
+path = "examples/guild/reply_reference.rs"
 required-features = ["examples"]
 
 [[example]]
-name = "demo_group_reply_ark"
+name = "guild_reply_ark"
+path = "examples/guild/reply_ark.rs"
 required-features = ["examples"]
 
 [[example]]
-name = "demo_c2c_reply_text"
+name = "guild_reply_image"
+path = "examples/guild/reply_image.rs"
 required-features = ["examples"]
 
 [[example]]
-name = "demo_recall"
+name = "guild_recall"
+path = "examples/guild/recall.rs"
 required-features = ["examples"]
 
 [[example]]
-name = "demo_dms_reply"
+name = "guild_pins_message"
+path = "examples/guild/pins_message.rs"
 required-features = ["examples"]
 
 [[example]]
-name = "demo_at_reply_reference"
+name = "guild_announce"
+path = "examples/guild/announce.rs"
 required-features = ["examples"]
 
 [[example]]
-name = "demo_new_message_api"
+name = "guild_schedule"
+path = "examples/guild/schedule.rs"
 required-features = ["examples"]
 
 [[example]]
-name = "demo_announce"
+name = "guild_api_permission"
+path = "examples/guild/api_permission.rs"
 required-features = ["examples"]
 
 [[example]]
-name = "demo_api_permission"
+name = "guild_reaction_users"
+path = "examples/guild/reaction_users.rs"
 required-features = ["examples"]
 
 [[example]]
-name = "demo_at_reply_ark"
+name = "group_reply_text"
+path = "examples/group/reply_text.rs"
 required-features = ["examples"]
 
 [[example]]
-name = "demo_audio_or_live_channel_member"
+name = "group_reply_ark"
+path = "examples/group/reply_ark.rs"
 required-features = ["examples"]
 
 [[example]]
-name = "demo_c2c_manage_event"
+name = "group_reply_file"
+path = "examples/group/reply_file.rs"
 required-features = ["examples"]
 
 [[example]]
-name = "demo_c2c_reply_file"
+name = "group_reply_markdown"
+path = "examples/group/reply_markdown.rs"
 required-features = ["examples"]
 
 [[example]]
-name = "demo_get_reaction_users"
+name = "group_reply_embed"
+path = "examples/group/reply_embed.rs"
 required-features = ["examples"]
 
 [[example]]
-name = "demo_group_manage_event"
+name = "group_reply_keyboard"
+path = "examples/group/reply_keyboard.rs"
 required-features = ["examples"]
 
 [[example]]
-name = "demo_group_reply_file"
+name = "group_manage_event"
+path = "examples/group/manage_event.rs"
 required-features = ["examples"]
 
 [[example]]
-name = "demo_guild_member_event"
+name = "c2c_reply_text"
+path = "examples/c2c/reply_text.rs"
 required-features = ["examples"]
 
 [[example]]
-name = "demo_open_forum_event"
+name = "c2c_reply_file"
+path = "examples/c2c/reply_file.rs"
 required-features = ["examples"]
 
 [[example]]
-name = "demo_pins_message"
+name = "c2c_reply_ark"
+path = "examples/c2c/reply_ark.rs"
 required-features = ["examples"]
 
 [[example]]
-name = "demo_schedule"
+name = "c2c_reply_markdown"
+path = "examples/c2c/reply_markdown.rs"
+required-features = ["examples"]
+
+[[example]]
+name = "c2c_reply_embed"
+path = "examples/c2c/reply_embed.rs"
+required-features = ["examples"]
+
+[[example]]
+name = "c2c_reply_keyboard"
+path = "examples/c2c/reply_keyboard.rs"
+required-features = ["examples"]
+
+[[example]]
+name = "c2c_manage_event"
+path = "examples/c2c/manage_event.rs"
+required-features = ["examples"]
+
+[[example]]
+name = "direct_reply"
+path = "examples/direct/reply.rs"
+required-features = ["examples"]
+
+[[example]]
+name = "direct_reply_rich"
+path = "examples/direct/reply_rich.rs"
+required-features = ["examples"]
+
+[[example]]
+name = "event_guild_member"
+path = "examples/events/guild_member.rs"
+required-features = ["examples"]
+
+[[example]]
+name = "event_open_forum"
+path = "examples/events/open_forum.rs"
+required-features = ["examples"]
+
+[[example]]
+name = "event_audio_or_live_channel_member"
+path = "examples/events/audio_or_live_channel_member.rs"
+required-features = ["examples"]
+
+[[example]]
+name = "api_message_params"
+path = "examples/api/message_params.rs"
 required-features = ["examples"]
 
 [lib]

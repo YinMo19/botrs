@@ -282,7 +282,7 @@ Examples:
 
 - models/message.rs: add MessageParams, GroupMessageParams, C2CMessageParams, DirectMessageParams structs.
 - api.rs: add short send methods for structured parameter sending.
-- examples/: add demo_new_message_api.rs showing the new API usage.
+- examples/api/: add message_params.rs showing the message parameter API usage.
 - deprecate old multi-parameter API methods but keep backward compatibility.
 ```
 
