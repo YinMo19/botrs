@@ -129,16 +129,6 @@ fn non_empty(value: String) -> Option<String> {
     (!value.is_empty()).then_some(value)
 }
 
-impl std::fmt::Display for Audio {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "Audio {{ channel_id: {:?}, guild_id: {:?}, audio_url: {:?}, text: {:?}, event_id: {:?} }}",
-            self.channel_id, self.guild_id, self.audio_url, self.text, self.event_id
-        )
-    }
-}
-
 /// Public audio event data structure for live channels
 #[derive(Debug, Clone, Serialize)]
 pub struct PublicAudio {
@@ -174,16 +164,6 @@ impl PublicAudio {
             channel_type: wire.channel_type,
             user_id: wire.user_id,
         }
-    }
-}
-
-impl std::fmt::Display for PublicAudio {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "PublicAudio {{ guild_id: {:?}, channel_id: {:?}, channel_type: {:?}, user_id: {:?} }}",
-            self.guild_id, self.channel_id, self.channel_type, self.user_id
-        )
     }
 }
 

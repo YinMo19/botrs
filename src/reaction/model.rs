@@ -44,13 +44,3 @@ impl Reaction {
         }
     }
 }
-
-impl std::fmt::Display for Reaction {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "Reaction {{ user_id: {}, channel_id: {}, guild_id: {}, target_type: {:?}, event_id: {:?} }}",
-            self.user_id, self.channel_id, self.guild_id, self.target.target_type, self.event_id
-        )
-    }
-}

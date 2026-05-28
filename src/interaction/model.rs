@@ -73,16 +73,6 @@ impl Interaction {
     }
 }
 
-impl std::fmt::Display for Interaction {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "Interaction {{ id: {:?}, type: {:?}, scene: {:?}, chat_type: {:?}, event_id: {:?} }}",
-            self.id, self.interaction_type, self.scene, self.chat_type, self.event_id
-        )
-    }
-}
-
 #[derive(Debug, Default, Deserialize)]
 struct InteractionWire {
     #[serde(default)]

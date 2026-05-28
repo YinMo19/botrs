@@ -123,16 +123,6 @@ impl Thread {
     }
 }
 
-impl std::fmt::Display for Thread {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "Thread {{ channel_id: {:?}, guild_id: {:?}, author_id: {:?}, event_id: {:?} }}",
-            self.channel_id, self.guild_id, self.author_id, self.event_id
-        )
-    }
-}
-
 /// Forum post structure.
 #[derive(Debug, Clone, Serialize)]
 pub struct Post {

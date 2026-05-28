@@ -87,13 +87,3 @@ impl OpenThread {
         }
     }
 }
-
-impl std::fmt::Display for OpenThread {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "OpenThread {{ channel_id: {:?}, guild_id: {:?}, author_id: {:?}, event_id: {:?} }}",
-            self.channel_id, self.guild_id, self.author_id, self.event_id
-        )
-    }
-}
