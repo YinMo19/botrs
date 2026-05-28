@@ -10,7 +10,5 @@ mod ops;
 
 pub use core::Intents;
 
-pub type Intent = u32;
-
 #[cfg(test)]
 mod tests;
