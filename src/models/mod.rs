@@ -37,7 +37,7 @@ pub use webhook::*;
 pub use guild::{Guild, GuildRole, Member};
 
 use serde::{Deserialize, Deserializer, Serialize};
-use std::{collections::HashMap, str::FromStr, time::Duration as StdDuration};
+use std::{str::FromStr, time::Duration as StdDuration};
 
 /// A snowflake ID used throughout the QQ Guild API.
 pub type Snowflake = String;
@@ -94,11 +94,6 @@ fn parse_duration(value: &str) -> Result<StdDuration, String> {
         "h" => Ok(StdDuration::from_secs(number * 60 * 60)),
         _ => Err(format!("unsupported duration unit {unit:?}")),
     }
-}
-
-/// Pager trait.
-pub trait Pager {
-    fn query_params(&self) -> HashMap<String, String>;
 }
 
 /// Represents the type of a message.

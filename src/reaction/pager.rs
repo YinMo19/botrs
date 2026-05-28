@@ -1,4 +1,3 @@
-use crate::models::Pager;
 use serde::{Deserialize, Serialize};
 
 fn insert_query_param(
@@ -29,11 +28,5 @@ impl MessageReactionPager {
         insert_query_param(&mut query, "limit", &self.limit);
         insert_query_param(&mut query, "cookie", &self.cookie);
         query
-    }
-}
-
-impl Pager for MessageReactionPager {
-    fn query_params(&self) -> std::collections::HashMap<String, String> {
-        MessageReactionPager::query_params(self)
     }
 }

@@ -1,4 +1,3 @@
-use crate::models::Pager;
 use serde::{Deserialize, Serialize};
 
 fn insert_query_param(
@@ -57,12 +56,6 @@ impl MessagesPager {
             insert_query_param(&mut query, pager_type.as_str(), &self.id);
         }
         query
-    }
-}
-
-impl Pager for MessagesPager {
-    fn query_params(&self) -> std::collections::HashMap<String, String> {
-        MessagesPager::query_params(self)
     }
 }
 

@@ -1,4 +1,3 @@
-use crate::models::Pager;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -29,12 +28,6 @@ impl GuildMembersPager {
     }
 }
 
-impl Pager for GuildMembersPager {
-    fn query_params(&self) -> HashMap<String, String> {
-        GuildMembersPager::query_params(self)
-    }
-}
-
 /// Pager for guild role member list requests.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct GuildRoleMembersPager {
@@ -53,12 +46,6 @@ impl GuildRoleMembersPager {
         insert_query_param(&mut query, "limit", &self.limit);
         insert_query_param(&mut query, "start_index", &self.start_index);
         query
-    }
-}
-
-impl Pager for GuildRoleMembersPager {
-    fn query_params(&self) -> HashMap<String, String> {
-        GuildRoleMembersPager::query_params(self)
     }
 }
 
@@ -86,11 +73,5 @@ impl GuildPager {
             insert_query_param(&mut query, "before", &self.before);
         }
         query
-    }
-}
-
-impl Pager for GuildPager {
-    fn query_params(&self) -> HashMap<String, String> {
-        GuildPager::query_params(self)
     }
 }
