@@ -311,3 +311,105 @@ pub struct Reference {
     #[serde(default, serialize_with = "serialize_option_as_default")]
     pub ignore_get_message_error: Option<bool>,
 }
+
+/// Typing/input status payload.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+pub struct InputNotify {
+    /// Input status type.
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
+    pub input_type: Option<u32>,
+    /// Duration in seconds for the input status.
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
+    pub input_second: Option<i32>,
+}
+
+/// Prompt keyboard payload shown in the interaction area.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
+pub struct PromptKeyboard {
+    /// Keyboard content.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub keyboard: Option<Keyboard>,
+}
+
+/// Message action button payload.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+pub struct ActionButton {
+    /// Action template ID.
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
+    pub template_id: Option<i32>,
+    /// Callback data returned by interaction events.
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
+    pub callback_data: Option<String>,
+    /// Whether to show feedback controls.
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
+    pub feedback: Option<bool>,
+    /// Whether to show TTS control.
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
+    pub tts: Option<bool>,
+    /// Whether to show regenerate control.
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
+    pub re_generate: Option<bool>,
+    /// Whether to show stop-generation control.
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
+    pub stop_generate: Option<bool>,
+}
+
+/// Streaming message metadata.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+pub struct Stream {
+    /// Streaming state.
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
+    pub state: Option<i32>,
+    /// Streaming message ID.
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
+    pub id: Option<String>,
+    /// Streaming fragment index.
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
+    pub index: Option<i32>,
+    /// Whether to reset an unfinished stream.
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
+    pub reset: Option<bool>,
+}
+
+/// Setting guide target used by direct-message setting guide payloads.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+pub struct SettingGuide {
+    /// Guild ID to jump to from the setting guide.
+    #[serde(default)]
+    pub guild_id: String,
+}
+
+/// Setting guide send payload.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+pub struct SettingGuideParams {
+    /// Optional text content, usually mentions for channel setting guides.
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
+    pub content: Option<String>,
+    /// Optional direct-message jump target.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub setting_guide: Option<SettingGuide>,
+}
+
+impl SettingGuideParams {
+    /// Builds a channel setting guide that mentions the provided user IDs.
+    pub fn for_users(user_ids: impl IntoIterator<Item = impl AsRef<str>>) -> Self {
+        let content = user_ids
+            .into_iter()
+            .map(|user_id| format!("<@{}>", user_id.as_ref()))
+            .collect::<String>();
+        Self {
+            content: (!content.is_empty()).then_some(content),
+            ..Default::default()
+        }
+    }
+
+    /// Builds a direct-message setting guide that jumps to the provided guild.
+    pub fn for_guild(guild_id: impl Into<String>) -> Self {
+        Self {
+            setting_guide: Some(SettingGuide {
+                guild_id: guild_id.into(),
+            }),
+            ..Default::default()
+        }
+    }
+}

@@ -23,15 +23,16 @@ struct C2cFileBody<'a> {
 }
 
 #[derive(Serialize)]
-struct GuildMessageAnnounceBody<'a> {
-    channel_id: &'a str,
+struct ChannelAnnounceBody<'a> {
     message_id: &'a str,
 }
 
 #[derive(Serialize)]
-struct GuildRecommendAnnounceBody {
+struct GuildAnnounceBody {
+    channel_id: String,
+    message_id: String,
     announces_type: u32,
-    recommend_channels: Vec<RecommendChannel>,
+    recommend_channels: Option<Vec<RecommendChannel>>,
 }
 
 impl BotApi {
@@ -93,6 +94,45 @@ impl BotApi {
 
     // Announcement APIs
 
+    /// Creates a channel announcement from an existing channel message.
+    pub async fn create_channel_announce(
+        &self,
+        channel_id: &str,
+        message_id: &str,
+    ) -> Result<Announce> {
+        debug!(
+            "Creating channel announcement in channel {} for message {}",
+            channel_id, message_id
+        );
+
+        let body = ChannelAnnounceBody { message_id };
+        let path = resource::channel_announces(channel_id);
+        let response = self
+            .http
+            .post(self.token(), &path, None::<&()>, Some(&body))
+            .await?;
+        Self::decode_json(response)
+    }
+
+    /// Deletes one channel announcement by message ID.
+    pub async fn delete_channel_announce(&self, channel_id: &str, message_id: &str) -> Result<()> {
+        debug!(
+            "Deleting channel announcement {} in channel {}",
+            message_id, channel_id
+        );
+        let path = resource::channel_announce(channel_id, message_id);
+        self.http.delete(self.token(), &path, None::<&()>).await?;
+        Ok(())
+    }
+
+    /// Deletes all announcements in a channel.
+    pub async fn clean_channel_announces(&self, channel_id: &str) -> Result<()> {
+        debug!("Cleaning channel announcements in channel {}", channel_id);
+        let path = resource::channel_announce(channel_id, "all");
+        self.http.delete(self.token(), &path, None::<&()>).await?;
+        Ok(())
+    }
+
     /// Creates a message-type guild announcement from an existing message.
     pub async fn create_announce(
         &self,
@@ -105,9 +145,11 @@ impl BotApi {
             guild_id, message_id
         );
 
-        let body = GuildMessageAnnounceBody {
-            channel_id,
-            message_id,
+        let body = GuildAnnounceBody {
+            channel_id: channel_id.to_string(),
+            message_id: message_id.to_string(),
+            announces_type: u8::from(AnnouncesType::Member) as u32,
+            recommend_channels: None,
         };
 
         let path = resource::guild_announces(guild_id);
@@ -127,9 +169,11 @@ impl BotApi {
     ) -> Result<Announce> {
         debug!("Creating recommend announcement in guild {}", guild_id);
 
-        let body = GuildRecommendAnnounceBody {
+        let body = GuildAnnounceBody {
+            channel_id: String::new(),
+            message_id: String::new(),
             announces_type: u8::from(announces_type) as u32,
-            recommend_channels,
+            recommend_channels: Some(recommend_channels),
         };
 
         let path = resource::guild_announces(guild_id);
@@ -155,11 +199,17 @@ impl BotApi {
         let response = self.http.delete(self.token(), &path, None::<&()>).await?;
         Ok(response)
     }
+
+    /// Deletes all guild announcements.
+    pub async fn clean_guild_announces(&self, guild_id: &str) -> Result<()> {
+        self.delete_announce(guild_id, None::<&str>).await?;
+        Ok(())
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{C2cFileBody, GroupFileBody, GuildMessageAnnounceBody, GuildRecommendAnnounceBody};
+    use super::{C2cFileBody, GroupFileBody, GuildAnnounceBody};
     use crate::models::announce::{AnnouncesType, RecommendChannel};
     use tokio::io::{AsyncReadExt, AsyncWriteExt};
     use tokio::net::TcpListener;
@@ -335,33 +385,39 @@ mod tests {
 
     #[test]
     fn high_level_guild_announce_body_uses_platform_shape() {
-        let message = serde_json::to_value(GuildMessageAnnounceBody {
-            channel_id: "channel-1",
-            message_id: "message-1",
+        let message = serde_json::to_value(GuildAnnounceBody {
+            channel_id: "channel-1".to_string(),
+            message_id: "message-1".to_string(),
+            announces_type: 0,
+            recommend_channels: None,
         })
         .unwrap();
         assert_eq!(
             message,
             serde_json::json!({
                 "channel_id": "channel-1",
-                "message_id": "message-1"
+                "message_id": "message-1",
+                "announces_type": 0,
+                "recommend_channels": null
             })
         );
 
-        let recommend = serde_json::to_value(GuildRecommendAnnounceBody {
+        let recommend = serde_json::to_value(GuildAnnounceBody {
+            channel_id: String::new(),
+            message_id: String::new(),
             announces_type: u8::from(AnnouncesType::Welcome) as u32,
-            recommend_channels: vec![RecommendChannel {
+            recommend_channels: Some(vec![RecommendChannel {
                 channel_id: "channel-2".to_string(),
                 introduce: "intro".to_string(),
-            }],
+            }]),
         })
         .unwrap();
+        assert_eq!(recommend["channel_id"], "");
+        assert_eq!(recommend["message_id"], "");
         assert_eq!(recommend["announces_type"], 1);
         assert_eq!(
             recommend["recommend_channels"][0]["channel_id"],
             "channel-2"
         );
-        assert!(recommend.get("channel_id").is_none());
-        assert!(recommend.get("message_id").is_none());
     }
 }

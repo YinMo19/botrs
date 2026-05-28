@@ -18,6 +18,41 @@ impl BotApi {
             .await?;
         Ok(())
     }
+
+    /// Recalls (deletes) a group message.
+    pub async fn recall_group_message(
+        &self,
+        group_openid: &str,
+        message_id: &str,
+        hidetip: Option<bool>,
+    ) -> Result<()> {
+        debug!(
+            "Recalling group message {} in group {}",
+            message_id, group_openid
+        );
+        let params = hidetip.and_then(Self::hide_tip_query);
+        let path = resource::group_message(group_openid, message_id);
+        self.http
+            .delete(self.token(), &path, params.as_ref())
+            .await?;
+        Ok(())
+    }
+
+    /// Recalls (deletes) a C2C message.
+    pub async fn recall_c2c_message(
+        &self,
+        openid: &str,
+        message_id: &str,
+        hidetip: Option<bool>,
+    ) -> Result<()> {
+        debug!("Recalling C2C message {} for {}", message_id, openid);
+        let params = hidetip.and_then(Self::hide_tip_query);
+        let path = resource::c2c_message(openid, message_id);
+        self.http
+            .delete(self.token(), &path, params.as_ref())
+            .await?;
+        Ok(())
+    }
 }
 
 #[cfg(test)]
@@ -97,6 +132,39 @@ mod tests {
         assert!(
             request
                 .starts_with("DELETE /channels/channel-1/messages/message-1?hidetip=true HTTP/1.1")
+        );
+        server.await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn recall_group_message_uses_open_group_route() {
+        let (base_url, request, server) = spawn_capture_server().await;
+        let api = test_api(base_url).await;
+
+        api.recall_group_message("group-openid-1", "message-1", None)
+            .await
+            .unwrap();
+
+        let request = request.await.unwrap();
+        assert!(
+            request.starts_with("DELETE /v2/groups/group-openid-1/messages/message-1 HTTP/1.1")
+        );
+        server.await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn recall_c2c_message_uses_open_user_route() {
+        let (base_url, request, server) = spawn_capture_server().await;
+        let api = test_api(base_url).await;
+
+        api.recall_c2c_message("openid-1", "message-1", Some(true))
+            .await
+            .unwrap();
+
+        let request = request.await.unwrap();
+        assert!(
+            request
+                .starts_with("DELETE /v2/users/openid-1/messages/message-1?hidetip=true HTTP/1.1")
         );
         server.await.unwrap();
     }

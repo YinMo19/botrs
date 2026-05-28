@@ -88,6 +88,7 @@ RUST_LOG=debug cargo run --example guild_reply_text --features examples
 | `guild_schedule` | `guild/schedule.rs` | Schedule create, get, update, and delete |
 | `guild_api_permission` | `guild/api_permission.rs` | API permission list and permission demand creation |
 | `guild_reaction_users` | `guild/reaction_users.rs` | Reaction user pagination |
+| `guild_tools` | `guild/tools.rs` | Reading, editing, recalling, announcing, cleaning pins, and setting guides |
 
 Guild channel message examples generally use `Intents::new().with_public_guild_messages()` and send through `session.reply`, `session.send_message`, or other `BotApi` methods exposed through the session.
 
@@ -135,6 +136,7 @@ Direct-message receive handlers use `Intents::new().with_direct_message()`. If a
 | `event_guild_member` | `events/guild_member.rs` | Guild member add, update, and remove |
 | `event_open_forum` | `events/open_forum.rs` | Open forum thread, post, and reply events |
 | `event_audio_or_live_channel_member` | `events/audio_or_live_channel_member.rs` | Audio/live channel member enter and exit |
+| `event_interaction_search` | `events/interaction_search.rs` | Inline search interaction responses |
 
 These examples focus on gateway event parsing and the corresponding `EventHandler` callback names.
 

@@ -4,7 +4,8 @@ use super::{
     KeyboardButtonRenderData, KeyboardContent, KeyboardModal, KeyboardRow, KeyboardStyle,
     KeyboardSubscribeData, KeyboardTemplateId, MarkdownParam, MarkdownPayload, MarkdownStyle,
     Media, MediaInfo, Message, MessageAttachment, MessageAudit, MessageCreateType, MessageParams,
-    MessageReference, MessageToCreate, MessageUser, Reference,
+    MessageReference, MessageToCreate, MessageUser, MessagesPager, Reference, SettingGuideParams,
+    Stream,
 };
 
 #[test]
@@ -71,6 +72,65 @@ fn message_params_convert_to_create_payload_shape() {
                 "file_info": "file-info"
             },
             "msg_seq": 42
+        })
+    );
+}
+
+#[test]
+fn message_params_include_extended_send_fields() {
+    let params = MessageParams {
+        content: Some("hello".to_string()),
+        subscribe_id: Some("subscribe-1".to_string()),
+        stream: Some(Stream {
+            state: Some(1),
+            id: Some("stream-1".to_string()),
+            index: Some(2),
+            reset: Some(false),
+        }),
+        feature_id: Some(42),
+        ..Default::default()
+    };
+
+    assert_eq!(
+        serde_json::to_value(MessageToCreate::from(params)).unwrap(),
+        serde_json::json!({
+            "content": "hello",
+            "subscribe_id": "subscribe-1",
+            "stream": {
+                "state": 1,
+                "id": "stream-1",
+                "index": 2
+            },
+            "feature_id": 42
+        })
+    );
+}
+
+#[test]
+fn message_pager_builds_expected_query_params() {
+    let query = MessagesPager::around("message-1", Some(5)).to_query_params();
+
+    assert_eq!(query.get("around").map(String::as_str), Some("message-1"));
+    assert_eq!(query.get("limit").map(String::as_str), Some("5"));
+}
+
+#[test]
+fn setting_guide_params_build_channel_mentions_and_dm_target() {
+    let channel = SettingGuideParams::for_users(["user-1", "user-2"]);
+    assert_eq!(
+        serde_json::to_value(channel).unwrap(),
+        serde_json::json!({
+            "content": "<@user-1><@user-2>"
+        })
+    );
+
+    let dm = SettingGuideParams::for_guild("guild-1");
+    assert_eq!(
+        serde_json::to_value(dm).unwrap(),
+        serde_json::json!({
+            "setting_guide": {
+                "guild_id": "guild-1"
+            }
         })
     );
 }

@@ -1,10 +1,11 @@
 use crate::models::serde_helpers::{is_zero_u32, option_is_none_or_default};
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 use super::payload::option_message_type_is_none_or_zero;
 use super::{
-    Ark, Embed, Keyboard, KeyboardPayload, MarkdownPayload, Media, MessageCreateType,
-    MessageToCreate, Reference,
+    ActionButton, Ark, Embed, InputNotify, Keyboard, KeyboardPayload, MarkdownPayload, Media,
+    MessageCreateType, MessageToCreate, PromptKeyboard, Reference, Stream,
 };
 
 macro_rules! channel_like_message_params_struct {
@@ -48,6 +49,24 @@ macro_rules! channel_like_message_params_struct {
             /// Message sequence number
             #[serde(skip_serializing_if = "option_is_none_or_default")]
             pub msg_seq: Option<u32>,
+            /// Subscribe message template ID
+            #[serde(skip_serializing_if = "option_is_none_or_default")]
+            pub subscribe_id: Option<String>,
+            /// Input notification payload
+            #[serde(skip_serializing_if = "Option::is_none")]
+            pub input_notify: Option<InputNotify>,
+            /// Prompt keyboard payload
+            #[serde(skip_serializing_if = "Option::is_none")]
+            pub prompt_keyboard: Option<PromptKeyboard>,
+            /// Message action button payload
+            #[serde(skip_serializing_if = "Option::is_none")]
+            pub action_button: Option<ActionButton>,
+            /// Streaming message metadata
+            #[serde(skip_serializing_if = "Option::is_none")]
+            pub stream: Option<Stream>,
+            /// Feature ID controlling message send behavior
+            #[serde(skip_serializing_if = "option_is_none_or_default")]
+            pub feature_id: Option<u32>,
         }
     };
 }
@@ -93,6 +112,24 @@ macro_rules! open_message_params_struct {
             /// Keyboard payload
             #[serde(skip_serializing_if = "Option::is_none")]
             pub keyboard: Option<KeyboardPayload>,
+            /// Subscribe message template ID
+            #[serde(skip_serializing_if = "option_is_none_or_default")]
+            pub subscribe_id: Option<String>,
+            /// Input notification payload
+            #[serde(skip_serializing_if = "Option::is_none")]
+            pub input_notify: Option<InputNotify>,
+            /// Prompt keyboard payload
+            #[serde(skip_serializing_if = "Option::is_none")]
+            pub prompt_keyboard: Option<PromptKeyboard>,
+            /// Message action button payload
+            #[serde(skip_serializing_if = "Option::is_none")]
+            pub action_button: Option<ActionButton>,
+            /// Streaming message metadata
+            #[serde(skip_serializing_if = "Option::is_none")]
+            pub stream: Option<Stream>,
+            /// Feature ID controlling message send behavior
+            #[serde(skip_serializing_if = "option_is_none_or_default")]
+            pub feature_id: Option<u32>,
         }
     };
 }
@@ -162,6 +199,12 @@ macro_rules! impl_channel_like_message_params {
                     event_id: params.event_id,
                     msg_seq: params.msg_seq,
                     media: None,
+                    subscribe_id: params.subscribe_id,
+                    input_notify: params.input_notify,
+                    prompt_keyboard: params.prompt_keyboard,
+                    action_button: params.action_button,
+                    stream: params.stream,
+                    feature_id: params.feature_id,
                 }
             }
         }
@@ -213,6 +256,12 @@ macro_rules! impl_open_message_params {
                     event_id: params.event_id,
                     msg_seq: params.msg_seq,
                     media: params.media.map(Into::into),
+                    subscribe_id: params.subscribe_id,
+                    input_notify: params.input_notify,
+                    prompt_keyboard: params.prompt_keyboard,
+                    action_button: params.action_button,
+                    stream: params.stream,
+                    feature_id: params.feature_id,
                     ..Default::default()
                 }
             }
@@ -224,3 +273,82 @@ impl_channel_like_message_params!(MessageParams);
 impl_open_message_params!(GroupMessageParams);
 impl_open_message_params!(C2CMessageParams);
 impl_channel_like_message_params!(DirectMessageParams);
+
+/// Direction used when listing channel messages around an anchor message.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum MessagePagerType {
+    /// Fetch messages around the anchor message.
+    Around,
+    /// Fetch messages before the anchor message.
+    Before,
+    /// Fetch messages after the anchor message.
+    After,
+}
+
+impl MessagePagerType {
+    fn as_query_key(self) -> &'static str {
+        match self {
+            Self::Around => "around",
+            Self::Before => "before",
+            Self::After => "after",
+        }
+    }
+}
+
+/// Query parameters for listing channel messages.
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+pub struct MessagesPager {
+    /// Anchor mode and message ID.
+    pub anchor: Option<(MessagePagerType, String)>,
+    /// Maximum number of messages to return.
+    pub limit: Option<u32>,
+}
+
+impl MessagesPager {
+    /// Creates a pager that only sets the limit.
+    pub fn new(limit: impl Into<Option<u32>>) -> Self {
+        Self {
+            limit: limit.into(),
+            ..Default::default()
+        }
+    }
+
+    /// Fetches messages before the provided message ID.
+    pub fn before(message_id: impl Into<String>, limit: impl Into<Option<u32>>) -> Self {
+        Self {
+            anchor: Some((MessagePagerType::Before, message_id.into())),
+            limit: limit.into(),
+        }
+    }
+
+    /// Fetches messages after the provided message ID.
+    pub fn after(message_id: impl Into<String>, limit: impl Into<Option<u32>>) -> Self {
+        Self {
+            anchor: Some((MessagePagerType::After, message_id.into())),
+            limit: limit.into(),
+        }
+    }
+
+    /// Fetches messages around the provided message ID.
+    pub fn around(message_id: impl Into<String>, limit: impl Into<Option<u32>>) -> Self {
+        Self {
+            anchor: Some((MessagePagerType::Around, message_id.into())),
+            limit: limit.into(),
+        }
+    }
+
+    pub(crate) fn to_query_params(&self) -> HashMap<&'static str, String> {
+        let mut query = HashMap::new();
+        if let Some(limit) = self.limit
+            && limit != 0
+        {
+            query.insert("limit", limit.to_string());
+        }
+        if let Some((pager_type, message_id)) = &self.anchor
+            && !message_id.is_empty()
+        {
+            query.insert(pager_type.as_query_key(), message_id.clone());
+        }
+        query
+    }
+}

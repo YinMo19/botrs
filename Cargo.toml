@@ -130,6 +130,11 @@ path = "examples/guild/reaction_users.rs"
 required-features = ["examples"]
 
 [[example]]
+name = "guild_tools"
+path = "examples/guild/tools.rs"
+required-features = ["examples"]
+
+[[example]]
 name = "group_reply_text"
 path = "examples/group/reply_text.rs"
 required-features = ["examples"]
@@ -227,6 +232,11 @@ required-features = ["examples"]
 [[example]]
 name = "event_audio_or_live_channel_member"
 path = "examples/events/audio_or_live_channel_member.rs"
+required-features = ["examples"]
+
+[[example]]
+name = "event_interaction_search"
+path = "examples/events/interaction_search.rs"
 required-features = ["examples"]
 
 [[example]]
