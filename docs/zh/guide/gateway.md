@@ -8,7 +8,7 @@
 
 1. 校验 `Token` 并通过 `BotApi::get_bot_info` 拉取当前机器人信息。
 2. 调用 `BotApi::get_gateway` 获取 WebSocket URL、推荐 shard 数与会话启动限额。
-3. 用 `check_session_limit` 校验限额（若当日额度已耗尽返回 `BotError::Sdk`）。
+3. 校验会话启动限额；若当日额度已耗尽，返回 `BotError::Sdk`。
 4. 根据 `session_start_limit.max_concurrency` 调用 `Gateway::session_start_interval` 计算重连间隔。
 5. 启动会话管理器，为每个 shard 打开一个 `Gateway`，把事件汇聚到客户端读取的通道。
 
@@ -22,7 +22,7 @@
 
 ## Resume 与 Identify
 
-正常断开后，网关会先用缓存的 `session_id` 与 `last_seq` 尝试 `RESUME`。若服务端回复 `INVALID_SESSION`（或关闭码命中 `can_not_resume` 列表），下一次尝试将退化为重新 `IDENTIFY`。命中 `can_not_identify` 列表的关闭码（例如 `4014` 表示“intent 未授权”）会让网关停止重连，客户端把它作为 `BotError::Gateway` 暴露。
+正常断开后，网关会先用缓存的 `session_id` 与 `last_seq` 尝试 `RESUME`。若服务端回复 `INVALID_SESSION` 或其他不可 resume 的关闭码，下一次尝试将退化为重新 `IDENTIFY`。致命的 identify 关闭码（例如 `4014` 表示“intent 未授权”）会让网关停止重连，客户端把它作为 `BotError::Gateway` 暴露。
 
 ## 重连节流
 

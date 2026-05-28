@@ -8,7 +8,7 @@ When you call `client.start().await`, the framework:
 
 1. Validates your `Token` and fetches the current bot user via `BotApi::get_bot_info`.
 2. Calls `BotApi::get_gateway` to obtain the WebSocket URL, the recommended shard count, and the session-start limits.
-3. Validates the limits via `check_session_limit` (returns `BotError::Sdk` if you've already exhausted your daily start budget).
+3. Validates the session-start limits and returns `BotError::Sdk` if you've already exhausted your daily start budget.
 4. Computes a reconnect interval from `session_start_limit.max_concurrency` using `Gateway::session_start_interval`.
 5. Spawns a session manager that opens one `Gateway` per shard and pumps events into the channel the client reads.
 
@@ -22,7 +22,7 @@ You don't need to send heartbeats yourself, but you can observe heartbeat health
 
 ## Resume vs identify
 
-After a clean disconnect the gateway tries `RESUME` first using the cached `session_id` and `last_seq`. If the server responds with `INVALID_SESSION` (or a close code in the cannot-resume set returned by `can_not_resume`), the next attempt falls back to a fresh `IDENTIFY`. Close codes in the `can_not_identify` set (for example, `4014` "disallowed intent") cause the gateway to stop reconnecting; the client surfaces that as `BotError::Gateway`.
+After a clean disconnect the gateway tries `RESUME` first using the cached `session_id` and `last_seq`. If the server responds with `INVALID_SESSION` or another non-resumable close code, the next attempt falls back to a fresh `IDENTIFY`. Fatal identify close codes, for example `4014` "disallowed intent", cause the gateway to stop reconnecting; the client surfaces that as `BotError::Gateway`.
 
 ## Reconnect throttling
 
