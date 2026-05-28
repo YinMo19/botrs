@@ -103,20 +103,6 @@ pub struct Keyboard {
     pub content: Option<KeyboardContent>,
 }
 
-pub type ActionType = u32;
-pub type PermissionType = u32;
-
-pub const ACTION_TYPE_URL: ActionType = 0;
-pub const ACTION_TYPE_CALLBACK: ActionType = 1;
-pub const ACTION_TYPE_AT_BOT: ActionType = 2;
-pub const ACTION_TYPE_MQQ_API: ActionType = 3;
-pub const ACTION_TYPE_SUBSCRIBE: ActionType = 4;
-
-pub const PERMISSION_TYPE_SPECIFY_USER_IDS: PermissionType = 0;
-pub const PERMISSION_TYPE_MANAGER: PermissionType = 1;
-pub const PERMISSION_TYPE_ALL: PermissionType = 2;
-pub const PERMISSION_TYPE_SPECIFY_ROLE_IDS: PermissionType = 3;
-
 /// Keyboard content structure.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct KeyboardContent {

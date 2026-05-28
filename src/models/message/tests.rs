@@ -1,11 +1,11 @@
 use super::{
-    ACTION_TYPE_SUBSCRIBE, ActionButton, Ark, ArkKv, ArkObj, ArkObjKv, C2CMessageParams,
-    DirectMessage, Embed, GroupMessageParams, InputNotify, Keyboard, KeyboardButton,
-    KeyboardButtonAction, KeyboardButtonPermission, KeyboardButtonRenderData, KeyboardContent,
-    KeyboardModal, KeyboardRow, KeyboardStyle, KeyboardSubscribeData, KeyboardTemplateId,
-    MarkdownParam, MarkdownPayload, MarkdownStyle, Media, MediaInfo, Message, MessageAttachment,
-    MessageAudit, MessageCreateType, MessagePagerType, MessageParams, MessageReference,
-    MessageToCreate, MessageUser, MessagesPager, Reference, Stream,
+    ActionButton, Ark, ArkKv, ArkObj, ArkObjKv, C2CMessageParams, DirectMessage, Embed,
+    GroupMessageParams, InputNotify, Keyboard, KeyboardButton, KeyboardButtonAction,
+    KeyboardButtonPermission, KeyboardButtonRenderData, KeyboardContent, KeyboardModal,
+    KeyboardRow, KeyboardStyle, KeyboardSubscribeData, KeyboardTemplateId, MarkdownParam,
+    MarkdownPayload, MarkdownStyle, Media, MediaInfo, Message, MessageAttachment, MessageAudit,
+    MessageCreateType, MessagePagerType, MessageParams, MessageReference, MessageToCreate,
+    MessageUser, MessagesPager, Reference, Stream,
 };
 
 #[test]
@@ -394,7 +394,7 @@ fn keyboard_omits_go_zero_values() {
 #[test]
 fn keyboard_keeps_non_zero_values() {
     let action = KeyboardButtonAction {
-        action_type: Some(ACTION_TYPE_SUBSCRIBE),
+        action_type: Some(4),
         click_limit: Some(1),
         data: Some("payload".to_string()),
         enter: true,

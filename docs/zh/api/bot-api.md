@@ -124,9 +124,9 @@ let keyboard = Keyboard {
                     ..Default::default()
                 }),
                 action: Some(KeyboardButtonAction {
-                    action_type: Some(ACTION_TYPE_CALLBACK),
+                    action_type: Some(1),
                     permission: Some(KeyboardButtonPermission {
-                        permission_type: Some(PERMISSION_TYPE_ALL),
+                        permission_type: Some(2),
                         ..Default::default()
                     }),
                     data: Some("ok".into()),
