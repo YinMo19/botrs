@@ -359,5 +359,5 @@ fn member_delete_options_match_query_shape() {
         })
     );
 
-    assert_eq!(normalize_delete_history_msg_days(42), NO_DELETE);
+    assert_eq!(normalize_delete_history_msg_days(42), 0);
 }
