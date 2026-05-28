@@ -19,7 +19,7 @@ pub mod intents;
 pub mod interaction;
 pub mod manage;
 pub mod models;
-pub mod reaction;
+mod reaction;
 pub mod session_manager;
 pub mod signature;
 #[path = "token/mod.rs"]
@@ -34,6 +34,10 @@ pub use error::{BotError, Result};
 pub use intents::Intents;
 pub use models::gateway::Ready;
 pub use models::*;
+pub use reaction::{
+    Emoji as ReactionEmoji, MessageReaction, MessageReactionPager, Reaction, ReactionTarget,
+    ReactionTargetType, ReactionUsers,
+};
 pub use signature::{HEADER_SIGNATURE, HEADER_TIMESTAMP, generate, verify};
 pub use token_impl::{Token, start_access_token_refresh};
 pub use webhook::{dispatch_ack, handle_http_callback, heartbeat_ack, validation_ack};

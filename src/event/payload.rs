@@ -40,10 +40,10 @@ macro_rules! impl_constructed_payload_data {
     };
 }
 
-impl PayloadData for crate::reaction::Reaction {
+impl PayloadData for crate::Reaction {
     fn parse_from_payload(payload: &WSPayload, message: &[u8]) -> crate::Result<Self> {
         let data = parse_data(message)?;
-        Ok(crate::reaction::Reaction::from_message_reaction(
+        Ok(crate::Reaction::from_message_reaction(
             payload_event_id(payload),
             data,
         ))

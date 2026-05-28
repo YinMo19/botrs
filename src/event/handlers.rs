@@ -1,4 +1,5 @@
 use super::payload::PayloadData;
+use crate::MessageReaction;
 use crate::forum::{ForumAuditResult, Post, Reply, Thread};
 use crate::interaction::Interaction;
 use crate::manage::{C2CFriendData, EnterAioEvent, SubscribeMessageStatusData};
@@ -9,7 +10,6 @@ use crate::models::{
     guild::{Guild, Member},
     message::{Message, MessageAudit, MessageDelete},
 };
-use crate::reaction::MessageReaction;
 
 macro_rules! typed_handler {
     ($fn_name:ident, $data:ty) => {

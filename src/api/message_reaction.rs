@@ -1,7 +1,7 @@
 use super::{BotApi, resource};
 use crate::error::Result;
 use crate::models::emoji::EmojiType;
-use crate::reaction::{Emoji as ReactionEmoji, MessageReactionPager, ReactionUsers};
+use crate::{MessageReactionPager, ReactionEmoji, ReactionUsers};
 use std::collections::HashMap;
 use tracing::debug;
 
