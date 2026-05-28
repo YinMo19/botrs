@@ -39,14 +39,21 @@ pub struct BotApi {
 
 mod announces;
 mod api_permissions;
+mod audio;
 mod base;
+mod channel;
+mod channel_permissions;
 mod direct_message;
 mod gateway;
+mod guild;
+mod interaction;
 mod me;
 mod message;
 mod message_reaction;
+mod mute;
 mod pins;
 mod resource;
+mod role;
 mod schedule;
 pub mod session;
 

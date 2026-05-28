@@ -2,12 +2,37 @@ use crate::api_impl::{BotApi, resource};
 use crate::error::Result;
 use crate::models::{
     api::MessageResponse,
-    message::{MessageParams, MessageToCreate},
+    message::{Message, MessageParams, MessageToCreate, MessagesPager, SettingGuideParams},
 };
 use reqwest::Method;
 use tracing::debug;
 
 impl BotApi {
+    /// Fetches a single channel message by ID.
+    pub async fn get_message(&self, channel_id: &str, message_id: &str) -> Result<Message> {
+        debug!("Getting message {} in channel {}", message_id, channel_id);
+        let path = resource::channel_message(channel_id, message_id);
+        let response = self.http.get(self.token(), &path, None::<&()>).await?;
+        decode_message_response(response)
+    }
+
+    /// Lists channel messages using the provided pager.
+    pub async fn list_messages(
+        &self,
+        channel_id: &str,
+        pager: &MessagesPager,
+    ) -> Result<Vec<Message>> {
+        debug!("Listing messages in channel {}", channel_id);
+        let path = resource::channel_messages(channel_id);
+        let query = pager.to_query_params();
+        let response = if query.is_empty() {
+            self.http.get(self.token(), &path, None::<&()>).await?
+        } else {
+            self.http.get(self.token(), &path, Some(&query)).await?
+        };
+        Self::decode_json(response)
+    }
+
     /// Sends a message to a channel using MessageParams.
     pub async fn send_message(
         &self,
@@ -20,6 +45,39 @@ impl BotApi {
         self.request_message_response_body(Method::POST, &path, &body)
             .await
     }
+
+    /// Updates a channel message.
+    pub async fn update_message(
+        &self,
+        channel_id: &str,
+        message_id: &str,
+        params: MessageParams,
+    ) -> Result<Message> {
+        debug!("Updating message {} in channel {}", message_id, channel_id);
+        let body = MessageToCreate::from(params);
+        let path = resource::channel_message(channel_id, message_id);
+        self.request_json(Method::PATCH, &path, None::<&()>, Some(&body))
+            .await
+    }
+
+    /// Sends a channel setting guide message.
+    pub async fn send_setting_guide(
+        &self,
+        channel_id: &str,
+        params: SettingGuideParams,
+    ) -> Result<Message> {
+        debug!("Sending setting guide to channel {}", channel_id);
+        let path = resource::channel_setting_guide(channel_id);
+        self.request_json(Method::POST, &path, None::<&()>, Some(&params))
+            .await
+    }
+}
+
+fn decode_message_response(response: serde_json::Value) -> Result<Message> {
+    if let Some(message) = response.get("message") {
+        return BotApi::decode_json(message.clone());
+    }
+    BotApi::decode_json(response)
 }
 
 #[cfg(test)]
@@ -40,6 +98,19 @@ mod tests {
     }
 
     async fn spawn_capture_server() -> (
+        String,
+        oneshot::Receiver<String>,
+        tokio::task::JoinHandle<()>,
+    ) {
+        spawn_capture_server_with_body(
+            r#"{"id":"message-1","timestamp":"2026-01-01T00:00:00+08:00"}"#,
+        )
+        .await
+    }
+
+    async fn spawn_capture_server_with_body(
+        body: &'static str,
+    ) -> (
         String,
         oneshot::Receiver<String>,
         tokio::task::JoinHandle<()>,
@@ -92,7 +163,6 @@ mod tests {
             let request = String::from_utf8_lossy(&request_bytes).to_string();
             let _ = tx.send(request);
 
-            let body = r#"{"id":"message-1","timestamp":"2026-01-01T00:00:00+08:00"}"#;
             let response = format!(
                 "HTTP/1.1 200 OK\r\ncontent-type: application/json\r\ncontent-length: {}\r\nconnection: close\r\n\r\n{}",
                 body.len(),
@@ -128,6 +198,78 @@ mod tests {
             request_body(&request),
             serde_json::json!({
                 "content": "hello"
+            })
+        );
+        server.await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn list_messages_uses_pager_query() {
+        let (base_url, request, server) =
+            spawn_capture_server_with_body(r#"[{"id":"message-1"}]"#).await;
+        let api = test_api(base_url).await;
+        let messages = api
+            .list_messages("channel-1", &MessagesPager::before("message-0", 3))
+            .await
+            .unwrap();
+
+        assert_eq!(messages[0].id.as_deref(), Some("message-1"));
+        let request = request.await.unwrap();
+        assert!(request.starts_with("GET /channels/channel-1/messages?"));
+        assert!(request.contains("before=message-0"));
+        assert!(request.contains("limit=3"));
+        server.await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn get_message_accepts_wrapped_message_response() {
+        let (base_url, request, server) =
+            spawn_capture_server_with_body(r#"{"message":{"id":"message-1"}}"#).await;
+        let api = test_api(base_url).await;
+        let message = api.get_message("channel-1", "message-1").await.unwrap();
+
+        assert_eq!(message.id.as_deref(), Some("message-1"));
+        let request = request.await.unwrap();
+        assert!(request.starts_with("GET /channels/channel-1/messages/message-1 HTTP/1.1"));
+        server.await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn update_message_sends_patch_body() {
+        let (base_url, request, server) = spawn_capture_server().await;
+        let api = test_api(base_url).await;
+        api.update_message("channel-1", "message-1", MessageParams::new_text("updated"))
+            .await
+            .unwrap();
+
+        let request = request.await.unwrap();
+        assert!(request.starts_with("PATCH /channels/channel-1/messages/message-1 HTTP/1.1"));
+        assert_eq!(
+            request_body(&request),
+            serde_json::json!({
+                "content": "updated"
+            })
+        );
+        server.await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn send_setting_guide_mentions_users() {
+        let (base_url, request, server) = spawn_capture_server().await;
+        let api = test_api(base_url).await;
+        api.send_setting_guide(
+            "channel-1",
+            SettingGuideParams::for_users(["user-1", "user-2"]),
+        )
+        .await
+        .unwrap();
+
+        let request = request.await.unwrap();
+        assert!(request.starts_with("POST /channels/channel-1/settingguide HTTP/1.1"));
+        assert_eq!(
+            request_body(&request),
+            serde_json::json!({
+                "content": "<@user-1><@user-2>"
             })
         );
         server.await.unwrap();

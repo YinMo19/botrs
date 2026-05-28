@@ -2,7 +2,7 @@ use crate::api_impl::{BotApi, resource};
 use crate::error::Result;
 use crate::models::{
     api::MessageResponse,
-    message::{DirectMessageParams, MessageToCreate},
+    message::{DirectMessageParams, Message, MessageToCreate, SettingGuideParams},
 };
 use reqwest::Method;
 use tracing::debug;
@@ -18,6 +18,38 @@ impl BotApi {
         let body = MessageToCreate::from(params);
         let path = resource::dms_messages(guild_id);
         self.request_message_response_body(Method::POST, &path, &body)
+            .await
+    }
+
+    /// Recalls a direct message by its DM guild/session ID.
+    pub async fn recall_direct_message(
+        &self,
+        guild_id: &str,
+        message_id: &str,
+        hidetip: Option<bool>,
+    ) -> Result<()> {
+        debug!(
+            "Recalling direct message {} in DM session {}",
+            message_id, guild_id
+        );
+        let params = hidetip.and_then(Self::hide_tip_query);
+        let path = resource::dms_message(guild_id, message_id);
+        self.http
+            .delete(self.token(), &path, params.as_ref())
+            .await?;
+        Ok(())
+    }
+
+    /// Sends a direct-message setting guide.
+    pub async fn send_direct_setting_guide(
+        &self,
+        guild_id: &str,
+        jump_guild_id: &str,
+    ) -> Result<Message> {
+        debug!("Sending direct setting guide in DM session {}", guild_id);
+        let params = SettingGuideParams::for_guild(jump_guild_id);
+        let path = resource::dms_setting_guide(guild_id);
+        self.request_json(Method::POST, &path, None::<&()>, Some(&params))
             .await
     }
 }

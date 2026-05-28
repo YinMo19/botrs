@@ -2,7 +2,10 @@ use crate::models::serde_helpers::option_is_none_or_default;
 use serde::{Deserialize, Serialize};
 
 use super::{MediaInfo, MessageCreateType, option_message_type_is_none_or_zero};
-use crate::models::message::{Ark, Embed, Keyboard, MarkdownPayload, Reference};
+use crate::models::message::{
+    ActionButton, Ark, Embed, InputNotify, Keyboard, MarkdownPayload, PromptKeyboard, Reference,
+    Stream,
+};
 
 /// Channel/direct message create payload.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
@@ -43,4 +46,22 @@ pub(crate) struct MessageToCreate {
     /// Rich media info
     #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) media: Option<MediaInfo>,
+    /// Subscribe message template ID.
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
+    pub(crate) subscribe_id: Option<String>,
+    /// Input notification payload.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) input_notify: Option<InputNotify>,
+    /// Prompt keyboard payload.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) prompt_keyboard: Option<PromptKeyboard>,
+    /// Message action button payload.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) action_button: Option<ActionButton>,
+    /// Streaming message metadata.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) stream: Option<Stream>,
+    /// Feature ID controlling message send behavior.
+    #[serde(skip_serializing_if = "option_is_none_or_default")]
+    pub(crate) feature_id: Option<u32>,
 }

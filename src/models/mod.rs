@@ -10,11 +10,7 @@
 
 pub mod announce;
 pub mod api;
-pub mod audio {
-    //! Audio gateway event payloads.
-
-    pub use crate::audio::{Audio, PublicAudio, PublicAudioType};
-}
+pub mod audio;
 pub mod channel;
 pub mod emoji;
 pub mod forum {
@@ -26,13 +22,7 @@ pub mod forum {
 }
 pub mod gateway;
 pub mod guild;
-pub mod interaction {
-    //! Interaction gateway event payloads.
-
-    pub use crate::interaction::{
-        Interaction, InteractionData, InteractionDataType, InteractionType, Resolved,
-    };
-}
+pub mod interaction;
 pub mod manage {
     //! C2C, group, subscription, and AIO management event payloads.
 
@@ -42,6 +32,7 @@ pub mod manage {
     };
 }
 pub mod message;
+pub mod mute;
 pub mod permission;
 pub mod reaction {
     //! Message reaction gateway event and API payloads.
@@ -50,6 +41,7 @@ pub mod reaction {
         MessageReaction, Reaction, ReactionTarget, ReactionTargetType, ReactionUsers,
     };
 }
+pub mod role;
 pub mod schedule;
 pub(crate) mod serde_helpers;
 pub mod user;
@@ -64,36 +56,47 @@ pub mod prelude {
         ApiError, AudioAction, BotInfo, GatewayResponse, MessageResponse, PinsMessage, RateLimit,
         SessionStartLimit, ShardConfig,
     };
-    pub use super::audio::{Audio, PublicAudio, PublicAudioType};
+    pub use super::audio::{Audio, AudioControl, AudioStatus, PublicAudio, PublicAudioType};
     pub use super::channel::{Channel, ChannelSubType, ChannelType, PrivateType, SpeakPermission};
     pub use super::emoji::{Emoji, EmojiType};
     pub use super::forum::{
         ForumAuditResult, OpenThread, Post, PostInfo, Reply, ReplyInfo, Thread, ThreadInfo,
     };
     pub use super::gateway::{GatewayEvent, Hello, Identify, IdentifyProperties, Ready, Resume};
-    pub use super::guild::{Guild, Member, Member as GuildMember};
+    pub use super::guild::{
+        DeleteHistoryMsgDays, Guild, GuildMembersPager, GuildPager, GuildRoleMembers,
+        GuildRoleMembersPager, Member, Member as GuildMember, MemberDeleteOptions, MessageSetting,
+    };
     pub use super::interaction::{
         Interaction, InteractionData, InteractionDataType, InteractionType, Resolved,
+        SearchActionType, SearchLayout, SearchLayoutType, SearchRecord, SearchResponse,
     };
     pub use super::manage::{
         C2CFriendData, C2CManageEvent, EnterAioEvent, GroupManageEvent, SubscribeMessageStatusData,
         SubscribeMsgTemplateResult,
     };
     pub use super::message::{
-        Ark, ArkKv, ArkObj, ArkObjKv, C2CMessage, C2CMessageParams, C2CMessageUser, DirectMessage,
-        DirectMessageParams, DirectMessageToCreate, Embed, EmbedField, EmbedThumbnail,
-        GroupMessage, GroupMessageParams, GroupMessageUser, Keyboard, KeyboardButton,
-        KeyboardButtonAction, KeyboardButtonPermission, KeyboardButtonRenderData, KeyboardContent,
-        KeyboardModal, KeyboardPayload, KeyboardRow, KeyboardStyle, KeyboardSubscribeData,
-        KeyboardTemplateId, MarkdownParam, MarkdownPayload, MarkdownStyle, Media, Message,
-        MessageAttachment, MessageAudit, MessageCreateType, MessageDelete, MessageMember,
-        MessageParams, MessageReference, MessageScene, MessageUser, Reference,
+        ActionButton, Ark, ArkKv, ArkObj, ArkObjKv, C2CMessage, C2CMessageParams, C2CMessageUser,
+        DirectMessage, DirectMessageParams, DirectMessageToCreate, Embed, EmbedField,
+        EmbedThumbnail, GroupMessage, GroupMessageParams, GroupMessageUser, InputNotify, Keyboard,
+        KeyboardButton, KeyboardButtonAction, KeyboardButtonPermission, KeyboardButtonRenderData,
+        KeyboardContent, KeyboardModal, KeyboardPayload, KeyboardRow, KeyboardStyle,
+        KeyboardSubscribeData, KeyboardTemplateId, MarkdownParam, MarkdownPayload, MarkdownStyle,
+        Media, Message, MessageAttachment, MessageAudit, MessageCreateType, MessageDelete,
+        MessageMember, MessagePagerType, MessageParams, MessageReference, MessageScene,
+        MessageUser, MessagesPager, PromptKeyboard, Reference, SettingGuide, SettingGuideParams,
+        Stream,
     };
+    pub use super::mute::{GuildMute, GuildMuteResponse};
     pub use super::permission::{
         APIPermission, APIPermissionDemand, APIPermissionDemandIdentify, APIPermissions,
+        ChannelPermissions, ChannelRolePermissions, UpdateChannelPermissions,
     };
     pub use super::reaction::{
         MessageReaction, Reaction, ReactionTarget, ReactionTargetType, ReactionUsers,
+    };
+    pub use super::role::{
+        DEFAULT_ROLE_COLOR, GuildRoles, MemberRoleParams, Role, UpdateRoleFilter, UpdateRoleResult,
     };
     pub use super::schedule::{RemindType, Schedule, ScheduleWrapper};
     pub use super::user::{Member as UserMember, User};
