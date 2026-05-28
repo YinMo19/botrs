@@ -42,8 +42,6 @@ tracing = "0.1"
 # Utilities
 chrono = { version = "0.4", features = ["serde"] }
 async-trait = "0.1"
-ed25519-dalek = "2"
-hex = "0.4"
 
 # Optional features for examples
 toml = { version = "0.8", optional = true }

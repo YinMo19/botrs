@@ -2,42 +2,12 @@ use crate::api_impl::{BotApi, resource};
 use crate::error::Result;
 use crate::models::{
     api::MessageResponse,
-    message::{Message, MessageParams, MessageToCreate, MessagesPager},
+    message::{MessageParams, MessageToCreate},
 };
 use reqwest::Method;
 use tracing::debug;
 
 impl BotApi {
-    /// Gets a specific message.
-    pub async fn get_message(&self, channel_id: &str, message_id: &str) -> Result<Message> {
-        debug!("Getting message {} in channel {}", message_id, channel_id);
-        let path = resource::channel_message(channel_id, message_id);
-        let response = self.http.get(self.token(), &path, None::<&()>).await?;
-        Self::parse_message_response(response)
-    }
-
-    /// Gets channel messages using paginated requests.
-    pub async fn get_messages(
-        &self,
-        channel_id: &str,
-        pager: &MessagesPager,
-    ) -> Result<Vec<Message>> {
-        debug!("Getting messages in channel {}", channel_id);
-        let params = pager.query_params();
-        let path = resource::channel_messages(channel_id);
-        self.request_json(
-            Method::GET,
-            &path,
-            if params.is_empty() {
-                None
-            } else {
-                Some(&params)
-            },
-            None::<&()>,
-        )
-        .await
-    }
-
     /// Sends a message to a channel using MessageParams.
     pub async fn send_message(
         &self,
@@ -48,20 +18,6 @@ impl BotApi {
         let body = MessageToCreate::from(params);
         let path = resource::channel_messages(channel_id);
         self.request_message_response_body(Method::POST, &path, &body)
-            .await
-    }
-
-    /// Edits a channel message using MessageParams.
-    pub async fn edit_message(
-        &self,
-        channel_id: &str,
-        message_id: &str,
-        params: MessageParams,
-    ) -> Result<MessageResponse> {
-        debug!("Editing message {} in channel {}", message_id, channel_id);
-        let body = MessageToCreate::from(params);
-        let path = resource::channel_message(channel_id, message_id);
-        self.request_message_response_body(Method::PATCH, &path, &body)
             .await
     }
 }

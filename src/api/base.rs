@@ -24,7 +24,6 @@ impl BotApi {
         let app_id = token.app_id().to_string();
         Self {
             http: http.with_union_app_id(&app_id),
-            app_id,
             token,
         }
     }

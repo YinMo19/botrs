@@ -66,21 +66,6 @@ impl HttpClient {
         self.request(Method::PUT, token, path, query, body).await
     }
 
-    pub(crate) async fn put_raw_with_headers<Q>(
-        &self,
-        token: &Token,
-        path: &str,
-        query: Option<&Q>,
-        body: impl Into<String>,
-        headers: HeaderMap,
-    ) -> Result<serde_json::Value>
-    where
-        Q: Serialize + ?Sized,
-    {
-        self.request_raw_with_headers(Method::PUT, token, path, query, body, headers)
-            .await
-    }
-
     pub(crate) async fn delete<Q>(
         &self,
         token: &Token,
@@ -92,20 +77,6 @@ impl HttpClient {
     {
         self.request(Method::DELETE, token, path, query, None::<&()>)
             .await
-    }
-
-    pub(crate) async fn delete_with_body<Q, B>(
-        &self,
-        token: &Token,
-        path: &str,
-        query: Option<&Q>,
-        body: Option<&B>,
-    ) -> Result<serde_json::Value>
-    where
-        Q: Serialize + ?Sized,
-        B: Serialize + ?Sized,
-    {
-        self.request(Method::DELETE, token, path, query, body).await
     }
 
     pub(crate) async fn patch<Q, B>(
@@ -188,39 +159,6 @@ impl HttpClient {
         }
 
         let response = request.send().await.map_err(BotError::Http)?;
-
-        self.handle_response(response).await
-    }
-
-    pub(crate) async fn request_raw_with_headers<Q>(
-        &self,
-        method: Method,
-        token: &Token,
-        path: &str,
-        query: Option<&Q>,
-        body: impl Into<String>,
-        headers: HeaderMap,
-    ) -> Result<serde_json::Value>
-    where
-        Q: Serialize + ?Sized,
-    {
-        let url = format!("{}{}", self.base_url, path);
-        debug!("Making {} request to: {}", method, url);
-
-        let mut headers = self.authorized_headers(token, headers).await?;
-        headers.insert("Content-Type", "application/json".parse().unwrap());
-
-        let mut request = self.client.request(method.clone(), &url).headers(headers);
-
-        if let Some(q) = query {
-            request = request.query(q);
-        }
-
-        let response = request
-            .body(body.into())
-            .send()
-            .await
-            .map_err(BotError::Http)?;
 
         self.handle_response(response).await
     }

@@ -51,18 +51,6 @@ async fn cloned_tokens_share_cached_access_token() {
 }
 
 #[test]
-fn refresh_millis_matches_expected_bounds() {
-    assert_eq!(get_refresh_millis(8), 8_000);
-    assert_eq!(get_refresh_millis(9), 0);
-
-    let refresh_millis = get_refresh_millis(10);
-    assert!((501..=1_000).contains(&refresh_millis));
-
-    let refresh_millis = get_refresh_millis(7200);
-    assert!((7_190_501..=7_191_000).contains(&refresh_millis));
-}
-
-#[test]
 fn parse_expires_in_accepts_number_or_string() {
     assert_eq!(parse_expires_in(&serde_json::json!("7200")), Some(7200));
     assert_eq!(parse_expires_in(&serde_json::json!(7200)), Some(7200));

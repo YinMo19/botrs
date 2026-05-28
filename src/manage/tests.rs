@@ -1,31 +1,6 @@
 use super::*;
 
 #[test]
-fn test_manage_event_type_from_str() {
-    assert_eq!(
-        "group_add_robot".parse::<ManageEventType>(),
-        Ok(ManageEventType::GroupAddRobot)
-    );
-    assert_eq!(
-        "friend_add".parse::<ManageEventType>(),
-        Ok(ManageEventType::FriendAdd)
-    );
-    assert_eq!("invalid".parse::<ManageEventType>(), Err(()));
-}
-
-#[test]
-fn manage_event_type_serializes_as_event_name() {
-    assert_eq!(
-        serde_json::to_value(ManageEventType::GroupMsgReceive).unwrap(),
-        serde_json::json!("group_msg_receive")
-    );
-    assert_eq!(
-        serde_json::from_value::<ManageEventType>(serde_json::json!("c2c_msg_reject")).unwrap(),
-        ManageEventType::C2CMsgReject
-    );
-}
-
-#[test]
 fn enter_aio_uses_zero_value_omitempty_shape() {
     let event = EnterAioEvent::new(
         Some("event-1".to_string()),

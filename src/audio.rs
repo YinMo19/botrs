@@ -1,51 +1,9 @@
 //! Audio-related functionality for QQ Bot
 //!
-//! This module provides structures and implementations for handling audio events,
-//! audio controls, and live audio channel interactions.
+//! This module provides structures for gateway audio events.
 
 use crate::models::api::AudioAction;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
-
-/// Audio status enumeration
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
-#[repr(u32)]
-pub enum AudioStatus {
-    /// Start audio playback
-    #[default]
-    Start = 0,
-    /// Pause audio playback
-    Pause = 1,
-    /// Resume audio playback
-    Resume = 2,
-    /// Stop audio playback
-    Stop = 3,
-}
-
-impl Serialize for AudioStatus {
-    fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_u32(*self as u32)
-    }
-}
-
-impl<'de> Deserialize<'de> for AudioStatus {
-    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        match u32::deserialize(deserializer)? {
-            0 => Ok(Self::Start),
-            1 => Ok(Self::Pause),
-            2 => Ok(Self::Resume),
-            3 => Ok(Self::Stop),
-            value => Err(serde::de::Error::custom(format!(
-                "invalid audio status {value}"
-            ))),
-        }
-    }
-}
 
 /// Public audio channel type
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -80,20 +38,6 @@ impl<'de> Deserialize<'de> for PublicAudioType {
     {
         Ok(Self::from(u8::deserialize(deserializer)?))
     }
-}
-
-/// Audio control structure for managing audio playback
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
-pub struct AudioControl {
-    /// URL of the audio file
-    #[serde(default)]
-    pub audio_url: String,
-    /// Text description of the audio
-    #[serde(default)]
-    pub text: String,
-    /// Current audio status
-    #[serde(default)]
-    pub status: AudioStatus,
 }
 
 /// Audio event data structure
@@ -170,45 +114,6 @@ impl PublicAudio {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn test_audio_status() {
-        assert_eq!(AudioStatus::Start as u32, 0);
-        assert_eq!(AudioStatus::Pause as u32, 1);
-        assert_eq!(AudioStatus::Resume as u32, 2);
-        assert_eq!(AudioStatus::Stop as u32, 3);
-    }
-
-    #[test]
-    fn audio_status_uses_numeric_json() {
-        assert_eq!(
-            serde_json::to_value(AudioStatus::Start).unwrap(),
-            serde_json::json!(0)
-        );
-        assert_eq!(
-            serde_json::to_value(AudioStatus::Pause).unwrap(),
-            serde_json::json!(1)
-        );
-        assert_eq!(
-            serde_json::from_value::<AudioStatus>(serde_json::json!(3)).unwrap(),
-            AudioStatus::Stop
-        );
-        assert!(serde_json::from_value::<AudioStatus>(serde_json::json!(4)).is_err());
-    }
-
-    #[test]
-    fn audio_control_uses_json_shape() {
-        let control = AudioControl {
-            audio_url: "https://example.com/audio.mp3".to_string(),
-            text: "now playing".to_string(),
-            status: AudioStatus::Start,
-        };
-        let value = serde_json::to_value(&control).unwrap();
-
-        assert_eq!(value["audio_url"], "https://example.com/audio.mp3");
-        assert_eq!(value["text"], "now playing");
-        assert_eq!(value["status"], 0);
-    }
 
     #[test]
     fn test_public_audio_type() {

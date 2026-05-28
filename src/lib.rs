@@ -11,36 +11,40 @@ mod audio;
 pub mod client;
 mod constant;
 pub mod error;
-mod event;
 pub mod forum;
-pub mod gateway;
+mod gateway;
 pub mod http;
 pub mod intents;
 pub mod interaction;
 pub mod manage;
 pub mod models;
 mod reaction;
-pub mod session_manager;
-pub mod signature;
+mod session_manager;
 #[path = "token/mod.rs"]
 mod token_impl;
-pub mod webhook;
 
 // Re-export main types for convenience
 pub use api_impl::BotApi;
-pub use audio::{Audio, AudioControl, AudioStatus, PublicAudio, PublicAudioType};
+pub use audio::{Audio, PublicAudio, PublicAudioType};
 pub use client::{Client, Context, EventHandler};
 pub use error::{BotError, Result};
 pub use intents::Intents;
-pub use models::gateway::Ready;
-pub use models::*;
+pub use models::api::{BotInfo, MessageResponse};
+pub use models::channel::Channel;
+pub use models::gateway::{GatewayEvent, Ready};
+pub use models::guild::{Guild, GuildRole, Member};
+pub use models::message::{
+    C2CMessage, DirectMessage, DirectMessageToCreate, GroupMessage, Message, MessageDelete,
+    MessageParams,
+};
+pub use models::robot::Robot;
+pub use models::schedule::Schedule;
+pub use models::user::User;
 pub use reaction::{
     Emoji as ReactionEmoji, MessageReaction, MessageReactionPager, Reaction, ReactionTarget,
     ReactionTargetType, ReactionUsers,
 };
-pub use signature::{HEADER_SIGNATURE, HEADER_TIMESTAMP, generate, verify};
-pub use token_impl::{Token, start_access_token_refresh};
-pub use webhook::{dispatch_ack, handle_http_callback, heartbeat_ack, validation_ack};
+pub use token_impl::Token;
 
 /// The current version of the library
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");

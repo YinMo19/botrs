@@ -1,40 +1,5 @@
-use crate::models::{Snowflake, Timestamp, channel::Channel};
+use crate::models::{Snowflake, Timestamp};
 use serde::{Deserialize, Serialize};
-
-/// Response returned by the guild role members endpoint.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
-pub struct GuildRoleMembers {
-    /// Role members in the current page
-    #[serde(default)]
-    pub data: Vec<Member>,
-    /// Cursor for the next page
-    #[serde(default)]
-    pub next: String,
-}
-
-/// Body used when adding or deleting a member role.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
-pub struct MemberAddRoleBody {
-    /// Channel object for channel administrator roles.
-    pub channel: Option<Channel>,
-}
-
-/// Additional options for deleting a guild member.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
-pub struct MemberDeleteOptions {
-    /// Whether to add the member to the guild blacklist
-    pub add_blacklist: bool,
-    /// How many days of history to retract
-    pub delete_history_msg_days: i32,
-}
-
-/// Normalizes history deletion days to the official supported values.
-pub fn normalize_delete_history_msg_days(days: i32) -> i32 {
-    match days {
-        3 | 7 | 15 | 30 | -1 => days,
-        _ => 0,
-    }
-}
 
 /// Represents a member of a guild.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]

@@ -1,9 +1,6 @@
 use super::{BotApi, resource};
 use crate::error::Result;
-use crate::models::{
-    api::BotInfo,
-    guild::{Guild, GuildPager},
-};
+use crate::models::api::BotInfo;
 use tracing::debug;
 
 impl BotApi {
@@ -13,47 +10,6 @@ impl BotApi {
         let response = self
             .http
             .get(self.token(), resource::USER_ME, None::<&()>)
-            .await?;
-        Self::decode_json(response)
-    }
-
-    /// Lists guilds visible to the current bot using inline pagination parameters.
-    pub async fn get_guilds(
-        &self,
-        guild_id: Option<&str>,
-        limit: Option<u32>,
-        desc: Option<bool>,
-    ) -> Result<Vec<Guild>> {
-        let (before, after) = match (guild_id, desc.unwrap_or(false)) {
-            (Some(guild_id), true) => (Some(guild_id.to_string()), None),
-            (Some(guild_id), false) => (None, Some(guild_id.to_string())),
-            (None, _) => (None, None),
-        };
-        let pager = GuildPager {
-            before,
-            after,
-            limit: Some(limit.unwrap_or(100).to_string()),
-        };
-        self.get_guilds_with_pager(&pager).await
-    }
-
-    /// Lists guilds visible to the current bot using a pre-built pager.
-    pub async fn get_guilds_with_pager(&self, pager: &GuildPager) -> Result<Vec<Guild>> {
-        debug!("Getting guilds");
-
-        let params = pager.query_params();
-
-        let response = self
-            .http
-            .get(
-                self.token(),
-                resource::USER_ME_GUILDS,
-                if params.is_empty() {
-                    None
-                } else {
-                    Some(&params)
-                },
-            )
             .await?;
         Self::decode_json(response)
     }
@@ -74,14 +30,6 @@ mod tests {
         let mut http = crate::http::HttpClient::new(30, false).unwrap();
         http.base_url = base_url;
         BotApi::new(http, token)
-    }
-
-    async fn spawn_capture_server() -> (
-        String,
-        oneshot::Receiver<String>,
-        tokio::task::JoinHandle<()>,
-    ) {
-        spawn_capture_server_with_body(r#"[{"id":"guild-1","name":"Guild One"}]"#).await
     }
 
     async fn spawn_capture_server_with_body(
@@ -137,37 +85,6 @@ mod tests {
         assert_eq!(bot.share_url, "https://example.test/share");
         let request = request.await.unwrap();
         assert!(request.starts_with("GET /users/@me HTTP/1.1"));
-        server.await.unwrap();
-    }
-
-    #[tokio::test]
-    async fn get_guilds_uses_default_limit() {
-        let (base_url, request, server) = spawn_capture_server().await;
-        let api = test_api(base_url).await;
-        let guilds = api.get_guilds(None, None, None).await.unwrap();
-
-        assert_eq!(guilds[0].id, "guild-1");
-        let request = request.await.unwrap();
-        assert!(request.starts_with("GET /users/@me/guilds?limit=100 HTTP/1.1"));
-        server.await.unwrap();
-    }
-
-    #[tokio::test]
-    async fn get_guilds_uses_desc_cursor() {
-        let (base_url, request, server) = spawn_capture_server().await;
-        let api = test_api(base_url).await;
-        let guilds = api
-            .get_guilds(Some("guild-cursor-1"), Some(20), Some(true))
-            .await
-            .unwrap();
-
-        assert_eq!(guilds[0].id, "guild-1");
-        let request = request.await.unwrap();
-        assert!(
-            request.starts_with("GET /users/@me/guilds?limit=20&before=guild-cursor-1 HTTP/1.1")
-                || request
-                    .starts_with("GET /users/@me/guilds?before=guild-cursor-1&limit=20 HTTP/1.1")
-        );
         server.await.unwrap();
     }
 }

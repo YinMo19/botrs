@@ -70,13 +70,11 @@
 
 mod content;
 mod event;
-mod pager;
 mod params;
 mod payload;
 
 pub use content::*;
 pub use event::*;
-pub use pager::*;
 pub use params::*;
 pub use payload::*;
 

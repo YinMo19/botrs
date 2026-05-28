@@ -5,14 +5,14 @@
 
 mod core;
 mod display;
-mod refresh;
 
 pub use core::Token;
-pub use refresh::start_access_token_refresh;
 
-#[cfg(test)]
-use refresh::get_refresh_millis;
-use refresh::parse_expires_in;
+pub(super) fn parse_expires_in(value: &serde_json::Value) -> Option<u64> {
+    value
+        .as_u64()
+        .or_else(|| value.as_str().and_then(|value| value.parse().ok()))
+}
 
 #[cfg(test)]
 mod tests;

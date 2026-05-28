@@ -4,15 +4,11 @@
 
 mod member;
 mod model;
-mod mute;
-mod pager;
 mod role;
 
-pub use member::*;
-pub use model::*;
-pub use mute::*;
-pub use pager::*;
-pub use role::*;
+pub use member::Member;
+pub use model::Guild;
+pub use role::GuildRole;
 
 #[cfg(test)]
 mod tests;

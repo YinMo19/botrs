@@ -48,8 +48,6 @@ pub struct Gateway {
     pub(super) last_heartbeat_ack: Arc<AtomicU64>,
     /// Heartbeat sent time for ACK tracking
     pub(super) last_heartbeat_sent: Arc<AtomicU64>,
-    /// Fixed interval between reconnect attempts, derived from gateway session limits
-    pub(super) reconnect_interval: Duration,
 }
 
 impl Gateway {
@@ -89,22 +87,7 @@ impl Gateway {
             heartbeat_count: Arc::new(AtomicU64::new(0)),
             last_heartbeat_ack: Arc::new(AtomicU64::new(0)),
             last_heartbeat_sent: Arc::new(AtomicU64::new(0)),
-            reconnect_interval: Duration::from_secs(SESSION_START_LIMIT_WINDOW_SECS),
         }
-    }
-
-    /// Configures the fixed reconnect interval used after a connection exits.
-    ///
-    /// Official SDKs throttle new websocket starts with a session-manager interval
-    /// rather than a long-lived exponential backoff. A zero duration is normalized
-    /// to one second to avoid tight reconnect loops.
-    pub fn with_reconnect_interval(mut self, reconnect_interval: Duration) -> Self {
-        self.reconnect_interval = if reconnect_interval.is_zero() {
-            Duration::from_secs(1)
-        } else {
-            reconnect_interval
-        };
-        self
     }
 
     pub(crate) fn with_resume_state(

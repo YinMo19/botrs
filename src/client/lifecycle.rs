@@ -110,16 +110,16 @@ impl<H: EventHandler + 'static> Client<H> {
         // Set up event channel
         let (event_sender, mut event_receiver) = mpsc::unbounded_channel();
 
-        let reconnect_interval =
+        let start_interval =
             Gateway::session_start_interval(gateway_info.session_start_limit.max_concurrency);
         debug!(
-            "Gateway reconnect interval: {:?} (max_concurrency: {})",
-            reconnect_interval, gateway_info.session_start_limit.max_concurrency
+            "Gateway session start interval: {:?} (max_concurrency: {})",
+            start_interval, gateway_info.session_start_limit.max_concurrency
         );
 
         info!(
             "Starting {} gateway shard(s) with interval {:?}",
-            gateway_info.shards, reconnect_interval
+            gateway_info.shards, start_interval
         );
         let mut session_manager = new_session_manager();
         tokio::spawn({

@@ -2,32 +2,6 @@ use super::*;
 use crate::intents::Intents;
 
 #[test]
-fn websocket_payload_keeps_session_out_of_json() {
-    let mut payload = WSPayload::from(GatewayEvent {
-        id: Some("event-id".to_string()),
-        event_type: Some(EVENT_MESSAGE_CREATE.to_string()),
-        data: Some(serde_json::json!({"content": "hello"})),
-        sequence: Some(7),
-        opcode: WS_DISPATCH_EVENT,
-    });
-    payload.session = Some(crate::session_manager::Session::new(
-        "wss://example.com",
-        crate::Token::new("app", "secret"),
-        crate::Intents::default(),
-        0,
-        1,
-    ));
-
-    let value = serde_json::to_value(&payload).unwrap();
-
-    assert!(value.get("session").is_none());
-    assert_eq!(value["op"], WS_DISPATCH_EVENT);
-    assert_eq!(value["s"], 7);
-    assert_eq!(value["t"], EVENT_MESSAGE_CREATE);
-    assert_eq!(value["id"], "event-id");
-}
-
-#[test]
 fn gateway_event_omits_absent_wire_fields() {
     let event = GatewayEvent {
         id: None,
@@ -38,12 +12,12 @@ fn gateway_event_omits_absent_wire_fields() {
             "shard": [0, 1],
         })),
         sequence: None,
-        opcode: WS_IDENTIFY,
+        opcode: opcodes::IDENTIFY,
     };
 
     let value = serde_json::to_value(&event).unwrap();
 
-    assert_eq!(value["op"], WS_IDENTIFY);
+    assert_eq!(value["op"], opcodes::IDENTIFY);
     assert!(value.get("d").is_some());
     assert!(value.get("id").is_none());
     assert!(value.get("t").is_none());

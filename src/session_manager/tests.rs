@@ -53,16 +53,6 @@ fn sessions_are_generated_per_shard() {
     assert_eq!(shards, vec![[0, 3], [1, 3], [2, 3]]);
 }
 
-#[test]
-fn app_id_session_matches_webhook_shape() {
-    let session = Session::from_app_id("app-id-1");
-
-    assert_eq!(session.app_id.as_deref(), Some("app-id-1"));
-    assert!(session.id.is_empty());
-    assert_eq!(session.last_seq, 0);
-    assert_eq!(session.shard(), [0, 0]);
-}
-
 #[tokio::test]
 async fn non_resumable_error_clears_session_before_requeue() {
     let (session_tx, mut session_rx) = mpsc::unbounded_channel();

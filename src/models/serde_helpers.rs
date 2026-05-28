@@ -53,21 +53,6 @@ pub(crate) fn is_zero_i32(value: &i32) -> bool {
     *value == 0
 }
 
-/// True when a slice is empty.
-///
-/// Useful for bare `Vec<T>` fields that should be omitted when empty. Prefer
-/// `Vec::is_empty` directly when the call site already imports it.
-pub(crate) fn is_empty_vec<T>(value: &[T]) -> bool {
-    value.is_empty()
-}
-
-/// Predicate for `bool` fields whose `false` value should be omitted.
-///
-/// Equivalent to `std::ops::Not::not` but easier to remember in this context.
-pub(crate) fn is_false(value: &bool) -> bool {
-    !*value
-}
-
 /// Deserialize an `Option<String>` from either a JSON string or number.
 ///
 /// The QQ Bot Open API mixes string IDs and numeric IDs in some payloads

@@ -18,41 +18,6 @@ impl BotApi {
             .await?;
         Ok(())
     }
-
-    /// Recalls a C2C message.
-    pub async fn retract_c2c_message(
-        &self,
-        openid: &str,
-        message_id: &str,
-        hidetip: Option<bool>,
-    ) -> Result<()> {
-        debug!("Retracting C2C message {} for {}", message_id, openid);
-        self.retract_open_message(resource::c2c_message(openid, message_id), hidetip)
-            .await
-    }
-
-    /// Recalls a group message.
-    pub async fn retract_group_message(
-        &self,
-        group_openid: &str,
-        message_id: &str,
-        hidetip: Option<bool>,
-    ) -> Result<()> {
-        debug!(
-            "Retracting group message {} for {}",
-            message_id, group_openid
-        );
-        self.retract_open_message(resource::group_message(group_openid, message_id), hidetip)
-            .await
-    }
-
-    pub async fn retract_open_message(&self, path: String, hidetip: Option<bool>) -> Result<()> {
-        let params = Self::hide_tip_query(hidetip.unwrap_or(false));
-        self.http
-            .delete(self.token(), &path, params.as_ref())
-            .await?;
-        Ok(())
-    }
 }
 
 #[cfg(test)]

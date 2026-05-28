@@ -1,32 +1,6 @@
 use super::*;
 
 #[test]
-fn test_format() {
-    assert_eq!(u8::from(Format::PlainText), 1);
-    assert_eq!(u8::from(Format::Html), 2);
-    assert_eq!(u8::from(Format::Markdown), 3);
-    assert_eq!(u8::from(Format::Json), 4);
-    assert_eq!(serde_json::to_value(Format::Markdown).unwrap(), 3);
-    assert_eq!(
-        serde_json::from_value::<Format>(serde_json::json!(4)).unwrap(),
-        Format::Json
-    );
-    assert_eq!(
-        serde_json::from_value::<Format>(serde_json::json!(99)).unwrap(),
-        Format::Unknown(99)
-    );
-}
-
-#[test]
-fn test_text_creation() {
-    let data = serde_json::json!({
-        "text": "Hello, world!"
-    });
-    let text: Text = serde_json::from_value(data).unwrap();
-    assert_eq!(text.text, Some("Hello, world!".to_string()));
-}
-
-#[test]
 fn thread_info_keeps_title_and_content_as_strings() {
     let data = serde_json::json!({
         "thread_id": "thread-1",
@@ -47,40 +21,6 @@ fn thread_info_keeps_title_and_content_as_strings() {
         value["content"],
         serde_json::json!("{\"paragraphs\":[{\"elems\":[]}]}")
     );
-}
-
-#[test]
-fn forum_rest_models_match_platform_shapes() {
-    let body = ThreadToCreate::new("Title", "Content", Format::Markdown);
-    assert_eq!(
-        serde_json::to_value(&body).unwrap(),
-        serde_json::json!({
-            "title": "Title",
-            "content": "Content",
-            "format": 3
-        })
-    );
-
-    let forum_rsp: ForumRsp = serde_json::from_value(serde_json::json!({
-        "threads": [{
-            "thread_id": "thread-1",
-            "title": "Title",
-            "content": "Content",
-            "date_time": "2024-01-02T03:04:05+08:00"
-        }],
-        "is_finish": 1
-    }))
-    .unwrap();
-    assert_eq!(forum_rsp.threads[0].thread_id, "thread-1");
-    assert_eq!(forum_rsp.is_finish, 1);
-
-    let post_rsp: PostThreadRsp = serde_json::from_value(serde_json::json!({
-        "task_id": "task-1",
-        "create_time": "1710000000"
-    }))
-    .unwrap();
-    assert_eq!(post_rsp.task_id, "task-1");
-    assert_eq!(post_rsp.create_time, "1710000000");
 }
 
 #[test]

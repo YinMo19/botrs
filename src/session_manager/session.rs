@@ -10,7 +10,6 @@ pub struct Session {
     pub intent: Intents,
     pub last_seq: u64,
     pub shards: crate::models::api::ShardConfig,
-    pub app_id: Option<String>,
 }
 
 impl Session {
@@ -31,26 +30,10 @@ impl Session {
                 shard_id,
                 shard_count,
             },
-            app_id: None,
         }
     }
 
     pub fn shard(&self) -> [u32; 2] {
         [self.shards.shard_id, self.shards.shard_count]
-    }
-
-    pub fn from_app_id(app_id: impl Into<String>) -> Self {
-        Self {
-            id: String::new(),
-            url: String::new(),
-            token: Token::new("", ""),
-            intent: Intents::default(),
-            last_seq: 0,
-            shards: crate::models::api::ShardConfig {
-                shard_id: 0,
-                shard_count: 0,
-            },
-            app_id: Some(app_id.into()),
-        }
     }
 }

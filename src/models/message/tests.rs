@@ -4,8 +4,8 @@ use super::{
     KeyboardButtonPermission, KeyboardButtonRenderData, KeyboardContent, KeyboardModal,
     KeyboardRow, KeyboardStyle, KeyboardSubscribeData, KeyboardTemplateId, MarkdownParam,
     MarkdownPayload, MarkdownStyle, Media, MediaInfo, Message, MessageAttachment, MessageAudit,
-    MessageCreateType, MessagePagerType, MessageParams, MessageReference, MessageToCreate,
-    MessageUser, MessagesPager, Reference, Stream,
+    MessageCreateType, MessageParams, MessageReference, MessageToCreate, MessageUser, Reference,
+    Stream,
 };
 
 #[test]
@@ -469,29 +469,6 @@ fn reference_keeps_official_zero_value_shape() {
             "ignore_get_message_error": false
         })
     );
-}
-
-#[test]
-fn messages_pager_query_params() {
-    let pager = MessagesPager {
-        pager_type: Some(MessagePagerType::Before),
-        id: Some("msg-1".to_string()),
-        limit: Some("20".to_string()),
-    };
-    let query = pager.query_params();
-
-    assert_eq!(query.get("before").map(String::as_str), Some("msg-1"));
-    assert_eq!(query.get("limit").map(String::as_str), Some("20"));
-}
-
-#[test]
-fn messages_pager_omits_empty_query_params() {
-    let pager = MessagesPager {
-        pager_type: Some(MessagePagerType::Before),
-        id: Some(String::new()),
-        limit: Some(String::new()),
-    };
-    assert!(pager.query_params().is_empty());
 }
 
 #[test]

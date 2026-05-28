@@ -2,31 +2,6 @@ use crate::models::Snowflake;
 use crate::models::serde_helpers::is_zero_u32;
 use serde::{Deserialize, Serialize};
 
-/// Guild roles response wrapper.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
-pub struct GuildRoles {
-    /// Guild ID
-    #[serde(default)]
-    pub guild_id: Snowflake,
-    /// List of roles in the guild
-    #[serde(default)]
-    pub roles: Vec<GuildRole>,
-    /// Number of roles
-    #[serde(default, rename = "role_num_limit")]
-    pub num_limit: String,
-}
-
-/// Default role color used when creating or updating roles.
-pub const DEFAULT_ROLE_COLOR: u32 = 4_278_245_297;
-
-/// Role update info body.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
-pub struct UpdateRoleInfo {
-    pub name: String,
-    pub color: u32,
-    pub hoist: u32,
-}
-
 /// Represents a role in a guild.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct GuildRole {
@@ -48,62 +23,4 @@ pub struct GuildRole {
     /// The number of online members with this role
     #[serde(default, skip_serializing_if = "is_zero_u32")]
     pub member_limit: u32,
-}
-
-impl GuildRole {
-    fn default_color() -> u32 {
-        DEFAULT_ROLE_COLOR
-    }
-}
-
-/// Filter identifying which role fields are being updated.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub struct UpdateRoleFilter {
-    pub name: u32,
-    pub color: u32,
-    pub hoist: u32,
-}
-
-impl Default for UpdateRoleFilter {
-    fn default() -> Self {
-        Self {
-            name: 1,
-            color: 1,
-            hoist: 1,
-        }
-    }
-}
-
-/// Role update body.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct UpdateRole {
-    pub guild_id: String,
-    pub filter: UpdateRoleFilter,
-    #[serde(rename = "info")]
-    pub update: GuildRole,
-}
-
-impl UpdateRole {
-    /// Creates a role update body with sensible defaults.
-    pub fn new(guild_id: impl Into<String>, mut role: GuildRole) -> Self {
-        if role.color == 0 {
-            role.color = GuildRole::default_color();
-        }
-        Self {
-            guild_id: guild_id.into(),
-            filter: UpdateRoleFilter::default(),
-            update: role,
-        }
-    }
-}
-
-/// Result returned from role create/update APIs.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
-pub struct UpdateResult {
-    #[serde(default)]
-    pub role_id: Snowflake,
-    #[serde(default)]
-    pub guild_id: Snowflake,
-    #[serde(default)]
-    pub role: Option<GuildRole>,
 }

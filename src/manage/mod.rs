@@ -5,13 +5,11 @@
 
 mod aio;
 mod c2c;
-mod event_type;
 mod group;
 mod subscribe;
 
 pub use aio::EnterAioEvent;
 pub use c2c::{C2CFriendData, C2CManageEvent};
-pub use event_type::ManageEventType;
 pub use group::GroupManageEvent;
 pub use subscribe::{SubscribeMessageStatusData, SubscribeMsgTemplateResult};
 

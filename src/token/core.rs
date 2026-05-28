@@ -179,14 +179,6 @@ impl Token {
         Ok(())
     }
 
-    pub(super) async fn force_refresh_access_token(&self) -> Result<()> {
-        let current_time = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .map_err(|_| BotError::internal("Failed to get current time"))?
-            .as_secs();
-        self.refresh_access_token(current_time, true).await
-    }
-
     async fn access_token(&self) -> Result<String> {
         self.ensure_valid_token().await?;
         self.state
@@ -197,6 +189,7 @@ impl Token {
             .ok_or_else(|| BotError::auth("No valid access token available"))
     }
 
+    #[cfg(test)]
     pub(super) async fn cached_expires_in(&self) -> Option<u64> {
         self.state.lock().await.expires_in
     }

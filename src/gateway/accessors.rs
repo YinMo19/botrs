@@ -7,11 +7,6 @@ impl Gateway {
         self.is_ready.load(Ordering::Relaxed)
     }
 
-    /// Returns true if the gateway can reconnect.
-    pub fn can_reconnect(&self) -> bool {
-        self.can_reconnect.load(Ordering::Relaxed)
-    }
-
     /// Gets the current session ID.
     pub fn session_id(&self) -> Option<&str> {
         self.session_id.as_deref()
