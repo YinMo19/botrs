@@ -1,93 +1,49 @@
 # 用户与成员
 
-QQ 频道机器人 API 中的用户和成员数据结构。所有结构体都实现了 `Serialize` + `Deserialize`，并通过 `#[serde(default)]` 容忍缺失字段，便于反序列化部分载荷。
+用户模型只保留会在核心链路里出现的几种形态：bot 自身、READY 事件里的 user、reaction user 列表、消息作者、guild member 事件，以及日程 creator。
 
-## `User`
+## User 与 BotInfo
 
-频道接口返回的标准用户对象。
+`User` 是通用用户结构，包含 id、username、avatar、bot 标记和 union 字段。`Ready::user` 使用这个类型。
 
-```rust
-pub struct User {
-    pub id: Snowflake,
-    pub username: String,
-    pub avatar: String,           // 头像哈希，未设置时为空
-    pub bot: bool,
-    pub union_openid: String,     // 跨应用标识
-    pub union_user_account: String,
-}
-```
+`BotInfo` 是 `/users/@me` 的响应，除了基础用户字段，还保留平台返回的 `share_url` 和 `welcome_msg`。启动后的 `Context::bot_info` 就来自这个接口。
 
-`Snowflake` 是 `String` 的类型别名。构造 UI 链接或消息内容时，直接检查 `avatar` 与 `id` 字段。
+## Member 形态
 
-## `Member`
+当前有两个 member 形态：
 
-频道作用域下的 `User` 包装。
+- `botrs::Member`，也就是 `models::guild::Member`，用于 guild member 网关事件。它有 `guild_id`、`user`、`nick`、`roles`、`joined_at` 和 `op_user_id`。
+- `models::user::Member`，它 flatten 一个 `User`，并带 nick、roles、joined_at、deaf、mute。当前主要用于日程 creator 这类响应数据。
 
-```rust
-pub struct Member {
-    #[serde(flatten)]
-    pub user: User,
-    pub nick: Option<String>,
-    pub roles: Vec<Snowflake>,
-    pub joined_at: Timestamp,
-    pub deaf: bool,
-    pub mute: bool,
-}
-```
+两者不要混用。事件处理器里看到的 `guild_member_add` / `guild_member_update` / `guild_member_remove` 参数是第一种。
 
-`Timestamp` 是 RFC 3339 字符串。需要展示名称或判断角色时，直接检查 `nick`、`user.username` 与 `roles` 字段。
+## 消息作者
 
-> 注：成员相关网关事件使用另一份 `Member` —— 见 [`models::guild::Member`](./guilds-channels.md)，它把 `guild_id` 和 `op_user_id` 单独保留为字段。
+不同消息场景的作者字段并不相同：
 
-## `BotInfo`
+- 频道消息使用 `MessageUser`，字段接近普通 guild user。
+- 群消息使用 `GroupMessageUser`，重点是 `member_openid` 和 `union_openid`。
+- C2C 消息使用 `C2CMessageUser`，重点是 `user_openid`。
+- 频道消息里的 member 信息使用 `MessageMember`，只包含 nick、roles、joined_at。
 
-`/users/@me` 返回的机器人自身信息。
+私信事件使用 `Message`；私信会话使用 `DirectMessage`。
+
+## 使用建议
+
+处理消息时不要假设所有用户字段都存在。平台在不同事件中可能省略用户名、头像或 member 信息，因此 author/member 字段大多是 `Option`。
 
 ```rust
-pub struct BotInfo {
-    pub id: Snowflake,
-    pub username: String,
-    pub avatar: Option<String>,
-    pub bot: bool,
-}
+let is_bot = message
+    .author
+    .as_ref()
+    .and_then(|author| author.bot)
+    .unwrap_or(false);
 ```
 
-`Ready::user` 在 `EventHandler::ready` 回调中暴露这个对象。
-
-## 消息作者类型
-
-不同会话场景下的作者结构略有差异，所有字段均为 `Option`，因为接口可能省略。
-
-| 类型                 | 出现位置                    | 关键字段                                  |
-|----------------------|-----------------------------|-------------------------------------------|
-| `MessageUser`        | 频道消息（`Message`）       | `id`、`username`、`avatar`、`bot`         |
-| `DirectMessageUser`  | 私信                        | `id`、`username`、`avatar`                |
-| `GroupMessageUser`   | 群 `@bot` 消息              | `id`、`member_openid`、`union_openid`     |
-| `C2CMessageUser`     | C2C（私聊）消息             | `id`、`user_openid`                       |
-
-群聊和 C2C 不暴露真实的频道用户 ID，使用 `*_openid` 标识用户。
-
-## 成员相关操作
-
-常用方法挂在 `BotApi` / `Context` 上：
-
-- `get_guild_member(guild_id, user_id)` —— 获取单个成员。
-- `get_guild_members(guild_id, limit, after)` —— 分页列表，下页传上页最后一个 `user.id` 作 `after`。
-- `create_guild_role_member` / `delete_guild_role_member` —— 角色赋予和移除。
-- `delete_member` —— 移除成员，可选拉黑和历史消息删除设置。
-- `mute_member`、`mute_all`、`cancel_mute_all`、`on_microphone`、`off_microphone` —— 语音控制。
-
-每个方法都返回 `Result<T>`，QQ 接口错误会被映射为 `BotError`。
-
-```rust
-let member = ctx.get_guild_member(guild_id, user_id).await?;
-if member.roles.contains(&moderator_role_id) {
-    // 执行管理操作
-}
-```
+群和 C2C 回复时优先使用事件模型中的 openid 字段。
 
 ## 参见
 
-- [消息](./messages.md) —— 消息结构以及消息作者类型在场景中的使用。
-- [频道与子频道](./guilds-channels.md) —— 频道侧的 `Member` 变体和角色数据。
-- [Client API](../client.md) —— `Context` 暴露的用户作用域辅助方法。
+- [消息](./messages.md)
+- [频道与子频道](./guilds-channels.md)
+- [其他类型](./other-types.md)

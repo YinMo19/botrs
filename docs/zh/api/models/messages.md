@@ -1,118 +1,74 @@
 # 消息
 
-QQ 频道机器人 API 中的消息数据结构。框架将网关事件载荷（入站消息）与发送参数对象（出站请求体）分开建模。
+消息模型分成两类：网关推送进来的事件 payload，以及发送消息时使用的参数结构体。当前实现重点保证这两条链路可用：事件能正确解析，handler 能用框架 API 正常回复。
 
-## 入站消息
+## 收到的消息
 
-### `Message`
+频道 `@bot` 消息使用 `Message`，对应 `EventHandler::message_create`。私信事件也使用 `Message`，对应 `direct_message_create`，可通过 `direct_message`、`src_guild_id` 等字段识别私信场景。
 
-频道（包含 @ 提及）消息。
+群聊和 C2C 是独立模型：
+
+- `GroupMessage` 对应 `GROUP_AT_MESSAGE_CREATE`，核心定位字段是 `group_openid`。
+- `C2CMessage` 对应 `C2C_MESSAGE_CREATE`，核心定位字段通常来自 `author.user_openid`。
+
+这些事件模型都保留了平台可能给出的 message id、content、attachments、mentions、timestamp、reference 和内部 `event_id`。如果只是做回复，优先使用模型自带的 `reply` 方法，或者手动构造对应的参数结构体。
 
 ```rust
-pub struct Message {
-    pub id: Option<Snowflake>,
-    pub content: Option<String>,
-    pub channel_id: Option<Snowflake>,
-    pub guild_id: Option<Snowflake>,
-    pub group_id: Option<Snowflake>,
-    pub author: Option<MessageUser>,
-    pub member: Option<MessageMember>,
-    pub message_reference: Option<MessageReference>,
-    pub mentions: Vec<MessageUser>,
-    pub attachments: Vec<MessageAttachment>,
-    pub embeds: Vec<Embed>,
-    pub ark: Option<Ark>,
-    pub direct_message: Option<bool>,
-    pub seq: Option<u64>,
-    pub seq_in_channel: Option<String>,
-    pub timestamp: Option<Timestamp>,
-    pub edited_timestamp: Option<Timestamp>,
-    pub mention_everyone: Option<bool>,
-    pub src_guild_id: Option<Snowflake>,
-    pub file_info: Option<String>,
-    pub ttl: Option<u32>,
-    pub message_scene: Option<MessageScene>,
-    pub event_id: Option<String>,
+if let Some(content) = &message.content {
+    if content.trim() == "/ping" {
+        message.reply(ctx.api(), "pong").await?;
+    }
 }
 ```
 
-字符串字段大量使用 `Option<Snowflake>`，因为 QQ 接口可能在部分载荷中省略它们。`Message` 提供的便捷方法：
+## 发送消息
 
-- `reply(api, token, content)` —— 文本回复，会自动设置 `msg_id` 走被动消息路径。
+发送侧使用四个参数类型：
 
-消息判断可直接检查 `author.bot`、`content`、`attachments`、`mentions` 等字段。
+| 参数类型 | 用途 |
+| --- | --- |
+| `MessageParams` | 频道消息 |
+| `DirectMessageParams` | 私信会话消息 |
+| `GroupMessageParams` | 群聊消息 |
+| `C2CMessageParams` | C2C 消息 |
 
-### `GroupMessage` 与 `C2CMessage`
-
-群消息（群 `@bot`）和 C2C（私聊）消息结构相似，都使用 OpenID 标识用户：
-
-```rust
-pub struct GroupMessage {
-    pub id: Option<Snowflake>,
-    pub content: Option<String>,
-    pub message_reference: Option<MessageReference>,
-    pub mentions: Vec<GroupMessageUser>,
-    pub attachments: Vec<MessageAttachment>,
-    pub msg_seq: Option<u64>,
-    pub timestamp: Option<Timestamp>,
-    pub author: Option<GroupMessageUser>,
-    pub group_openid: Option<String>,
-    pub event_id: Option<String>,
-}
-```
-
-`C2CMessage` 形状相同，只是 `author`/`mentions` 的类型变成 `C2CMessageUser`。
-
-### `DirectMessage`
-
-`DirectMessage` 是私信**会话**对象（由创建私信会话的接口返回），并不是网关上的消息事件。私信网关事件仍然使用 `Message`，并把 `direct_message` 置为 `Some(true)`。
+最常用的是 `new_text` 和 `with_reply`：
 
 ```rust
-pub struct DirectMessage {
-    pub guild_id: Snowflake,
-    pub channel_id: Snowflake,
-    pub create_time: String,
-}
+let params = MessageParams::new_text("pong").with_reply(message_id);
+ctx.send_message(&channel_id, params).await?;
 ```
 
-## 出站参数对象
+复杂消息直接在参数结构体上设置对应字段：
 
-发送侧使用构建器结构体，避免老接口里一长串 `Option<...>` 参数：
+- `embed` 用于 embed 消息。
+- `ark` 用于 ark 模板。
+- `markdown` 用于 markdown 模板或 markdown 内容。
+- `keyboard` 用于按钮键盘。
+- `media` 用于群/C2C 文件上传后返回的媒体描述。
 
-| 结构体                  | 对应接口                                   |
-|-------------------------|--------------------------------------------|
-| `MessageParams`         | `BotApi::send_message`         |
-| `DirectMessageParams`   | `BotApi::send_direct_message`  |
-| `GroupMessageParams`    | `BotApi::send_group_message`   |
-| `C2CMessageParams`      | `BotApi::send_c2c_message`     |
+## DirectMessage 的含义
 
-每个结构体都暴露 `new_text(content)`，并在适用场景提供回复和文件辅助方法。embed、markdown、ark、keyboard、media 等可选载荷请直接设置参数结构体里的对应字段，然后交给对应的发送方法。
+`DirectMessage` 是创建私信会话后返回的 session DTO。发送私信的流程是：
+
+1. 用 `DirectMessageToCreate::new(source_guild_id, recipient_id)` 创建会话请求。
+2. 调用 `create_direct_message` 得到 `DirectMessage`。
+3. 用返回的 `guild_id` 调用 `send_direct_message`。
 
 ```rust
-let params = MessageParams::new_text("Pong!").with_reply(message_id);
-api.send_message(&channel_id, params).await?;
+let dm = DirectMessageToCreate::new(&guild_id, &user_id);
+let session = ctx.create_direct_message(&dm).await?;
+
+let params = DirectMessageParams::new_text("hello");
+ctx.send_direct_message(&session.guild_id, params).await?;
 ```
 
-## 配套类型
+## Open message 的 msg_type
 
-| 类型                | 用途                                                 |
-|---------------------|------------------------------------------------------|
-| `Embed`             | 嵌入式消息（标题、描述、字段、缩略图）。             |
-| `Ark`               | Ark 模板消息（`template_id` + `kv` 数组）。          |
-| `MarkdownPayload`   | Markdown 发送体（模板 id、内容、参数等）。           |
-| `Keyboard`          | 行内键盘（按钮组合）。                               |
-| `MessageReference`  | `{ message_id, ignore_get_message_error }`。         |
-| `MessageAttachment` | 附件元信息（URL、文件名、大小……）。                  |
-| `MessageAudit`      | 审核网关事件的载荷。                                 |
-| `MessageDelete`     | 撤回事件载荷，包含 `message` 与 `op_user`。          |
-| `MessageScene`      | 入站事件中的场景标记（群聊、C2C、频道）。            |
-
-## 消息作者类型
-
-参见 [用户与成员 - 消息作者类型](./users-members.md#消息作者类型) 了解 `MessageUser`、`DirectMessageUser`、`GroupMessageUser`、`C2CMessageUser` 的结构。
+群和 C2C 消息沿用开放平台的数字 `msg_type`。文本一般保持默认值 0；媒体消息使用 7；markdown、ark、embed 等类型按平台协议值填写。频道消息则使用 `MessageCreateType`，在 Rust 侧有 enum 建模。
 
 ## 参见
 
-- [消息指南](../../guide/messages.md) —— 任务导向的使用说明。
-- [Bot API](../bot-api.md) —— 全部消息路由。
-- [其他类型](./other-types.md) —— 嵌入、键盘、Ark、附件等附属结构。
+- [消息指南](../../guide/messages.md)
+- [Bot API](../bot-api.md)
+- [其他类型](./other-types.md)

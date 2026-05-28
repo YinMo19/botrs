@@ -54,7 +54,7 @@ pub trait EventHandler: Send + Sync {
 
 ### 互动
 
-- `interaction_create(ctx, Interaction)` —— 按钮、应用互动事件；通过 `ctx.put_interaction(...)` 应答。
+- `interaction_create(ctx, Interaction)` —— 按钮、应用互动 payload。
 
 ### 音频 / 语音
 

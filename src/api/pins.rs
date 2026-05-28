@@ -23,14 +23,6 @@ impl BotApi {
         Ok(())
     }
 
-    /// Clears all pinned messages in a channel.
-    pub async fn clean_pins(&self, channel_id: &str) -> Result<()> {
-        debug!("Clearing pinned messages in channel {}", channel_id);
-        let path = resource::channel_pins_all(channel_id);
-        self.http.delete(self.token(), &path, None::<&()>).await?;
-        Ok(())
-    }
-
     /// Lists pinned messages in a channel.
     pub async fn get_pins(&self, channel_id: &str) -> Result<PinsMessage> {
         debug!("Getting pinned messages in channel {}", channel_id);

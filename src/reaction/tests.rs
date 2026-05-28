@@ -1,4 +1,5 @@
 use super::*;
+use crate::models::emoji::{Emoji, EmojiType};
 
 #[test]
 fn test_reaction_target_type() {
@@ -25,10 +26,11 @@ fn test_reaction_target_type_from() {
 fn test_emoji_creation() {
     let emoji = Emoji {
         id: "emoji123".to_string(),
-        emoji_type: 1,
+        emoji_type: EmojiType::System,
+        ..Default::default()
     };
     assert_eq!(emoji.id, "emoji123");
-    assert_eq!(emoji.emoji_type, 1);
+    assert_eq!(emoji.emoji_type, EmojiType::System);
 }
 
 #[test]
@@ -66,7 +68,8 @@ fn message_reaction_keeps_official_dto_shape() {
         },
         emoji: Emoji {
             id: "43".to_string(),
-            emoji_type: 1,
+            emoji_type: EmojiType::System,
+            ..Default::default()
         },
     };
     let value = serde_json::to_value(&reaction).unwrap();
@@ -91,7 +94,7 @@ fn message_reaction_uses_required_zero_value_fields() {
     assert_eq!(reaction.target.id, "");
     assert_eq!(reaction.target.target_type, ReactionTargetType::Message);
     assert_eq!(reaction.emoji.id, "");
-    assert_eq!(reaction.emoji.emoji_type, 0);
+    assert_eq!(reaction.emoji.emoji_type, EmojiType::Unknown(0));
 
     let value = serde_json::to_value(&reaction).unwrap();
     assert_eq!(value["user_id"], "");
@@ -117,7 +120,8 @@ fn reaction_event_id_is_internal_only() {
             },
             emoji: Emoji {
                 id: "43".to_string(),
-                emoji_type: 1,
+                emoji_type: EmojiType::System,
+                ..Default::default()
             },
         },
     );
@@ -151,25 +155,4 @@ fn reaction_users_omits_empty_response_fields() {
     assert_eq!(value["cookie"], "cursor-1");
     assert_eq!(value["is_end"], true);
     assert_eq!(value["users"][0]["id"], "user-1");
-}
-
-#[test]
-fn reaction_pager_query_params() {
-    let pager = MessageReactionPager {
-        cookie: Some("cursor-1".to_string()),
-        limit: Some("20".to_string()),
-    };
-    let query = pager.query_params();
-
-    assert_eq!(query.get("cookie").map(String::as_str), Some("cursor-1"));
-    assert_eq!(query.get("limit").map(String::as_str), Some("20"));
-}
-
-#[test]
-fn reaction_pager_omits_empty_query_params() {
-    let pager = MessageReactionPager {
-        cookie: Some(String::new()),
-        limit: Some(String::new()),
-    };
-    assert!(pager.query_params().is_empty());
 }

@@ -31,7 +31,7 @@ pub type Result<T> = std::result::Result<T, BotError>;
 | `InvalidData(String)`                        | Local validation (e.g. malformed permission string).     |
 | `Timeout`                                    | Network timeout, surfaced from internal stages.          |
 | `Gateway(String)`                            | Gateway protocol error not covered by other variants.    |
-| `Session(String)`                            | Webhook session bookkeeping failure.                     |
+| `Session(String)`                            | Gateway session bookkeeping failure.                     |
 | `Internal(String)`                           | Bug-style internal invariant violation.                  |
 | `Io(std::io::Error)`                         | Local I/O (e.g. file uploads).                           |
 | `NotImplemented(String)`                     | Endpoint reachable but not yet wired up.                 |
@@ -50,8 +50,8 @@ A few short constructors live on `BotError` for code that builds errors locally:
 ```rust
 use botrs::BotError;
 
-match api.get_guild("guild_id").await {
-    Ok(guild) => println!("{}", guild.name),
+match api.get_bot_info().await {
+    Ok(bot) => println!("{}", bot.username),
     Err(BotError::Http(e)) if e.is_timeout() => warn!("timed out"),
     Err(BotError::RateLimit { retry_after }) => {
         tokio::time::sleep(Duration::from_secs(retry_after)).await;

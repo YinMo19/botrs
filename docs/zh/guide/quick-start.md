@@ -6,7 +6,7 @@
 
 ```toml
 [dependencies]
-botrs = "0.11.0"
+botrs = "0.13.0"
 tokio = { version = "1", features = ["full"] }
 async-trait = "0.1"
 tracing = "0.1"

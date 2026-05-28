@@ -28,5 +28,5 @@ if let Some(message_id) = resp.id {
 ## 参见
 
 - 指南：[`docs/zh/guide/api-client.md`](../guide/api-client.md)
-- 可用方法的权威来源：`src/api.rs`（`BotApi` 的 impl）
+- 可用方法的权威来源：`src/api/mod.rs` 以及 `src/api/` 目录下的实现文件
 - 上面表格里列出的 `examples/` demo 路径

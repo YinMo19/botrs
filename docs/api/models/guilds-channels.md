@@ -1,163 +1,50 @@
 # Guilds and Channels
 
-Guild and channel data structures for the QQ Guild Bot API. `Snowflake` is `String`. Most string and numeric fields use `#[serde(default)]` so partial gateway payloads deserialize cleanly.
+The crate keeps guild, channel, and guild member models because the gateway delivers those events. They deserialize `GUILD_*`, `CHANNEL_*`, and `GUILD_MEMBER_*` payloads before dispatching to `EventHandler`.
 
-## `Guild`
+These models are primarily for reading event data, logging, metrics, and business checks.
 
-Guild metadata returned by the guild endpoints and gateway events.
+## Guild
+
+`Guild` describes the guild itself: id, name, icon, owner fields, member counts, description, and union binding fields. `GUILD_CREATE` payloads may include `channels`, so the model keeps `Vec<Channel>`.
+
+Typical usage is reading the event in a handler:
 
 ```rust
-pub struct Guild {
-    pub id: Snowflake,
-    pub name: String,
-    pub icon: String,
-    pub owner_id: Snowflake,
-    #[serde(rename = "owner")]
-    pub is_owner: bool,
-    pub member_count: i32,
-    pub max_members: i64,
-    pub description: String,
-    pub joined_at: String,                  // RFC 3339
-    pub channels: Vec<Channel>,             // gateway only
-    pub union_world_id: String,
-    pub union_org_id: String,
-    pub op_user_id: Snowflake,
+async fn guild_create(&self, _ctx: Context, guild: Guild) {
+    tracing::info!("joined guild {}", guild.name);
 }
 ```
 
-`is_owner` maps to the protocol's `owner` boolean. `channels` is populated only on `GUILD_CREATE` gateway payloads.
+## Channel
 
-## `Channel`
+`Channel` describes a sub-channel. It keeps platform fields including `type`, `sub_type`, parent channel, owner, visibility, and speak permission.
 
-Channel metadata. Skip-serializing-when-zero is applied to the optional fields so request bodies for create/update endpoints stay minimal.
+Type fields wrap protocol numbers in Rust enums:
+
+- `ChannelType`: text, voice, category, live, application, forum, plus unknown values.
+- `ChannelSubType`: chat, notice, guide, team game, plus unknown values.
+- `PrivateType`: public, only admin, admin and member, plus unknown values.
+- `SpeakPermission`: invalid, public, admin and member, plus unknown values.
+
+These enums retain unknown numeric values so new platform values do not break deserialization.
+
+## Guild Member Events
+
+`botrs::Member` maps to guild member gateway events. It includes guild id, optional user, nickname, role ids, join time, and operator id.
 
 ```rust
-pub struct Channel {
-    pub id: Snowflake,
-    pub guild_id: Snowflake,
-    pub name: String,
-    pub channel_type: ChannelType,          // JSON: "type"
-    pub sub_type: ChannelSubType,
-    pub position: i64,
-    pub parent_id: Snowflake,
-    pub owner_id: Snowflake,
-    pub private_type: PrivateType,
-    pub private_user_ids: Vec<String>,
-    pub speak_permission: SpeakPermission,
-    pub application_id: Snowflake,
-    pub permissions: String,
-    pub op_user_id: Snowflake,
+async fn guild_member_add(&self, _ctx: Context, member: Member) {
+    if let Some(user) = &member.user {
+        tracing::info!("{} joined {}", user.username, member.guild_id);
+    }
 }
 ```
 
-For modify/create endpoints use `ChannelValueObject`, which wraps every field in `Option<T>` and omits zero values from the JSON body.
+This is distinct from `models::user::Member`, which wraps `User` and mainly appears in response fields such as schedule creator.
 
-### Channel enums
+## See Also
 
-| Enum                  | Variants                                                                |
-|-----------------------|-------------------------------------------------------------------------|
-| `ChannelType`         | `Text=0`, `Voice=2`, `Category=4`, `Live=10005`, `Application=10006`, `Forum=10007`, plus `Unknown(u32)` for forward-compat |
-| `ChannelSubType`      | `Chat=0`, `Notice=1`, `Guide=2`, `TeamGame=3`                          |
-| `PrivateType`         | `Public=0`, `OnlyAdmin=1`, `AdminAndMember=2`                          |
-| `SpeakPermission`     | `Invalid=0`, `Public=1`, `AdminAndMember=2`                            |
-
-Each enum implements `From<u8>`/`From<u32>` for raw numeric round-trips. Use the enum variants directly, for example `channel.channel_type == ChannelType::Text` or `channel.speak_permission == SpeakPermission::Public`.
-
-## Channel permissions
-
-Two read-side DTOs — one per principal type — and a single update body:
-
-```rust
-pub struct ChannelPermissions {       // user-scoped
-    pub channel_id: Snowflake,
-    pub user_id: Snowflake,
-    pub permissions: String,          // bitset as decimal string
-}
-
-pub struct ChannelRolesPermissions {  // role-scoped
-    pub channel_id: Snowflake,
-    pub role_id: Snowflake,
-    pub permissions: String,
-}
-
-pub struct UpdateChannelPermissions {
-    pub add: Option<String>,          // bits to set
-    pub remove: Option<String>,       // bits to clear
-}
-```
-
-`UpdateChannelPermissions::validate()` confirms the strings parse as `u64` before the request is sent.
-
-## Roles
-
-```rust
-pub struct GuildRole {
-    pub id: Snowflake,
-    pub name: String,
-    pub color: u32,                   // ARGB-as-decimal
-    pub hoist: u32,                   // 0 / 1
-    pub member_count: u32,            // JSON: "number", omitempty
-    pub member_limit: u32,            // omitempty
-}
-
-pub struct GuildRoles {
-    pub guild_id: Snowflake,
-    pub roles: Vec<GuildRole>,
-    #[serde(rename = "role_num_limit")]
-    pub num_limit: String,
-}
-```
-
-Update flow uses three structs together:
-
-```rust
-pub struct UpdateRoleFilter { pub name: u32, pub color: u32, pub hoist: u32 }
-pub struct UpdateRoleInfo   { pub name: String, pub color: u32, pub hoist: u32 }
-pub struct UpdateRole {
-    pub guild_id: String,
-    pub filter: UpdateRoleFilter,     // 1 = update this field
-    #[serde(rename = "info")]
-    pub update: GuildRole,
-}
-```
-
-`UpdateRoleFilter::default()` enables every field (all `1`).
-
-## Member (guild side)
-
-The gateway uses a guild-scoped `Member` distinct from `models::user::Member`.
-
-```rust
-pub struct Member {
-    pub guild_id: Snowflake,
-    pub user: Option<User>,
-    pub nick: String,
-    pub roles: Vec<Snowflake>,
-    pub joined_at: Timestamp,
-    pub op_user_id: Snowflake,        // omitempty
-}
-```
-
-`MemberAddRoleBody { channel: Option<Channel> }` is the body for the channel-administrator role assignment endpoint.
-
-## Mute
-
-```rust
-pub struct UpdateGuildMute {
-    pub mute_end_timestamp: String,   // omitempty
-    pub mute_seconds: String,         // omitempty
-    pub user_ids: Vec<String>,        // omitempty, batch-mute only
-}
-```
-
-Constructors:
-
-- `UpdateGuildMute::new(end, seconds)` — single member.
-- `UpdateGuildMute::new_multi(user_ids, end, seconds)` — batch.
-- `UpdateGuildMute::cancel()` / `cancel_multi(user_ids)` — clear mute.
-
-## See also
-
-- [Bot API](../bot-api.md) — every guild/channel/role/mute endpoint.
-- [Users and Members](./users-members.md) — the `User` shape referenced from `Member`.
-- [Other types](./other-types.md) — announces, schedules, pins, API permission demands.
+- [EventHandler](../event-handler.md)
+- [Users and Members](./users-members.md)
+- [BotApi](../bot-api.md)

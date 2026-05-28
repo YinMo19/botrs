@@ -61,20 +61,6 @@ pub struct Announce {
     pub recommend_channels: Vec<RecommendChannel>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
-pub struct ChannelAnnouncesToCreate {
-    pub message_id: String,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
-pub struct GuildAnnouncesToCreate {
-    pub channel_id: String,
-    pub message_id: String,
-    pub announces_type: u32,
-    #[serde(default)]
-    pub recommend_channels: Vec<RecommendChannel>,
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -180,27 +166,5 @@ mod tests {
         assert_eq!(value["announces_type"], 1);
         assert_eq!(value["recommend_channels"][0]["channel_id"], "channel-2");
         assert_eq!(value["recommend_channels"][0]["introduce"], "intro");
-    }
-
-    #[test]
-    fn announce_create_bodies_keep_required_fields() {
-        let channel = serde_json::to_value(ChannelAnnouncesToCreate::default()).unwrap();
-        assert_eq!(
-            channel,
-            serde_json::json!({
-                "message_id": ""
-            })
-        );
-
-        let guild = serde_json::to_value(GuildAnnouncesToCreate::default()).unwrap();
-        assert_eq!(
-            guild,
-            serde_json::json!({
-                "channel_id": "",
-                "message_id": "",
-                "announces_type": 0,
-                "recommend_channels": []
-            })
-        );
     }
 }

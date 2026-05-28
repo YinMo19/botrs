@@ -24,7 +24,7 @@ Each row lists the public Rust constant, the underlying bit, the `with_*` builde
 | `Intents::GUILDS`                       | `1 << 0`  | `with_guilds`                        | Guild create / update / delete + channel CRUD.          |
 | `Intents::GUILD_MEMBERS`                | `1 << 1`  | `with_guild_members`                 | Member add / update / remove.                           |
 | `Intents::GUILD_MESSAGES` (privileged)  | `1 << 9`  | `with_guild_messages`                | All guild messages — needs special approval.            |
-| `Intents::GUILD_MESSAGE_REACTIONS`      | `1 << 10` | `with_guild_message_reactions`       | Reactions added / removed in guild messages.            |
+| `Intents::GUILD_MESSAGE_REACTIONS`      | `1 << 10` | `with_guild_message_reactions`       | Reaction add / delete events in guild messages.         |
 | `Intents::DIRECT_MESSAGE`               | `1 << 12` | `with_direct_message`                | Direct-message create / delete events.                  |
 | `Intents::OPEN_FORUM_EVENT`             | `1 << 18` | `with_open_forum_event`              | Open-forum activity (public forums).                    |
 | `Intents::AUDIO_OR_LIVE_CHANNEL_MEMBER` | `1 << 19` | `with_audio_or_live_channel_member`  | Voice / live channel member changes.                    |

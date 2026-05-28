@@ -3,7 +3,7 @@ use crate::error::Result;
 use crate::models::announce::{Announce, AnnouncesType, RecommendChannel};
 use crate::models::message::Media;
 use serde::Serialize;
-use serde_json::{Value, json};
+use serde_json::Value;
 use tracing::debug;
 
 #[derive(Serialize)]
@@ -93,49 +93,6 @@ impl BotApi {
 
     // Announcement APIs
 
-    /// Creates a channel announcement from an existing message.
-    pub async fn create_channel_announce(
-        &self,
-        channel_id: &str,
-        message_id: &str,
-    ) -> Result<Announce> {
-        debug!(
-            "Creating channel announcement in channel {} for message {}",
-            channel_id, message_id
-        );
-
-        let body = json!({
-            "message_id": message_id
-        });
-
-        let path = resource::channel_announces(channel_id);
-        let response = self
-            .http
-            .post(self.token(), &path, None::<&()>, Some(&body))
-            .await?;
-        Self::decode_json(response)
-    }
-
-    /// Deletes a channel announcement by message ID.
-    pub async fn delete_channel_announce(&self, channel_id: &str, message_id: &str) -> Result<()> {
-        debug!(
-            "Deleting announcement {} in channel {}",
-            message_id, channel_id
-        );
-
-        let path = resource::channel_announce(channel_id, message_id);
-        self.http.delete(self.token(), &path, None::<&()>).await?;
-        Ok(())
-    }
-
-    /// Clears all channel announcements without checking a message ID.
-    pub async fn clean_channel_announces(&self, channel_id: &str) -> Result<()> {
-        debug!("Clearing announcements in channel {}", channel_id);
-        let path = resource::channel_announces_all(channel_id);
-        self.http.delete(self.token(), &path, None::<&()>).await?;
-        Ok(())
-    }
-
     /// Creates a message-type guild announcement from an existing message.
     pub async fn create_announce(
         &self,
@@ -161,16 +118,6 @@ impl BotApi {
         Self::decode_json(response)
     }
 
-    /// Creates a message-type guild announcement.
-    pub async fn create_guild_announce(
-        &self,
-        guild_id: &str,
-        channel_id: &str,
-        message_id: &str,
-    ) -> Result<Announce> {
-        self.create_announce(guild_id, channel_id, message_id).await
-    }
-
     /// Creates a guild announcement that recommends channels.
     pub async fn create_recommend_announce(
         &self,
@@ -193,17 +140,6 @@ impl BotApi {
         Self::decode_json(response)
     }
 
-    /// Creates a recommended channel guild announcement.
-    pub async fn create_guild_recommend_announce(
-        &self,
-        guild_id: &str,
-        announces_type: AnnouncesType,
-        recommend_channels: Vec<RecommendChannel>,
-    ) -> Result<Announce> {
-        self.create_recommend_announce(guild_id, announces_type, recommend_channels)
-            .await
-    }
-
     /// Deletes a guild announcement by message ID and returns the raw response.
     ///
     /// Passing `None::<&str>` deletes all guild announcements.
@@ -218,20 +154,6 @@ impl BotApi {
         let path = resource::guild_announce(guild_id, message_id);
         let response = self.http.delete(self.token(), &path, None::<&()>).await?;
         Ok(response)
-    }
-
-    /// Deletes a guild announcement.
-    pub async fn delete_guild_announce(&self, guild_id: &str, message_id: &str) -> Result<()> {
-        self.delete_announce(guild_id, message_id).await?;
-        Ok(())
-    }
-
-    /// Clears all guild announcements without checking a message ID.
-    pub async fn clean_guild_announces(&self, guild_id: &str) -> Result<()> {
-        debug!("Clearing announcements in guild {}", guild_id);
-        let path = resource::guild_announces_all(guild_id);
-        self.http.delete(self.token(), &path, None::<&()>).await?;
-        Ok(())
     }
 }
 

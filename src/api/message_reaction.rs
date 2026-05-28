@@ -1,7 +1,7 @@
 use super::{BotApi, resource};
+use crate::ReactionUsers;
 use crate::error::Result;
 use crate::models::emoji::EmojiType;
-use crate::{MessageReactionPager, ReactionEmoji, ReactionUsers};
 use std::collections::HashMap;
 use tracing::debug;
 
@@ -37,17 +37,6 @@ impl BotApi {
         Ok(())
     }
 
-    /// Adds a reaction to a message using a structured emoji value.
-    pub async fn create_message_reaction(
-        &self,
-        channel_id: &str,
-        message_id: &str,
-        emoji: &ReactionEmoji,
-    ) -> Result<()> {
-        self.put_reaction(channel_id, message_id, emoji.emoji_type, &emoji.id)
-            .await
-    }
-
     /// Removes the bot's reaction using raw emoji type and ID values.
     pub async fn delete_reaction(
         &self,
@@ -63,17 +52,6 @@ impl BotApi {
         let path = resource::message_reaction(channel_id, message_id, emoji_type, emoji_id);
         self.http.delete(self.token(), &path, None::<&()>).await?;
         Ok(())
-    }
-
-    /// Removes the bot's reaction using a structured emoji value.
-    pub async fn delete_own_message_reaction(
-        &self,
-        channel_id: &str,
-        message_id: &str,
-        emoji: &ReactionEmoji,
-    ) -> Result<()> {
-        self.delete_reaction(channel_id, message_id, emoji.emoji_type, &emoji.id)
-            .await
     }
 
     /// Lists users that reacted with a specific emoji.
@@ -99,35 +77,6 @@ impl BotApi {
         let path =
             resource::message_reaction(channel_id, message_id, u8::from(emoji_type), emoji_id);
         let response = self.http.get(self.token(), &path, Some(&params)).await?;
-        Self::decode_json(response)
-    }
-
-    /// Lists users that reacted with a specific emoji using structured options.
-    pub async fn get_message_reaction_users(
-        &self,
-        channel_id: &str,
-        message_id: &str,
-        emoji: &ReactionEmoji,
-        pager: &MessageReactionPager,
-    ) -> Result<ReactionUsers> {
-        debug!(
-            "Getting reaction users for message {} with emoji {:?}",
-            message_id, emoji.id
-        );
-        let params = pager.query_params();
-        let path = resource::message_reaction(channel_id, message_id, emoji.emoji_type, &emoji.id);
-        let response = self
-            .http
-            .get(
-                self.token(),
-                &path,
-                if params.is_empty() {
-                    None
-                } else {
-                    Some(&params)
-                },
-            )
-            .await?;
         Self::decode_json(response)
     }
 }

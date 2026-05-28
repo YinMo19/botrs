@@ -6,7 +6,7 @@ BotRS is an asynchronous framework for building QQ Guild bots in Rust. It wraps 
 
 The `Client` owns the gateway connection and the HTTP client. You construct it with a `Token`, an `Intents` bitset, an implementation of `EventHandler`, and a `bool` that picks the sandbox or production base URL. After `client.start().await`, the gateway dispatches events into your handler.
 
-The `EventHandler` trait is a single trait with a default `async fn` per event (`message_create`, `at_message_create`, `guild_create`, `forum_thread_create`, and so on). You implement only the ones you care about.
+The `EventHandler` trait is a single trait with a default `async fn` per event (`message_create`, `direct_message_create`, `guild_create`, `forum_thread_create`, and so on). You implement only the ones you care about.
 
 Each handler call receives a `Context`, which holds the shared `BotApi`. `BotApi` is the typed HTTP layer and owns the token used for REST calls; you can also construct one yourself if you need REST access outside of an event handler.
 
@@ -17,9 +17,9 @@ Each handler call receives a `Context`, which holds the shared `BotApi`. `BotApi
 Every send method takes a typed `*Params` builder rather than a long list of `Option` arguments:
 
 ```rust
-let params = MessageParams::new_text("hello")
-    .with_reply(message_id)
-    .with_markdown(true);
+let mut params = MessageParams::new_text("hello")
+    .with_reply(message_id);
+params.markdown = Some(markdown);
 ctx.send_message("channel_id", params).await?;
 ```
 

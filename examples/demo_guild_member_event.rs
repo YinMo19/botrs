@@ -39,9 +39,11 @@ impl EventHandler for GuildMemberEventHandler {
             }
         };
 
-        // Note: guild_id needs to be obtained from context or event data
-        // For this demo, we'll use a placeholder since it's not available in Member
-        let guild_id = "placeholder_guild_id"; // This should come from event context
+        let guild_id = &member.guild_id;
+        if guild_id.is_empty() {
+            warn!("Guild member event has no guild_id");
+            return;
+        }
 
         let dm = DirectMessageToCreate::new(guild_id, user_id);
         match ctx.create_direct_message(&dm).await {

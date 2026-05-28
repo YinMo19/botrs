@@ -12,14 +12,6 @@ pub struct Ark {
     pub kv: Option<Vec<ArkKv>>,
 }
 
-/// Ark message wrapper.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
-pub struct MessageArk {
-    /// Ark payload
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub ark: Option<Ark>,
-}
-
 /// Ark key-value pair.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ArkKv {

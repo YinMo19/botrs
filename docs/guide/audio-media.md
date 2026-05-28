@@ -1,58 +1,37 @@
 # Audio and media
 
-The framework exposes two layers of audio support: events the gateway delivers to your `EventHandler`, and REST methods on `BotApi` for controlling playback and uploading media.
+Audio-related functionality has two parts: gateway audio events, and media upload for group/C2C messages.
 
-## Audio events
+## Audio Events
 
-Subscribing to `Intents::AUDIO_ACTION` enables four callbacks:
+With the corresponding intents enabled, the platform sends audio state and voice/live channel member changes through the gateway:
 
-- `audio_start(&self, ctx, audio: Audio)` — playback began.
-- `audio_finish(&self, ctx, audio: Audio)` — playback finished.
-- `on_mic(&self, ctx, audio: Audio)` — bot is on-mic in the voice subchannel.
-- `off_mic(&self, ctx, audio: Audio)` — bot is off-mic.
+- `audio_start`
+- `audio_finish`
+- `on_mic`
+- `off_mic`
+- `audio_or_live_channel_member_enter`
+- `audio_or_live_channel_member_exit`
 
-`Audio` carries `channel_id`, `guild_id`, `audio_url`, `text`, `event_id`, all `Option<String>`. Use the callback `ctx` for any REST calls triggered by the event.
+`Audio` carries channel id, guild id, audio URL, text description, and internal event id. `PublicAudio` represents voice/live channel member enter and exit events, with `PublicAudioType` distinguishing voice from live.
 
-For voice / live-channel member traffic, enable `Intents::AUDIO_OR_LIVE_CHANNEL_MEMBER` and implement `audio_or_live_channel_member_enter` / `_exit`. The payload is `PublicAudio { guild_id, channel_id, channel_type: Option<PublicAudioType>, user_id }` where `PublicAudioType` is `Voice = 2` or `Live = 5`.
+These events are useful for logging, metrics, state sync, or triggering normal message replies.
 
-## Controlling playback
+## Media Upload for Group and C2C
 
-`BotApi::post_audio(channel_id, &AudioControl)` updates an audio session in a voice channel. `AudioControl` is the request body:
-
-```rust
-use botrs::{AudioControl, AudioStatus};
-
-let control = AudioControl {
-    audio_url: "https://example.com/track.mp3".into(),
-    text: "now playing".into(),
-    status: AudioStatus::Start,   // Start | Pause | Resume | Stop
-};
-ctx.post_audio(&channel_id, &control).await?;
-```
-
-Mic control on a voice channel:
-
-- `BotApi::on_microphone(channel_id)` — bot joins the mic.
-- `BotApi::off_microphone(channel_id)` — bot leaves.
-
-## Uploading rich media
-
-For group and C2C messages you can upload media first, then send a message that references it.
+Group and C2C messages can upload media first, then send a message that references the returned media.
 
 ```rust
-use botrs::models::message::GroupMessageParams;
-
-// 1 = image, 2 = video, 3 = audio (voice), 4 = file
 let media = ctx
     .post_group_file(&group_openid, 1, image_url, None)
     .await?;
 
-let params = GroupMessageParams {
-    msg_type: 7, // media
-    media: Some(media),
-    ..Default::default()
-};
+let mut params = GroupMessageParams::default();
+params.msg_type = 7;
+params.media = Some(media);
 ctx.send_group_message(&group_openid, params).await?;
 ```
 
-The C2C surface mirrors this with `post_c2c_file(openid, file_type, url, srv_send_msg)`. Pass `srv_send_msg = Some(true)` to have the platform forward the upload as a message immediately, otherwise reuse the returned `Media` descriptor in your own `*MessageParams`.
+`file_type` follows platform values: commonly 1 image, 2 video, 3 audio, 4 file. C2C uses `post_c2c_file` with the same parameter shape.
+
+When `srv_send_msg` is `Some(true)`, the platform sends the uploaded file directly. When it is `None` or `Some(false)`, place the returned `Media` into your own message params.

@@ -1,121 +1,71 @@
 # 其他类型
 
-QQ 频道机器人 API 使用的辅助模型类型。完整字段定义请参考源码；本文重点是结构概览和指向使用这些类型的接口。
+这一页记录除了消息、用户、guild/channel 以外的常用模型：网关启动信息、日程、权限、精华、公告、表情回应、互动事件、音频事件、管理事件和论坛事件。
 
-## 音频与语音
+## 网关
 
-```rust
-pub struct AudioControl {            // /audio_control 的请求体
-    pub audio_url: String,
-    pub text: String,
-    pub status: AudioStatus,         // 数值：0..=3
-}
+`get_gateway` 返回 `GatewayResponse`，其中包含 websocket URL、建议 shard 数和 session start limit。`Client::start` 会使用它来创建内部 gateway session；应用代码通常不需要直接处理。
 
-pub enum AudioStatus { Start = 0, Pause = 1, Resume = 2, Stop = 3 }
-```
-
-`Audio` 是网关事件载荷（`AUDIO_START` / `AUDIO_FINISH` 等）。`PublicAudio` 表示语音/直播子频道的成员事件，附带 `PublicAudioType`（`Voice = 2`、`Live = 5`）。需要发起 REST 调用时使用事件回调里的 `Context`。
-
-## 论坛主题
-
-网关论坛事件的载荷。字段类型保留协议中的裸字符串/数值：
-
-```rust
-pub struct Thread     { pub guild_id: Option<String>, pub channel_id: Option<String>, pub author_id: Option<String>, pub thread_info: ThreadInfo, pub event_id: Option<String> }
-pub struct ThreadInfo { pub thread_id: Option<String>, pub title: Option<String>, pub content: Option<String>, pub date_time: Option<String> }
-pub struct Post       { pub guild_id: Option<String>, pub channel_id: Option<String>, pub author_id: Option<String>, pub post_info: PostInfo, pub event_id: Option<String> }
-pub struct Reply      { pub guild_id: Option<String>, pub channel_id: Option<String>, pub author_id: Option<String>, pub reply_info: ReplyInfo, pub event_id: Option<String> }
-pub struct ForumAuditResult { pub task_id: String, pub guild_id: String, pub channel_id: String, pub author_id: String, pub thread_id: String, pub post_id: String, pub reply_id: String, pub publish_type: u32, pub result: u32, pub err_msg: String, pub date_time: String, /* … */ }
-```
-
-`OpenThread` 是开放论坛变体，会根据触发的具体子事件在 `thread_info`、`post_info`、`reply_info` 中携带其一。
-
-`title` 和 `content` 是协议定义的 paragraph 树 JSON。需要结构化解析时可用 `Content::new(&serde_json::from_str(&info.title.as_deref().unwrap_or("{}"))?)`。
+`Ready` 是 `READY` 事件的 payload。它包含 session id、版本号、当前 bot 的 `User`，以及可选 shard 信息。
 
 ## 日程
 
-```rust
-pub struct Schedule {
-    pub id: Snowflake,
-    pub name: String,
-    pub description: String,
-    pub start_timestamp: String,        // unix 秒
-    pub end_timestamp: String,
-    pub jump_channel_id: Snowflake,
-    pub remind_type: String,            // RemindType::to_wire_string()
-    pub creator: Option<Member>,
-}
-```
+日程模型服务于 `get_schedules`、`get_schedule`、`create_schedule`、`update_schedule`、`delete_schedule`。创建或更新时使用 `Schedule::new(...)`，提醒时间使用 `RemindType`，最终会转成平台需要的字符串值。
 
-`RemindType` 取值 `None=0` … `Before2Days=8`，加 `Unknown(u8)` 兜底。`ScheduleWrapper { schedule: Option<Schedule> }` 是创建/更新接口的请求体。
+```rust
+let schedule = Schedule::new(
+    "Daily sync",
+    "1767225600",
+    "1767229200",
+    Some(channel_id.to_string()),
+    RemindType::Before15Minutes,
+);
+ctx.create_schedule(&schedule_channel_id, &schedule).await?;
+```
 
 ## API 权限
 
-```rust
-pub struct APIPermissions { pub api_list: Vec<APIPermission> /* JSON: "apis" */ }
-pub struct APIPermission  { pub path: String, pub method: String, pub desc: String, pub auth_status: i32 }
+权限查询使用 `get_api_permissions`。申请权限使用 `post_permission_demand`，调用时传目标子频道、接口标识和说明文本。
 
-pub struct APIPermissionDemand          { pub guild_id: Snowflake, pub channel_id: Snowflake, pub api_identify: Option<APIPermissionDemandIdentify>, pub title: String, pub desc: String }
-pub struct APIPermissionDemandToCreate  { pub channel_id: Snowflake, pub api_identify: Option<APIPermissionDemandIdentify>, pub desc: String }
-pub struct APIPermissionDemandIdentify  { pub path: String, pub method: String }
-```
+`post_permission_demand` 会根据这些参数生成请求体；调用方只需要关心目标接口和说明文本。
 
-协议中所有带 `omitempty` 的字段都使用了 `skip_serializing_if`，零值不会出现在 JSON 中。
+## 精华与公告
 
-## 精华、公告、推送配置
+精华消息用 `PinsMessage` 表示当前 pinned message id 列表。常用流程是置顶、取消置顶和查询。
 
-- `PinsMessage { guild_id, channel_id, message_ids: Vec<Snowflake> }` —— `get_pins` 的返回值。
-- `Announce` —— 见 [`announce.rs`](https://github.com/YinMo19/botrs/blob/main/src/models/announce.rs)；配套有 `RecommendChannel`、`ChannelAnnouncesToCreate`、`GuildAnnouncesToCreate`。
-- `MessageSetting { disable_create_dm: bool, disable_push_msg: bool, channel_ids: Vec<Snowflake>, channel_push_max_num: i32 }` —— 每个字段都跳过零值，与协议保持一致。
-
-## 互动事件
-
-```rust
-pub struct Interaction {
-    pub id: String,
-    pub application_id: String,
-    pub interaction_type: InteractionType,         // JSON: "type"
-    pub data: Option<InteractionData>,
-    pub guild_id: Option<String>,
-    pub channel_id: Option<String>,
-    pub group_open_id: Option<String>,
-    pub user_open_id: Option<String>,
-    pub group_member_open_id: Option<String>,
-    pub timestamp: Option<String>,
-    pub version: Option<i32>,
-    pub event_id: Option<String>,
-    pub scene: Option<String>,
-    pub chat_type: Option<i32>,
-    pub channel_type: Option<i32>,
-}
-```
-
-`InteractionType` 与 `InteractionDataType` 对应文档定义的整数码。`BotApi::put_interaction` 用于回执互动事件。
+公告模型包含 `Announce`、`RecommendChannel` 和 `AnnouncesType`。常见流程是从已有消息创建公告，或构造推荐频道列表创建推荐公告。
 
 ## 表情回应
 
-```rust
-pub struct MessageReaction { pub user_id: Snowflake, pub channel_id: Snowflake, pub guild_id: Snowflake, pub target: ReactionTarget, pub emoji: Emoji }
-pub struct ReactionTarget  { pub id: String, #[serde(rename = "type")] pub target_type: ReactionTargetType }
-pub enum   ReactionTargetType { Message = 0, Subject = 1, Bot = 2 }
-pub struct Emoji            { pub id: String, #[serde(rename = "type")] pub emoji_type: i32 }
-pub struct ReactionUsers   { pub users: Vec<User>, pub cookie: String, pub is_end: bool }
-```
+reaction 事件和 REST 查询共享同一套核心类型：
 
-## 管理类事件
+- `Reaction` 是 handler 收到的事件对象。
+- `MessageReaction` 是平台 reaction payload 的 DTO。
+- `ReactionTarget` 和 `ReactionTargetType` 表示表态目标。
+- `ReactionUsers` 是 `get_reaction_users` 的响应。
+- emoji 使用 `models::emoji::Emoji` 与 `EmojiType`。
 
-`GroupManageEvent` / `C2CManageEvent` 携带 `event_id`、`timestamp`，以及定位被影响群/成员的 OpenID。`ManageEventType` 是字符串枚举（`group_add_robot`、`friend_del`……），网关分发器使用它路由事件。`EnterAioEvent { user_openid: String, from_source: String }` 与 `SubscribeMessageStatusData { group_openid, openid, result: Vec<SubscribeMsgTemplateResult>, /* … */ }` 是其余的管理类载荷。
+查询 reaction 用户时，把上一次响应里的 `cookie` 和本次 `limit` 传给 `get_reaction_users`。当响应的 `is_end` 为 true 时分页结束。
 
-## 网关与会话
+## 互动事件
 
-```rust
-pub struct Ready             { pub user: User, pub session_id: String, pub shard: [u32; 2], pub version: u32 }
-pub struct Session           { pub id: String, pub url: String, pub token: Token, pub intent: Intents, pub last_seq: u64, /* … */ }
-pub struct SessionStartLimit { pub total: u32, pub remaining: u32, pub reset_after: u64, pub max_concurrency: u32 }
-```
+`Interaction` 对应 `interaction_create`，用于读取平台传来的按钮或应用互动 payload。
+
+## 音频、管理和论坛事件
+
+音频相关模型用于 gateway 事件：`Audio`、`PublicAudio` 和 `PublicAudioType`。
+
+管理类事件仍会分发：
+
+- 群：`GroupManageEvent`
+- C2C：`C2CManageEvent`
+- AIO：`EnterAioEvent`
+- 订阅消息授权状态：`SubscribeMessageStatusData`
+
+论坛事件包含普通论坛事件和 open forum 事件，handler 可以读取主题、帖子、回复和审核结果。
 
 ## 参见
 
-- [消息](./messages.md) —— 消息侧的辅助类型（embed、ark、keyboard）。
-- [频道与子频道](./guilds-channels.md) —— 频道、子频道、角色、禁言相关结构。
-- [Bot API](../bot-api.md) —— 产生或使用这些类型的接口。
+- [BotApi](../bot-api.md)
+- [EventHandler](../event-handler.md)
+- [消息](./messages.md)

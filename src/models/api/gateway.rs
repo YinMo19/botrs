@@ -53,10 +53,10 @@ pub struct BotInfo {
     /// The bot's union user account.
     #[serde(default)]
     pub union_user_account: String,
-    /// Robot share URL returned by the current-user endpoint.
+    /// Bot share URL returned by the current-user endpoint.
     #[serde(default)]
     pub share_url: String,
-    /// Robot welcome message returned by the current-user endpoint.
+    /// Bot welcome message returned by the current-user endpoint.
     #[serde(default)]
     pub welcome_msg: String,
 }

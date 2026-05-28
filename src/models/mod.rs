@@ -11,7 +11,6 @@ pub mod gateway;
 pub mod guild;
 pub mod message;
 pub mod permission;
-pub mod robot;
 pub mod schedule;
 pub(crate) mod serde_helpers;
 pub mod user;
@@ -25,12 +24,11 @@ pub use gateway::*;
 // Guild types are already exported by the specific re-exports below
 pub use message::*;
 pub use permission::*;
-pub use robot::*;
 pub use schedule::*;
-pub use user::{Member as UserMember, Role as UserRole, User};
+pub use user::{Member as UserMember, User};
 
 // Re-export specific types for convenience
-pub use guild::{Guild, GuildRole, Member};
+pub use guild::{Guild, Member};
 
 /// A snowflake ID used throughout the QQ Guild API.
 pub type Snowflake = String;

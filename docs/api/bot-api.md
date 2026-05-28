@@ -1,185 +1,103 @@
 # BotApi
 
-`BotApi` is the synchronous-style facade over the QQ Bot Open API. It owns the HTTP client, builds requests, signs them with a `Token`, and returns parsed model types. Every method is `async` and returns `Result<T, BotError>`.
+`BotApi` is the REST client used by a bot while handling events. After a gateway event arrives, handlers usually call it through `Context` to send replies, recall channel messages, upload group/C2C files, manage announcements, schedules and pins, inspect reaction users, or create API permission requests.
 
-## Construction
+When your bot is driven by `Client`, you normally do not construct `BotApi` yourself. Every event callback receives a `Context` that already owns the shared API client:
 
 ```rust
-use botrs::{BotApi, http::HttpClient, Token};
+let params = MessageParams::new_text("pong").with_reply(message_id);
+ctx.send_message(&channel_id, params).await?;
+```
 
-let http = HttpClient::new(/* timeout secs */ 30, /* sandbox */ false)?;
+Construct `BotApi` manually only when you want to call REST without running the gateway:
+
+```rust
+let http = HttpClient::new(30, false)?;
 let token = Token::new("app_id", "secret");
 let api = BotApi::new(http, token);
 
 let me = api.get_bot_info().await?;
 ```
 
-`BotApi` is `Clone` and cheap to clone; the inner HTTP client is reference-counted. For a bot client driven by `Client`, `Context` dereferences to the same `BotApi`, so handler code can call `ctx.send_message(...)` directly.
+## Current Surface
 
-## Method index
+`BotApi` covers these paths:
 
-Every method takes `&self` plus endpoint-specific arguments and returns `Result<…>`. The token is stored on `BotApi`. The lists below group the 100+ routes by domain. Look up parameter and response types in [Models](./models/messages.md), [Guilds & Channels](./models/guilds-channels.md), and [Other Types](./models/other-types.md).
+| Area | Methods |
+| --- | --- |
+| Bot identity and gateway discovery | `get_bot_info`, `get_gateway` |
+| Guild channel messages | `send_message`, `recall_message` |
+| Group and C2C messages | `send_group_message`, `send_c2c_message` |
+| Direct messages | `create_direct_message`, `send_direct_message` |
+| Group/C2C files | `post_group_file`, `post_c2c_file` |
+| Announcements | `create_announce`, `create_recommend_announce`, `delete_announce` |
+| Schedules | `get_schedules`, `get_schedule`, `create_schedule`, `update_schedule`, `delete_schedule` |
+| API permissions | `get_api_permissions`, `post_permission_demand` |
+| Reactions | `put_reaction`, `delete_reaction`, `get_reaction_users` |
+| Pins | `put_pin`, `delete_pin`, `get_pins` |
 
-### Bot identity
+## Sending Messages
 
-- `get_bot_info` — `/users/@me`, returns `BotInfo`.
-- `get_gateway` — gateway URL + recommended shard count.
-
-### Guilds
-
-- `get_guild` / `get_guilds` / `get_guilds_with_pager`
-- guild members: `get_guild_member`, `get_guild_members`, `get_guild_members_with_pager`
-- role members: `get_guild_role_members`, `get_guild_role_members_with_pager`
-- mute: `mute_all`, `cancel_mute_all`, `mute_member`, `mute_multi_member`, `multi_member_mute`, `cancel_mute_multi_member`
-
-### Channels
-
-- `get_channel`, `get_channels`
-- `create_channel`, `create_private_channel`, `update_channel`, `delete_channel`
-- permissions: `get_channel_user_permissions`, `get_channel_role_permissions`, `update_channel_user_permissions`, `update_channel_role_permissions`, `put_channel_permissions`, `put_channel_roles_permissions`
-
-### Roles
-
-- `get_guild_roles`
-- `create_guild_role`, `update_guild_role`, `delete_guild_role`
-- assign / remove: `create_guild_role_member`, `delete_guild_role_member`, `delete_member`, `delete_member_with_options`
-
-### Messages (channel)
-
-- `get_message`, `get_messages`
-- send: `send_message`.
-- edit: `edit_message`.
-- recall: `recall_message`.
-
-### Direct messages
-
-- create session: `create_direct_message`.
-- send: `send_direct_message`.
-- recall: `retract_dm_message`.
-- setting guide: `post_dm_setting_guide`, `post_dm_setting_guide_message`.
-
-### Group / C2C messages
-
-- send: `send_group_message`, `send_c2c_message`.
-- recall: `retract_group_message`, `retract_c2c_message`.
-- file upload: `post_group_file`, `post_c2c_file`.
-
-### Reactions
-
-- `put_reaction`, `delete_reaction`, `delete_own_message_reaction`
-- `create_message_reaction`, `get_reaction_users`, `get_message_reaction_users`
-
-### Pins
-
-- `put_pin`, `delete_pin`, `get_pins`, `clean_pins`
-
-### Announces
-
-- guild: `create_guild_announce`, `delete_guild_announce`, `clean_guild_announces`, `create_guild_recommend_announce`, `create_recommend_announce`
-- channel: `create_channel_announce`, `delete_channel_announce`, `clean_channel_announces`
-- shorthand: `create_announce`, `delete_announce`
-
-### Schedules
-
-- `get_schedules`, `get_schedule`, `create_schedule`, `update_schedule`, `delete_schedule`
-
-### API permissions
-
-- `get_api_permissions`, `post_permission_demand`, `require_api_permissions`
-
-### Audio / voice
-
-- `post_audio` (uses `AudioControl`), `update_audio`
-- `on_microphone`, `off_microphone`, `list_voice_channel_members`
-
-### Setting guide
-
-- `post_setting_guide`, `post_setting_guide_message`
-
-### Interaction
-
-- `put_interaction` — acknowledges a button/interaction event.
-
-### Webhook sessions
-
-- `create_session`, `check_sessions`, `session_list`, `remove_session`
-
-### Message setting
-
-- `get_message_setting` — guild push and DM toggles.
-
-## Worked examples
-
-**Reply to an @-mention with a keyboard.** Build the keyboard once, attach to `MessageParams`, and dispatch with `send_message`.
+Message sending uses parameter structs:
 
 ```rust
-let keyboard = Keyboard {
-    content: Some(KeyboardContent {
-        rows: Some(vec![KeyboardRow {
-            buttons: Some(vec![KeyboardButton {
-                id: Some("ok".into()),
-                render_data: Some(KeyboardButtonRenderData {
-                    label: Some("OK".into()),
-                    style: Some(1),
-                    ..Default::default()
-                }),
-                action: Some(KeyboardButtonAction {
-                    action_type: Some(1),
-                    permission: Some(KeyboardButtonPermission {
-                        permission_type: Some(2),
-                        ..Default::default()
-                    }),
-                    data: Some("ok".into()),
-                    ..Default::default()
-                }),
-                ..Default::default()
-            }]),
-        }]),
-        ..Default::default()
-    }),
-    ..Default::default()
-};
+let params = MessageParams::new_text("hello");
+ctx.send_message(&channel_id, params).await?;
 
-let mut params = MessageParams::new_text("Choose:")
-    .with_reply(message.id.as_deref().unwrap_or(""));
-params.keyboard = Some(keyboard);
-
-api.send_message(&channel_id, params).await?;
+let params = GroupMessageParams::new_text("hello group");
+ctx.send_group_message(&group_openid, params).await?;
 ```
 
-**Paginated member listing.** Use the pager helper to avoid manually threading `after`.
+Guild channel messages and DMs use `MessageParams` / `DirectMessageParams`. Group and C2C messages use `GroupMessageParams` / `C2CMessageParams`, matching QQ's open-message shape. For ark, embed, markdown, keyboard, or media payloads, set the corresponding field on the parameter struct.
+
+## Files and Media
+
+Group and C2C media sending is a two-step flow: upload the file to receive a `Media`, then place that media object into a message parameter struct. `file_type` follows the platform values: commonly 1 image, 2 video, 3 audio, 4 file.
 
 ```rust
-let pager = ctx
-    .get_guild_members_with_pager(&guild_id, &GuildMembersPager::default())
+let media = ctx
+    .post_group_file(&group_openid, 1, "https://example.com/image.png", None)
     .await?;
-for member in pager.items {
-    /* ... */
+
+let mut params = GroupMessageParams::default();
+params.msg_type = 7;
+params.media = Some(media);
+ctx.send_group_message(&group_openid, params).await?;
+```
+
+When `srv_send_msg` is `Some(true)`, the platform sends the uploaded file directly, so you usually do not need a separate media message.
+
+## Announcements, Schedules, Pins, Permissions
+
+These APIs are direct wrappers around their protocol payloads:
+
+- Announcements can be created from an existing message or from a list of recommended channels.
+- Schedules support listing, fetching one item, creating, updating, and deleting.
+- Pins support pinning one message, unpinning one message, and listing pinned message ids.
+- API permission requests take `channel_id`, `APIPermissionDemandIdentify`, and a description.
+
+```rust
+let identify = APIPermissionDemandIdentify {
+    path: "/channels/{channel_id}/messages".to_string(),
+    method: "POST".to_string(),
+};
+
+ctx.post_permission_demand(&guild_id, &channel_id, identify, "Need to send replies")
+    .await?;
+```
+
+## Errors
+
+All methods return `botrs::Result<T>`. In event handlers, handle errors locally because `EventHandler` methods return `()`:
+
+```rust
+if let Err(err) = ctx.send_message(&channel_id, params).await {
+    tracing::warn!("send failed: {err}");
 }
 ```
 
-**Update channel permissions safely.** The `validate()` helper rejects non-numeric strings before they reach the server.
+## See Also
 
-```rust
-let body = UpdateChannelPermissions::new(Some("1024"), Some("0"));
-body.validate()?;
-api.update_channel_user_permissions(&channel_id, &user_id, &body).await?;
-```
-
-## Error handling
-
-Every call returns `Result<T, BotError>`. Match on `BotError` to distinguish:
-
-- `BotError::Http` — transport-level failures (timeout, DNS).
-- `BotError::Api { code, message, .. }` — non-2xx response with the QQ-defined error code.
-- `BotError::Auth` — token signing or refresh failure.
-- `BotError::InvalidData` — local validation failure (e.g. malformed permission string).
-
-For 429 responses, `BotError::Api` carries the `Retry-After` hint when present; the framework does not retry automatically — wrap calls with your own backoff if you need that behavior.
-
-## See also
-
-- [Client](./client.md) — high-level bot loop that owns a `BotApi`.
-- [Context](./context.md) — request-scoped wrapper exposing the same routes during event handling.
-- [Models](./models/messages.md) — request and response struct definitions.
-- [Token](./token.md) — credential management and refresh.
+- [Context](./context.md)
+- [Messages](./models/messages.md)
+- [Other types](./models/other-types.md)

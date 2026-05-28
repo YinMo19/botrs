@@ -43,11 +43,9 @@ The send call has a different name and a different ID parameter for each surface
 | C2C           | `C2CMessageParams`   | `send_c2c_message`       | `openid`           |
 | DM            | `DirectMessageParams`| `send_direct_message`               | `guild_id` (DM guild) |
 
-Editing a guild message uses `edit_message(channel_id, message_id, params)`.
-
 ## Replying from an event
 
-`Message::reply(&api, content)` is the convenience for replying with plain text in the same channel as the inbound `Message`. The same shape exists on `GroupMessage`, `C2CMessage`, and `DirectMessage`. Internally these construct the matching `*Params` value with `with_reply` set to the inbound message id.
+`Message::reply(&api, content)` is the convenience for replying with plain text in the same channel as the inbound `Message`. `GroupMessage` and `C2CMessage` provide the same shape for their surfaces. Internally these construct the matching `*Params` value with `with_reply` set to the inbound message id.
 
 ```rust
 async fn message_create(&self, ctx: Context, message: Message) {
@@ -63,9 +61,4 @@ For anything beyond plain text, build a `MessageParams` and call `ctx.send_messa
 ## Recall and audit
 
 - `BotApi::recall_message(channel_id, message_id, hidetip)` deletes a guild message.
-- `retract_c2c_message`, `retract_group_message`, `retract_dm_message` are the recall variants for the other surfaces.
 - Audit events are surfaced via `EventHandler::message_audit_pass` / `message_audit_reject` and carry a `MessageAudit` payload; you do not have to ack them.
-
-## Removed Legacy API
-
-The pre-0.2 multi-`Option` methods (`post_message`, `post_group_message`, `post_c2c_message`, `post_dms`) and the later `*_with_params` compatibility names have been removed. Use the short methods shown above. See [v0.2.0 migration](/guide/migration-v0.2.0) for the rewrite recipe.

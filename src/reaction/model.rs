@@ -1,8 +1,9 @@
 use crate::models::Snowflake;
+use crate::models::emoji::Emoji;
 use serde::Serialize;
 use serde_json::Value;
 
-use super::{Emoji, MessageReaction, ReactionTarget};
+use super::{MessageReaction, ReactionTarget};
 
 /// Reaction structure representing emoji reactions to messages or posts
 #[derive(Debug, Clone, Serialize)]

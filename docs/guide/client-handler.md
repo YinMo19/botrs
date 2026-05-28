@@ -69,7 +69,7 @@ pub struct Context {
 }
 ```
 
-The inner API client is the same `BotApi` the client built. `Context` dereferences to `BotApi`, so calls such as `ctx.send_message(...)` and `ctx.get_guild(...)` work directly. `bot_info` is filled in from `/users/@me` once the client starts.
+The inner API client is the same `BotApi` the client built. `Context` dereferences to `BotApi`, so calls such as `ctx.send_message(...)`, `ctx.get_pins(...)`, and `ctx.create_schedule(...)` work directly. `bot_info` is filled in from `/users/@me` once the client starts.
 
 If you need an explicit API reference, call `ctx.api()`. For event replies, `message.reply(&ctx, "pong")` accepts the context because it dereferences to `BotApi`.
 

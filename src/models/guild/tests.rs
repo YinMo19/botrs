@@ -115,55 +115,6 @@ fn test_member_limit() {
 }
 
 #[test]
-fn test_role_creation() {
-    let role = GuildRole::default();
-    assert_eq!(role.id, "");
-    assert_eq!(role.name, "");
-    assert_eq!(role.hoist, 0);
-    assert_eq!(role.member_count, 0);
-}
-
-#[test]
-fn test_role_with_data() {
-    let role = GuildRole {
-        id: "role123".to_string(),
-        name: "Admin".to_string(),
-        color: 0xFF0000,
-        hoist: 1,
-        member_count: 5,
-        member_limit: 10,
-    };
-
-    assert_eq!(role.id, "role123");
-    assert_eq!(role.name, "Admin");
-    assert_eq!(role.color, 0xFF0000);
-    assert_eq!(role.hoist, 1);
-    assert_eq!(role.member_count, 5);
-    assert_eq!(role.member_limit, 10);
-    assert!(role.member_count < role.member_limit);
-}
-
-#[test]
-fn role_keeps_official_json_shape() {
-    let role = GuildRole {
-        id: "role-1".to_string(),
-        name: "Admin".to_string(),
-        color: 0xFF0000,
-        hoist: 1,
-        member_count: 5,
-        member_limit: 10,
-    };
-    let value = serde_json::to_value(&role).unwrap();
-
-    assert_eq!(value["id"], "role-1");
-    assert_eq!(value["name"], "Admin");
-    assert_eq!(value["color"], 0xFF0000);
-    assert_eq!(value["hoist"], 1);
-    assert_eq!(value["number"], 5);
-    assert_eq!(value["member_limit"], 10);
-}
-
-#[test]
 fn test_member_creation() {
     let member = Member::default();
     assert!(member.user.is_none());

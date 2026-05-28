@@ -4,7 +4,7 @@ Add `botrs` to your `Cargo.toml` together with an async runtime:
 
 ```toml
 [dependencies]
-botrs = "0.11.0"
+botrs = "0.13.0"
 tokio = { version = "1", features = ["full"] }
 async-trait = "0.1"
 tracing = "0.1"
@@ -18,7 +18,7 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 The crate ships with no default features. The only feature you may want to opt into is `examples`, which pulls in `toml` and `tracing-subscriber` for the binaries under `examples/`. Library users do not need it.
 
 ```toml
-botrs = { version = "0.11.0", features = ["examples"] }
+botrs = { version = "0.13.0", features = ["examples"] }
 ```
 
 ## Sanity check

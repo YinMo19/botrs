@@ -4,12 +4,10 @@
 //! in QQ Guild bots.
 
 mod api;
-mod create;
 mod demand;
 mod identify;
 
 pub use api::{APIPermission, APIPermissions};
-pub use create::APIPermissionDemandToCreate;
 pub use demand::APIPermissionDemand;
 pub use identify::APIPermissionDemandIdentify;
 

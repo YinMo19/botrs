@@ -30,28 +30,12 @@ pub(crate) fn dms_messages(guild_id: &str) -> String {
     format!("/dms/{guild_id}/messages")
 }
 
-pub(crate) fn channel_announces(channel_id: &str) -> String {
-    format!("/channels/{channel_id}/announces")
-}
-
-pub(crate) fn channel_announce(channel_id: &str, message_id: &str) -> String {
-    format!("/channels/{channel_id}/announces/{message_id}")
-}
-
-pub(crate) fn channel_announces_all(channel_id: &str) -> String {
-    format!("/channels/{channel_id}/announces/all")
-}
-
 pub(crate) fn guild_announces(guild_id: &str) -> String {
     format!("/guilds/{guild_id}/announces")
 }
 
 pub(crate) fn guild_announce(guild_id: &str, message_id: &str) -> String {
     format!("/guilds/{guild_id}/announces/{message_id}")
-}
-
-pub(crate) fn guild_announces_all(guild_id: &str) -> String {
-    format!("/guilds/{guild_id}/announces/all")
 }
 
 pub(crate) fn channel_schedules(channel_id: &str) -> String {
@@ -76,10 +60,6 @@ pub(crate) fn channel_pins(channel_id: &str) -> String {
 
 pub(crate) fn channel_pin(channel_id: &str, message_id: &str) -> String {
     format!("/channels/{channel_id}/pins/{message_id}")
-}
-
-pub(crate) fn channel_pins_all(channel_id: &str) -> String {
-    format!("/channels/{channel_id}/pins/all")
 }
 
 pub(crate) fn message_reaction(

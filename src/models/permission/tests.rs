@@ -145,36 +145,3 @@ fn api_permission_demand_uses_zero_values() {
     let value = serde_json::to_value(&demand).unwrap();
     assert!(value.as_object().unwrap().is_empty());
 }
-
-#[test]
-fn api_permission_demand_to_create_keeps_required_fields_when_zero() {
-    // ChannelID and Desc do NOT have omitempty in the QQ Bot Open API,
-    // so they must always be present in the JSON body.
-    let demand = APIPermissionDemandToCreate::default();
-    let value = serde_json::to_value(&demand).unwrap();
-
-    assert_eq!(value["channel_id"], "");
-    assert_eq!(value["desc"], "");
-    assert!(value.get("api_identify").is_none());
-}
-
-#[test]
-fn api_permission_demand_to_create_keeps_official_json_shape() {
-    let demand = APIPermissionDemandToCreate::new(
-        "channel-1",
-        APIPermissionDemandIdentify {
-            path: "/channels/{channel_id}/messages".to_string(),
-            method: "POST".to_string(),
-        },
-        "Need to send messages",
-    );
-    let value = serde_json::to_value(&demand).unwrap();
-
-    assert_eq!(value["channel_id"], "channel-1");
-    assert_eq!(
-        value["api_identify"]["path"],
-        "/channels/{channel_id}/messages"
-    );
-    assert_eq!(value["api_identify"]["method"], "POST");
-    assert_eq!(value["desc"], "Need to send messages");
-}

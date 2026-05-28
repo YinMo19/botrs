@@ -4,7 +4,7 @@ This page maps the most common Python QQ-bot SDK patterns to their `botrs` equiv
 
 ## Handler class → `EventHandler` trait
 
-In a Python SDK you typically subclass a `Client` (or register handlers via decorators) and override `async def on_at_message_create(self, msg)` and friends.
+In a Python SDK you typically subclass a `Client` or register message callbacks via decorators.
 
 In `botrs` you implement the `EventHandler` trait on a struct of your own. Each event is one `async fn` with a default empty body, so you only override what you care about. The handler must be `Send + Sync` and `'static`.
 
@@ -15,7 +15,7 @@ struct MyBot;
 
 #[async_trait::async_trait]
 impl EventHandler for MyBot {
-    async fn at_message_create(&self, ctx: Context, msg: Message) {
+    async fn message_create(&self, ctx: Context, msg: Message) {
         if let Some(content) = msg.content.as_deref() {
             if content.contains("ping") {
                 let _ = msg.reply(&ctx, "pong").await;
@@ -53,7 +53,7 @@ let intents = Intents::default()
 
 ## Sending a message
 
-The Python pattern of `await api.post_message(channel_id, content="hi", msg_id=...)` translates to the `*Params` builder family:
+Python keyword-argument message calls translate to the `*Params` builder family:
 
 ```rust
 use botrs::models::message::MessageParams;

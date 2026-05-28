@@ -1,7 +1,8 @@
 use serde::{Deserialize, Serialize};
 
-use super::{Emoji, ReactionTarget};
+use super::ReactionTarget;
 use crate::models::Snowflake;
+use crate::models::emoji::Emoji;
 
 /// Message reaction DTO.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]

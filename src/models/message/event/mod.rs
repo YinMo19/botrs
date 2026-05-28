@@ -18,7 +18,4 @@ pub use group::GroupMessage;
 pub use message::Message;
 pub use reference::MessageReference;
 pub use scene::MessageScene;
-pub use user::{
-    C2CMessageUser, DirectMessageMember, DirectMessageUser, GroupMessageUser, MessageMember,
-    MessageUser,
-};
+pub use user::{C2CMessageUser, GroupMessageUser, MessageMember, MessageUser};

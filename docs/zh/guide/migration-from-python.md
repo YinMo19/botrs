@@ -4,7 +4,7 @@
 
 ## 处理器类 → `EventHandler` trait
 
-Python SDK 通常让你继承一个 `Client`（或通过装饰器注册），重写 `async def on_at_message_create(self, msg)` 等回调。
+Python SDK 通常让你继承一个 `Client`，或通过装饰器注册消息回调。
 
 在 `botrs` 中，给自己的 struct 实现 `EventHandler` trait，每个事件对应一个带默认空实现的 `async fn`，按需重写。处理器必须满足 `Send + Sync` 与 `'static`。
 
@@ -15,7 +15,7 @@ struct MyBot;
 
 #[async_trait::async_trait]
 impl EventHandler for MyBot {
-    async fn at_message_create(&self, ctx: Context, msg: Message) {
+    async fn message_create(&self, ctx: Context, msg: Message) {
         if let Some(content) = msg.content.as_deref() {
             if content.contains("ping") {
                 let _ = msg.reply(&ctx, "pong").await;
@@ -53,7 +53,7 @@ let intents = Intents::default()
 
 ## 发送消息
 
-Python 的 `await api.post_message(channel_id, content="hi", msg_id=...)` 对应 `*Params` 构建器系列：
+Python 里按关键字参数发送消息的写法，对应到 Rust 侧的 `*Params` 构建器系列：
 
 ```rust
 use botrs::models::message::MessageParams;

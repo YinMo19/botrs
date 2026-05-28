@@ -1,118 +1,74 @@
 # Messages
 
-Message data structures for the QQ Guild Bot API. The framework distinguishes incoming events (gateway payloads) from outgoing parameter objects.
+Message models are split into two groups: inbound gateway payloads and outbound parameter structs. The current implementation focuses on those two paths: events deserialize into usable payloads, and handlers can reply through the framework API.
 
-## Incoming messages
+## Inbound Messages
 
-### `Message`
+Guild channel `@bot` messages use `Message`, delivered to `EventHandler::message_create`. Direct-message events also use `Message`, delivered to `direct_message_create`; fields such as `direct_message` and `src_guild_id` identify the DM scene.
 
-Guild channel messages, including @-mentions.
+Group and C2C messages have their own models:
+
+- `GroupMessage` maps to `GROUP_AT_MESSAGE_CREATE`; the key routing field is `group_openid`.
+- `C2CMessage` maps to `C2C_MESSAGE_CREATE`; the key routing field usually comes from `author.user_openid`.
+
+These event models retain platform-provided message id, content, attachments, mentions, timestamp, references, and internal `event_id`. For plain replies, prefer the model's `reply` method. For richer replies, build the matching parameter struct manually.
 
 ```rust
-pub struct Message {
-    pub id: Option<Snowflake>,
-    pub content: Option<String>,
-    pub channel_id: Option<Snowflake>,
-    pub guild_id: Option<Snowflake>,
-    pub group_id: Option<Snowflake>,
-    pub author: Option<MessageUser>,
-    pub member: Option<MessageMember>,
-    pub message_reference: Option<MessageReference>,
-    pub mentions: Vec<MessageUser>,
-    pub attachments: Vec<MessageAttachment>,
-    pub embeds: Vec<Embed>,
-    pub ark: Option<Ark>,
-    pub direct_message: Option<bool>,
-    pub seq: Option<u64>,
-    pub seq_in_channel: Option<String>,
-    pub timestamp: Option<Timestamp>,
-    pub edited_timestamp: Option<Timestamp>,
-    pub mention_everyone: Option<bool>,
-    pub src_guild_id: Option<Snowflake>,
-    pub file_info: Option<String>,
-    pub ttl: Option<u32>,
-    pub message_scene: Option<MessageScene>,
-    pub event_id: Option<String>,
+if let Some(content) = &message.content {
+    if content.trim() == "/ping" {
+        message.reply(ctx.api(), "pong").await?;
+    }
 }
 ```
 
-Most string fields use `Option<Snowflake>` because the QQ Open API may omit them on partial payloads. Convenience methods on `Message`:
+## Sending Messages
 
-- `reply(api, token, content)` — text reply that sets `msg_id` for passive routing.
+Outbound sending uses four parameter types:
 
-Inspect fields such as `author.bot`, `content`, `attachments`, and `mentions` directly for message predicates.
+| Parameter type | Use |
+| --- | --- |
+| `MessageParams` | Guild channel messages |
+| `DirectMessageParams` | Direct-message session messages |
+| `GroupMessageParams` | Group messages |
+| `C2CMessageParams` | C2C messages |
 
-### `GroupMessage` and `C2CMessage`
-
-Group messages (group `@bot`) and C2C (private/direct) messages share a similar shape but use OpenID-based identification:
-
-```rust
-pub struct GroupMessage {
-    pub id: Option<Snowflake>,
-    pub content: Option<String>,
-    pub message_reference: Option<MessageReference>,
-    pub mentions: Vec<GroupMessageUser>,
-    pub attachments: Vec<MessageAttachment>,
-    pub msg_seq: Option<u64>,
-    pub timestamp: Option<Timestamp>,
-    pub author: Option<GroupMessageUser>,
-    pub group_openid: Option<String>,
-    pub event_id: Option<String>,
-}
-```
-
-`C2CMessage` is structurally identical except its `author`/`mentions` use `C2CMessageUser`.
-
-### `DirectMessage`
-
-`DirectMessage` is the **session** record returned by the direct-message creation API — not the gateway message. Direct-message gateway events use `Message` with `direct_message: Some(true)`.
+The most common helpers are `new_text` and `with_reply`:
 
 ```rust
-pub struct DirectMessage {
-    pub guild_id: Snowflake,
-    pub channel_id: Snowflake,
-    pub create_time: String,
-}
+let params = MessageParams::new_text("pong").with_reply(message_id);
+ctx.send_message(&channel_id, params).await?;
 ```
 
-## Outgoing parameters
+For complex messages, set fields directly:
 
-Send-side payloads use builder structs to avoid the long `Option<...>` argument lists of older APIs:
+- `embed` for embed messages.
+- `ark` for ark templates.
+- `markdown` for markdown templates or markdown content.
+- `keyboard` for button keyboards.
+- `media` for media returned by group/C2C file upload.
 
-| Struct                  | Used by                                    |
-|-------------------------|--------------------------------------------|
-| `MessageParams`         | `BotApi::send_message`         |
-| `DirectMessageParams`   | `BotApi::send_direct_message`  |
-| `GroupMessageParams`    | `BotApi::send_group_message`   |
-| `C2CMessageParams`      | `BotApi::send_c2c_message`     |
+## DirectMessage
 
-Each exposes `new_text(content)` and reply/file helpers where they apply. For embed, markdown, ark, keyboard, media, and other optional payloads, set the corresponding field on the params struct and pass it to the matching send method.
+`DirectMessage` is the session DTO returned after creating a direct-message session. The send flow is:
+
+1. Create a session request with `DirectMessageToCreate::new(source_guild_id, recipient_id)`.
+2. Call `create_direct_message` to receive `DirectMessage`.
+3. Use the returned `guild_id` with `send_direct_message`.
 
 ```rust
-let params = MessageParams::new_text("Pong!").with_reply(message_id);
-api.send_message(&channel_id, params).await?;
+let dm = DirectMessageToCreate::new(&guild_id, &user_id);
+let session = ctx.create_direct_message(&dm).await?;
+
+let params = DirectMessageParams::new_text("hello");
+ctx.send_direct_message(&session.guild_id, params).await?;
 ```
 
-## Supporting types
+## Open Message msg_type
 
-| Type                | Purpose                                              |
-|---------------------|------------------------------------------------------|
-| `Embed`             | Embed body (title, description, fields, thumbnail).  |
-| `Ark`               | Ark template payload (`template_id` + `kv` array).   |
-| `MarkdownPayload`   | Markdown send body (template id, content, params).   |
-| `Keyboard`          | Inline keyboard (rows of buttons).                   |
-| `MessageReference`  | `{ message_id, ignore_get_message_error }`.          |
-| `MessageAttachment` | File attachment metadata (URL, filename, size, …).   |
-| `MessageAudit`      | Audit-result payload from the audit gateway events.  |
-| `MessageDelete`     | Delete-event payload with `message` and `op_user`.   |
-| `MessageScene`      | Scene marker (group, c2c, channel) on inbound events.|
+Group and C2C messages use the platform's numeric `msg_type`. Text generally keeps the default value 0; media uses 7; markdown, ark, embed, and other types follow the platform's protocol values. Guild channel messages use the Rust-modeled `MessageCreateType`.
 
-## Message author types
+## See Also
 
-See [Users and Members](./users-members.md#message-author-types) for `MessageUser`, `DirectMessageUser`, `GroupMessageUser`, and `C2CMessageUser`.
-
-## See also
-
-- [Messages guide](../../guide/messages.md) — task-oriented usage.
-- [Bot API](../bot-api.md) — every message route.
-- [Other types](./other-types.md) — embeds, keyboards, ark, attachments.
+- [BotApi](../bot-api.md)
+- [Users and Members](./users-members.md)
+- [Other types](./other-types.md)

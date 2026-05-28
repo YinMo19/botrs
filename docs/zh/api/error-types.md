@@ -31,7 +31,7 @@ pub type Result<T> = std::result::Result<T, BotError>;
 | `InvalidData(String)`                         | 本地校验（例如非法的权限串）失败。                      |
 | `Timeout`                                     | 内部各阶段抛出的网络超时。                              |
 | `Gateway(String)`                             | 其他不属于上述任一变体的网关协议错误。                  |
-| `Session(String)`                             | Webhook 会话状态机错误。                                |
+| `Session(String)`                             | 网关会话状态机错误。                                    |
 | `Internal(String)`                            | 框架自身的不变量被破坏（视为 bug）。                    |
 | `Io(std::io::Error)`                          | 本地 I/O，例如文件上传。                                |
 | `NotImplemented(String)`                      | 接口可达，但尚未在框架里实现。                          |
@@ -50,8 +50,8 @@ pub type Result<T> = std::result::Result<T, BotError>;
 ```rust
 use botrs::BotError;
 
-match api.get_guild("guild_id").await {
-    Ok(guild) => println!("{}", guild.name),
+match api.get_bot_info().await {
+    Ok(bot) => println!("{}", bot.username),
     Err(BotError::Http(e)) if e.is_timeout() => warn!("timed out"),
     Err(BotError::RateLimit { retry_after }) => {
         tokio::time::sleep(Duration::from_secs(retry_after)).await;

@@ -69,7 +69,7 @@ pub struct Context {
 }
 ```
 
-内部 API 客户端与 `Client` 持有的是同一个 `BotApi`。`Context` 会解引用到 `BotApi`，所以可以直接调用 `ctx.send_message(...)`、`ctx.get_guild(...)`。`bot_info` 在客户端启动时通过 `/users/@me` 获取并填入。
+内部 API 客户端与 `Client` 持有的是同一个 `BotApi`。`Context` 会解引用到 `BotApi`，所以可以直接调用 `ctx.send_message(...)`、`ctx.get_pins(...)`、`ctx.create_schedule(...)`。`bot_info` 在客户端启动时通过 `/users/@me` 获取并填入。
 
 如果需要显式拿到 API 引用，调用 `ctx.api()`。事件回复中 `message.reply(&ctx, "pong")` 也能工作，因为 `Context` 会解引用到 `BotApi`。
 

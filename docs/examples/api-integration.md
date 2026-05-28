@@ -28,5 +28,5 @@ For paginated APIs like `get_reaction_users`, drive the loop yourself with the r
 ## See also
 
 - Guide: [`docs/guide/api-client.md`](../guide/api-client.md)
-- Source of truth for available methods: `src/api.rs` (the `BotApi` impl)
+- Source of truth for available methods: `src/api/mod.rs` and the files under `src/api/`
 - Demo paths listed above under `examples/`

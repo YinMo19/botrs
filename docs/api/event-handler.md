@@ -26,7 +26,7 @@ Methods are grouped by the gateway category that produces them.
 ### Channel messages
 
 - `message_create(ctx, Message)` — guild channel messages and `@mentions`.
-- `message_delete(ctx, MessageDelete)` — guild message removed.
+- `message_delete(ctx, MessageDelete)` — guild message delete event.
 - `public_message_delete(ctx, MessageDelete)` — public-domain delete.
 
 ### Direct messages
@@ -54,7 +54,7 @@ Methods are grouped by the gateway category that produces them.
 
 ### Interaction
 
-- `interaction_create(ctx, Interaction)` — buttons, slash-style interactions; ack with `ctx.put_interaction(...)`.
+- `interaction_create(ctx, Interaction)` — buttons and application interaction payloads.
 
 ### Audio / voice
 

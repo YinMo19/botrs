@@ -1,6 +1,6 @@
 # Forum and threads
 
-Forum events arrive over the gateway when the `Intents::FORUMS` (private) or `Intents::OPEN_FORUM_EVENT` (public) bits are set. The framework decodes the gateway payload into typed structs and dispatches to your `EventHandler`. There is currently no REST API on `BotApi` for creating or deleting threads — bots are notification consumers, not authors.
+Forum events arrive over the gateway when the `Intents::FORUMS` (private) or `Intents::OPEN_FORUM_EVENT` (public) bits are set. The framework decodes the gateway payload into typed structs and dispatches to your `EventHandler`, so forum handling is event-driven.
 
 ## Private forum callbacks
 

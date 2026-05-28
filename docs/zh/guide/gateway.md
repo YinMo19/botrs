@@ -1,51 +1,51 @@
 # 网关
 
-网关是机器人与 QQ 之间的 WebSocket 连接。`Client` 已经替你构建并运行它，大多数使用者无需直接接触网关类型。本页只描述框架代为处理的生命周期，以及少量影响它的可调参数。
+网关由 `Client` 管理。应用代码通常通过实现 `EventHandler` 来处理网关流量。
 
-## 客户端管理的生命周期
+## 生命周期
 
 调用 `client.start().await` 后，框架会：
 
-1. 校验 `Token` 并通过 `BotApi::get_bot_info` 拉取当前机器人信息。
-2. 调用 `BotApi::get_gateway` 获取 WebSocket URL、推荐 shard 数与会话启动限额。
-3. 校验会话启动限额；若当日额度已耗尽，返回 `BotError::Sdk`。
-4. 根据 `session_start_limit.max_concurrency` 调用 `Gateway::session_start_interval` 计算重连间隔。
-5. 启动会话管理器，为每个 shard 打开一个 `Gateway`，把事件汇聚到客户端读取的通道。
+1. 校验 `Token`；
+2. 创建共享的 `BotApi`；
+3. 通过 `get_bot_info` 获取 bot 信息；
+4. 通过 `get_gateway` 获取网关元信息；
+5. 根据返回的 URL、shard 数和 session start limit 创建 shard session；
+6. 连接每个 shard，完成鉴权，发送心跳，并把 gateway dispatch payload 转发到 client 事件循环。
 
-客户端进入主循环：每个分派事件都会被解码为对应的载荷类型，并路由到 `EventHandler` 中的回调。
+随后 client 会把每个 gateway dispatch 解析成对应的 Rust 模型，并调用匹配的 `EventHandler` 方法。
 
-## 心跳
+## 心跳与重连
 
-收到 `HELLO` op 后，网关记录服务端给出的 `heartbeat_interval`（毫秒）并启动心跳任务。每次心跳发送 op-1 携带最后一次收到的 `s`；如果下一次心跳前没有收到 `HEARTBEAT_ACK`，连接被判定为死连接并关闭，由重连路径接管。
+收到 `HELLO` 后，runtime 使用服务端给出的 heartbeat interval 启动心跳任务。心跳会携带最后一次收到的 sequence number。socket 关闭时，runtime 会用缓存的 session id 和 sequence number 尝试 resume。不可 resume 的关闭码会触发新的 identify；致命 identify 错误会停止重连，并以 `BotError` 的形式暴露。
 
-你无需自己发送心跳。心跳健康状况可通过 tracing 观察 —— 网关在 `debug` 级别打印 ack 延迟。
+session manager 会根据 `session_start_limit.max_concurrency` 间隔启动 shard，避免网络恢复后集中重连。
 
-## Resume 与 Identify
+## 事件分发
 
-正常断开后，网关会先用缓存的 `session_id` 与 `last_seq` 尝试 `RESUME`。若服务端回复 `INVALID_SESSION` 或其他不可 resume 的关闭码，下一次尝试将退化为重新 `IDENTIFY`。致命的 identify 关闭码（例如 `4014` 表示“intent 未授权”）会让网关停止重连，客户端把它作为 `BotError::Gateway` 暴露。
+已知事件名会解析成类型化 payload。例如：
 
-## 重连节流
+- `READY` -> `ready(ctx, Ready)`
+- `AT_MESSAGE_CREATE` -> `message_create(ctx, Message)`
+- `DIRECT_MESSAGE_CREATE` -> `direct_message_create(ctx, Message)`
+- `GROUP_AT_MESSAGE_CREATE` -> `group_message_create(ctx, GroupMessage)`
+- `C2C_MESSAGE_CREATE` -> `c2c_message_create(ctx, C2CMessage)`
+- `MESSAGE_REACTION_ADD` / `MESSAGE_REACTION_REMOVE` -> 表情回应回调
+- guild、channel、member、manage、audio、forum、open-forum 事件 -> 对应回调
 
-框架遵循官方指引：不要紧凑循环重连。两次 `connect_once` 之间的间隔来自 `Gateway::session_start_interval(max_concurrency)`，实现为 `round(2 / max_concurrency)`，下限为一秒。`max_concurrency = 1` 时为 2 秒，更高并发档位等比缩短。
+未知事件名会进入 `unknown_event(ctx, GatewayEvent)`，这样平台新增事件时仍然可以被观察到。
 
-如需自定义间隔（例如测试），在驱动 `Gateway` 之前调用 `Gateway::with_reconnect_interval(Duration::from_secs(n))`。零会被归一化为一秒，避免病态循环。
+## 可配置项
 
-## 状态查询
+公开配置项保持很小：
 
-正在运行的 `Gateway` 暴露若干便于观测的 `pub fn`：
+- `Client::new(token, intents, handler, is_sandbox)`
+- `Client::with_config(token, intents, handler, timeout, is_sandbox)`
+- `Intents` 控制 QQ 会发送哪些 gateway 事件类别。
+- `is_sandbox` 控制 REST 和 gateway discovery 是否使用沙箱环境。
 
-- `is_ready() -> bool` —— 收到首个 `READY` 后变为 `true`。
-- `can_reconnect() -> bool` —— 一旦遇到不可恢复的关闭码就翻转为 `false`。
-- `session_id() -> Option<&str>` —— resume 会话 id，identify 完成前为 `None`。
-- `last_sequence() -> u64` —— 最近一次的 `s` 值，心跳也会用到。
+## 参见
 
-通常这些方法在自定义会话管理器中使用。客户端默认使用 `new_session_manager()` 构造的实现。
-
-## Sharding
-
-shard 数量来自 `gateway_info.shards`（即 `BotApi::get_gateway` 的返回）。每个 shard 是独立的 WebSocket 连接，由会话管理器按计算出的间隔节流。`Client` 没有手动 shard 设置，若需自定义拓扑，可自行构造 `Gateway::new(url, token, intents, Some([shard_id, total]))`，并通过 `set_session_manager_factory` 注入自己的会话管理器。
-
-## 相关类型
-
-- `botrs::session_manager::Session`、`botrs::session_manager::SessionManager` 与 `botrs::session_manager::ChanManager` 是网关运行时使用的公开会话管理类型。
-- 公共端点常量包括 `botrs::DEFAULT_WS_URL`（`wss://api.sgroup.qq.com/websocket`）与 `botrs::SANDBOX_API_URL`。
+- [Client](../api/client.md)
+- [EventHandler](../api/event-handler.md)
+- [Intents](./intents.md)

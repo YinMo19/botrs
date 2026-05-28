@@ -32,18 +32,14 @@ pub use intents::Intents;
 pub use models::api::{BotInfo, MessageResponse};
 pub use models::channel::Channel;
 pub use models::gateway::{GatewayEvent, Ready};
-pub use models::guild::{Guild, GuildRole, Member};
+pub use models::guild::{Guild, Member};
 pub use models::message::{
     C2CMessage, DirectMessage, DirectMessageToCreate, GroupMessage, Message, MessageDelete,
     MessageParams,
 };
-pub use models::robot::Robot;
 pub use models::schedule::Schedule;
 pub use models::user::User;
-pub use reaction::{
-    Emoji as ReactionEmoji, MessageReaction, MessageReactionPager, Reaction, ReactionTarget,
-    ReactionTargetType, ReactionUsers,
-};
+pub use reaction::{MessageReaction, Reaction, ReactionTarget, ReactionTargetType, ReactionUsers};
 pub use token_impl::Token;
 
 /// The current version of the library

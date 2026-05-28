@@ -132,21 +132,3 @@ fn test_member_roles() {
             .any(|role_id| !member.roles.contains(role_id))
     );
 }
-
-#[test]
-fn test_role_creation() {
-    let role = Role {
-        id: "123456789".to_string(),
-        name: "TestRole".to_string(),
-        color: 0,
-        hoist: false,
-        position: 0,
-        permissions: "0".to_string(),
-        managed: false,
-        mentionable: false,
-    };
-
-    assert_eq!(role.id, "123456789");
-    assert_eq!(role.name, "TestRole");
-    assert_eq!(role.permissions, "0");
-}

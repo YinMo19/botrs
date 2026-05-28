@@ -32,7 +32,7 @@ let intents = Intents::default()
 | `GUILD_MESSAGES`（特权）      | `with_guild_messages`                | 频道全量消息（`message_create` 等）                     |
 | `GUILD_MESSAGE_REACTIONS`     | `with_guild_message_reactions`       | 表情添加 / 移除                                         |
 | `DIRECT_MESSAGE`              | `with_direct_message`                | 私聊 `direct_message_create`                            |
-| `PUBLIC_GUILD_MESSAGES`       | `with_public_guild_messages`         | @ 消息 `at_message_create`，非特权                      |
+| `PUBLIC_GUILD_MESSAGES`       | `with_public_guild_messages`         | @ 消息 `message_create`，非特权                         |
 | `PUBLIC_MESSAGES`             | `with_public_messages`               | 群聊 / C2C 消息                                         |
 | `INTERACTION`                 | `with_interaction`                   | 按钮 / interaction 事件                                 |
 | `MESSAGE_AUDIT`               | `with_message_audit`                 | 消息审核通过 / 拒绝                                     |

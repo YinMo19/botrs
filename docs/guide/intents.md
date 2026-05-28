@@ -32,7 +32,7 @@ You can also OR raw constants together via `Intents::with_intent(Intents::GUILDS
 | `GUILD_MESSAGES` *(priv.)*    | `with_guild_messages`                | All channel messages (`message_create` and friends)      |
 | `GUILD_MESSAGE_REACTIONS`     | `with_guild_message_reactions`       | Reaction add / remove                                    |
 | `DIRECT_MESSAGE`              | `with_direct_message`                | DM `direct_message_create`                               |
-| `PUBLIC_GUILD_MESSAGES`       | `with_public_guild_messages`         | At-mention messages (`at_message_create`) — non-priv.    |
+| `PUBLIC_GUILD_MESSAGES`       | `with_public_guild_messages`         | At-mention messages (`message_create`) — non-priv.       |
 | `PUBLIC_MESSAGES`             | `with_public_messages`               | Group / C2C messages                                     |
 | `INTERACTION`                 | `with_interaction`                   | Button / interaction events                              |
 | `MESSAGE_AUDIT`               | `with_message_audit`                 | Message audit pass / reject                              |

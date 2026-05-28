@@ -1,121 +1,71 @@
 # Other Types
 
-Supporting model types used by the QQ Bot Open API. Refer to source for full field-level definitions; this page summarises shapes and points to the routes that produce or consume them.
+This page covers common models outside messages, users, guilds, and channels: gateway startup data, schedules, permissions, pins, announcements, reactions, interactions, audio events, manage events, and forum events.
 
-## Audio and voice
+## Gateway
 
-```rust
-pub struct AudioControl {            // request body for /audio_control
-    pub audio_url: String,
-    pub text: String,
-    pub status: AudioStatus,         // numeric: 0..=3
-}
+`get_gateway` returns `GatewayResponse`, including the websocket URL, recommended shard count, and session start limit. `Client::start` uses it to create internal gateway sessions; application code normally does not handle it directly.
 
-pub enum AudioStatus { Start = 0, Pause = 1, Resume = 2, Stop = 3 }
-```
-
-`Audio` is the gateway event payload (`AUDIO_START` / `AUDIO_FINISH` etc.). `PublicAudio` carries voice/live channel member events with a `PublicAudioType` (`Voice = 2`, `Live = 5`). Use the event callback `Context` for REST calls.
-
-## Forum threads
-
-Gateway forum events deliver these payloads. Field types reflect the protocol's bare strings/integers:
-
-```rust
-pub struct Thread     { pub guild_id: Option<String>, pub channel_id: Option<String>, pub author_id: Option<String>, pub thread_info: ThreadInfo, pub event_id: Option<String> }
-pub struct ThreadInfo { pub thread_id: Option<String>, pub title: Option<String>, pub content: Option<String>, pub date_time: Option<String> }
-pub struct Post       { pub guild_id: Option<String>, pub channel_id: Option<String>, pub author_id: Option<String>, pub post_info: PostInfo, pub event_id: Option<String> }
-pub struct Reply      { pub guild_id: Option<String>, pub channel_id: Option<String>, pub author_id: Option<String>, pub reply_info: ReplyInfo, pub event_id: Option<String> }
-pub struct ForumAuditResult { pub task_id: String, pub guild_id: String, pub channel_id: String, pub author_id: String, pub thread_id: String, pub post_id: String, pub reply_id: String, pub publish_type: u32, pub result: u32, pub err_msg: String, pub date_time: String, /* … */ }
-```
-
-`OpenThread` is the open-forum variant and may carry `thread_info`, `post_info`, **or** `reply_info` depending on which sub-event fired.
-
-`title` and `content` are JSON-encoded paragraph trees as defined by the QQ Bot Open API; parse with `Content::new(&serde_json::from_str(&info.title.as_deref().unwrap_or("{}"))?)` if you need a structured view.
+`Ready` is the `READY` event payload. It contains the session id, version, current bot `User`, and optional shard data.
 
 ## Schedules
 
-```rust
-pub struct Schedule {
-    pub id: Snowflake,
-    pub name: String,
-    pub description: String,
-    pub start_timestamp: String,        // unix seconds
-    pub end_timestamp: String,
-    pub jump_channel_id: Snowflake,
-    pub remind_type: String,            // RemindType::to_wire_string()
-    pub creator: Option<Member>,
-}
-```
-
-`RemindType` enumerates `None=0` … `Before2Days=8` plus `Unknown(u8)`. `ScheduleWrapper { schedule: Option<Schedule> }` is the create/update body.
-
-## API permissions
+Schedule models are used by `get_schedules`, `get_schedule`, `create_schedule`, `update_schedule`, and `delete_schedule`. Create or update schedules with `Schedule::new(...)`; reminders use `RemindType`, which converts to the string value expected by the platform.
 
 ```rust
-pub struct APIPermissions { pub api_list: Vec<APIPermission> /* JSON: "apis" */ }
-pub struct APIPermission  { pub path: String, pub method: String, pub desc: String, pub auth_status: i32 }
-
-pub struct APIPermissionDemand          { pub guild_id: Snowflake, pub channel_id: Snowflake, pub api_identify: Option<APIPermissionDemandIdentify>, pub title: String, pub desc: String }
-pub struct APIPermissionDemandToCreate  { pub channel_id: Snowflake, pub api_identify: Option<APIPermissionDemandIdentify>, pub desc: String }
-pub struct APIPermissionDemandIdentify  { pub path: String, pub method: String }
+let schedule = Schedule::new(
+    "Daily sync",
+    "1767225600",
+    "1767229200",
+    Some(channel_id.to_string()),
+    RemindType::Before15Minutes,
+);
+ctx.create_schedule(&schedule_channel_id, &schedule).await?;
 ```
 
-Every field with `omitempty` in the protocol uses `skip_serializing_if` so zero values stay off the wire.
+## API Permissions
 
-## Pins, announces, message setting
+Permission listing uses `get_api_permissions`. Permission requests use `post_permission_demand`, passing the target channel, API identifier, and description.
 
-- `PinsMessage { guild_id, channel_id, message_ids: Vec<Snowflake> }` — return value of `get_pins`.
-- `Announce` — see [`announce.rs`](https://github.com/YinMo19/botrs/blob/main/src/models/announce.rs); `RecommendChannel` and the create-side `ChannelAnnouncesToCreate` / `GuildAnnouncesToCreate` accompany it.
-- `MessageSetting { disable_create_dm: bool, disable_push_msg: bool, channel_ids: Vec<Snowflake>, channel_push_max_num: i32 }` — every field omits its zero value to match the protocol.
+`post_permission_demand` builds the request body from those fields, so callers only need to describe the target API and the reason.
 
-## Interaction
+## Pins and Announcements
 
-```rust
-pub struct Interaction {
-    pub id: String,
-    pub application_id: String,
-    pub interaction_type: InteractionType,         // JSON: "type"
-    pub data: Option<InteractionData>,
-    pub guild_id: Option<String>,
-    pub channel_id: Option<String>,
-    pub group_open_id: Option<String>,
-    pub user_open_id: Option<String>,
-    pub group_member_open_id: Option<String>,
-    pub timestamp: Option<String>,
-    pub version: Option<i32>,
-    pub event_id: Option<String>,
-    pub scene: Option<String>,
-    pub chat_type: Option<i32>,
-    pub channel_type: Option<i32>,
-}
-```
+Pinned messages are represented by `PinsMessage`, which stores the pinned message ids for a channel. The common flow is pin, unpin, and list.
 
-`InteractionType` and `InteractionDataType` map to the documented integer codes. `BotApi::put_interaction` acknowledges the event.
+Announcement models include `Announce`, `RecommendChannel`, and `AnnouncesType`. The common flow is creating an announcement from an existing message, or creating a recommended-channel announcement from a channel list.
 
 ## Reactions
 
-```rust
-pub struct MessageReaction { pub user_id: Snowflake, pub channel_id: Snowflake, pub guild_id: Snowflake, pub target: ReactionTarget, pub emoji: Emoji }
-pub struct ReactionTarget  { pub id: String, #[serde(rename = "type")] pub target_type: ReactionTargetType }
-pub enum   ReactionTargetType { Message = 0, Subject = 1, Bot = 2 }
-pub struct Emoji            { pub id: String, #[serde(rename = "type")] pub emoji_type: i32 }
-pub struct ReactionUsers   { pub users: Vec<User>, pub cookie: String, pub is_end: bool }
-```
+Reaction events and REST queries share the same core types:
 
-## Management events
+- `Reaction` is the event object received by handlers.
+- `MessageReaction` is the platform reaction payload DTO.
+- `ReactionTarget` and `ReactionTargetType` describe the reacted target.
+- `ReactionUsers` is the response from `get_reaction_users`.
+- Emoji data uses `models::emoji::Emoji` and `EmojiType`.
 
-`GroupManageEvent` / `C2CManageEvent` carry `event_id`, `timestamp`, plus the OpenIDs needed to identify the affected group / member. `ManageEventType` is a string enum (`group_add_robot`, `friend_del`, …) used by the gateway router. `EnterAioEvent { user_openid: String, from_source: String }` and `SubscribeMessageStatusData { group_openid, openid, result: Vec<SubscribeMsgTemplateResult>, /* … */ }` are the remaining management payloads.
+When listing reaction users, pass the previous response's `cookie` and a `limit` to `get_reaction_users`. Pagination ends when `is_end` is true.
 
-## Gateway / session
+## Interaction
 
-```rust
-pub struct Ready             { pub user: User, pub session_id: String, pub shard: [u32; 2], pub version: u32 }
-pub struct Session           { pub id: String, pub url: String, pub token: Token, pub intent: Intents, pub last_seq: u64, /* … */ }
-pub struct SessionStartLimit { pub total: u32, pub remaining: u32, pub reset_after: u64, pub max_concurrency: u32 }
-```
+`Interaction` maps to `interaction_create` and is used to read button or application interaction payloads from the platform.
 
-## See also
+## Audio, Manage, and Forum Events
 
-- [Messages](./messages.md) — message-side support types (embeds, ark, keyboards).
-- [Guilds & Channels](./guilds-channels.md) — guild, channel, role, mute structs.
-- [Bot API](../bot-api.md) — the routes that produce and consume these types.
+Audio models are gateway event payloads: `Audio`, `PublicAudio`, and `PublicAudioType`.
+
+Manage events are dispatched as:
+
+- Group: `GroupManageEvent`
+- C2C: `C2CManageEvent`
+- AIO entry: `EnterAioEvent`
+- Subscribe message authorization status: `SubscribeMessageStatusData`
+
+Forum events include private forum events and open forum events. Handlers can read threads, posts, replies, and audit results from their typed payloads.
+
+## See Also
+
+- [BotApi](../bot-api.md)
+- [EventHandler](../event-handler.md)
+- [Messages](./messages.md)

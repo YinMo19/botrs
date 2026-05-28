@@ -4,10 +4,7 @@ mod auth;
 mod events;
 mod payload;
 
-pub use auth::{
-    Hello, Identify, IdentifyProperties, Ready, Resume, WSIdentityData, WSReadyData, WSResumeData,
-    WSUser,
-};
+pub use auth::{Hello, Identify, IdentifyProperties, Ready, Resume};
 pub use events::*;
 pub use payload::GatewayEvent;
 

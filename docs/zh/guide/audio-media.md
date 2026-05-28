@@ -1,58 +1,37 @@
 # 音频与媒体
 
-框架的音频支持分两层：网关投递给 `EventHandler` 的事件，以及 `BotApi` 上控制播放和上传媒体的 REST 方法。
+音频相关能力分成两类：gateway 音频事件，以及群/C2C 的媒体文件发送。
 
 ## 音频事件
 
-启用 `Intents::AUDIO_ACTION` 后会收到四个回调：
+开启对应 intents 后，平台会通过 gateway 推送音频状态和语音/直播子频道成员变更：
 
-- `audio_start(&self, ctx, audio: Audio)` —— 播放开始。
-- `audio_finish(&self, ctx, audio: Audio)` —— 播放结束。
-- `on_mic(&self, ctx, audio: Audio)` —— 机器人已上麦。
-- `off_mic(&self, ctx, audio: Audio)` —— 机器人已下麦。
+- `audio_start`
+- `audio_finish`
+- `on_mic`
+- `off_mic`
+- `audio_or_live_channel_member_enter`
+- `audio_or_live_channel_member_exit`
 
-`Audio` 包含 `channel_id`、`guild_id`、`audio_url`、`text`、`event_id`，均为 `Option<String>`。事件触发后的 REST 调用请直接使用回调里的 `ctx`。
+`Audio` 会携带 channel id、guild id、audio url、文本描述和内部 event id。`PublicAudio` 用于语音/直播子频道成员进入和离开事件，`PublicAudioType` 用来区分 voice 与 live。
 
-语音／直播子频道成员进出事件需要启用 `Intents::AUDIO_OR_LIVE_CHANNEL_MEMBER`，并实现 `audio_or_live_channel_member_enter` / `_exit`。载荷为 `PublicAudio { guild_id, channel_id, channel_type: Option<PublicAudioType>, user_id }`，`PublicAudioType` 取值 `Voice = 2` 或 `Live = 5`。
+这些事件适合做日志、统计、状态同步，或触发普通消息回复。
 
-## 控制播放
+## 群与 C2C 媒体上传
 
-`BotApi::post_audio(channel_id, &AudioControl)` 用于更新某语音子频道的音频会话，`AudioControl` 即请求体：
-
-```rust
-use botrs::{AudioControl, AudioStatus};
-
-let control = AudioControl {
-    audio_url: "https://example.com/track.mp3".into(),
-    text: "正在播放".into(),
-    status: AudioStatus::Start, // Start | Pause | Resume | Stop
-};
-ctx.post_audio(&channel_id, &control).await?;
-```
-
-麦位控制：
-
-- `BotApi::on_microphone(channel_id)` —— 上麦。
-- `BotApi::off_microphone(channel_id)` —— 下麦。
-
-## 富媒体上传
-
-群／C2C 消息可以先上传媒体，再发送引用该媒体的消息：
+群和 C2C 消息可以先上传媒体，再发送引用该媒体的消息。
 
 ```rust
-use botrs::models::message::GroupMessageParams;
-
-// 1=图片 2=视频 3=语音 4=文件
 let media = ctx
     .post_group_file(&group_openid, 1, image_url, None)
     .await?;
 
-let params = GroupMessageParams {
-    msg_type: 7, // media
-    media: Some(media),
-    ..Default::default()
-};
+let mut params = GroupMessageParams::default();
+params.msg_type = 7;
+params.media = Some(media);
 ctx.send_group_message(&group_openid, params).await?;
 ```
 
-C2C 与之对应的方法是 `post_c2c_file(openid, file_type, url, srv_send_msg)`。传入 `srv_send_msg = Some(true)` 时平台会直接转发为消息，否则把返回的 `Media` 描述塞进自己的 `*MessageParams`。
+`file_type` 使用平台协议值：常见值为 1 图片、2 视频、3 语音、4 文件。C2C 使用 `post_c2c_file`，参数形态相同。
+
+`srv_send_msg` 传 `Some(true)` 时，平台会在上传后直接发送；传 `None` 或 `Some(false)` 时，通常把返回的 `Media` 放进消息参数里自行发送。

@@ -18,7 +18,7 @@ BotRS 是一个用 Rust 实现的 QQ 频道机器人框架，基于 [QQ 频道�
 
 ```toml
 [dependencies]
-botrs = "0.11.0"
+botrs = "0.13.0"
 tokio = { version = "1.0", features = ["full"] }
 tracing = "0.1"
 tracing-subscriber = "0.3"
@@ -28,8 +28,7 @@ async-trait = "0.1"
 ### 基础示例
 
 ```rust,no_run
-use botrs::{Client, Context, EventHandler, Intents, Token, Message};
-use botrs::models::gateway::Ready;
+use botrs::{Client, Context, EventHandler, Intents, Message, Ready, Token};
 use botrs::models::message::MessageParams;
 use tracing::info;
 

@@ -4,7 +4,7 @@
 
 ```toml
 [dependencies]
-botrs = "0.11.0"
+botrs = "0.13.0"
 tokio = { version = "1", features = ["full"] }
 async-trait = "0.1"
 tracing = "0.1"
@@ -18,7 +18,7 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 crate 默认不启用任何特性。唯一可能用到的开关是 `examples`，它会引入 `toml` 与 `tracing-subscriber`，用于 `examples/` 目录下的可执行示例。普通使用者不需要它。
 
 ```toml
-botrs = { version = "0.11.0", features = ["examples"] }
+botrs = { version = "0.13.0", features = ["examples"] }
 ```
 
 ## 安装自检

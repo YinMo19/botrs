@@ -24,7 +24,7 @@ export default defineConfig({
                     { text: "API Reference", link: "/api/client" },
                     { text: "Examples", link: "/examples/getting-started" },
                     {
-                        text: "v0.2.5",
+                        text: "v0.13.0",
                         items: [
                             { text: "Changelog", link: "/changelog" },
                             { text: "Contributing", link: "/contributing" },
@@ -111,11 +111,11 @@ export default defineConfig({
                             ],
                         },
                         {
-                            text: "Migration Guide",
+                            text: "Reference",
                             items: [
                                 {
-                                    text: "v0.2.0 Message API",
-                                    link: "/guide/migration-v0.2.0",
+                                    text: "Message API Shape",
+                                    link: "/guide/message-api",
                                 },
                                 {
                                     text: "From Python",
@@ -263,7 +263,7 @@ export default defineConfig({
                     { text: "API 参考", link: "/zh/api/client" },
                     { text: "示例", link: "/zh/examples/getting-started" },
                     {
-                        text: "v0.2.5",
+                        text: "v0.13.0",
                         items: [
                             { text: "更新日志", link: "/zh/changelog" },
                             { text: "贡献指南", link: "/zh/contributing" },
@@ -350,11 +350,11 @@ export default defineConfig({
                             ],
                         },
                         {
-                            text: "迁移指南",
+                            text: "参考",
                             items: [
                                 {
-                                    text: "v0.2.0 消息 API",
-                                    link: "/zh/guide/migration-v0.2.0",
+                                    text: "消息 API 形态",
+                                    link: "/zh/guide/message-api",
                                 },
                                 {
                                     text: "从 Python 迁移",

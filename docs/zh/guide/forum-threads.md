@@ -1,6 +1,6 @@
 # 论坛与主题
 
-启用 `Intents::FORUMS`（特权）或 `Intents::OPEN_FORUM_EVENT`（公开）后，论坛事件会通过网关投递。框架将网关载荷解码为类型化的结构体并交给 `EventHandler`。`BotApi` 当前并没有创建／删除主题的 REST 接口 —— 机器人是通知消费者而非作者。
+启用 `Intents::FORUMS`（特权）或 `Intents::OPEN_FORUM_EVENT`（公开）后，论坛事件会通过网关投递。框架将网关载荷解码为类型化的结构体并交给 `EventHandler`，因此论坛处理是事件驱动的。
 
 ## 私域论坛回调
 

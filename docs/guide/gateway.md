@@ -1,51 +1,51 @@
 # Gateway
 
-The gateway is the WebSocket connection between your bot and QQ. The `Client` builds and runs it for you — most users never touch the gateway types directly. This page documents the lifecycle the framework manages on your behalf and the small number of knobs that affect it.
+The gateway is managed by `Client`. Application code normally interacts with gateway traffic by implementing `EventHandler`.
 
-## Lifecycle managed by the client
+## Lifecycle
 
-When you call `client.start().await`, the framework:
+When `client.start().await` runs, the framework:
 
-1. Validates your `Token` and fetches the current bot user via `BotApi::get_bot_info`.
-2. Calls `BotApi::get_gateway` to obtain the WebSocket URL, the recommended shard count, and the session-start limits.
-3. Validates the session-start limits and returns `BotError::Sdk` if you've already exhausted your daily start budget.
-4. Computes a reconnect interval from `session_start_limit.max_concurrency` using `Gateway::session_start_interval`.
-5. Spawns a session manager that opens one `Gateway` per shard and pumps events into the channel the client reads.
+1. validates the `Token`;
+2. builds a shared `BotApi`;
+3. fetches bot info with `get_bot_info`;
+4. fetches gateway metadata with `get_gateway`;
+5. creates shard sessions from the returned URL, shard count, and session-start limit;
+6. connects each shard, authenticates, sends heartbeats, and forwards gateway dispatch payloads into the client event loop.
 
-The client then loops on the receiver: every dispatched event is decoded into the typed payload and routed to the matching `EventHandler` callback.
+The client then parses each gateway dispatch into the relevant Rust model and calls the matching `EventHandler` method.
 
-## Heartbeat
+## Heartbeat and reconnect
 
-After a `HELLO` op the gateway records the server-supplied `heartbeat_interval` (in milliseconds) and starts a heartbeat task. Each tick sends an op-1 `HEARTBEAT` carrying the last received sequence number; if a `HEARTBEAT_ACK` does not return before the next tick, the connection is considered dead and the socket is closed so the reconnect path can run.
+After `HELLO`, the runtime starts a heartbeat task using the server-provided heartbeat interval. Heartbeats carry the last received sequence number. If the socket closes, the runtime tries to resume with the cached session id and sequence number. Non-resumable close codes force a new identify; fatal identify errors stop reconnecting and surface as `BotError`.
 
-You don't need to send heartbeats yourself, but you can observe heartbeat health through tracing — the gateway logs ack latency at `debug` level.
+The session manager spaces shard starts according to `session_start_limit.max_concurrency`. This keeps reconnects from hammering the platform after a network failure.
 
-## Resume vs identify
+## Event dispatch
 
-After a clean disconnect the gateway tries `RESUME` first using the cached `session_id` and `last_seq`. If the server responds with `INVALID_SESSION` or another non-resumable close code, the next attempt falls back to a fresh `IDENTIFY`. Fatal identify close codes, for example `4014` "disallowed intent", cause the gateway to stop reconnecting; the client surfaces that as `BotError::Gateway`.
+Known event names are parsed into typed payloads. Examples:
 
-## Reconnect throttling
+- `READY` -> `ready(ctx, Ready)`
+- `AT_MESSAGE_CREATE` -> `message_create(ctx, Message)`
+- `DIRECT_MESSAGE_CREATE` -> `direct_message_create(ctx, Message)`
+- `GROUP_AT_MESSAGE_CREATE` -> `group_message_create(ctx, GroupMessage)`
+- `C2C_MESSAGE_CREATE` -> `c2c_message_create(ctx, C2CMessage)`
+- `MESSAGE_REACTION_ADD` / `MESSAGE_REACTION_REMOVE` -> reaction callbacks
+- guild, channel, member, manage, audio, forum, and open-forum events -> their corresponding callbacks
 
-The framework follows the official QQ guidance: never reconnect in a tight loop. The interval between two `connect_once` attempts comes from `Gateway::session_start_interval(max_concurrency)`, which implements `round(2 / max_concurrency)` with a one-second floor. For `max_concurrency = 1` that's two seconds; higher concurrency tiers shorten it accordingly.
+Unknown event names are passed to `unknown_event(ctx, GatewayEvent)` so newer platform events can still be observed.
 
-If you need a custom interval (e.g. for tests), call `Gateway::with_reconnect_interval(Duration::from_secs(n))` before driving it. Zero is normalized to one second to avoid pathological loops.
+## Configuration knobs
 
-## Inspecting state
+The public knobs are intentionally small:
 
-A live `Gateway` exposes a few `pub fn`s for observability:
+- `Client::new(token, intents, handler, is_sandbox)`
+- `Client::with_config(token, intents, handler, timeout, is_sandbox)`
+- `Intents` controls which gateway event categories QQ sends.
+- `is_sandbox` switches REST and gateway discovery to the sandbox environment.
 
-- `is_ready() -> bool` — `true` after the first `READY` dispatch.
-- `can_reconnect() -> bool` — flips to `false` once a non-resumable close is observed.
-- `session_id() -> Option<&str>` — the resume session id or `None` before identify completes.
-- `last_sequence() -> u64` — the last received `s` value, also used in heartbeats.
+## See also
 
-You usually access these from a custom session manager. The default `SessionManager` (created by `new_session_manager()`) is the one the client uses.
-
-## Sharding
-
-The number of shards comes from `gateway_info.shards` (returned by `BotApi::get_gateway`). Each shard is a separate WebSocket connection that the session manager throttles using the calculated session start interval. There is no manual shard configuration in `Client`; if you need a custom topology, build `Gateway` instances yourself, pass `Some([shard_id, total])` to `Gateway::new`, and run them through a session manager you constructed via `set_session_manager_factory`.
-
-## Related types
-
-- `botrs::session_manager::Session`, `botrs::session_manager::SessionManager`, and `botrs::session_manager::ChanManager` are the public session-management types used by the gateway runtime.
-- Constants such as `botrs::DEFAULT_WS_URL` (`wss://api.sgroup.qq.com/websocket`) and `botrs::SANDBOX_API_URL` are the published endpoints.
+- [Client](../api/client.md)
+- [Event handler](../api/event-handler.md)
+- [Intents](./intents.md)

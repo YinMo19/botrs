@@ -173,7 +173,7 @@ When releasing new versions:
 1. Update changelog
 2. Update version references in code examples
 3. Add migration guides if needed
-4. Update any deprecated feature warnings
+4. Update any feature notes that users need to see
 
 ## Getting Help
 

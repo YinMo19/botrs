@@ -1,77 +1,48 @@
 # Context
 
-`Context` 是传给每个 `EventHandler` 回调的请求作用域对象。它持有共享 API 客户端和缓存的 `BotInfo`；认证 token 存在 `BotApi` 内部。
+`Context` 是事件回调里的运行上下文。它的作用很简单：把当前事件处理逻辑和共享的 `BotApi` 连接起来，并携带启动时拿到的 bot 信息。
+
+你不需要手动构造 `Context`。`Client` 在网关事件循环里创建它，然后传给每个 `EventHandler` 方法。
+
+## 直接调用 API
+
+`Context` 会解引用到 `BotApi`，所以 handler 里可以直接写：
 
 ```rust
-pub struct Context {
-    api: Arc<BotApi>,
-    pub bot_info: Option<BotInfo>,
-}
+let params = MessageParams::new_text("pong");
+ctx.send_message(&channel_id, params).await?;
 ```
 
-`Context` 实现了 `Clone`，复制成本很低；它还实现了 `Deref<Target = BotApi>`，所以 handler 里可以直接在 `ctx` 上调用 `BotApi` 方法。
+这和 `ctx.api().send_message(...)` 是同一个 API 客户端。需要把 API 客户端传给辅助函数时，可以使用 `ctx.api()` 拿到 `&BotApi`。
 
-## 构造
+## bot_info
 
-无需自行构造 `Context`。`Client` 会用驱动网关的同一个 `BotApi` 创建它，并在网关 `READY` 数据可用后填充 `bot_info`。
+`ctx.bot_info` 来自启动阶段的 `get_bot_info`。正常由 `Client::start` 驱动的事件里它会有值，但类型上仍是 `Option<BotInfo>`，因为测试或内部构造场景可能没有填充。
 
-## 提供的能力
-
-因为 `Context` 会解引用到 `BotApi`，[Bot API](./bot-api.md) 里列出的 REST 方法都可以直接调用：
+常见用途是日志、判断当前 bot 名称、或生成响应文本：
 
 ```rust
-ctx.send_message(channel_id, MessageParams::new_text("pong")).await?;
-ctx.send_group_message(group_openid, GroupMessageParams::new_text("pong")).await?;
-ctx.recall_message(channel_id, message_id, Some(true)).await?;
+let bot_name = ctx
+    .bot_info
+    .as_ref()
+    .map(|bot| bot.username.as_str())
+    .unwrap_or("bot");
 ```
 
-需要 `BotApi` 引用的辅助 API 可以直接传 `&ctx`。如果要显式借用，`ctx.api()` 返回 `&BotApi`。
+## 并发使用
 
-## 示例：使用 embed 回复
-
-```rust
-async fn message_create(&self, ctx: Context, message: Message) {
-    if message.author.as_ref().and_then(|author| author.bot).unwrap_or_default() { return; }
-
-    let params = MessageParams {
-        embed: Some(embed),
-        ..Default::default()
-    };
-
-    if let Err(err) = ctx
-        .send_message(message.channel_id.as_deref().unwrap_or(""), params)
-        .await
-    {
-        warn!("send failed: {err}");
-    }
-}
-```
-
-## 示例：删除成员
+`Context` 克隆成本很低，内部共享同一个 API 客户端和 token 缓存。需要把回复动作放到后台任务时，可以 clone 一份：
 
 ```rust
-ctx.delete_member(&guild_id, &user_id, Some(true), Some(1)).await?;
-```
-
-`delete_member` 接受 `add_blacklist: Option<bool>` 与 `delete_history_msg_days: Option<i32>`，使用平台默认值时传 `None`。
-
-## 并发
-
-`Context` clone 成本极低，且内部 `Arc<BotApi>` 是共享的，把任务派出去非常容易：
-
-```rust
-let context = ctx.clone();
+let background = ctx.clone();
 tokio::spawn(async move {
     let params = MessageParams::new_text("background work done");
-    let _ = context.send_message(&channel, params).await;
+    let _ = background.send_message(&channel_id, params).await;
 });
 ```
 
-`BotApi` 持有的 token 会通过共享缓存自动续期，不需要在任务之间手动传递最新 token。
-
 ## 参见
 
-- [Client](./client.md) —— 创建并把 `Context` 传给事件回调的对象。
-- [BotApi](./bot-api.md) —— 完整路由目录。
-- [事件处理器](./event-handler.md) —— 接收 `Context` 的 trait。
-- [Token](./token.md) —— 嵌入 `BotApi` 的凭证模型。
+- [BotApi](./bot-api.md)
+- [EventHandler](./event-handler.md)
+- [Client](./client.md)

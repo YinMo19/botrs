@@ -1,93 +1,49 @@
 # Users and Members
 
-User and member data structures for the QQ Guild Bot API. All structs are `Serialize` + `Deserialize` and accept missing fields via `#[serde(default)]` so they survive partial payloads.
+User models cover the shapes that appear in the core runtime path: the bot itself, `READY` user data, reaction user lists, message authors, guild member events, and schedule creators.
 
-## `User`
+## User and BotInfo
 
-The canonical user record returned by guild endpoints.
+`User` is the general user structure. It includes id, username, avatar, bot flag, and union fields. `Ready::user` uses this type.
 
-```rust
-pub struct User {
-    pub id: Snowflake,
-    pub username: String,
-    pub avatar: String,           // avatar hash, empty when unset
-    pub bot: bool,
-    pub union_openid: String,     // cross-app identifier
-    pub union_user_account: String,
-}
-```
+`BotInfo` is the `/users/@me` response. In addition to basic user fields, it keeps the platform's `share_url` and `welcome_msg`. `Context::bot_info` is populated from this endpoint during startup.
 
-`Snowflake` is a type alias for `String`. Inspect `avatar` and `id` directly when building UI links or message content.
+## Member Shapes
 
-## `Member`
+There are two member shapes:
 
-A guild-scoped wrapper around `User`.
+- `botrs::Member`, also `models::guild::Member`, is used by guild member gateway events. It has `guild_id`, `user`, `nick`, `roles`, `joined_at`, and `op_user_id`.
+- `models::user::Member` flattens a `User` and adds nick, roles, joined_at, deaf, and mute. It mainly appears in response fields such as schedule creator.
 
-```rust
-pub struct Member {
-    #[serde(flatten)]
-    pub user: User,
-    pub nick: Option<String>,
-    pub roles: Vec<Snowflake>,
-    pub joined_at: Timestamp,
-    pub deaf: bool,
-    pub mute: bool,
-}
-```
+Do not treat them as interchangeable. The `guild_member_add`, `guild_member_update`, and `guild_member_remove` callbacks receive the first shape.
 
-`Timestamp` is `String` (RFC 3339). Inspect `nick`, `user.username`, and `roles` directly when deriving display labels or checking role membership.
+## Message Authors
 
-> Note: gateway events deserialize a different `Member` shape — see [`models::guild::Member`](./guilds-channels.md), which keeps `guild_id` and `op_user_id` as separate fields used by member-add/remove events.
+Author fields differ by message scene:
 
-## `BotInfo`
+- Guild channel messages use `MessageUser`, close to a normal guild user shape.
+- Group messages use `GroupMessageUser`, centered on `member_openid` and `union_openid`.
+- C2C messages use `C2CMessageUser`, centered on `user_openid`.
+- Guild channel member info uses `MessageMember`, which only contains nick, roles, and joined_at.
 
-Returned by `/users/@me`.
+Direct-message events use `Message`; direct-message sessions use `DirectMessage`.
+
+## Practical Guidance
+
+Do not assume every user field is present. The platform may omit username, avatar, or member info in different events, so author/member fields are often `Option`.
 
 ```rust
-pub struct BotInfo {
-    pub id: Snowflake,
-    pub username: String,
-    pub avatar: Option<String>,
-    pub bot: bool,
-}
+let is_bot = message
+    .author
+    .as_ref()
+    .and_then(|author| author.bot)
+    .unwrap_or(false);
 ```
 
-`Ready::user` exposes one of these to your `EventHandler::ready` handler.
+For group and C2C replies, use the openid fields from the event model.
 
-## Message author types
+## See Also
 
-Different message channels carry different author shapes. All four use `Option` fields because the API may omit them.
-
-| Type                | Used by                         | Notable fields                              |
-|---------------------|---------------------------------|---------------------------------------------|
-| `MessageUser`       | guild messages (`Message`)      | `id`, `username`, `avatar`, `bot`           |
-| `DirectMessageUser` | direct messages                 | `id`, `username`, `avatar`                  |
-| `GroupMessageUser`  | group `@bot` messages           | `id`, `member_openid`, `union_openid`       |
-| `C2CMessageUser`    | C2C (private) messages          | `id`, `user_openid`                         |
-
-Group and C2C messages identify users with `*_openid` rather than a numeric guild user id, since the bot does not see the underlying QQ accounts.
-
-## Working with members
-
-The high-traffic operations live on `BotApi` / `Context`:
-
-- `get_guild_member(guild_id, user_id)` — fetch a single member.
-- `get_guild_members(guild_id, limit, after)` — paginated listing; pass the previous page's last `user.id` as `after`.
-- `create_guild_role_member` / `delete_guild_role_member` — role assignment.
-- `delete_member` — removes a member, with optional blacklist and history-delete settings.
-- `mute_member`, `mute_all`, `cancel_mute_all`, `on_microphone`, `off_microphone` — voice controls.
-
-Each method returns `Result<T>` and propagates QQ API errors as `BotError`.
-
-```rust
-let member = ctx.get_guild_member(guild_id, user_id).await?;
-if member.roles.contains(&moderator_role_id) {
-    // perform privileged action
-}
-```
-
-## See also
-
-- [Messages](./messages.md) — message structures and the message author types in context.
-- [Guilds & Channels](./guilds-channels.md) — guild-side `Member` variant and role data.
-- [Client API](../client.md) — how `Context` exposes user-scoped helpers.
+- [Messages](./messages.md)
+- [Guilds and Channels](./guilds-channels.md)
+- [Other types](./other-types.md)

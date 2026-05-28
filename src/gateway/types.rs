@@ -52,17 +52,6 @@ pub struct Gateway {
 
 impl Gateway {
     /// Creates a gateway client for one websocket session or shard.
-    ///
-    /// # Examples
-    ///
-    /// ```rust,no_run
-    /// use botrs::{Token, Intents};
-    /// use botrs::gateway::Gateway;
-    ///
-    /// let token = Token::new("app_id", "secret");
-    /// let intents = Intents::default();
-    /// let gateway = Gateway::new("wss://api.sgroup.qq.com/websocket", token, intents, None);
-    /// ```
     pub fn new(
         url: impl Into<String>,
         token: Token,

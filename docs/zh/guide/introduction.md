@@ -6,7 +6,7 @@ BotRS 是一个用 Rust 构建 QQ 频道机器人的异步框架。它将 QQ 频
 
 `Client` 拥有网关连接和 HTTP 客户端。构造它需要 `Token`、`Intents` 位集、`EventHandler` 实现，以及一个布尔值用来选择沙箱或正式环境基础地址。调用 `client.start().await` 之后，网关会把事件分派到你的处理器。
 
-`EventHandler` 是一个 trait，每个事件对应一个带默认实现的 `async fn`（例如 `message_create`、`at_message_create`、`guild_create`、`forum_thread_create` 等）。只实现关心的事件即可。
+`EventHandler` 是一个 trait，每个事件对应一个带默认实现的 `async fn`（例如 `message_create`、`direct_message_create`、`guild_create`、`forum_thread_create` 等）。只实现关心的事件即可。
 
 每次回调都会传入一个 `Context`，其中持有共享的 `BotApi`。`BotApi` 是带类型签名的 HTTP 层，并持有 REST 调用所需的 token；如果需要在事件处理之外调用 REST API，也可以自行构造一个。
 
@@ -17,9 +17,9 @@ BotRS 是一个用 Rust 构建 QQ 频道机器人的异步框架。它将 QQ 频
 所有发送方法都接受类型化的 `*Params` 构建器，而非一长串 `Option` 参数：
 
 ```rust
-let params = MessageParams::new_text("你好")
-    .with_reply(message_id)
-    .with_markdown(true);
+let mut params = MessageParams::new_text("你好")
+    .with_reply(message_id);
+params.markdown = Some(markdown);
 ctx.send_message("channel_id", params).await?;
 ```
 

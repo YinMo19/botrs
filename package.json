@@ -1,6 +1,6 @@
 {
     "name": "botrs-docs",
-    "version": "0.2.5",
+    "version": "0.13.0",
     "description": "Documentation for BotRS - A Rust QQ Bot framework",
     "scripts": {
         "docs:dev": "vitepress dev docs",

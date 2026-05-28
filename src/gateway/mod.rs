@@ -10,7 +10,7 @@ mod heartbeat;
 mod runtime;
 mod types;
 
-pub use types::Gateway;
+pub(crate) use types::Gateway;
 
 #[cfg(test)]
 mod tests;

@@ -18,18 +18,25 @@ pub enum EmojiType {
     Unknown(u8),
 }
 
+impl Default for EmojiType {
+    fn default() -> Self {
+        Self::Unknown(0)
+    }
+}
+
 wire_enum!(EmojiType, u8, Unknown, {
     System = 1,
     Custom = 2,
 });
 
 /// Represents an emoji used in reactions or messages.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct Emoji {
     /// Unique identifier for the emoji
+    #[serde(default)]
     pub id: Snowflake,
     /// Type of the emoji (system or custom)
-    #[serde(rename = "type")]
+    #[serde(default, rename = "type")]
     pub emoji_type: EmojiType,
     /// Name of the emoji (optional)
     #[serde(default, skip_serializing_if = "Option::is_none")]
