@@ -43,11 +43,11 @@ impl fmt::Display for SdkError {
     }
 }
 
-pub fn sdk_error(code: i32, message: impl Into<String>) -> SdkError {
+pub(crate) fn sdk_error(code: i32, message: impl Into<String>) -> SdkError {
     SdkError::new(code, message, None::<String>)
 }
 
-pub fn sdk_error_from_error(err: &(dyn std::error::Error + 'static)) -> SdkError {
+pub(crate) fn sdk_error_from_error(err: &(dyn std::error::Error + 'static)) -> SdkError {
     if let Some(err) = err.downcast_ref::<SdkError>() {
         return err.clone();
     }
@@ -57,7 +57,7 @@ pub fn sdk_error_from_error(err: &(dyn std::error::Error + 'static)) -> SdkError
     SdkError::new(9999, err.to_string(), None::<String>)
 }
 
-pub fn invalid_session_error() -> SdkError {
+pub(crate) fn invalid_session_error() -> SdkError {
     SdkError::new(
         CODE_CONN_CLOSE_CANT_RESUME,
         "invalid session",
@@ -65,7 +65,7 @@ pub fn invalid_session_error() -> SdkError {
     )
 }
 
-pub fn session_limit_error() -> SdkError {
+pub(crate) fn session_limit_error() -> SdkError {
     SdkError::new(
         CODE_CONN_CLOSE_CANT_IDENTIFY,
         "session num limit",
