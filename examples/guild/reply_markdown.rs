@@ -44,18 +44,6 @@ fn markdown_template_params() -> MessageParams {
     }
 }
 
-fn markdown_content_params() -> MessageParams {
-    let markdown = MarkdownPayload {
-        content: Some("# 标题 \n## 简介很开心 \n内容".to_string()),
-        ..Default::default()
-    };
-
-    MessageParams {
-        markdown: Some(markdown),
-        ..Default::default()
-    }
-}
-
 #[async_trait::async_trait]
 impl EventHandler for MarkdownReplyHandler {
     /// Called when the bot is ready and connected.
@@ -94,8 +82,11 @@ impl EventHandler for MarkdownReplyHandler {
             Err(e) => warn!("Failed to send markdown message by template: {}", e),
         }
 
-        // Send markdown by content.
-        match session.send_message(markdown_content_params()).await {
+        // Send raw markdown content through the session helper.
+        match session
+            .send_markdown_message("# 标题 \n## 简介很开心 \n内容")
+            .await
+        {
             Ok(_) => info!("Successfully sent markdown message by content"),
             Err(e) => warn!("Failed to send markdown message by content: {}", e),
         }

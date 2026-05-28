@@ -5,7 +5,6 @@
 #[path = "../common/mod.rs"]
 mod common;
 
-use botrs::models::message::{C2CMessageParams, MarkdownPayload};
 use botrs::{C2CReplySession, Client, EventHandler, Intents, ReadySession, Token};
 use common::{Config, init_logging};
 use std::env;
@@ -22,21 +21,12 @@ impl EventHandler for C2CReplyMarkdownHandler {
     async fn c2c_message_create(&self, mut session: C2CReplySession) {
         let message = session.message().clone();
         let content = message.content.as_deref().unwrap_or_default();
-        let markdown = MarkdownPayload {
-            content: Some(format!(
-                "# C2C Markdown\n\n收到单聊消息：{}\n\n- 使用 `C2CMessageParams`\n- `msg_type = 2`",
-                content
-            )),
-            ..Default::default()
-        };
+        let markdown = format!(
+            "# C2C Markdown\n\n收到单聊消息：{}\n\n- 使用 `session.send_markdown_message`\n- 自动填充 `msg_type = 2`",
+            content
+        );
 
-        let params = C2CMessageParams {
-            msg_type: 2,
-            markdown: Some(markdown),
-            ..Default::default()
-        };
-
-        match session.send_message(params).await {
+        match session.send_markdown_message(markdown).await {
             Ok(response) => info!("Successfully sent C2C markdown message: {:?}", response),
             Err(e) => warn!("Failed to send C2C markdown message: {}", e),
         }

@@ -62,6 +62,15 @@ impl ChannelReplySession {
         self.send_message(MessageParams::new_text(content)).await
     }
 
+    /// Sends a raw markdown message in the current channel reply session.
+    pub async fn send_markdown_message(
+        &mut self,
+        content: impl Into<String>,
+    ) -> Result<MessageResponse> {
+        self.send_message(MessageParams::new_markdown(content))
+            .await
+    }
+
     /// Sends a channel message, filling reply ids and msg_seq when omitted.
     pub async fn send_message(&mut self, mut params: MessageParams) -> Result<MessageResponse> {
         self.prepare_message(&mut params);

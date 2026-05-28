@@ -66,6 +66,15 @@ impl C2CReplySession {
         self.send_message(C2CMessageParams::new_text(content)).await
     }
 
+    /// Sends a raw markdown message in the current C2C reply session.
+    pub async fn send_markdown_message(
+        &mut self,
+        content: impl Into<String>,
+    ) -> Result<MessageResponse> {
+        self.send_message(C2CMessageParams::new_markdown(content))
+            .await
+    }
+
     /// Sends a C2C message, filling reply ids and msg_seq when omitted.
     pub async fn send_message(&mut self, mut params: C2CMessageParams) -> Result<MessageResponse> {
         self.prepare_message(&mut params);

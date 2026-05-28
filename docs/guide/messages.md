@@ -7,7 +7,7 @@ Every send method on `BotApi` accepts a typed builder rather than a long list of
 - `C2CMessageParams` — single-user C2C messages.
 - `DirectMessageParams` — DM (private chat) messages.
 
-All four expose `new_text(content)` for the common case and `with_reply(message_id)` to set the `msg_id` reference. Rich payloads (embed, ark, markdown, keyboard, image URL, or group/C2C media) are set with struct-update syntax.
+All four expose `new_text(content)` and `new_markdown(content)` for common cases, plus `with_reply(message_id)` to set the `msg_id` reference. Rich payloads (embed, ark, template markdown, keyboard, image URL, or group/C2C media) are set with struct-update syntax.
 
 ```rust
 use botrs::models::message::MessageParams;
@@ -45,7 +45,7 @@ The send call has a different name and a different ID parameter for each surface
 
 ## Replying from an event
 
-`session.reply(content)` is the convenience for replying with plain text in the same event session. Reply sessions automatically attach the inbound message id, event id, and open-message `msg_seq` where the platform requires it.
+`session.reply(content)` is the convenience for replying with plain text in the same event session. `session.send_markdown_message(content)` does the same for raw markdown. Reply sessions automatically attach the inbound message id, event id, and open-message `msg_seq` where the platform requires it.
 
 ```rust
 async fn message_create(&self, mut session: ChannelReplySession) {
@@ -58,6 +58,12 @@ async fn message_create(&self, mut session: ChannelReplySession) {
 ```
 
 For anything beyond plain text, build a `MessageParams` and call `session.send_message(params)`.
+
+```rust
+session.send_markdown_message("# hello\n\n- one line").await?;
+```
+
+For template markdown or markdown combined with keyboards, build the matching params struct and call `session.send_message(params)`.
 
 ## Recall and audit
 

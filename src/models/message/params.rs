@@ -128,6 +128,18 @@ macro_rules! impl_channel_like_message_params {
                 }
             }
 
+            /// Creates a new parameter object with raw markdown content.
+            pub fn new_markdown(content: impl Into<String>) -> Self {
+                Self {
+                    msg_type: Some(MessageCreateType::Markdown),
+                    markdown: Some(MarkdownPayload {
+                        content: Some(content.into()),
+                        ..Default::default()
+                    }),
+                    ..Default::default()
+                }
+            }
+
             /// Sets the message reference for replying.
             pub fn with_reply(mut self, message_id: impl Into<String>) -> Self {
                 self.msg_id = Some(message_id.into());
@@ -164,6 +176,18 @@ macro_rules! impl_open_message_params {
                 Self {
                     msg_type: 0,
                     content: Some(content.into()),
+                    ..Default::default()
+                }
+            }
+
+            /// Creates a new parameter object with raw markdown content.
+            pub fn new_markdown(content: impl Into<String>) -> Self {
+                Self {
+                    msg_type: 2,
+                    markdown: Some(MarkdownPayload {
+                        content: Some(content.into()),
+                        ..Default::default()
+                    }),
                     ..Default::default()
                 }
             }

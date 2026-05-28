@@ -5,7 +5,6 @@
 #[path = "../common/mod.rs"]
 mod common;
 
-use botrs::models::message::{GroupMessageParams, MarkdownPayload};
 use botrs::{Client, EventHandler, GroupReplySession, Intents, ReadySession, Token};
 use common::{Config, init_logging};
 use std::env;
@@ -24,21 +23,12 @@ impl EventHandler for GroupReplyMarkdownHandler {
         let content = message.content.as_deref().unwrap_or_default();
         info!("Received group message: {}", content);
 
-        let markdown = MarkdownPayload {
-            content: Some(format!(
-                "# Group Markdown\n\n收到群消息：{}\n\n- 使用 `GroupMessageParams`\n- `msg_type = 2` \n *MATH*: $\\displaystyle\\int_0^\\infty \\frac{{\\sin x}}{{x}} {{\\rm d}} x = \\frac{{\\pi}}{{2}}$",
-                content
-            )),
-            ..Default::default()
-        };
+        let markdown = format!(
+            "# Group Markdown\n\n收到群消息：{}\n\n- 使用 `session.send_markdown_message`\n- 自动填充 `msg_type = 2`\n\n *MATH*: $\\displaystyle\\int_0^\\infty \\frac{{\\sin x}}{{x}} {{\\rm d}} x = \\frac{{\\pi}}{{2}}$",
+            content
+        );
 
-        let params = GroupMessageParams {
-            msg_type: 2,
-            markdown: Some(markdown),
-            ..Default::default()
-        };
-
-        match session.send_message(params).await {
+        match session.send_markdown_message(markdown).await {
             Ok(response) => info!("Successfully sent group markdown message: {:?}", response),
             Err(e) => warn!("Failed to send group markdown message: {}", e),
         }

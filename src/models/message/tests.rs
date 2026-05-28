@@ -87,6 +87,30 @@ fn open_message_text_params_omit_unspecified_msg_seq() {
 }
 
 #[test]
+fn markdown_params_set_expected_message_type() {
+    let channel = MessageParams::new_markdown("# hello");
+    let channel_value = serde_json::to_value(MessageToCreate::from(channel)).unwrap();
+    assert_eq!(channel_value["msg_type"], serde_json::json!(2));
+    assert_eq!(
+        channel_value["markdown"]["content"],
+        serde_json::json!("# hello")
+    );
+
+    let group = GroupMessageParams::new_markdown("# group");
+    let group_value = serde_json::to_value(MessageToCreate::from(group)).unwrap();
+    assert_eq!(group_value["msg_type"], serde_json::json!(2));
+    assert_eq!(
+        group_value["markdown"]["content"],
+        serde_json::json!("# group")
+    );
+
+    let c2c = C2CMessageParams::new_markdown("# c2c");
+    let c2c_value = serde_json::to_value(MessageToCreate::from(c2c)).unwrap();
+    assert_eq!(c2c_value["msg_type"], serde_json::json!(2));
+    assert_eq!(c2c_value["markdown"]["content"], serde_json::json!("# c2c"));
+}
+
+#[test]
 fn open_message_manual_params_omit_unspecified_msg_seq() {
     let group = GroupMessageParams {
         msg_type: 0,

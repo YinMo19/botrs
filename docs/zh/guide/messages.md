@@ -7,7 +7,7 @@
 - `C2CMessageParams` —— 单聊 C2C 消息。
 - `DirectMessageParams` —— 私信（DM）消息。
 
-四者都提供 `new_text(content)` 和 `with_reply(message_id)`。富文本载荷（embed、ark、markdown、keyboard、图片 URL、群/C2C media）通过结构体字段直接赋值。
+四者都提供常见场景的 `new_text(content)`、`new_markdown(content)`，以及设置 `msg_id` 引用的 `with_reply(message_id)`。富文本载荷（embed、ark、模板 markdown、keyboard、图片 URL、群/C2C media）通过结构体字段直接赋值。
 
 ```rust
 use botrs::models::message::MessageParams;
@@ -45,7 +45,7 @@ session.send_message(params).await?;
 
 ## 在事件中回复
 
-`session.reply(content)` 是在当前事件会话中回复纯文本的便捷方法。Reply session 会自动带上入站消息 id、event id，以及平台要求的 open-message `msg_seq`。
+`session.reply(content)` 是在当前事件会话中回复纯文本的便捷方法。`session.send_markdown_message(content)` 则用于发送自由格式 markdown。Reply session 会自动带上入站消息 id、event id，以及平台要求的 open-message `msg_seq`。
 
 ```rust
 async fn message_create(&self, mut session: ChannelReplySession) {
@@ -57,7 +57,11 @@ async fn message_create(&self, mut session: ChannelReplySession) {
 }
 ```
 
-要发送非纯文本，请自行构造 `MessageParams` 并调用 `session.send_message(params)`。
+```rust
+session.send_markdown_message("# hello\n\n- one line").await?;
+```
+
+模板 markdown 或 markdown + keyboard 组合仍然自行构造对应 params，然后调用 `session.send_message(params)`。
 
 ## 撤回与审核
 

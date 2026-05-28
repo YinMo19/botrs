@@ -26,7 +26,13 @@ let params = MessageParams { embed: Some(embed), ..Default::default() };
 session.send_message(params).await?;
 ```
 
-The same shape works for `markdown: Some(MarkdownPayload { ... })` and `ark: Some(Ark { template_id: Some(37), kv: Some(vec![ArkKv { ... }]) })`. Markdown supports both `custom_template_id` + `params` (template form) and raw `content`. For group and C2C sends, set `msg_type` to `2` for Markdown, `3` for ARK, and `4` for Embed.
+Raw markdown has a session helper:
+
+```rust
+session.send_markdown_message("# title\n\nbody").await?;
+```
+
+Use `markdown: Some(MarkdownPayload { ... })` when you need `custom_template_id` + `params` or markdown plus keyboard in the same message. For manually built group and C2C rich messages, set `msg_type` to `2` for Markdown, `3` for ARK, and `4` for Embed.
 
 ## See also
 

@@ -63,6 +63,15 @@ impl DirectReplySession {
             .await
     }
 
+    /// Sends a raw markdown message in the current direct-message reply session.
+    pub async fn send_markdown_message(
+        &mut self,
+        content: impl Into<String>,
+    ) -> Result<MessageResponse> {
+        self.send_message(DirectMessageParams::new_markdown(content))
+            .await
+    }
+
     /// Sends a direct message, filling reply ids and msg_seq when omitted.
     pub async fn send_message(
         &mut self,
