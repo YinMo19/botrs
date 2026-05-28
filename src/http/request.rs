@@ -1,6 +1,6 @@
 use super::HttpClient;
 use crate::error::{BotError, Result};
-use crate::token::Token;
+use crate::token_impl::Token;
 use reqwest::{
     Method,
     header::{HeaderMap, HeaderValue},

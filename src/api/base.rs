@@ -1,7 +1,7 @@
 use super::BotApi;
 use crate::error::Result;
 use crate::http::HttpClient;
-use crate::token::Token;
+use crate::token_impl::Token;
 use reqwest::Method;
 use serde::Serialize;
 use serde_json::Value;

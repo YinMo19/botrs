@@ -1,5 +1,5 @@
 use crate::intents::Intents;
-use crate::token::Token;
+use crate::token_impl::Token;
 
 /// Websocket session descriptor.
 #[derive(Debug, Clone)]

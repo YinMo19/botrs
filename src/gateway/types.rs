@@ -1,5 +1,5 @@
 use crate::intents::Intents;
-use crate::token::Token;
+use crate::token_impl::Token;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::time::{Duration, Instant};

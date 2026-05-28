@@ -11,7 +11,7 @@ use crate::gateway::Gateway;
 use crate::intents::Intents;
 use crate::models::api::GatewayResponse;
 use crate::models::gateway::GatewayEvent;
-use crate::token::Token;
+use crate::token_impl::Token;
 
 pub(super) type SessionFuture = Pin<Box<dyn Future<Output = (Session, crate::Result<()>)> + Send>>;
 pub(super) type SessionConnectFn =

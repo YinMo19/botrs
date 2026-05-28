@@ -5,7 +5,7 @@ use super::*;
 use crate::error::{CODE_CONN_CLOSE_CANT_IDENTIFY, CODE_CONN_CLOSE_CANT_RESUME, sdk_error};
 use crate::intents::Intents;
 use crate::models::api::{GatewayResponse, SessionStartLimit};
-use crate::token::Token;
+use crate::token_impl::Token;
 
 fn ap_info(shards: u32, remaining: u32, max_concurrency: u32) -> GatewayResponse {
     GatewayResponse {

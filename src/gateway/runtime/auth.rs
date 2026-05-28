@@ -69,7 +69,7 @@ mod tests {
     use crate::gateway::Gateway;
     use crate::intents::Intents;
     use crate::models::gateway::opcodes;
-    use crate::token::Token;
+    use crate::token_impl::Token;
 
     #[tokio::test]
     async fn identify_uses_qqbot_authorization_token() {

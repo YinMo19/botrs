@@ -44,7 +44,7 @@ mod prelude {
         Emoji as ReactionEmoji, MessageReactionPager, Reaction, ReactionUsers,
     };
     pub(super) use crate::session_manager::{check_session_limit, new_session_manager};
-    pub(super) use crate::token::Token;
+    pub(super) use crate::token_impl::Token;
     pub(super) use std::sync::Arc;
     pub(super) use tokio::sync::mpsc;
     pub(super) use tracing::{debug, error, info};

@@ -1,5 +1,5 @@
 use super::*;
-use crate::token::Token;
+use crate::token_impl::Token;
 use reqwest::StatusCode;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpListener;

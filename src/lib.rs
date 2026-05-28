@@ -22,7 +22,8 @@ pub mod models;
 pub mod reaction;
 pub mod session_manager;
 pub mod signature;
-pub mod token;
+#[path = "token/mod.rs"]
+mod token_impl;
 pub mod webhook;
 
 // Re-export main types for convenience
@@ -33,7 +34,7 @@ pub use intents::Intents;
 pub use models::gateway::Ready;
 pub use models::*;
 pub use signature::{HEADER_SIGNATURE, HEADER_TIMESTAMP, generate, verify};
-pub use token::{Token, start_access_token_refresh};
+pub use token_impl::{Token, start_access_token_refresh};
 pub use webhook::{dispatch_ack, handle_http_callback, heartbeat_ack, validation_ack};
 
 /// The current version of the library

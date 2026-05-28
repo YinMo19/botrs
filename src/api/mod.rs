@@ -26,7 +26,7 @@
 //! [`DirectMessageParams`]: crate::models::message::DirectMessageParams
 
 use crate::http::HttpClient;
-use crate::token::Token;
+use crate::token_impl::Token;
 
 /// HTTP header carrying the bot app id for interaction callbacks.
 pub(crate) const HEADER_CALLBACK_APP_ID: &str = "X-Callback-AppID";
