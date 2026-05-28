@@ -53,7 +53,7 @@ pub struct Ready {
     /// Session ID
     pub session_id: String,
     /// Bot information
-    pub user: crate::models::User,
+    pub user: crate::models::user::User,
     /// Shard information
     pub shard: Option<[u32; 2]>,
 }

@@ -2,13 +2,10 @@
 //!
 //! Demonstrates the shared parameter structs used by the message sending APIs.
 
+use botrs::models::prelude::*;
 use botrs::{
     C2CReplySession, ChannelReplySession, Client, DirectReplySession, EventHandler,
     GroupReplySession, Intents, Token,
-    models::message::{
-        C2CMessageParams, DirectMessageParams, Embed, EmbedField, GroupMessageParams,
-        MarkdownPayload, MessageParams,
-    },
 };
 use tracing::{info, warn};
 

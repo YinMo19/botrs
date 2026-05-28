@@ -1,5 +1,5 @@
 use super::RemindType;
-use crate::models::{Snowflake, UserMember};
+use crate::models::{Snowflake, user::Member as UserMember};
 use serde::{Deserialize, Serialize};
 
 /// Represents a schedule event in a channel.

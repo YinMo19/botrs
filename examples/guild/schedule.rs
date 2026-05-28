@@ -5,7 +5,8 @@
 #[path = "../common/mod.rs"]
 mod common;
 
-use botrs::{ChannelReplySession, Client, EventHandler, Intents, ReadySession, Schedule, Token};
+use botrs::models::schedule::Schedule;
+use botrs::{ChannelReplySession, Client, EventHandler, Intents, ReadySession, Token};
 use common::{Config, init_logging};
 use std::env;
 use tracing::{info, warn};

@@ -11,19 +11,19 @@ mod audio;
 pub mod client;
 mod constant;
 pub mod error;
-pub mod forum;
+mod forum;
 mod gateway;
 pub mod http;
 pub mod intents;
-pub mod interaction;
-pub mod manage;
+mod interaction;
+mod manage;
 pub mod models;
 mod reaction;
 mod session_manager;
 #[path = "token/mod.rs"]
 mod token_impl;
 
-// Re-export main types for convenience
+// Public runtime and API entry points. Data models live under `botrs::models`.
 pub use api_impl::BotApi;
 pub use api_impl::session::{
     AudioSession, C2CManageSession, C2CReplySession, ChannelReplySession, ChannelSession,
@@ -33,21 +33,9 @@ pub use api_impl::session::{
     ReactionSession, ReadySession, ResumeSession, SubscribeMessageStatusSession, ThreadSession,
     UnknownEventSession,
 };
-pub use audio::{Audio, PublicAudio, PublicAudioType};
 pub use client::{Client, EventHandler};
 pub use error::{BotError, Result};
 pub use intents::Intents;
-pub use models::api::{BotInfo, MessageResponse};
-pub use models::channel::Channel;
-pub use models::gateway::{GatewayEvent, Ready};
-pub use models::guild::{Guild, Member};
-pub use models::message::{
-    C2CMessage, DirectMessage, DirectMessageToCreate, GroupMessage, Message, MessageDelete,
-    MessageParams,
-};
-pub use models::schedule::Schedule;
-pub use models::user::User;
-pub use reaction::{MessageReaction, Reaction, ReactionTarget, ReactionTargetType, ReactionUsers};
 pub use token_impl::Token;
 
 /// The current version of the library

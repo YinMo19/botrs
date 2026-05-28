@@ -50,7 +50,7 @@ fn test_reaction_user_creation() {
         "username": "testuser",
         "avatar": "https://example.com/avatar.png"
     });
-    let user: crate::models::User = serde_json::from_value(data).unwrap();
+    let user: crate::models::user::User = serde_json::from_value(data).unwrap();
     assert_eq!(user.id, "user123");
     assert_eq!(user.username, "testuser");
     assert_eq!(user.avatar, "https://example.com/avatar.png");

@@ -9,7 +9,7 @@ pub struct Member {
     pub guild_id: Snowflake,
     /// The user information
     #[serde(default)]
-    pub user: Option<crate::models::User>,
+    pub user: Option<crate::models::user::User>,
     /// The member's nickname in the guild
     #[serde(default)]
     pub nick: String,

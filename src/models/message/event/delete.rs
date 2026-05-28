@@ -8,7 +8,7 @@ pub struct MessageDelete {
     pub message: Message,
     /// User who performed the operation
     #[serde(default)]
-    pub op_user: crate::models::User,
+    pub op_user: crate::models::user::User,
     /// Event ID from the gateway
     #[serde(skip)]
     pub event_id: Option<String>,

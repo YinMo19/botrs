@@ -12,7 +12,7 @@ User models cover the shapes that appear in the core runtime path: the bot itsel
 
 There are two member shapes:
 
-- `botrs::Member`, also `models::guild::Member`, is used by guild member gateway events. It has `guild_id`, `user`, `nick`, `roles`, `joined_at`, and `op_user_id`.
+- `botrs::models::guild::Member`, also `models::guild::Member`, is used by guild member gateway events. It has `guild_id`, `user`, `nick`, `roles`, `joined_at`, and `op_user_id`.
 - `models::user::Member` flattens a `User` and adds nick, roles, joined_at, deaf, and mute. It mainly appears in response fields such as schedule creator.
 
 Do not treat them as interchangeable. The `guild_member_add`, `guild_member_update`, and `guild_member_remove` callbacks receive the first shape.

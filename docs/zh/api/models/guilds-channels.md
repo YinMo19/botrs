@@ -32,7 +32,7 @@ async fn guild_create(&self, session: GuildSession) {
 
 ## Guild member 事件
 
-`botrs::Member` 对应网关里的 guild member 事件。它包含 guild id、可选 user、昵称、角色 id 列表、加入时间和操作者 id。
+`botrs::models::guild::Member` 对应网关里的 guild member 事件。它包含 guild id、可选 user、昵称、角色 id 列表、加入时间和操作者 id。
 
 ```rust
 async fn guild_member_add(&self, session: MemberSession) {

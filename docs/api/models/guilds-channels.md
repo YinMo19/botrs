@@ -32,7 +32,7 @@ These enums retain unknown numeric values so new platform values do not break de
 
 ## Guild Member Events
 
-`botrs::Member` maps to guild member gateway events. It includes guild id, optional user, nickname, role ids, join time, and operator id.
+`botrs::models::guild::Member` maps to guild member gateway events. It includes guild id, optional user, nickname, role ids, join time, and operator id.
 
 ```rust
 async fn guild_member_add(&self, session: MemberSession) {

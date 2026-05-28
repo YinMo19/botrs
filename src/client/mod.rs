@@ -14,7 +14,6 @@ pub use handler::EventHandler;
 
 #[allow(unused_imports)]
 mod prelude {
-    pub(super) use crate::Reaction;
     pub(super) use crate::api_impl::BotApi;
     pub(super) use crate::api_impl::session::{
         AudioSession, C2CManageSession, C2CReplySession, ChannelReplySession, ChannelSession,
@@ -32,9 +31,15 @@ mod prelude {
     pub(super) use crate::manage::{
         C2CManageEvent, EnterAioEvent, GroupManageEvent, SubscribeMessageStatusData,
     };
-    pub(super) use crate::models::api::AudioAction;
-    pub(super) use crate::models::gateway::GatewayEvent;
-    pub(super) use crate::models::*;
+    pub(super) use crate::models::api::{AudioAction, BotInfo};
+    pub(super) use crate::models::channel::Channel;
+    pub(super) use crate::models::gateway::{GatewayEvent, Ready};
+    pub(super) use crate::models::guild::{Guild, Member};
+    pub(super) use crate::models::message::{
+        C2CMessage, GroupMessage, Message, MessageAudit, MessageDelete,
+    };
+    pub(super) use crate::models::reaction::Reaction;
+    pub(super) use crate::models::user::User;
     pub(super) use crate::session_manager::{check_session_limit, new_session_manager};
     pub(super) use crate::token_impl::Token;
     pub(super) use std::sync::Arc;

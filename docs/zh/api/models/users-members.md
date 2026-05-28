@@ -12,7 +12,7 @@
 
 当前有两个 member 形态：
 
-- `botrs::Member`，也就是 `models::guild::Member`，用于 guild member 网关事件。它有 `guild_id`、`user`、`nick`、`roles`、`joined_at` 和 `op_user_id`。
+- `botrs::models::guild::Member`，也就是 `models::guild::Member`，用于 guild member 网关事件。它有 `guild_id`、`user`、`nick`、`roles`、`joined_at` 和 `op_user_id`。
 - `models::user::Member`，它 flatten 一个 `User`，并带 nick、roles、joined_at、deaf、mute。当前主要用于日程 creator 这类响应数据。
 
 两者不要混用。事件处理器里看到的 `guild_member_add` / `guild_member_update` / `guild_member_remove` 参数是第一种。

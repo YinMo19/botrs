@@ -22,7 +22,10 @@ use crate::audio::{Audio, PublicAudio};
 use crate::forum::{ForumAuditResult, OpenThread, Post, Reply, Thread};
 use crate::interaction::Interaction;
 use crate::manage::{EnterAioEvent, SubscribeMessageStatusData};
-use crate::models::{Channel, GatewayEvent, Guild, Member, MessageAudit, MessageDelete, Ready};
+use crate::models::channel::Channel;
+use crate::models::gateway::{GatewayEvent, Ready};
+use crate::models::guild::{Guild, Member};
+use crate::models::message::{MessageAudit, MessageDelete};
 use crate::reaction::Reaction;
 
 pub type ReadySession = EventSession<Ready>;
