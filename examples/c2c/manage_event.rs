@@ -5,8 +5,8 @@
 #[path = "../common/mod.rs"]
 mod common;
 
-use botrs::manage::C2CManageEvent;
-use botrs::{Client, Context, EventHandler, Intents, Ready, Token};
+use botrs::models::message::C2CMessageParams;
+use botrs::{C2CManageSession, Client, EventHandler, Intents, ReadySession, Token};
 use common::{Config, init_logging};
 use std::env;
 use tracing::{info, warn};
@@ -17,32 +17,18 @@ struct C2CManageEventHandler;
 #[async_trait::async_trait]
 impl EventHandler for C2CManageEventHandler {
     /// Called when the bot is ready and connected.
-    async fn ready(&self, _ctx: Context, ready: Ready) {
-        info!("robot 「{}」 on_ready!", ready.user.username);
+    async fn ready(&self, session: ReadySession) {
+        info!("robot 「{}」 on_ready!", session.event().user.username);
     }
 
     /// Called when a friend is added.
-    async fn friend_add(&self, ctx: Context, event: C2CManageEvent) {
+    async fn friend_add(&self, mut session: C2CManageSession) {
+        let event = session.event();
         info!("用户添加机器人：{:?}", event);
 
-        // Get user OpenID
-        let openid = match &event.openid {
-            Some(openid) => openid,
-            None => {
-                warn!("Friend add event has no openid");
-                return;
-            }
-        };
+        let params = C2CMessageParams::new_text("hello");
 
-        // Send welcome message (equivalent to self.api.post_c2c_message)
-        let params = botrs::models::message::C2CMessageParams {
-            msg_type: 0,
-            content: Some("hello".to_string()),
-            event_id: event.event_id.clone(),
-            ..Default::default()
-        };
-
-        match ctx.send_c2c_message(openid, params).await {
+        match session.send_message(params).await {
             Ok(response) => {
                 info!("Successfully sent welcome message");
                 info!("Response: {:?}", response);
@@ -52,18 +38,18 @@ impl EventHandler for C2CManageEventHandler {
     }
 
     /// Called when a friend is deleted.
-    async fn friend_del(&self, _ctx: Context, event: C2CManageEvent) {
-        info!("用户删除机器人：{:?}", event);
+    async fn friend_del(&self, session: C2CManageSession) {
+        info!("用户删除机器人：{:?}", session.event());
     }
 
     /// Called when C2C message is rejected.
-    async fn c2c_msg_reject(&self, _ctx: Context, event: C2CManageEvent) {
-        info!("用户关闭机器人主动消息：{:?}", event);
+    async fn c2c_msg_reject(&self, session: C2CManageSession) {
+        info!("用户关闭机器人主动消息：{:?}", session.event());
     }
 
     /// Called when C2C message is received.
-    async fn c2c_msg_receive(&self, _ctx: Context, event: C2CManageEvent) {
-        info!("用户打开机器人主动消息：{:?}", event);
+    async fn c2c_msg_receive(&self, session: C2CManageSession) {
+        info!("用户打开机器人主动消息：{:?}", session.event());
     }
 
     /// Called when an error occurs during event processing.

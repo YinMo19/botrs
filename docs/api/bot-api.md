@@ -1,12 +1,12 @@
 # BotApi
 
-`BotApi` is the REST client used by a bot while handling events. After a gateway event arrives, handlers usually call it through `Context` to send replies, recall channel messages, upload group/C2C files, manage announcements, schedules and pins, inspect reaction users, or create API permission requests.
+`BotApi` is the stateless REST client used by a bot while handling events. After a gateway event arrives, handlers usually call it through the event session to send replies, recall channel messages, upload group/C2C files, manage announcements, schedules and pins, inspect reaction users, or create API permission requests.
 
-When your bot is driven by `Client`, you normally do not construct `BotApi` yourself. Every event callback receives a `Context` that already owns the shared API client:
+When your bot is driven by `Client`, you normally do not construct `BotApi` yourself. Every event callback receives a session that exposes the shared API client:
 
 ```rust
 let params = MessageParams::new_text("pong").with_reply(message_id);
-ctx.send_message(&channel_id, params).await?;
+session.send_message(params).await?;
 ```
 
 Construct `BotApi` manually only when you want to call REST without running the gateway:
@@ -42,10 +42,10 @@ Message sending uses parameter structs:
 
 ```rust
 let params = MessageParams::new_text("hello");
-ctx.send_message(&channel_id, params).await?;
+session.send_message(params).await?;
 
 let params = GroupMessageParams::new_text("hello group");
-ctx.send_group_message(&group_openid, params).await?;
+group_session.send_message(params).await?;
 ```
 
 Guild channel messages and DMs use `MessageParams` / `DirectMessageParams`. Group and C2C messages use `GroupMessageParams` / `C2CMessageParams`, matching QQ's open-message shape. For ark, embed, markdown, keyboard, or media payloads, set the corresponding field on the parameter struct.
@@ -55,14 +55,14 @@ Guild channel messages and DMs use `MessageParams` / `DirectMessageParams`. Grou
 Group and C2C media sending is a two-step flow: upload the file to receive a `Media`, then place that media object into a message parameter struct. `file_type` follows the platform values: commonly 1 image, 2 video, 3 audio, 4 file.
 
 ```rust
-let media = ctx
-    .post_group_file(&group_openid, 1, "https://example.com/image.png", None)
+let media = session
+    .post_file(1, "https://example.com/image.png", None)
     .await?;
 
 let mut params = GroupMessageParams::default();
 params.msg_type = 7;
 params.media = Some(media);
-ctx.send_group_message(&group_openid, params).await?;
+session.send_message(params).await?;
 ```
 
 When `srv_send_msg` is `Some(true)`, the platform sends the uploaded file directly, so you usually do not need a separate media message.
@@ -82,7 +82,7 @@ let identify = APIPermissionDemandIdentify {
     method: "POST".to_string(),
 };
 
-ctx.post_permission_demand(&guild_id, &channel_id, identify, "Need to send replies")
+session.post_permission_demand(&guild_id, &channel_id, identify, "Need to send replies")
     .await?;
 ```
 
@@ -91,13 +91,13 @@ ctx.post_permission_demand(&guild_id, &channel_id, identify, "Need to send repli
 All methods return `botrs::Result<T>`. In event handlers, handle errors locally because `EventHandler` methods return `()`:
 
 ```rust
-if let Err(err) = ctx.send_message(&channel_id, params).await {
+if let Err(err) = session.send_message(params).await {
     tracing::warn!("send failed: {err}");
 }
 ```
 
 ## See Also
 
-- [Context](./context.md)
+- [Sessions](./context.md)
 - [Messages](./models/messages.md)
 - [Other types](./models/other-types.md)

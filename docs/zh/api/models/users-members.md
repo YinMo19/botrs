@@ -6,7 +6,7 @@
 
 `User` 是通用用户结构，包含 id、username、avatar、bot 标记和 union 字段。`Ready::user` 使用这个类型。
 
-`BotInfo` 是 `/users/@me` 的响应，除了基础用户字段，还保留平台返回的 `share_url` 和 `welcome_msg`。启动后的 `Context::bot_info` 就来自这个接口。
+`BotInfo` 是 `/users/@me` 的响应，除了基础用户字段，还保留平台返回的 `share_url` 和 `welcome_msg`。handler 派发时的 `session.bot_info()` 就来自这个接口。
 
 ## Member 形态
 

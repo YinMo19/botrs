@@ -11,7 +11,8 @@ crate 保留 guild、channel 和 guild member 模型，是因为网关会推送�
 典型使用方式是在 handler 里读取事件内容：
 
 ```rust
-async fn guild_create(&self, _ctx: Context, guild: Guild) {
+async fn guild_create(&self, session: GuildSession) {
+    let guild = session.event();
     tracing::info!("joined guild {}", guild.name);
 }
 ```
@@ -34,7 +35,8 @@ async fn guild_create(&self, _ctx: Context, guild: Guild) {
 `botrs::Member` 对应网关里的 guild member 事件。它包含 guild id、可选 user、昵称、角色 id 列表、加入时间和操作者 id。
 
 ```rust
-async fn guild_member_add(&self, _ctx: Context, member: Member) {
+async fn guild_member_add(&self, session: MemberSession) {
+    let member = session.event();
     if let Some(user) = &member.user {
         tracing::info!("{} joined {}", user.username, member.guild_id);
     }

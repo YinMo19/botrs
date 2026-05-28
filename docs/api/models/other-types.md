@@ -20,7 +20,7 @@ let schedule = Schedule::new(
     Some(channel_id.to_string()),
     RemindType::Before15Minutes,
 );
-ctx.create_schedule(&schedule_channel_id, &schedule).await?;
+session.create_schedule(&schedule_channel_id, &schedule).await?;
 ```
 
 ## API Permissions

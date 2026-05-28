@@ -5,7 +5,7 @@
 #[path = "../common/mod.rs"]
 mod common;
 
-use botrs::{Client, Context, EventHandler, GroupMessage, Intents, Ready, Token};
+use botrs::{Client, EventHandler, GroupReplySession, Intents, ReadySession, Token};
 use common::{Config, init_logging};
 use std::env;
 use tracing::{info, warn};
@@ -16,12 +16,13 @@ struct GroupReplyHandler;
 #[async_trait::async_trait]
 impl EventHandler for GroupReplyHandler {
     /// Called when the bot is ready and connected.
-    async fn ready(&self, _ctx: Context, ready: Ready) {
-        info!("robot 「{}」 on_ready!", ready.user.username);
+    async fn ready(&self, session: ReadySession) {
+        info!("robot 「{}」 on_ready!", session.event().user.username);
     }
 
     /// Called when a group @ message is created.
-    async fn group_message_create(&self, ctx: Context, message: GroupMessage) {
+    async fn group_message_create(&self, mut session: GroupReplySession) {
+        let message = session.message().clone();
         // Get message content
         let content = match &message.content {
             Some(content) => content,
@@ -30,31 +31,10 @@ impl EventHandler for GroupReplyHandler {
 
         info!("Received group message: {}", content);
 
-        // Get group OpenID
-        let group_openid = match &message.group_openid {
-            Some(openid) => openid,
-            None => {
-                warn!("Group message has no group_openid");
-                return;
-            }
-        };
-
-        // Get message ID for reply
-        let msg_id = message.id.as_deref();
-
         // Create reply content.
         let reply_content = format!("收到了消息：{content}");
 
-        // Send group message.
-        let params = botrs::models::message::GroupMessageParams {
-            msg_type: 0,
-            content: Some(reply_content),
-            msg_id: msg_id.map(|s| s.to_string()),
-            event_id: message.event_id.clone(),
-            ..Default::default()
-        };
-
-        match ctx.send_group_message(group_openid, params).await {
+        match session.reply(reply_content).await {
             Ok(response) => {
                 info!("Successfully sent group message reply");
                 info!("Response: {:?}", response);

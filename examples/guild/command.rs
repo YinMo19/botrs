@@ -6,7 +6,7 @@
 #[path = "../common/mod.rs"]
 mod common;
 
-use botrs::{Client, Context, EventHandler, Intents, Message, Ready, Token};
+use botrs::{ChannelReplySession, Client, EventHandler, Intents, ReadySession, Token};
 use common::{Config, init_logging};
 use std::env;
 use tracing::{info, warn};
@@ -95,12 +95,13 @@ impl AtReplyCommandHandler {
 #[async_trait::async_trait]
 impl EventHandler for AtReplyCommandHandler {
     /// Called when the bot is ready and connected.
-    async fn ready(&self, _ctx: Context, ready: Ready) {
-        info!("robot 「{}」 on_ready!", ready.user.username);
+    async fn ready(&self, session: ReadySession) {
+        info!("robot 「{}」 on_ready!", session.event().user.username);
     }
 
     /// Called when a message is created that mentions the bot.
-    async fn message_create(&self, ctx: Context, message: Message) {
+    async fn message_create(&self, mut session: ChannelReplySession) {
+        let message = session.message().clone();
         // Get message content
         let content = match &message.content {
             Some(content) => content,
@@ -111,34 +112,27 @@ impl EventHandler for AtReplyCommandHandler {
 
         // Try to execute commands
         if let Some(response) = self.registry.try_execute(content) {
-            // Send a reply through the message helper.
-            match message.reply(&ctx, &response).await {
-                Ok(_) => info!("Successfully sent reply via message.reply"),
-                Err(e) => warn!("Failed to send reply via message.reply: {}", e),
+            // Send a reply through the session helper.
+            match session.reply(response.clone()).await {
+                Ok(_) => info!("Successfully sent reply via session.reply"),
+                Err(e) => warn!("Failed to send reply via session.reply: {}", e),
             }
 
-            // Also send through the explicit API params path.
+            // Also send through the explicit session params path.
             let params = botrs::models::message::MessageParams {
                 content: Some(response),
-                msg_id: message.id.clone(),
                 ..Default::default()
             };
 
-            match ctx
-                .send_message(
-                    message.channel_id.as_ref().unwrap_or(&String::new()),
-                    params,
-                )
-                .await
-            {
-                Ok(_) => info!("Successfully sent message via api.post_message"),
-                Err(e) => warn!("Failed to send message via api.post_message: {}", e),
+            match session.send_message(params).await {
+                Ok(_) => info!("Successfully sent message via session.send_message"),
+                Err(e) => warn!("Failed to send message via session.send_message: {}", e),
             }
         } else {
             // No command matched, send a default response
             let default_response = "收到消息，但没有匹配的命令。可用命令: 你好/hello, 晚安";
 
-            match message.reply(&ctx, default_response).await {
+            match session.reply(default_response).await {
                 Ok(_) => info!("Successfully sent default reply"),
                 Err(e) => warn!("Failed to send default reply: {}", e),
             }

@@ -9,23 +9,24 @@ In a Python SDK you typically subclass a `Client` or register message callbacks 
 In `botrs` you implement the `EventHandler` trait on a struct of your own. Each event is one `async fn` with a default empty body, so you only override what you care about. The handler must be `Send + Sync` and `'static`.
 
 ```rust
-use botrs::{Client, Context, EventHandler, Intents, Message, Token};
+use botrs::{ChannelReplySession, Client, EventHandler, Intents, Token};
 
 struct MyBot;
 
 #[async_trait::async_trait]
 impl EventHandler for MyBot {
-    async fn message_create(&self, ctx: Context, msg: Message) {
-        if let Some(content) = msg.content.as_deref() {
+    async fn message_create(&self, mut session: ChannelReplySession) {
+        let message = session.message().clone();
+        if let Some(content) = message.content.as_deref() {
             if content.contains("ping") {
-                let _ = msg.reply(&ctx, "pong").await;
+                let _ = session.reply("pong").await;
             }
         }
     }
 }
 ```
 
-The Python `Context`-equivalent is passed in explicitly as the second parameter rather than reached for via `self`; REST credentials live inside its shared `BotApi`.
+BotRS callbacks are session-first: the callback receives one session value that contains the inbound message or event payload and exposes the shared `BotApi`.
 
 ## Token
 
@@ -59,7 +60,7 @@ Python keyword-argument message calls translate to the `*Params` builder family:
 use botrs::models::message::MessageParams;
 
 let params = MessageParams::new_text("hi").with_reply(&msg_id);
-ctx.send_message(&channel_id, params).await?;
+session.send_message(params).await?;
 ```
 
 The same pattern applies to group, C2C, and DM messages: `GroupMessageParams` → `send_group_message`, `C2CMessageParams` → `send_c2c_message`, `DirectMessageParams` → `send_direct_message`.

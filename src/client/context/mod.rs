@@ -1,13 +1,13 @@
 use super::prelude::*;
 use std::ops::Deref;
 
-/// Context passed to event handlers containing API access and bot information.
+/// Internal runtime context used to construct event-scoped sessions.
 #[derive(Clone)]
-pub struct Context {
+pub(crate) struct Context {
     /// API client for making requests
     api: Arc<BotApi>,
     /// Bot information
-    pub bot_info: Option<BotInfo>,
+    pub(crate) bot_info: Option<BotInfo>,
 }
 
 impl Context {
@@ -19,8 +19,13 @@ impl Context {
     }
 
     /// Returns the shared API client.
-    pub fn api(&self) -> &BotApi {
+    pub(crate) fn api(&self) -> &BotApi {
         &self.api
+    }
+
+    /// Returns an owned handle to the shared API client.
+    pub(crate) fn api_handle(&self) -> Arc<BotApi> {
+        Arc::clone(&self.api)
     }
 
     /// Sets the bot information.

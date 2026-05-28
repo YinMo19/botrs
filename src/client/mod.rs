@@ -9,13 +9,21 @@ mod dispatch;
 mod handler;
 mod lifecycle;
 
-pub use context::Context;
+pub(crate) use context::Context;
 pub use handler::EventHandler;
 
 #[allow(unused_imports)]
 mod prelude {
     pub(super) use crate::Reaction;
     pub(super) use crate::api_impl::BotApi;
+    pub(super) use crate::api_impl::session::{
+        AudioSession, C2CManageSession, C2CReplySession, ChannelReplySession, ChannelSession,
+        DirectReplySession, EnterAioSession, EventSession, ForumAuditSession, ForumReplySession,
+        GroupManageSession, GroupReplySession, GuildSession, InteractionSession, MemberSession,
+        MessageAuditSession, MessageDeleteSession, OpenForumSession, PostSession,
+        PublicAudioSession, ReactionSession, ReadySession, ResumeSession,
+        SubscribeMessageStatusSession, ThreadSession, UnknownEventSession,
+    };
     pub(super) use crate::audio::{Audio, PublicAudio};
     pub(super) use crate::error::{BotError, Result};
     pub(super) use crate::forum::{ForumAuditResult, OpenThread, Post, Reply, Thread};

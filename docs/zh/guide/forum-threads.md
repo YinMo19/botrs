@@ -6,14 +6,14 @@
 
 启用 `Intents::FORUMS` 后，`EventHandler` 会触发以下方法：
 
-- `forum_thread_create(&self, ctx, thread: Thread)`
-- `forum_thread_update(&self, ctx, thread: Thread)`
-- `forum_thread_delete(&self, ctx, thread: Thread)`
-- `forum_post_create(&self, ctx, post: Post)`
-- `forum_post_delete(&self, ctx, post: Post)`
-- `forum_reply_create(&self, ctx, reply: Reply)`
-- `forum_reply_delete(&self, ctx, reply: Reply)`
-- `forum_publish_audit_result(&self, ctx, result: ForumAuditResult)`
+- `forum_thread_create(&self, session: ThreadSession)`
+- `forum_thread_update(&self, session: ThreadSession)`
+- `forum_thread_delete(&self, session: ThreadSession)`
+- `forum_post_create(&self, session: PostSession)`
+- `forum_post_delete(&self, session: PostSession)`
+- `forum_reply_create(&self, session: ForumReplySession)`
+- `forum_reply_delete(&self, session: ForumReplySession)`
+- `forum_publish_audit_result(&self, session: ForumAuditSession)`
 
 ## 公开论坛回调
 
@@ -27,7 +27,7 @@
 
 `Thread` 带有 `channel_id`、`guild_id`、`author_id`、`event_id`（均为 `Option<String>`），以及 `thread_info: ThreadInfo`，其中 `ThreadInfo` 暴露主题标题和编辑器生成的富文本块。
 
-`Post` 与 `Reply` 形态相同，仅把 `thread_info` 换成 `post_info: PostInfo` / `reply_info: ReplyInfo`。论坛事件需要发起 REST 调用时，直接使用回调里的 `ctx`。
+`Post` 与 `Reply` 形态相同，仅把 `thread_info` 换成 `post_info: PostInfo` / `reply_info: ReplyInfo`。论坛事件需要发起 REST 调用时，直接使用回调里的 session。
 
 `ForumAuditResult` 直接映射审核载荷：
 
@@ -63,7 +63,8 @@ pub struct ForumAuditResult {
 ## 最小处理器示例
 
 ```rust
-async fn forum_publish_audit_result(&self, _ctx: Context, result: ForumAuditResult) {
+async fn forum_publish_audit_result(&self, session: ForumAuditSession) {
+    let result = session.event();
     if result.result != 0 {
         tracing::warn!(
             task = result.task_id,
@@ -73,7 +74,8 @@ async fn forum_publish_audit_result(&self, _ctx: Context, result: ForumAuditResu
     }
 }
 
-async fn forum_thread_create(&self, _ctx: Context, thread: Thread) {
+async fn forum_thread_create(&self, session: ThreadSession) {
+    let thread = session.event();
     tracing::info!(
         guild = ?thread.guild_id,
         channel = ?thread.channel_id,

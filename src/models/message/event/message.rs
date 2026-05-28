@@ -2,7 +2,7 @@ use super::{MessageAttachment, MessageMember, MessageReference, MessageScene, Me
 use crate::models::{Snowflake, Timestamp};
 use serde::{Deserialize, Serialize};
 
-use crate::models::message::{Ark, Embed, MessageParams};
+use crate::models::message::{Ark, Embed};
 
 /// Represents a message in a guild channel.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
@@ -57,27 +57,4 @@ pub struct Message {
     /// Event ID from the gateway
     #[serde(skip)]
     pub event_id: Option<String>,
-}
-
-impl Message {
-    /// Reply to this message
-    pub async fn reply(
-        &self,
-        api: &crate::api_impl::BotApi,
-        content: &str,
-    ) -> Result<crate::models::api::MessageResponse, crate::error::BotError> {
-        if let (Some(channel_id), Some(msg_id)) = (&self.channel_id, &self.id) {
-            let params = MessageParams {
-                content: Some(content.to_string()),
-                msg_id: Some(msg_id.clone()),
-                event_id: self.event_id.clone(),
-                ..Default::default()
-            };
-            api.send_message(channel_id, params).await
-        } else {
-            Err(crate::error::BotError::InvalidData(
-                "Missing channel_id or message_id for reply".to_string(),
-            ))
-        }
-    }
 }

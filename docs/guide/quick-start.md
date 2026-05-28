@@ -18,17 +18,18 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 The handler below replies to `!ping` when the bot is mentioned in a guild channel. `Token::new(app_id, secret)` and the `is_sandbox` flag on `Client::new` are the only credentials and environment knobs you need at this stage.
 
 ```rust
-use botrs::{Client, Context, EventHandler, Intents, Message, Ready, Token};
+use botrs::{ChannelReplySession, Client, EventHandler, Intents, ReadySession, Token};
 
 struct MyBot;
 
 #[async_trait::async_trait]
 impl EventHandler for MyBot {
-    async fn ready(&self, _ctx: Context, ready: Ready) {
-        tracing::info!("ready as {}", ready.user.username);
+    async fn ready(&self, session: ReadySession) {
+        tracing::info!("ready as {}", session.event().user.username);
     }
 
-    async fn message_create(&self, ctx: Context, message: Message) {
+    async fn message_create(&self, mut session: ChannelReplySession) {
+        let message = session.message().clone();
         if message
             .author
             .as_ref()
@@ -39,7 +40,7 @@ impl EventHandler for MyBot {
         }
         let Some(content) = message.content.as_deref() else { return };
         if content.trim() == "!ping" {
-            let _ = message.reply(&ctx, "pong").await;
+            let _ = session.reply("pong").await;
         }
     }
 }
@@ -67,7 +68,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 - `Token` carries the App ID and Secret. `Token::from_env()` is also available; it reads `QQ_BOT_APP_ID` and `QQ_BOT_SECRET`.
 - `Intents` is a bitflag set. `Intents::new()` starts empty, and each `with_*` method enables one event category. `Intents::default()` is the standard public preset: it enables public, non-privileged event categories while leaving privileged events and `ENTER_AIO` opt-in.
 - `Client::new(token, intents, handler, is_sandbox)` — pass `true` for the sandbox base URL while developing, `false` for production.
-- `message.reply(&ctx, text)` is the convenience for replying to the same channel; for richer payloads use `ctx.send_message` with `MessageParams` (see [Messages](/guide/messages)).
+- `session.reply(text)` is the convenience for replying to the current event; for richer payloads use `session.send_message` with `MessageParams` (see [Messages](/guide/messages)).
 
 ## Next
 

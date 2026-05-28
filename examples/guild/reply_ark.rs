@@ -6,7 +6,7 @@
 mod common;
 
 use botrs::models::message::{Ark, ArkKv};
-use botrs::{Client, Context, EventHandler, Intents, Message, Ready, Token};
+use botrs::{ChannelReplySession, Client, EventHandler, Intents, ReadySession, Token};
 use common::{Config, init_logging};
 use std::env;
 use tracing::{info, warn};
@@ -17,21 +17,12 @@ struct AtReplyArkHandler;
 #[async_trait::async_trait]
 impl EventHandler for AtReplyArkHandler {
     /// Called when the bot is ready and connected.
-    async fn ready(&self, _ctx: Context, ready: Ready) {
-        info!("robot 「{}」 on_ready!", ready.user.username);
+    async fn ready(&self, session: ReadySession) {
+        info!("robot 「{}」 on_ready!", session.event().user.username);
     }
 
     /// Called when a message is created that mentions the bot.
-    async fn message_create(&self, ctx: Context, message: Message) {
-        // Get channel ID for reply
-        let channel_id = match &message.channel_id {
-            Some(channel_id) => channel_id,
-            None => {
-                warn!("Message has no channel_id");
-                return;
-            }
-        };
-
+    async fn message_create(&self, mut session: ChannelReplySession) {
         // Create ARK payload.
         let ark_payload = Ark {
             template_id: Some(37),
@@ -68,7 +59,7 @@ impl EventHandler for AtReplyArkHandler {
             ..Default::default()
         };
 
-        match ctx.send_message(channel_id, params).await {
+        match session.send_message(params).await {
             Ok(_) => info!("Successfully sent ARK message"),
             Err(e) => warn!("Failed to send ARK message: {}", e),
         }

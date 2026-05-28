@@ -11,12 +11,13 @@ Group and C2C messages have their own models:
 - `GroupMessage` maps to `GROUP_AT_MESSAGE_CREATE`; the key routing field is `group_openid`.
 - `C2CMessage` maps to `C2C_MESSAGE_CREATE`; the key routing field usually comes from `author.user_openid`.
 
-These event models retain platform-provided message id, content, attachments, mentions, timestamp, references, and internal `event_id`. For plain replies, prefer the model's `reply` method. For richer replies, build the matching parameter struct manually.
+These event models retain platform-provided message id, content, attachments, mentions, timestamp, references, and internal `event_id`. For plain replies, prefer `session.reply(...)` from the matching reply session. For richer replies, build the matching parameter struct manually.
 
 ```rust
+let message = session.message();
 if let Some(content) = &message.content {
     if content.trim() == "/ping" {
-        message.reply(ctx.api(), "pong").await?;
+        session.reply("pong").await?;
     }
 }
 ```
@@ -36,7 +37,7 @@ The most common helpers are `new_text` and `with_reply`:
 
 ```rust
 let params = MessageParams::new_text("pong").with_reply(message_id);
-ctx.send_message(&channel_id, params).await?;
+session.send_message(params).await?;
 ```
 
 For complex messages, set fields directly:
@@ -57,10 +58,10 @@ For complex messages, set fields directly:
 
 ```rust
 let dm = DirectMessageToCreate::new(&guild_id, &user_id);
-let session = ctx.create_direct_message(&dm).await?;
+let dm_session = session.create_direct_message(&dm).await?;
 
 let params = DirectMessageParams::new_text("hello");
-ctx.send_direct_message(&session.guild_id, params).await?;
+session.send_direct_message(&dm_session.guild_id, params).await?;
 ```
 
 ## Open Message msg_type

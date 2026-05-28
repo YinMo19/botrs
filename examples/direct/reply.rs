@@ -7,7 +7,9 @@
 mod common;
 
 use botrs::models::message::DirectMessageToCreate;
-use botrs::{Client, Context, EventHandler, Intents, Message, Ready, Token};
+use botrs::{
+    ChannelReplySession, Client, DirectReplySession, EventHandler, Intents, ReadySession, Token,
+};
 use common::{Config, init_logging};
 use std::env;
 use tracing::{info, warn};
@@ -18,12 +20,13 @@ struct DmsReplyHandler;
 #[async_trait::async_trait]
 impl EventHandler for DmsReplyHandler {
     /// Called when the bot is ready and connected.
-    async fn ready(&self, _ctx: Context, ready: Ready) {
-        info!("robot 「{}」 on_ready!", ready.user.username);
+    async fn ready(&self, session: ReadySession) {
+        info!("robot 「{}」 on_ready!", session.event().user.username);
     }
 
     /// Called when a direct message is created.
-    async fn direct_message_create(&self, ctx: Context, message: Message) {
+    async fn direct_message_create(&self, mut session: DirectReplySession) {
+        let message = session.message().clone();
         // Get message content
         let content = match &message.content {
             Some(content) => content,
@@ -33,38 +36,22 @@ impl EventHandler for DmsReplyHandler {
         info!("Received direct message: {}", content);
 
         // Get bot name from the bot info if available
-        let bot_name = ctx
-            .bot_info
-            .as_ref()
+        let bot_name = session
+            .bot_info()
             .map(|info| info.username.as_str())
             .unwrap_or("Bot");
 
-        // Get guild ID for DM session
-        let guild_id = match &message.guild_id {
-            Some(id) => id,
-            None => {
-                warn!("Direct message has no guild_id");
-                return;
-            }
-        };
-
         let reply_content = format!("机器人{bot_name}收到你的私信了: {content}");
 
-        // Reply to the direct message through DirectMessageParams.
-        let params = botrs::models::message::DirectMessageParams {
-            content: Some(reply_content),
-            msg_id: message.id.clone(),
-            ..Default::default()
-        };
-
-        match ctx.send_direct_message(guild_id, params).await {
+        match session.reply(reply_content).await {
             Ok(_) => info!("Successfully replied to direct message"),
             Err(e) => warn!("Failed to reply to direct message: {}", e),
         }
     }
 
     /// Called when a message is created that mentions the bot.
-    async fn message_create(&self, ctx: Context, message: Message) {
+    async fn message_create(&self, session: ChannelReplySession) {
+        let message = session.message().clone();
         // Get message content
         let content = match &message.content {
             Some(content) => content,
@@ -104,7 +91,7 @@ impl EventHandler for DmsReplyHandler {
             );
 
             let dm = DirectMessageToCreate::new(guild_id, user_id);
-            match ctx.create_direct_message(&dm).await {
+            match session.create_direct_message(&dm).await {
                 Ok(dms_payload) => {
                     info!("Successfully created DM session");
                     info!("DMS Payload: {:?}", dms_payload);
@@ -118,7 +105,7 @@ impl EventHandler for DmsReplyHandler {
                     // Send a DM using the created session
                     let params = botrs::models::message::DirectMessageParams::new_text("hello");
 
-                    match ctx.send_direct_message(dm_guild_id, params).await {
+                    match session.send_direct_message(dm_guild_id, params).await {
                         Ok(_) => info!("Successfully sent DM via created session"),
                         Err(e) => warn!("Failed to send DM via created session: {}", e),
                     }

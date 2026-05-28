@@ -3,8 +3,6 @@ use crate::models::Timestamp;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::models::message::C2CMessageParams;
-
 /// Represents a C2C (client-to-client) message.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct C2CMessage {
@@ -31,32 +29,4 @@ pub struct C2CMessage {
     /// Event ID from the gateway
     #[serde(skip)]
     pub event_id: Option<String>,
-}
-
-impl C2CMessage {
-    /// Reply to this C2C message
-    pub async fn reply(
-        &self,
-        api: &crate::api_impl::BotApi,
-        content: &str,
-    ) -> Result<crate::models::api::MessageResponse, crate::error::BotError> {
-        if let (Some(user_openid), Some(msg_id)) = (
-            self.author.as_ref().and_then(|a| a.user_openid.as_ref()),
-            &self.id,
-        ) {
-            let params = C2CMessageParams {
-                msg_type: 0,
-                content: Some(content.to_string()),
-                msg_id: Some(msg_id.clone()),
-                msg_seq: Some(1),
-                event_id: self.event_id.clone(),
-                ..Default::default()
-            };
-            api.send_c2c_message(user_openid, params).await
-        } else {
-            Err(crate::error::BotError::InvalidData(
-                "Missing user_openid or message_id for C2C reply".to_string(),
-            ))
-        }
-    }
 }

@@ -9,18 +9,20 @@
 | [`guild/schedule.rs`](https://github.com/YinMo19/botrs/blob/main/examples/guild/schedule.rs)                          | `BotApi::create_schedule`、`get_schedule`、`update_schedule`、`delete_schedule`、`RemindType`                                          |
 | [`guild/pins_message.rs`](https://github.com/YinMo19/botrs/blob/main/examples/guild/pins_message.rs)                  | `BotApi::get_pins`、`BotApi::put_pin`、`BotApi::delete_pin`                                                                            |
 | [`guild/reaction_users.rs`](https://github.com/YinMo19/botrs/blob/main/examples/guild/reaction_users.rs)              | `BotApi::get_reaction_users`、`EmojiType::System`，按 `cookie` 字段翻页                                                                |
-| [`guild/recall.rs`](https://github.com/YinMo19/botrs/blob/main/examples/guild/recall.rs)                              | `Context::recall_message`（也可走 `BotApi::recall_message`）                                                                           |
+| [`guild/recall.rs`](https://github.com/YinMo19/botrs/blob/main/examples/guild/recall.rs)                              | `session.recall_message`（也可走 `BotApi::recall_message`）                                                                            |
 | [`api/message_params.rs`](https://github.com/YinMo19/botrs/blob/main/examples/api/message_params.rs)                  | `MessageParams`、`GroupMessageParams`、`C2CMessageParams`、`DirectMessageParams`                                                       |
 
 ## 套路
 
-所有 REST 调用都可以直接写在 `ctx` 上，因为 `Context` 会解引用到 `BotApi`；token 存在 `BotApi` 内部。错误以 `botrs::BotError` 返回，框架不会自动重试，请就地处理。
+所有 REST 调用都可以直接写在 `session` 上，因为 session 会解引用到 `BotApi`；token 存在 `BotApi` 内部。错误以 `botrs::BotError` 返回，框架不会自动重试，请就地处理。
 
 ```rust
 // examples/guild/recall.rs —— 发完立即撤回
-let resp = message.reply(&ctx, "this will vanish").await?;
+let resp = session.reply("this will vanish").await?;
 if let Some(message_id) = resp.id {
-    ctx.recall_message(channel_id, &message_id, /* hidetip */ true).await?;
+    session
+        .recall_message(session.channel_id(), &message_id, /* hidetip */ true)
+        .await?;
 }
 ```
 

@@ -11,7 +11,7 @@ Working examples:
 
 ## Pattern
 
-Build a payload (`Embed`, `MarkdownPayload`, `Ark`) using its struct-init form, drop it into the matching `MessageParams` field, then call `ctx.send_message(channel_id, params)`.
+Build a payload (`Embed`, `MarkdownPayload`, `Ark`) using its struct-init form, drop it into the matching params field, then call the current session's `send_message`.
 
 ```rust
 use botrs::models::message::{Embed, EmbedField, MessageParams};
@@ -23,7 +23,7 @@ let embed = Embed {
     ..Default::default()
 };
 let params = MessageParams { embed: Some(embed), ..Default::default() };
-ctx.send_message(channel_id, params).await?;
+session.send_message(params).await?;
 ```
 
 The same shape works for `markdown: Some(MarkdownPayload { ... })` and `ark: Some(Ark { template_id: Some(37), kv: Some(vec![ArkKv { ... }]) })`. Markdown supports both `custom_template_id` + `params` (template form) and raw `content`. For group and C2C sends, set `msg_type` to `2` for Markdown, `3` for ARK, and `4` for Embed.

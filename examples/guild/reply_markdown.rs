@@ -7,8 +7,8 @@
 mod common;
 
 use botrs::{
-    Client, Context, EventHandler, Intents, Message, Ready, Token,
-    models::message::{MarkdownParam, MarkdownPayload},
+    ChannelReplySession, Client, EventHandler, Intents, ReadySession, Token,
+    models::message::{MarkdownParam, MarkdownPayload, MessageParams},
 };
 use common::{Config, init_logging};
 use std::env;
@@ -17,82 +17,55 @@ use tracing::{info, warn};
 /// Event handler that responds to @ mentions with markdown messages.
 struct MarkdownReplyHandler;
 
-impl MarkdownReplyHandler {
-    /// Send markdown message by template (equivalent to handle_send_markdown_by_template)
-    async fn send_markdown_by_template(
-        &self,
-        ctx: &Context,
-        channel_id: &str,
-        _msg_id: Option<&str>,
-    ) {
-        // Create markdown parameters.
-        let params = vec![
-            MarkdownParam {
-                key: Some("title".to_string()),
-                values: Some(vec!["标题".to_string()]),
-            },
-            MarkdownParam {
-                key: Some("content".to_string()),
-                values: Some(vec![
-                    "为了成为一名合格的巫师，请务必阅读频道公告".to_string(),
-                    "藏馆黑色魔法书".to_string(),
-                ]),
-            },
-        ];
+fn markdown_template_params() -> MessageParams {
+    let params = vec![
+        MarkdownParam {
+            key: Some("title".to_string()),
+            values: Some(vec!["标题".to_string()]),
+        },
+        MarkdownParam {
+            key: Some("content".to_string()),
+            values: Some(vec![
+                "为了成为一名合格的巫师，请务必阅读频道公告".to_string(),
+                "藏馆黑色魔法书".to_string(),
+            ]),
+        },
+    ];
 
-        let markdown = MarkdownPayload {
-            custom_template_id: Some("65".to_string()),
-            params: Some(params),
-            ..Default::default()
-        };
+    let markdown = MarkdownPayload {
+        custom_template_id: Some("65".to_string()),
+        params: Some(params),
+        ..Default::default()
+    };
 
-        // Send markdown message using API
-        // Send markdown message through MessageParams.
-        let params = botrs::models::message::MessageParams {
-            markdown: Some(markdown),
-            ..Default::default()
-        };
-
-        match ctx.send_message(channel_id, params).await {
-            Ok(_) => info!("Successfully sent markdown message by template"),
-            Err(e) => warn!("Failed to send markdown message by template: {}", e),
-        }
+    MessageParams {
+        markdown: Some(markdown),
+        ..Default::default()
     }
+}
 
-    /// Send markdown message by content (equivalent to handle_send_markdown_by_content)
-    async fn send_markdown_by_content(
-        &self,
-        ctx: &Context,
-        channel_id: &str,
-        _msg_id: Option<&str>,
-    ) {
-        let markdown = MarkdownPayload {
-            content: Some("# 标题 \n## 简介很开心 \n内容".to_string()),
-            ..Default::default()
-        };
+fn markdown_content_params() -> MessageParams {
+    let markdown = MarkdownPayload {
+        content: Some("# 标题 \n## 简介很开心 \n内容".to_string()),
+        ..Default::default()
+    };
 
-        // Send markdown message through MessageParams.
-        let params = botrs::models::message::MessageParams {
-            markdown: Some(markdown),
-            ..Default::default()
-        };
-
-        match ctx.send_message(channel_id, params).await {
-            Ok(_) => info!("Successfully sent markdown message by content"),
-            Err(e) => warn!("Failed to send markdown message by content: {}", e),
-        }
+    MessageParams {
+        markdown: Some(markdown),
+        ..Default::default()
     }
 }
 
 #[async_trait::async_trait]
 impl EventHandler for MarkdownReplyHandler {
     /// Called when the bot is ready and connected.
-    async fn ready(&self, _ctx: Context, ready: Ready) {
-        info!("robot 「{}」 on_ready!", ready.user.username);
+    async fn ready(&self, session: ReadySession) {
+        info!("robot 「{}」 on_ready!", session.event().user.username);
     }
 
     /// Called when a message is created that mentions the bot.
-    async fn message_create(&self, ctx: Context, message: Message) {
+    async fn message_create(&self, mut session: ChannelReplySession) {
+        let message = session.message().clone();
         // Get message content
         let content = match &message.content {
             Some(content) => content,
@@ -102,38 +75,30 @@ impl EventHandler for MarkdownReplyHandler {
         info!("Received message: {}", content);
 
         // Get bot name from the bot info if available
-        let bot_name = ctx
-            .bot_info
-            .as_ref()
+        let bot_name = session
+            .bot_info()
             .map(|info| info.username.as_str())
             .unwrap_or("Bot");
 
         let reply_content = format!("机器人{bot_name}收到你的@消息了: {content}");
 
         // First send a regular reply.
-        match message.reply(&ctx, &reply_content).await {
+        match session.reply(reply_content).await {
             Ok(_) => info!("Successfully sent regular reply"),
             Err(e) => warn!("Failed to send regular reply: {}", e),
         }
 
-        // Get required IDs
-        let channel_id = match &message.channel_id {
-            Some(id) => id,
-            None => {
-                warn!("Message has no channel_id");
-                return;
-            }
-        };
+        // Send markdown by template.
+        match session.send_message(markdown_template_params()).await {
+            Ok(_) => info!("Successfully sent markdown message by template"),
+            Err(e) => warn!("Failed to send markdown message by template: {}", e),
+        }
 
-        let msg_id = message.id.as_deref();
-
-        // Send markdown by template
-        self.send_markdown_by_template(&ctx, channel_id, msg_id)
-            .await;
-
-        // Send markdown by content
-        self.send_markdown_by_content(&ctx, channel_id, msg_id)
-            .await;
+        // Send markdown by content.
+        match session.send_message(markdown_content_params()).await {
+            Ok(_) => info!("Successfully sent markdown message by content"),
+            Err(e) => warn!("Failed to send markdown message by content: {}", e),
+        }
     }
 
     /// Called when an error occurs during event processing.

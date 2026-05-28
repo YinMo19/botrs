@@ -5,7 +5,7 @@
 #[path = "../common/mod.rs"]
 mod common;
 
-use botrs::{Client, Context, EventHandler, GroupMessage, Intents, Ready, Token};
+use botrs::{Client, EventHandler, GroupReplySession, Intents, ReadySession, Token};
 use common::{Config, init_logging};
 use std::env;
 use tracing::{info, warn};
@@ -16,31 +16,20 @@ struct GroupReplyFileHandler;
 #[async_trait::async_trait]
 impl EventHandler for GroupReplyFileHandler {
     /// Called when the bot is ready and connected.
-    async fn ready(&self, _ctx: Context, ready: Ready) {
-        info!("robot 「{}」 on_ready!", ready.user.username);
+    async fn ready(&self, session: ReadySession) {
+        info!("robot 「{}」 on_ready!", session.event().user.username);
     }
 
     /// Called when a group @ message is created.
-    async fn group_message_create(&self, ctx: Context, message: GroupMessage) {
-        // Get group OpenID
-        let group_openid = match &message.group_openid {
-            Some(openid) => openid,
-            None => {
-                warn!("Group message has no group_openid");
-                return;
-            }
-        };
-
+    async fn group_message_create(&self, mut session: GroupReplySession) {
         // File URL - this needs to be filled with an actual uploaded resource URL
         let file_url = "https://arcaea.lowiro.com/assets/character-card_en_Hikari@2x-UqTl1zuc.png"; // 这里需要填写上传的资源Url，夹带私货
 
         // Upload media file.
-        let upload_media_result = ctx
-            .post_group_file(
-                group_openid,
+        let upload_media_result = session
+            .post_file(
                 1, // file_type: 1 for image, file type should match the actual file
-                file_url,
-                None, // srv_send_msg: Optional flag for server-side message sending
+                file_url, None, // srv_send_msg: Optional flag for server-side message sending
             )
             .await;
 
@@ -57,13 +46,11 @@ impl EventHandler for GroupReplyFileHandler {
         // Send group message with media.
         let params = botrs::models::message::GroupMessageParams {
             msg_type: 7, // 7表示富媒体类型 (rich media type)
-            msg_id: message.id.clone(),
-            event_id: message.event_id.clone(),
             media: Some(upload_media),
             ..Default::default()
         };
 
-        match ctx.send_group_message(group_openid, params).await {
+        match session.send_message(params).await {
             Ok(response) => {
                 info!("Successfully sent group file message");
                 info!("Response: {:?}", response);

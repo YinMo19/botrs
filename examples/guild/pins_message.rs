@@ -5,7 +5,7 @@
 #[path = "../common/mod.rs"]
 mod common;
 
-use botrs::{Client, Context, EventHandler, Intents, Message, Ready, Token};
+use botrs::{ChannelReplySession, Client, EventHandler, Intents, ReadySession, Token};
 use common::{Config, init_logging};
 use std::env;
 use tracing::{info, warn};
@@ -16,12 +16,13 @@ struct PinsMessageHandler;
 #[async_trait::async_trait]
 impl EventHandler for PinsMessageHandler {
     /// Called when the bot is ready and connected.
-    async fn ready(&self, _ctx: Context, ready: Ready) {
-        info!("robot 「{}」 on_ready!", ready.user.username);
+    async fn ready(&self, session: ReadySession) {
+        info!("robot 「{}」 on_ready!", session.event().user.username);
     }
 
     /// Called when a message is created that mentions the bot.
-    async fn message_create(&self, ctx: Context, message: Message) {
+    async fn message_create(&self, mut session: ChannelReplySession) {
+        let message = session.message().clone();
         // Get message content
         let content = match &message.content {
             Some(content) => content,
@@ -47,16 +48,15 @@ impl EventHandler for PinsMessageHandler {
         };
 
         // Get bot name from the bot info if available
-        let bot_name = ctx
-            .bot_info
-            .as_ref()
+        let bot_name = session
+            .bot_info()
             .map(|info| info.username.as_str())
             .unwrap_or("Bot");
 
         let reply_content = format!("机器人{bot_name}收到你的@消息了: {content}");
 
         // Reply to the message first
-        match message.reply(&ctx, &reply_content).await {
+        match session.reply(reply_content).await {
             Ok(_) => info!("Successfully replied to message"),
             Err(e) => warn!("Failed to reply to message: {}", e),
         }
@@ -64,7 +64,7 @@ impl EventHandler for PinsMessageHandler {
         // Handle different pin-related commands
         if content.contains("/获取精华列表") {
             // Get pins message list (equivalent to self.api.get_pins)
-            match ctx.get_pins(channel_id).await {
+            match session.get_pins(channel_id).await {
                 Ok(pins_message) => {
                     info!("Pins message list: {:?}", pins_message);
                 }
@@ -76,7 +76,7 @@ impl EventHandler for PinsMessageHandler {
 
         if content.contains("/创建精华消息") {
             // Create pin message (equivalent to self.api.put_pin)
-            match ctx.put_pin(channel_id, message_id).await {
+            match session.put_pin(channel_id, message_id).await {
                 Ok(pins_message) => {
                     info!("Created pin message: {:?}", pins_message);
                 }
@@ -88,7 +88,7 @@ impl EventHandler for PinsMessageHandler {
 
         if content.contains("/删除精华消息") {
             // Delete pin message (equivalent to self.api.delete_pin)
-            match ctx.delete_pin(channel_id, message_id).await {
+            match session.delete_pin(channel_id, message_id).await {
                 Ok(result) => {
                     info!("Deleted pin message: {:?}", result);
                 }

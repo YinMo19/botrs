@@ -75,5 +75,5 @@ info!("starting bot {}", token.safe_display());
 ## 参见
 
 - [Bot API](./bot-api.md) —— 所有接口最终都会消费 `Token`。
-- [Context](./context.md) —— 暴露持有 token 的 `BotApi`，回调里无需手动传 token。
+- [Sessions](./context.md) —— 暴露持有 token 的 `BotApi`，回调里无需手动传 token。
 - [错误类型](./error-types.md) —— 上文涉及的 `BotError::Auth` 与 `BotError::Config` 行为。

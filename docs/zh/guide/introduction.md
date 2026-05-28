@@ -1,6 +1,6 @@
 # 介绍
 
-BotRS 是一个用 Rust 构建 QQ 频道机器人的异步框架。它将 QQ 频道 Bot API 与网关 WebSocket 协议封装为少量类型：`Client`、`EventHandler`、`Context`、`BotApi`、`Token` 和 `Intents`。使用本框架时，几乎所有工作都从这些类型出发。
+BotRS 是一个用 Rust 构建 QQ 频道机器人的异步框架。它将 QQ 频道 Bot API 与网关 WebSocket 协议封装为少量类型：`Client`、`EventHandler`、session 类型、`BotApi`、`Token` 和 `Intents`。使用本框架时，几乎所有工作都从这些类型出发。
 
 ## 架构概览
 
@@ -8,7 +8,7 @@ BotRS 是一个用 Rust 构建 QQ 频道机器人的异步框架。它将 QQ 频
 
 `EventHandler` 是一个 trait，每个事件对应一个带默认实现的 `async fn`（例如 `message_create`、`direct_message_create`、`guild_create`、`forum_thread_create` 等）。只实现关心的事件即可。
 
-每次回调都会传入一个 `Context`，其中持有共享的 `BotApi`。`BotApi` 是带类型签名的 HTTP 层，并持有 REST 调用所需的 token；如果需要在事件处理之外调用 REST API，也可以自行构造一个。
+每次回调都会传入一个 session 对象。Reply session 提供顺手的 `reply` 与 `send_message` 方法；event session 通过 `session.event()` 暴露类型化载荷。`BotApi` 是带类型签名的 HTTP 层，并持有 REST 调用所需的 token；如果需要在事件处理之外调用 REST API，也可以自行构造一个。
 
 `Intents` 是一个位标志集合，告诉网关需要投递哪些事件类别，按需订阅可以减少无用流量。
 
@@ -20,7 +20,7 @@ BotRS 是一个用 Rust 构建 QQ 频道机器人的异步框架。它将 QQ 频
 let mut params = MessageParams::new_text("你好")
     .with_reply(message_id);
 params.markdown = Some(markdown);
-ctx.send_message("channel_id", params).await?;
+session.send_message(params).await?;
 ```
 
 `GroupMessageParams`、`C2CMessageParams`、`DirectMessageParams` 等的形态与之相同，完整集合见消息指南。
@@ -31,4 +31,4 @@ ctx.send_message("channel_id", params).await?;
 - [快速开始](/zh/guide/quick-start) —— 一个最小可运行机器人。
 - [客户端与事件处理器](/zh/guide/client-handler) —— 事件循环 API。
 - [消息](/zh/guide/messages) —— `*MessageParams` 构建器。
-- [API 客户端](/zh/guide/api-client) —— 使用 `BotApi` 与 `Context`。
+- [API 客户端](/zh/guide/api-client) —— 在 session 中或独立使用 `BotApi`。

@@ -25,9 +25,9 @@ The variants you'll match on most often correspond to outcomes the QQ API and ga
 REST calls (`BotApi::*`) return the error directly. Inside a handler, you decide what to do:
 
 ```rust
-async fn message_create(&self, ctx: Context, msg: Message) {
+async fn message_create(&self, mut session: ChannelReplySession) {
     let params = MessageParams::new_text("hi");
-    if let Err(e) = ctx.send_message("channel", params).await {
+    if let Err(e) = session.send_message(params).await {
         match e {
             BotError::RateLimit { retry_after } => {
                 tracing::warn!(retry_after, "rate limited; dropping reply");
@@ -51,7 +51,7 @@ These are advisory. The framework itself does not retry on your behalf — every
 
 ```rust
 loop {
-    match ctx.send_message(channel, params.clone()).await {
+    match session.send_message(params.clone()).await {
         Ok(resp) => break Ok(resp),
         Err(e) if e.is_retryable() => {
             if let Some(secs) = e.retry_after() {

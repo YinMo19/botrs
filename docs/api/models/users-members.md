@@ -6,7 +6,7 @@ User models cover the shapes that appear in the core runtime path: the bot itsel
 
 `User` is the general user structure. It includes id, username, avatar, bot flag, and union fields. `Ready::user` uses this type.
 
-`BotInfo` is the `/users/@me` response. In addition to basic user fields, it keeps the platform's `share_url` and `welcome_msg`. `Context::bot_info` is populated from this endpoint during startup.
+`BotInfo` is the `/users/@me` response. In addition to basic user fields, it keeps the platform's `share_url` and `welcome_msg`. `session.bot_info()` is populated from this endpoint during startup when a handler is dispatched.
 
 ## Member Shapes
 

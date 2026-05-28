@@ -25,7 +25,7 @@ impl CommandRegistry {
 }
 ```
 
-示例注册了两个命令（`你好` / `hello` 与 `晚安`），并演示了两种回复写法：方便的 `message.reply(&ctx, &response)` 与显式的 `MessageParams { content: Some(response), msg_id: message.id.clone(), ..Default::default() }` + `ctx.send_message(...)`。两种写法落到同一个接口，按需选择。
+示例注册了两个命令（`你好` / `hello` 与 `晚安`），并演示了两种回复写法：方便的 `session.reply(&response)` 与显式的 `MessageParams { content: Some(response), ..Default::default() }` + `session.send_message(...)`。两种写法落到同一个接口，按需选择。
 
 ## 参见
 

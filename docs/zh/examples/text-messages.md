@@ -10,14 +10,14 @@
 
 ## 选用合适的调用
 
-频道回复最短的写法是 `Message::reply`。其他场景（群、C2C、私信，或需要 `Reference`、`msg_id`、`event_id`、附件、embed 的回复）请构造对应的 `*Params` 并调用对应的 `BotApi` 方法：
+纯文本回复最短的写法是 `session.reply(...)`。更复杂的内容（`Reference`、显式 id、附件、embed 等）请构造对应的 `*Params` 并调用当前 session 的发送方法：
 
 | 目的地       | Params                | API 方法                              |
 |--------------|-----------------------|---------------------------------------|
-| 频道         | `MessageParams`       | `send_message`            |
-| 私信         | `DirectMessageParams` | `send_direct_message`                |
-| 群           | `GroupMessageParams`  | `send_group_message`      |
-| C2C          | `C2CMessageParams`    | `send_c2c_message`        |
+| 频道         | `MessageParams`       | `ChannelReplySession::send_message`  |
+| 私信         | `DirectMessageParams` | `DirectReplySession::send_message`   |
+| 群           | `GroupMessageParams`  | `GroupReplySession::send_message`    |
+| C2C          | `C2CMessageParams`    | `C2CReplySession::send_message`      |
 
 ```rust
 // 引用回复（频道）— 见 examples/guild/reply_reference.rs
@@ -26,10 +26,10 @@ let params = MessageParams {
     message_reference: Some(Reference { message_id: Some(message_id.clone()), ignore_get_message_error: None }),
     ..Default::default()
 };
-ctx.send_message(channel_id, params).await?;
+session.send_message(params).await?;
 ```
 
-群与 C2C 记得把 `msg_type` 设为 `0`（纯文本），并在字段存在时把 `msg_id: message.id.clone()`、`event_id: message.event_id.clone()` 一起传给平台。私信还需要从入站 `Message` 拿 DM `guild_id`，或使用 `BotApi::create_direct_message` 创建会话。
+Reply session 会在字段为空时自动填充 `msg_id`、`event_id` 和 `msg_seq`。私信还需要从入站 `Message` 拿 DM `guild_id`，或使用 `BotApi::create_direct_message` 创建会话。
 
 ## 参见
 

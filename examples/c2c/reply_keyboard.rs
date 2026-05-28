@@ -6,7 +6,7 @@
 mod common;
 
 use botrs::models::message::{C2CMessageParams, KeyboardPayload, MarkdownPayload};
-use botrs::{C2CMessage, Client, Context, EventHandler, Intents, Ready, Token};
+use botrs::{C2CReplySession, Client, EventHandler, Intents, ReadySession, Token};
 use common::{Config, init_logging};
 use std::env;
 use tracing::{info, warn};
@@ -15,20 +15,11 @@ struct C2CReplyKeyboardHandler;
 
 #[async_trait::async_trait]
 impl EventHandler for C2CReplyKeyboardHandler {
-    async fn ready(&self, _ctx: Context, ready: Ready) {
-        info!("robot 「{}」 on_ready!", ready.user.username);
+    async fn ready(&self, session: ReadySession) {
+        info!("robot 「{}」 on_ready!", session.event().user.username);
     }
 
-    async fn c2c_message_create(&self, ctx: Context, message: C2CMessage) {
-        let Some(user_openid) = message
-            .author
-            .as_ref()
-            .and_then(|author| author.user_openid.as_deref())
-        else {
-            warn!("C2C message has no user_openid");
-            return;
-        };
-
+    async fn c2c_message_create(&self, mut session: C2CReplySession) {
         let markdown = MarkdownPayload {
             content: Some("# C2C Keyboard\n\n点击下方按钮继续。".to_string()),
             ..Default::default()
@@ -41,12 +32,10 @@ impl EventHandler for C2CReplyKeyboardHandler {
             msg_type: 2,
             markdown: Some(markdown),
             keyboard: Some(keyboard),
-            msg_id: message.id.clone(),
-            event_id: message.event_id.clone(),
             ..Default::default()
         };
 
-        match ctx.send_c2c_message(user_openid, params).await {
+        match session.send_message(params).await {
             Ok(response) => info!("Successfully sent C2C keyboard message: {:?}", response),
             Err(e) => warn!("Failed to send C2C keyboard message: {}", e),
         }

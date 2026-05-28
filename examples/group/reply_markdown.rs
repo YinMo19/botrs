@@ -6,7 +6,7 @@
 mod common;
 
 use botrs::models::message::{GroupMessageParams, MarkdownPayload};
-use botrs::{Client, Context, EventHandler, GroupMessage, Intents, Ready, Token};
+use botrs::{Client, EventHandler, GroupReplySession, Intents, ReadySession, Token};
 use common::{Config, init_logging};
 use std::env;
 use tracing::{info, warn};
@@ -15,22 +15,18 @@ struct GroupReplyMarkdownHandler;
 
 #[async_trait::async_trait]
 impl EventHandler for GroupReplyMarkdownHandler {
-    async fn ready(&self, _ctx: Context, ready: Ready) {
-        info!("robot 「{}」 on_ready!", ready.user.username);
+    async fn ready(&self, session: ReadySession) {
+        info!("robot 「{}」 on_ready!", session.event().user.username);
     }
 
-    async fn group_message_create(&self, ctx: Context, message: GroupMessage) {
-        let Some(group_openid) = message.group_openid.as_deref() else {
-            warn!("Group message has no group_openid");
-            return;
-        };
-
+    async fn group_message_create(&self, mut session: GroupReplySession) {
+        let message = session.message().clone();
         let content = message.content.as_deref().unwrap_or_default();
         info!("Received group message: {}", content);
 
         let markdown = MarkdownPayload {
             content: Some(format!(
-                "# Group Markdown\n\n收到群消息：{}\n\n- 使用 `GroupMessageParams`\n- `msg_type = 2`",
+                "# Group Markdown\n\n收到群消息：{}\n\n- 使用 `GroupMessageParams`\n- `msg_type = 2` \n *MATH*: $\\displaystyle\\int_0^\\infty \\frac{{\\sin x}}{{x}} {{\\rm d}} x = \\frac{{\\pi}}{{2}}$",
                 content
             )),
             ..Default::default()
@@ -39,12 +35,10 @@ impl EventHandler for GroupReplyMarkdownHandler {
         let params = GroupMessageParams {
             msg_type: 2,
             markdown: Some(markdown),
-            msg_id: message.id.clone(),
-            event_id: message.event_id.clone(),
             ..Default::default()
         };
 
-        match ctx.send_group_message(group_openid, params).await {
+        match session.send_message(params).await {
             Ok(response) => info!("Successfully sent group markdown message: {:?}", response),
             Err(e) => warn!("Failed to send group markdown message: {}", e),
         }

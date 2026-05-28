@@ -7,19 +7,20 @@ The smallest end-to-end bot lives in [`examples/basic/simple_bot.rs`](https://gi
 Three things make a BotRS process: a `Token`, an `Intents` flagset describing which gateway events you care about, and an `EventHandler` impl. `Client::new(token, intents, handler, true)` glues them together and `client.start().await` runs the loop.
 
 ```rust
-use botrs::{Client, Context, EventHandler, Intents, Message, Ready, Token};
+use botrs::{ChannelReplySession, Client, EventHandler, Intents, ReadySession, Token};
 
 struct Handler;
 
 #[async_trait::async_trait]
 impl EventHandler for Handler {
-    async fn ready(&self, _ctx: Context, ready: Ready) {
-        println!("ready as {}", ready.user.username);
+    async fn ready(&self, session: ReadySession) {
+        println!("ready as {}", session.event().user.username);
     }
 
-    async fn message_create(&self, ctx: Context, message: Message) {
+    async fn message_create(&self, mut session: ChannelReplySession) {
+        let message = session.message().clone();
         if message.author.as_ref().and_then(|author| author.bot).unwrap_or_default() { return; }
-        let _ = message.reply(&ctx, "pong").await;
+        let _ = session.reply("pong").await;
     }
 }
 

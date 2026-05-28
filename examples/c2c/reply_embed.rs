@@ -6,7 +6,7 @@
 mod common;
 
 use botrs::models::message::{C2CMessageParams, Embed, EmbedField};
-use botrs::{C2CMessage, Client, Context, EventHandler, Intents, Ready, Token};
+use botrs::{C2CReplySession, Client, EventHandler, Intents, ReadySession, Token};
 use common::{Config, init_logging};
 use std::env;
 use tracing::{info, warn};
@@ -15,20 +15,11 @@ struct C2CReplyEmbedHandler;
 
 #[async_trait::async_trait]
 impl EventHandler for C2CReplyEmbedHandler {
-    async fn ready(&self, _ctx: Context, ready: Ready) {
-        info!("robot 「{}」 on_ready!", ready.user.username);
+    async fn ready(&self, session: ReadySession) {
+        info!("robot 「{}」 on_ready!", session.event().user.username);
     }
 
-    async fn c2c_message_create(&self, ctx: Context, message: C2CMessage) {
-        let Some(user_openid) = message
-            .author
-            .as_ref()
-            .and_then(|author| author.user_openid.as_deref())
-        else {
-            warn!("C2C message has no user_openid");
-            return;
-        };
-
+    async fn c2c_message_create(&self, mut session: C2CReplySession) {
         let embed = Embed {
             title: Some("C2C Embed".to_string()),
             description: Some("This embed was sent to a C2C conversation.".to_string()),
@@ -43,12 +34,10 @@ impl EventHandler for C2CReplyEmbedHandler {
         let params = C2CMessageParams {
             msg_type: 4,
             embed: Some(embed),
-            msg_id: message.id.clone(),
-            event_id: message.event_id.clone(),
             ..Default::default()
         };
 
-        match ctx.send_c2c_message(user_openid, params).await {
+        match session.send_message(params).await {
             Ok(response) => info!("Successfully sent C2C embed message: {:?}", response),
             Err(e) => warn!("Failed to send C2C embed message: {}", e),
         }

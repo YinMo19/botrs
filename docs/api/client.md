@@ -46,6 +46,6 @@ Dropping the `Client` task closes the gateway connection; `reqwest::Client` does
 ## See also
 
 - [EventHandler](./event-handler.md) — the trait `H` must implement.
-- [Bot API](./bot-api.md) — full route catalogue exposed through `Context` during event handling.
+- [Bot API](./bot-api.md) — full route catalogue exposed through event sessions.
 - [Intents](./intents.md) — controls which events the gateway will dispatch.
 - [Gateway guide](../guide/gateway.md) — connection lifecycle, heartbeats, reconnect throttling.

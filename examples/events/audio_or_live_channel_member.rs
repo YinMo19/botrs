@@ -5,7 +5,9 @@
 #[path = "../common/mod.rs"]
 mod common;
 
-use botrs::{Client, Context, EventHandler, Intents, PublicAudio, PublicAudioType, Ready, Token};
+use botrs::{
+    Client, EventHandler, Intents, PublicAudioSession, PublicAudioType, ReadySession, Token,
+};
 use common::{Config, init_logging};
 use std::env;
 use tracing::{info, warn};
@@ -16,12 +18,13 @@ struct AudioOrLiveChannelMemberHandler;
 #[async_trait::async_trait]
 impl EventHandler for AudioOrLiveChannelMemberHandler {
     /// Called when the bot is ready and connected.
-    async fn ready(&self, _ctx: Context, ready: Ready) {
-        info!("robot 「{}」 on_ready!", ready.user.username);
+    async fn ready(&self, session: ReadySession) {
+        info!("robot 「{}」 on_ready!", session.event().user.username);
     }
 
     /// Called when a user enters an audio or live channel.
-    async fn audio_or_live_channel_member_enter(&self, _ctx: Context, public_audio: PublicAudio) {
+    async fn audio_or_live_channel_member_enter(&self, session: PublicAudioSession) {
+        let public_audio = session.event();
         // Get user ID for logging
         let user_id = public_audio.user_id.as_deref().unwrap_or("Unknown");
 
@@ -43,7 +46,8 @@ impl EventHandler for AudioOrLiveChannelMemberHandler {
     }
 
     /// Called when a user exits an audio or live channel.
-    async fn audio_or_live_channel_member_exit(&self, _ctx: Context, public_audio: PublicAudio) {
+    async fn audio_or_live_channel_member_exit(&self, session: PublicAudioSession) {
+        let public_audio = session.event();
         // Get user ID for logging
         let user_id = public_audio.user_id.as_deref().unwrap_or("Unknown");
 

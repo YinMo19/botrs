@@ -145,6 +145,11 @@ path = "examples/group/reply_file.rs"
 required-features = ["examples"]
 
 [[example]]
+name = "group_reply_multi"
+path = "examples/group/reply_multi.rs"
+required-features = ["examples"]
+
+[[example]]
 name = "group_reply_markdown"
 path = "examples/group/reply_markdown.rs"
 required-features = ["examples"]

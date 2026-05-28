@@ -12,15 +12,15 @@ impl<H: EventHandler + 'static> Client<H> {
     /// # Examples
     ///
     /// ```rust,no_run
-    /// use botrs::{Client, Token, Intents, EventHandler, Context};
+    /// use botrs::{ChannelReplySession, Client, Token, Intents, EventHandler};
     /// use tracing::info;
     ///
     /// struct MyHandler;
     ///
     /// #[async_trait::async_trait]
     /// impl EventHandler for MyHandler {
-    ///     async fn message_create(&self, ctx: Context, message: botrs::Message) {
-    ///         info!("Received message: {:?}", message.content);
+    ///     async fn message_create(&self, session: ChannelReplySession) {
+    ///         info!("Received message: {:?}", session.message().content);
     ///     }
     /// }
     ///

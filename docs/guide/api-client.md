@@ -1,17 +1,17 @@
 # API client
 
-`BotApi` is the REST client used by the current bot runtime path. After a gateway event arrives, handlers usually call it through `Context` to reply, recall messages, upload group/C2C files, manage announcements, schedules and pins, inspect reaction users, and create API permission requests.
+`BotApi` is the REST client used by the current bot runtime path. After a gateway event arrives, handlers usually reach it through the session object to reply, recall messages, upload group/C2C files, manage announcements, schedules and pins, inspect reaction users, and create API permission requests.
 
 ## In a Handler
 
-The `Context` received by an event callback can be used directly as a `BotApi`:
+Every session can be used directly as a `BotApi`:
 
 ```rust
 let params = MessageParams::new_text("hi");
-ctx.send_message(channel_id, params).await?;
+session.send_message(params).await?;
 ```
 
-No token is passed in this path. `Client` creates the API client during startup; `Context` exposes that shared client to handlers.
+No token is passed in this path. `Client` creates the API client during startup; sessions expose that shared client to handlers through `session.api()` and `session.api_handle()`.
 
 Common calls include:
 
@@ -44,9 +44,9 @@ let gateway = api.get_gateway().await?;
 Message sending uses parameter structs:
 
 ```rust
-ctx.send_message(&channel_id, MessageParams::new_text("channel")).await?;
-ctx.send_group_message(&group_openid, GroupMessageParams::new_text("group")).await?;
-ctx.send_c2c_message(&openid, C2CMessageParams::new_text("c2c")).await?;
+session.send_message(MessageParams::new_text("channel")).await?;
+group_session.send_message(GroupMessageParams::new_text("group")).await?;
+c2c_session.send_message(C2CMessageParams::new_text("c2c")).await?;
 ```
 
 Rich payloads are field combinations: ark, embed, markdown, keyboard, media, and related fields are set directly on the corresponding params value. This keeps protocol fields explicit at the call site.
@@ -56,7 +56,7 @@ Rich payloads are field combinations: ark, embed, markdown, keyboard, media, and
 All REST methods return `botrs::Result<T>`. In handlers, errors are usually handled locally:
 
 ```rust
-if let Err(err) = ctx.send_message(&channel_id, params).await {
+if let Err(err) = session.send_message(params).await {
     tracing::warn!("send failed: {err}");
 }
 ```

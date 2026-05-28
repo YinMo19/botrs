@@ -7,19 +7,20 @@
 BotRS 进程由三部分组成：`Token`、描述需要哪些网关事件的 `Intents`、以及 `EventHandler` 实现。`Client::new(token, intents, handler, true)` 把它们粘起来，`client.start().await` 跑事件循环。
 
 ```rust
-use botrs::{Client, Context, EventHandler, Intents, Message, Ready, Token};
+use botrs::{ChannelReplySession, Client, EventHandler, Intents, ReadySession, Token};
 
 struct Handler;
 
 #[async_trait::async_trait]
 impl EventHandler for Handler {
-    async fn ready(&self, _ctx: Context, ready: Ready) {
-        println!("ready as {}", ready.user.username);
+    async fn ready(&self, session: ReadySession) {
+        println!("ready as {}", session.event().user.username);
     }
 
-    async fn message_create(&self, ctx: Context, message: Message) {
+    async fn message_create(&self, mut session: ChannelReplySession) {
+        let message = session.message().clone();
         if message.author.as_ref().and_then(|author| author.bot).unwrap_or_default() { return; }
-        let _ = message.reply(&ctx, "pong").await;
+        let _ = session.reply("pong").await;
     }
 }
 

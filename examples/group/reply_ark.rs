@@ -6,7 +6,7 @@
 mod common;
 
 use botrs::models::message::{Ark, ArkKv, GroupMessageParams};
-use botrs::{Client, Context, EventHandler, GroupMessage, Intents, Ready, Token};
+use botrs::{Client, EventHandler, GroupReplySession, Intents, ReadySession, Token};
 use common::{Config, init_logging};
 use std::env;
 use tracing::{info, warn};
@@ -17,21 +17,13 @@ struct GroupReplyArkHandler;
 #[async_trait::async_trait]
 impl EventHandler for GroupReplyArkHandler {
     /// Called when the bot is ready and connected.
-    async fn ready(&self, _ctx: Context, ready: Ready) {
-        info!("robot 「{}」 on_ready!", ready.user.username);
+    async fn ready(&self, session: ReadySession) {
+        info!("robot 「{}」 on_ready!", session.event().user.username);
     }
 
     /// Called when a group @ message is created.
-    async fn group_message_create(&self, ctx: Context, message: GroupMessage) {
-        // Get group OpenID
-        let group_openid = match &message.group_openid {
-            Some(openid) => openid,
-            None => {
-                warn!("Group message has no group_openid");
-                return;
-            }
-        };
-
+    async fn group_message_create(&self, mut session: GroupReplySession) {
+        let message = session.message().clone();
         if let Some(content) = &message.content {
             info!("Received group message: {}", content);
         }
@@ -60,12 +52,10 @@ impl EventHandler for GroupReplyArkHandler {
         let params = GroupMessageParams {
             msg_type: 3,
             ark: Some(ark_payload),
-            msg_id: message.id.clone(),
-            event_id: message.event_id.clone(),
             ..Default::default()
         };
 
-        match ctx.send_group_message(group_openid, params).await {
+        match session.send_message(params).await {
             Ok(response) => {
                 info!("Successfully sent group ARK message");
                 info!("Response: {:?}", response);

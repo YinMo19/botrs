@@ -46,6 +46,6 @@ let _ = main.await;
 ## 参见
 
 - [EventHandler](./event-handler.md) —— `H` 必须实现的 trait。
-- [Bot API](./bot-api.md) —— 事件处理中通过 `Context` 暴露的完整接口集。
+- [Bot API](./bot-api.md) —— 事件 session 中可用的完整接口集。
 - [Intents](./intents.md) —— 控制网关将派发哪些事件。
 - [网关指南](../guide/gateway.md) —— 连接生命周期、心跳、重连节流。

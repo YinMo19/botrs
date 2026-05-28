@@ -25,8 +25,16 @@ mod token_impl;
 
 // Re-export main types for convenience
 pub use api_impl::BotApi;
+pub use api_impl::session::{
+    AudioSession, C2CManageSession, C2CReplySession, ChannelReplySession, ChannelSession,
+    DirectReplySession, EnterAioSession, EventSession, ForumAuditSession, ForumReplySession,
+    GroupManageSession, GroupReplySession, GuildSession, InteractionSession, MemberSession,
+    MessageAuditSession, MessageDeleteSession, OpenForumSession, PostSession, PublicAudioSession,
+    ReactionSession, ReadySession, ResumeSession, SubscribeMessageStatusSession, ThreadSession,
+    UnknownEventSession,
+};
 pub use audio::{Audio, PublicAudio, PublicAudioType};
-pub use client::{Client, Context, EventHandler};
+pub use client::{Client, EventHandler};
 pub use error::{BotError, Result};
 pub use intents::Intents;
 pub use models::api::{BotInfo, MessageResponse};

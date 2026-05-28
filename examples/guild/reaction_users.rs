@@ -5,7 +5,7 @@
 #[path = "../common/mod.rs"]
 mod common;
 
-use botrs::{Client, Context, EventHandler, Intents, Message, Ready, Token};
+use botrs::{ChannelReplySession, Client, EventHandler, Intents, ReadySession, Token};
 use common::{Config, init_logging};
 use std::env;
 use tracing::{info, warn};
@@ -16,12 +16,12 @@ struct GetReactionUsersHandler;
 #[async_trait::async_trait]
 impl EventHandler for GetReactionUsersHandler {
     /// Called when the bot is ready and connected.
-    async fn ready(&self, _ctx: Context, ready: Ready) {
-        info!("robot 「{}」 on_ready!", ready.user.username);
+    async fn ready(&self, session: ReadySession) {
+        info!("robot 「{}」 on_ready!", session.event().user.username);
     }
 
     /// Called when a message is created that mentions the bot.
-    async fn message_create(&self, ctx: Context, _message: Message) {
+    async fn message_create(&self, session: ChannelReplySession) {
         let mut users: Vec<botrs::User> = Vec::new();
         let mut cookie = String::new();
 
@@ -39,7 +39,7 @@ impl EventHandler for GetReactionUsersHandler {
                 Some(cookie.as_str())
             };
 
-            match ctx
+            match session
                 .get_reaction_users(
                     channel_id,
                     message_id,

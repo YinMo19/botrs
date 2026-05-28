@@ -29,12 +29,12 @@ let params = MessageParams {
     keyboard: Some(keyboard),
     ..Default::default()
 };
-ctx.send_message(channel_id, params).await?;
+session.send_message(params).await?;
 ```
 
 ## 命令分发
 
-`examples/guild/command.rs` 展示了一个极小的 `CommandRegistry`：把别名映射到 handler 函数，在 `message_create` 中分发。框架本身没有命令系统；按前缀切分、调用匹配的 handler、再用 `Message::reply` 或 `MessageParams` 回复即可。
+`examples/guild/command.rs` 展示了一个极小的 `CommandRegistry`：把别名映射到 handler 函数，在 `message_create` 中分发。框架本身没有命令系统；按前缀切分、调用匹配的 handler、再用 `session.reply` 或 `session.send_message` 回复即可。
 
 ## 参见
 

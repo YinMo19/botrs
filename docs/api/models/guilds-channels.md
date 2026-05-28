@@ -11,7 +11,8 @@ These models are primarily for reading event data, logging, metrics, and busines
 Typical usage is reading the event in a handler:
 
 ```rust
-async fn guild_create(&self, _ctx: Context, guild: Guild) {
+async fn guild_create(&self, session: GuildSession) {
+    let guild = session.event();
     tracing::info!("joined guild {}", guild.name);
 }
 ```
@@ -34,7 +35,8 @@ These enums retain unknown numeric values so new platform values do not break de
 `botrs::Member` maps to guild member gateway events. It includes guild id, optional user, nickname, role ids, join time, and operator id.
 
 ```rust
-async fn guild_member_add(&self, _ctx: Context, member: Member) {
+async fn guild_member_add(&self, session: MemberSession) {
+    let member = session.event();
     if let Some(user) = &member.user {
         tracing::info!("{} joined {}", user.username, member.guild_id);
     }

@@ -9,23 +9,24 @@ Python SDK 通常让你继承一个 `Client`，或通过装饰器注册消息回
 在 `botrs` 中，给自己的 struct 实现 `EventHandler` trait，每个事件对应一个带默认空实现的 `async fn`，按需重写。处理器必须满足 `Send + Sync` 与 `'static`。
 
 ```rust
-use botrs::{Client, Context, EventHandler, Intents, Message, Token};
+use botrs::{ChannelReplySession, Client, EventHandler, Intents, Token};
 
 struct MyBot;
 
 #[async_trait::async_trait]
 impl EventHandler for MyBot {
-    async fn message_create(&self, ctx: Context, msg: Message) {
-        if let Some(content) = msg.content.as_deref() {
+    async fn message_create(&self, mut session: ChannelReplySession) {
+        let message = session.message().clone();
+        if let Some(content) = message.content.as_deref() {
             if content.contains("ping") {
-                let _ = msg.reply(&ctx, "pong").await;
+                let _ = session.reply("pong").await;
             }
         }
     }
 }
 ```
 
-Python 中通过 `self` 拿到的上下文在这里以第二个参数显式传入；REST 凭证保存在它共享的 `BotApi` 里。
+BotRS 回调是 session-first：每个回调收到一个 session，它包含入站消息或事件 payload，并暴露共享的 `BotApi`。
 
 ## Token
 
@@ -59,7 +60,7 @@ Python 里按关键字参数发送消息的写法，对应到 Rust 侧的 `*Para
 use botrs::models::message::MessageParams;
 
 let params = MessageParams::new_text("hi").with_reply(&msg_id);
-ctx.send_message(&channel_id, params).await?;
+session.send_message(params).await?;
 ```
 
 群、C2C、私信的形态相同：`GroupMessageParams` → `send_group_message`、`C2CMessageParams` → `send_c2c_message`、`DirectMessageParams` → `send_direct_message`。

@@ -5,8 +5,8 @@
 #[path = "../common/mod.rs"]
 mod common;
 
-use botrs::manage::GroupManageEvent;
-use botrs::{Client, Context, EventHandler, Intents, Ready, Token};
+use botrs::models::message::GroupMessageParams;
+use botrs::{Client, EventHandler, GroupManageSession, Intents, ReadySession, Token};
 use common::{Config, init_logging};
 use std::env;
 use tracing::{info, warn};
@@ -17,32 +17,18 @@ struct GroupManageEventHandler;
 #[async_trait::async_trait]
 impl EventHandler for GroupManageEventHandler {
     /// Called when the bot is ready and connected.
-    async fn ready(&self, _ctx: Context, ready: Ready) {
-        info!("robot 「{}」 on_ready!", ready.user.username);
+    async fn ready(&self, session: ReadySession) {
+        info!("robot 「{}」 on_ready!", session.event().user.username);
     }
 
     /// Called when robot is added to group.
-    async fn group_add_robot(&self, ctx: Context, event: GroupManageEvent) {
+    async fn group_add_robot(&self, mut session: GroupManageSession) {
+        let event = session.event();
         info!("机器人被添加到群聊：{:?}", event);
 
-        // Get group OpenID
-        let group_openid = match &event.group_openid {
-            Some(openid) => openid,
-            None => {
-                warn!("Group add robot event has no group_openid");
-                return;
-            }
-        };
+        let params = GroupMessageParams::new_text("hello");
 
-        // Send welcome message (equivalent to self.api.post_group_message)
-        let params = botrs::models::message::GroupMessageParams {
-            msg_type: 0,
-            content: Some("hello".to_string()),
-            event_id: event.event_id.clone(),
-            ..Default::default()
-        };
-
-        match ctx.send_group_message(group_openid, params).await {
+        match session.send_message(params).await {
             Ok(response) => {
                 info!("Successfully sent welcome message to group");
                 info!("Response: {:?}", response);
@@ -52,18 +38,18 @@ impl EventHandler for GroupManageEventHandler {
     }
 
     /// Called when robot is deleted from group.
-    async fn group_del_robot(&self, _ctx: Context, event: GroupManageEvent) {
-        info!("机器人被移除群聊：{:?}", event);
+    async fn group_del_robot(&self, session: GroupManageSession) {
+        info!("机器人被移除群聊：{:?}", session.event());
     }
 
     /// Called when group message is rejected.
-    async fn group_msg_reject(&self, _ctx: Context, event: GroupManageEvent) {
-        info!("群聊关闭机器人主动消息：{:?}", event);
+    async fn group_msg_reject(&self, session: GroupManageSession) {
+        info!("群聊关闭机器人主动消息：{:?}", session.event());
     }
 
     /// Called when group message is received.
-    async fn group_msg_receive(&self, _ctx: Context, event: GroupManageEvent) {
-        info!("群聊打开机器人主动消息：{:?}", event);
+    async fn group_msg_receive(&self, session: GroupManageSession) {
+        info!("群聊打开机器人主动消息：{:?}", session.event());
     }
 
     /// Called when an error occurs during event processing.

@@ -25,7 +25,7 @@ features:
 
   - icon: 🔧
     title: Small Core API
-    details: Client, EventHandler, Context, BotApi, Token, and Intents form the main surface used by applications.
+    details: Client, EventHandler, session types, BotApi, Token, and Intents form the main surface used by applications.
 
   - icon: 🎯
     title: Event-Driven Design
@@ -56,7 +56,7 @@ The central types are:
 
 - `Client` owns startup, gateway sessions, and event dispatch.
 - `EventHandler` is the trait you implement for gateway events.
-- `Context` gives each callback access to the shared `BotApi` and bot info.
+- Session types give each callback access to event data, bot info, and the shared `BotApi`.
 - `BotApi` sends messages and performs the core REST actions used by the examples.
 - `Token` stores credentials and supports environment loading.
 - `Intents` controls which gateway categories QQ sends.
@@ -66,7 +66,7 @@ The central types are:
 BotRS handles the core event-to-action loop:
 
 - Receive typed gateway events for guild/channel/member changes, guild messages, direct messages, group and C2C messages, reactions, interactions, audits, manage events, audio events, and forum events.
-- Reply with `message.reply(&ctx, "text")` for plain text, or build a matching params struct for richer payloads.
+- Reply with `session.reply("text")` for plain text, or build a matching params struct for richer payloads.
 - Send guild, group, C2C, and direct messages through `BotApi`.
 - Upload group/C2C media, then send it as a media message.
 - Work with announcements, schedules, API permission requests, reactions, and pinned messages.
@@ -74,19 +74,20 @@ BotRS handles the core event-to-action loop:
 ## Quick Example
 
 ```rust
-use botrs::{Client, Context, EventHandler, Intents, Message, Ready, Token};
+use botrs::{ChannelReplySession, Client, EventHandler, Intents, ReadySession, Token};
 
 struct MyBot;
 
 #[async_trait::async_trait]
 impl EventHandler for MyBot {
-    async fn ready(&self, _ctx: Context, ready: Ready) {
-        println!("Bot is ready as {}", ready.user.username);
+    async fn ready(&self, session: ReadySession) {
+        println!("Bot is ready as {}", session.event().user.username);
     }
 
-    async fn message_create(&self, ctx: Context, message: Message) {
+    async fn message_create(&self, mut session: ChannelReplySession) {
+        let message = session.message().clone();
         if message.content.as_deref() == Some("!ping") {
-            let _ = message.reply(&ctx, "pong").await;
+            let _ = session.reply("pong").await;
         }
     }
 }
@@ -108,7 +109,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 2. **[Quick Start](/guide/quick-start)** - Run a minimal bot.
 3. **[Client and Event Handler](/guide/client-handler)** - Learn the event loop.
 4. **[Messages](/guide/messages)** - Send text, media, markdown, ark, embed, and keyboard payloads.
-5. **[API Client](/guide/api-client)** - Use `BotApi` and `Context`.
+5. **[API Client](/guide/api-client)** - Use `BotApi` through sessions or standalone.
 
 ## Links
 

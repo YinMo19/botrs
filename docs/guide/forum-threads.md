@@ -6,14 +6,14 @@ Forum events arrive over the gateway when the `Intents::FORUMS` (private) or `In
 
 With `Intents::FORUMS`, the following `EventHandler` methods become live:
 
-- `forum_thread_create(&self, ctx, thread: Thread)`
-- `forum_thread_update(&self, ctx, thread: Thread)`
-- `forum_thread_delete(&self, ctx, thread: Thread)`
-- `forum_post_create(&self, ctx, post: Post)`
-- `forum_post_delete(&self, ctx, post: Post)`
-- `forum_reply_create(&self, ctx, reply: Reply)`
-- `forum_reply_delete(&self, ctx, reply: Reply)`
-- `forum_publish_audit_result(&self, ctx, result: ForumAuditResult)`
+- `forum_thread_create(&self, session: ThreadSession)`
+- `forum_thread_update(&self, session: ThreadSession)`
+- `forum_thread_delete(&self, session: ThreadSession)`
+- `forum_post_create(&self, session: PostSession)`
+- `forum_post_delete(&self, session: PostSession)`
+- `forum_reply_create(&self, session: ForumReplySession)`
+- `forum_reply_delete(&self, session: ForumReplySession)`
+- `forum_publish_audit_result(&self, session: ForumAuditSession)`
 
 ## Public forum callbacks
 
@@ -27,7 +27,7 @@ With `Intents::FORUMS`, the following `EventHandler` methods become live:
 
 `Thread` carries `channel_id`, `guild_id`, `author_id`, `event_id` (`Option<String>`), and a `thread_info: ThreadInfo`. `ThreadInfo` exposes the title and rich-content blocks the forum editor produced.
 
-`Post` and `Reply` follow the same shape but with `post_info: PostInfo` / `reply_info: ReplyInfo` instead. Use the callback `ctx` when a forum event needs to make REST calls.
+`Post` and `Reply` follow the same shape but with `post_info: PostInfo` / `reply_info: ReplyInfo` instead. Use the callback session when a forum event needs to make REST calls.
 
 `ForumAuditResult` mirrors the audit payload directly:
 
@@ -63,7 +63,8 @@ The exact field names and types are in `botrs::forum`; pattern-matching `Elem` i
 ## Minimal handler
 
 ```rust
-async fn forum_publish_audit_result(&self, _ctx: Context, result: ForumAuditResult) {
+async fn forum_publish_audit_result(&self, session: ForumAuditSession) {
+    let result = session.event();
     if result.result != 0 {
         tracing::warn!(
             task = result.task_id,
@@ -73,7 +74,8 @@ async fn forum_publish_audit_result(&self, _ctx: Context, result: ForumAuditResu
     }
 }
 
-async fn forum_thread_create(&self, _ctx: Context, thread: Thread) {
+async fn forum_thread_create(&self, session: ThreadSession) {
+    let thread = session.event();
     tracing::info!(
         guild = ?thread.guild_id,
         channel = ?thread.channel_id,

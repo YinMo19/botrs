@@ -7,7 +7,7 @@
 mod common;
 
 use botrs::{
-    Client, Context, EventHandler, Intents, Message, Ready, Token,
+    ChannelReplySession, Client, EventHandler, Intents, ReadySession, Token,
     models::message::{Embed, EmbedField},
 };
 use common::{Config, init_logging};
@@ -20,12 +20,13 @@ struct EmbedReplyHandler;
 #[async_trait::async_trait]
 impl EventHandler for EmbedReplyHandler {
     /// Called when the bot is ready and connected.
-    async fn ready(&self, _ctx: Context, ready: Ready) {
-        info!("robot 「{}」 on_ready!", ready.user.username);
+    async fn ready(&self, session: ReadySession) {
+        info!("robot 「{}」 on_ready!", session.event().user.username);
     }
 
     /// Called when a message is created that mentions the bot.
-    async fn message_create(&self, ctx: Context, message: Message) {
+    async fn message_create(&self, mut session: ChannelReplySession) {
+        let message = session.message().clone();
         // Get message content
         let content = match &message.content {
             Some(content) => content,
@@ -51,26 +52,17 @@ impl EventHandler for EmbedReplyHandler {
             ..Default::default()
         };
 
-        // Send the embed message.
-        let channel_id = match &message.channel_id {
-            Some(id) => id,
-            None => {
-                warn!("Message has no channel_id");
-                return;
-            }
-        };
-
         let params = botrs::models::message::MessageParams {
             embed: Some(embed),
             ..Default::default()
         };
 
-        match ctx.send_message(channel_id, params).await {
+        match session.send_message(params).await {
             Ok(_) => info!("Successfully sent embed message"),
             Err(e) => warn!("Failed to send embed message: {}", e),
         }
 
-        // For embeds, use the API params path because `message.reply` sends text.
+        // For embeds, use the params path because `session.reply` sends text.
     }
 
     /// Called when an error occurs during event processing.

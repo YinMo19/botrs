@@ -5,7 +5,7 @@
 #[path = "../common/mod.rs"]
 mod common;
 
-use botrs::{Client, Context, EventHandler, Intents, Message, Ready, Token};
+use botrs::{ChannelReplySession, Client, EventHandler, Intents, ReadySession, Token};
 use common::{Config, init_logging};
 use std::env;
 use tracing::{info, warn};
@@ -16,12 +16,13 @@ struct AnnounceHandler;
 #[async_trait::async_trait]
 impl EventHandler for AnnounceHandler {
     /// Called when the bot is ready and connected.
-    async fn ready(&self, _ctx: Context, ready: Ready) {
-        info!("robot 「{}」 on_ready!", ready.user.username);
+    async fn ready(&self, session: ReadySession) {
+        info!("robot 「{}」 on_ready!", session.event().user.username);
     }
 
     /// Called when a message is created that mentions the bot.
-    async fn message_create(&self, ctx: Context, message: Message) {
+    async fn message_create(&self, mut session: ChannelReplySession) {
+        let message = session.message().clone();
         // Get message content
         let content = match &message.content {
             Some(content) => content,
@@ -29,9 +30,8 @@ impl EventHandler for AnnounceHandler {
         };
 
         // Get bot name from the bot info if available
-        let bot_name = ctx
-            .bot_info
-            .as_ref()
+        let bot_name = session
+            .bot_info()
             .map(|info| info.username.as_str())
             .unwrap_or("Bot");
 
@@ -53,7 +53,7 @@ impl EventHandler for AnnounceHandler {
             ..Default::default()
         };
 
-        match ctx.send_message(channel_id, params).await {
+        match session.send_message(params).await {
             Ok(_) => info!("Successfully sent acknowledgment message"),
             Err(e) => warn!("Failed to send acknowledgment message: {}", e),
         }
@@ -85,7 +85,7 @@ impl EventHandler for AnnounceHandler {
         // Handle different announcement commands
         if content.contains("/建公告") {
             // Create announcement (equivalent to self.api.create_announce)
-            match ctx
+            match session
                 .create_announce(_guild_id, channel_id, _referenced_message_id)
                 .await
             {
@@ -98,7 +98,7 @@ impl EventHandler for AnnounceHandler {
             }
         } else if content.contains("/删公告") {
             // Delete announcement (equivalent to self.api.delete_announce)
-            match ctx
+            match session
                 .delete_announce(_guild_id, Some(_referenced_message_id.as_str()))
                 .await
             {
@@ -116,7 +116,7 @@ impl EventHandler for AnnounceHandler {
                 introduce: "introduce".to_string(),
             }];
 
-            match ctx
+            match session
                 .create_recommend_announce(
                     _guild_id,
                     botrs::models::announce::AnnouncesType::Member,

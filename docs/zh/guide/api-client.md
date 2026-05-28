@@ -1,17 +1,17 @@
 # API 客户端
 
-`BotApi` 是当前 bot 运行链路使用的 REST 客户端。收到网关事件以后，handler 通常通过 `Context` 调用它发送回复、撤回消息、上传群/C2C 文件、处理公告/日程/精华/表情回应和 API 权限申请。
+`BotApi` 是当前 bot 运行链路使用的 REST 客户端。收到网关事件以后，handler 通常通过 session 调用它发送回复、撤回消息、上传群/C2C 文件、处理公告/日程/精华/表情回应和 API 权限申请。
 
 ## 在 handler 里使用
 
-事件回调拿到的 `Context` 可以直接当 `BotApi` 用：
+事件回调拿到的 session 可以直接当 `BotApi` 用：
 
 ```rust
 let params = MessageParams::new_text("hi");
-ctx.send_message(channel_id, params).await?;
+session.send_message(params).await?;
 ```
 
-这条链路里不需要传 token。`Client` 启动时已经创建了 API 客户端，`Context` 只是把它交给 handler。
+这条链路里不需要传 token。`Client` 启动时已经创建了 API 客户端，session 通过 `session.api()` 与 `session.api_handle()` 把它交给 handler。
 
 常见调用包括：
 
@@ -44,9 +44,9 @@ let gateway = api.get_gateway().await?;
 发送消息统一使用参数结构体：
 
 ```rust
-ctx.send_message(&channel_id, MessageParams::new_text("channel")).await?;
-ctx.send_group_message(&group_openid, GroupMessageParams::new_text("group")).await?;
-ctx.send_c2c_message(&openid, C2CMessageParams::new_text("c2c")).await?;
+session.send_message(MessageParams::new_text("channel")).await?;
+group_session.send_message(GroupMessageParams::new_text("group")).await?;
+c2c_session.send_message(C2CMessageParams::new_text("c2c")).await?;
 ```
 
 富文本能力通过字段组合：ark、embed、markdown、keyboard、media 等都直接放到对应 params 上。这样既能表达协议字段，也能让调用点保持清晰。
@@ -56,7 +56,7 @@ ctx.send_c2c_message(&openid, C2CMessageParams::new_text("c2c")).await?;
 所有 REST 方法返回 `botrs::Result<T>`。在 handler 里一般就地处理错误：
 
 ```rust
-if let Err(err) = ctx.send_message(&channel_id, params).await {
+if let Err(err) = session.send_message(params).await {
     tracing::warn!("send failed: {err}");
 }
 ```

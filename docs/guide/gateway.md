@@ -25,15 +25,15 @@ The session manager spaces shard starts according to `session_start_limit.max_co
 
 Known event names are parsed into typed payloads. Examples:
 
-- `READY` -> `ready(ctx, Ready)`
-- `AT_MESSAGE_CREATE` -> `message_create(ctx, Message)`
-- `DIRECT_MESSAGE_CREATE` -> `direct_message_create(ctx, Message)`
-- `GROUP_AT_MESSAGE_CREATE` -> `group_message_create(ctx, GroupMessage)`
-- `C2C_MESSAGE_CREATE` -> `c2c_message_create(ctx, C2CMessage)`
+- `READY` -> `ready(ReadySession)`
+- `AT_MESSAGE_CREATE` -> `message_create(ChannelReplySession)`
+- `DIRECT_MESSAGE_CREATE` -> `direct_message_create(DirectReplySession)`
+- `GROUP_AT_MESSAGE_CREATE` -> `group_message_create(GroupReplySession)`
+- `C2C_MESSAGE_CREATE` -> `c2c_message_create(C2CReplySession)`
 - `MESSAGE_REACTION_ADD` / `MESSAGE_REACTION_REMOVE` -> reaction callbacks
 - guild, channel, member, manage, audio, forum, and open-forum events -> their corresponding callbacks
 
-Unknown event names are passed to `unknown_event(ctx, GatewayEvent)` so newer platform events can still be observed.
+Unknown event names are passed to `unknown_event(UnknownEventSession)` so newer platform events can still be observed.
 
 ## Configuration knobs
 

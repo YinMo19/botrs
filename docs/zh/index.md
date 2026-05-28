@@ -25,7 +25,7 @@ features:
 
   - icon: 🔧
     title: 小核心 API
-    details: Client、EventHandler、Context、BotApi、Token 和 Intents 构成应用使用的主表面。
+    details: Client、EventHandler、session 类型、BotApi、Token 和 Intents 构成应用使用的主表面。
 
   - icon: 🎯
     title: 事件驱动设计
@@ -56,7 +56,7 @@ BotRS 是围绕 QQ 网关和核心 REST 能力构建的异步 Rust QQ 频道机�
 
 - `Client` 负责启动、网关 session 和事件分发。
 - `EventHandler` 是你为网关事件实现的 trait。
-- `Context` 为每个回调提供共享 `BotApi` 和 bot 信息。
+- Session 类型为每个回调提供事件数据、bot 信息和共享 `BotApi`。
 - `BotApi` 负责发送消息，以及 examples 中使用的核心 REST 动作。
 - `Token` 保存凭据，并支持从环境变量加载。
 - `Intents` 控制 QQ 会发送哪些网关类别。
@@ -66,7 +66,7 @@ BotRS 是围绕 QQ 网关和核心 REST 能力构建的异步 Rust QQ 频道机�
 BotRS 处理核心的“事件到动作”链路：
 
 - 接收 guild/channel/member 变化、频道消息、私信、群与 C2C 消息、表情回应、互动、审核、管理、音频和论坛等类型化网关事件。
-- 纯文本回复可用 `message.reply(&ctx, "text")`，更复杂的回复可构造对应 params。
+- 纯文本回复可用 `session.reply("text")`，更复杂的回复可构造对应 params。
 - 通过 `BotApi` 发送频道、群、C2C 和私信消息。
 - 上传群/C2C 媒体，再作为 media 消息发送。
 - 使用公告、日程、API 权限申请、表情回应和精华消息相关 API。
@@ -74,19 +74,20 @@ BotRS 处理核心的“事件到动作”链路：
 ## 快速示例
 
 ```rust
-use botrs::{Client, Context, EventHandler, Intents, Message, Ready, Token};
+use botrs::{ChannelReplySession, Client, EventHandler, Intents, ReadySession, Token};
 
 struct MyBot;
 
 #[async_trait::async_trait]
 impl EventHandler for MyBot {
-    async fn ready(&self, _ctx: Context, ready: Ready) {
-        println!("机器人已就绪：{}", ready.user.username);
+    async fn ready(&self, session: ReadySession) {
+        println!("机器人已就绪：{}", session.event().user.username);
     }
 
-    async fn message_create(&self, ctx: Context, message: Message) {
+    async fn message_create(&self, mut session: ChannelReplySession) {
+        let message = session.message().clone();
         if message.content.as_deref() == Some("!ping") {
-            let _ = message.reply(&ctx, "pong").await;
+            let _ = session.reply("pong").await;
         }
     }
 }
@@ -108,7 +109,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 2. **[快速开始](/zh/guide/quick-start)** - 运行最小机器人。
 3. **[客户端与事件处理器](/zh/guide/client-handler)** - 了解事件循环。
 4. **[消息](/zh/guide/messages)** - 发送文本、媒体、Markdown、Ark、embed 和 keyboard payload。
-5. **[API 客户端](/zh/guide/api-client)** - 使用 `BotApi` 与 `Context`。
+5. **[API 客户端](/zh/guide/api-client)** - 在 session 中或独立使用 `BotApi`。
 
 ## 链接
 

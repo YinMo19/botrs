@@ -28,14 +28,15 @@ struct MyBot;
 
 #[async_trait::async_trait]
 impl EventHandler for MyBot {
-    async fn ready(&self, _ctx: Context, ready: Ready) {
-        tracing::info!("ready as {}", ready.user.username);
+    async fn ready(&self, session: ReadySession) {
+        tracing::info!("ready as {}", session.event().user.username);
     }
 
-    async fn message_create(&self, ctx: Context, message: Message) {
+    async fn message_create(&self, mut session: ChannelReplySession) {
+        let message = session.message().clone();
         if message.author.as_ref().and_then(|author| author.bot).unwrap_or_default() { return; }
         if message.content.as_deref() == Some("!ping") {
-            let _ = message.reply(&ctx, "pong").await;
+            let _ = session.reply("pong").await;
         }
     }
 }
@@ -43,7 +44,7 @@ impl EventHandler for MyBot {
 
 ## 可重写的回调
 
-每个回调都采用 `&self, Context, <载荷>` 的签名：
+每个回调都接收一个 session 参数：
 
 - 生命周期：`ready`、`resumed`、`error(BotError)`、`unknown_event(GatewayEvent)`。
 - 消息：`message_create`、`message_delete`、`direct_message_create`、`direct_message_delete`、`group_message_create`、`c2c_message_create`。
@@ -58,20 +59,11 @@ impl EventHandler for MyBot {
 
 只有当对应的 `Intents` 标志启用时，回调才会被触发，事件与标志的对应关系见 [Intents](/zh/guide/intents)。
 
-## Context 参数
+## Session 参数
 
-每个回调都会收到一个 `Context`：
+每个回调都会收到一个 session 对象。消息创建回调用 `ChannelReplySession`、`GroupReplySession`、`C2CReplySession`、`DirectReplySession` 这类 reply session；其他回调用 `ReadySession`、`MemberSession`、`MessageDeleteSession` 等 event session。
 
-```rust
-pub struct Context {
-    api: Arc<BotApi>,
-    pub bot_info: Option<BotInfo>,
-}
-```
-
-内部 API 客户端与 `Client` 持有的是同一个 `BotApi`。`Context` 会解引用到 `BotApi`，所以可以直接调用 `ctx.send_message(...)`、`ctx.get_pins(...)`、`ctx.create_schedule(...)`。`bot_info` 在客户端启动时通过 `/users/@me` 获取并填入。
-
-如果需要显式拿到 API 引用，调用 `ctx.api()`。事件回复中 `message.reply(&ctx, "pong")` 也能工作，因为 `Context` 会解引用到 `BotApi`。
+通用事件通过 `session.event()` 读取载荷，回复 session 通过 `session.message()` 读取入站消息。每个 session 都通过 `session.api()`、`session.api_handle()` 和 `Deref<Target = BotApi>` 暴露共享 REST 客户端。
 
 ## 错误回调
 
@@ -79,14 +71,14 @@ pub struct Context {
 
 ## 在处理器中派发任务
 
-回调应尽快返回，避免阻塞下一个事件。处理耗时任务时，克隆 `Context` 并移动到 `tokio::spawn`：
+回调应尽快返回，避免阻塞下一个事件。处理耗时任务时，把拥有型 API handle 移入 `tokio::spawn`：
 
 ```rust
-async fn message_create(&self, ctx: Context, message: Message) {
-    let context = ctx.clone();
+async fn message_create(&self, session: ChannelReplySession) {
+    let api = session.api_handle();
     tokio::spawn(async move {
         let params = MessageParams::new_text("done");
-        let _ = context.send_message("channel", params).await;
+        let _ = api.send_message("channel", params).await;
     });
 }
 ```

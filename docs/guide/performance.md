@@ -1,6 +1,6 @@
 # Performance
 
-The framework is a thin layer on top of `reqwest` and `tokio-tungstenite`; the things that move the needle are gateway-side knobs (shards and intents) and how you share `Context` / `BotApi` between tasks. Generic Rust performance advice doesn't belong here.
+The framework is a thin layer on top of `reqwest` and `tokio-tungstenite`; the things that move the needle are gateway-side knobs (shards and intents) and how you share session API handles / `BotApi` between tasks. Generic Rust performance advice doesn't belong here.
 
 ## Narrow your intents
 
@@ -22,15 +22,15 @@ For very small bots a single shard is fine and uses the least resource. For larg
 
 The reconnect throttle is implemented as `round(2 / max_concurrency)` with a 1-second floor; do not bypass it. See [gateway](/guide/gateway) for the details.
 
-## Share `Context` or `BotApi`
+## Share Session API Handles
 
-`Context` is cheap to clone because it holds an `Arc<BotApi>`. When you spawn work from inside a handler, clone the context and move it into the task:
+When you spawn work from inside a handler, move `session.api_handle()` into the task:
 
 ```rust
-async fn message_create(&self, ctx: Context, msg: Message) {
-    let context = ctx.clone();
+async fn message_create(&self, session: ChannelReplySession) {
+    let api = session.api_handle();
     tokio::spawn(async move {
-        let _ = context.send_message("channel", params).await;
+        let _ = api.send_message("channel", params).await;
     });
 }
 ```

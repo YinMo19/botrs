@@ -5,7 +5,7 @@
 #[path = "../common/mod.rs"]
 mod common;
 
-use botrs::{Client, Context, EventHandler, Intents, Message, Ready, Schedule, Token};
+use botrs::{ChannelReplySession, Client, EventHandler, Intents, ReadySession, Schedule, Token};
 use common::{Config, init_logging};
 use std::env;
 use tracing::{info, warn};
@@ -19,12 +19,13 @@ const _CHANNEL_SCHEDULE_ID: &str = "12333";
 #[async_trait::async_trait]
 impl EventHandler for ScheduleHandler {
     /// Called when the bot is ready and connected.
-    async fn ready(&self, _ctx: Context, ready: Ready) {
-        info!("robot 「{}」 on_ready!", ready.user.username);
+    async fn ready(&self, session: ReadySession) {
+        info!("robot 「{}」 on_ready!", session.event().user.username);
     }
 
     /// Called when a message is created that mentions the bot.
-    async fn message_create(&self, ctx: Context, message: Message) {
+    async fn message_create(&self, mut session: ChannelReplySession) {
+        let message = session.message().clone();
         // Get message content
         let content = match &message.content {
             Some(content) => content,
@@ -37,16 +38,15 @@ impl EventHandler for ScheduleHandler {
         info!("receive message {}", content);
 
         // Get bot name from the bot info if available
-        let bot_name = ctx
-            .bot_info
-            .as_ref()
+        let bot_name = session
+            .bot_info()
             .map(|info| info.username.as_str())
             .unwrap_or("Bot");
 
         let reply_content = format!("机器人{bot_name}收到你的@消息了: {content}");
 
         // Reply to the message first
-        match message.reply(&ctx, &reply_content).await {
+        match session.reply(reply_content).await {
             Ok(_) => info!("Successfully replied to message"),
             Err(e) => warn!("Failed to reply to message: {}", e),
         }
@@ -70,7 +70,10 @@ impl EventHandler for ScheduleHandler {
                 Some(_CHANNEL_SCHEDULE_ID.to_string()),
                 botrs::models::schedule::RemindType::None,
             );
-            match ctx.create_schedule(_CHANNEL_SCHEDULE_ID, &schedule).await {
+            match session
+                .create_schedule(_CHANNEL_SCHEDULE_ID, &schedule)
+                .await
+            {
                 Ok(schedule) => {
                     info!("Successfully created schedule: {:?}", schedule);
                     // if let Some(id) = &schedule.id {
@@ -84,7 +87,10 @@ impl EventHandler for ScheduleHandler {
         } else if content.contains("/查询日程") {
             // Get schedule.
             if !schedule_id.is_empty() {
-                match ctx.get_schedule(_CHANNEL_SCHEDULE_ID, &schedule_id).await {
+                match session
+                    .get_schedule(_CHANNEL_SCHEDULE_ID, &schedule_id)
+                    .await
+                {
                     Ok(schedule) => {
                         info!("Schedule details: {:?}", schedule);
                     }
@@ -105,7 +111,7 @@ impl EventHandler for ScheduleHandler {
                     Some(_CHANNEL_SCHEDULE_ID.to_string()),
                     botrs::models::schedule::RemindType::None,
                 );
-                match ctx
+                match session
                     .update_schedule(_CHANNEL_SCHEDULE_ID, &schedule_id, &schedule)
                     .await
                 {
@@ -122,7 +128,7 @@ impl EventHandler for ScheduleHandler {
         } else if content.contains("/删除日程") {
             // Delete schedule (equivalent to self.api.delete_schedule)
             if !schedule_id.is_empty() {
-                match ctx
+                match session
                     .delete_schedule(_CHANNEL_SCHEDULE_ID, &schedule_id)
                     .await
                 {

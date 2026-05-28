@@ -1,6 +1,6 @@
 # 性能
 
-框架本身只是 `reqwest` 与 `tokio-tungstenite` 之上的薄层；真正影响性能的是网关侧的几个调节项（shard 数与 intents），以及任务之间如何共享 `Context` / `BotApi`。通用 Rust 性能建议不在此处展开。
+框架本身只是 `reqwest` 与 `tokio-tungstenite` 之上的薄层；真正影响性能的是网关侧的几个调节项（shard 数与 intents），以及任务之间如何共享 session API handle / `BotApi`。通用 Rust 性能建议不在此处展开。
 
 ## 收紧 Intents
 
@@ -22,15 +22,15 @@ let intents = Intents::new()
 
 重连节流实现为 `round(2 / max_concurrency)`，下限 1 秒，请不要绕过。详见 [网关](/zh/guide/gateway)。
 
-## 共享 `Context` 或 `BotApi`
+## 共享 session API handle
 
-`Context` 内部持有 `Arc<BotApi>`，所以 clone 成本很低。在处理器里 `tokio::spawn` 时，克隆 `Context` 并移动进任务即可：
+在处理器里 `tokio::spawn` 时，把 `session.api_handle()` 移动进任务即可：
 
 ```rust
-async fn message_create(&self, ctx: Context, msg: Message) {
-    let context = ctx.clone();
+async fn message_create(&self, session: ChannelReplySession) {
+    let api = session.api_handle();
     tokio::spawn(async move {
-        let _ = context.send_message("channel", params).await;
+        let _ = api.send_message("channel", params).await;
     });
 }
 ```

@@ -1,44 +1,67 @@
-# Context
+# Sessions
 
-`Context` is the runtime context passed to event callbacks. It connects the current handler logic to the shared `BotApi` and carries the bot information fetched during startup.
+Event callbacks are session-first. `Context` is now an internal runtime detail; application handlers receive a session object instead.
 
-You do not construct `Context` yourself. `Client` creates it inside the gateway event loop and passes it to every `EventHandler` method.
+Reply-capable message events use specialized sessions:
 
-## Calling the API
+- `ChannelReplySession`
+- `DirectReplySession`
+- `GroupReplySession`
+- `C2CReplySession`
 
-`Context` dereferences to `BotApi`, so handlers can call API methods directly:
+Other events use `EventSession<T>` aliases such as `ReadySession`, `MessageDeleteSession`, `MemberSession`, `ReactionSession`, and `OpenForumSession`.
+
+## Reading Event Data
+
+Use the session accessor that matches the callback:
 
 ```rust
-let params = MessageParams::new_text("pong");
-ctx.send_message(&channel_id, params).await?;
+async fn ready(&self, session: ReadySession) {
+    tracing::info!("ready as {}", session.event().user.username);
+}
+
+async fn message_create(&self, mut session: ChannelReplySession) {
+    let message = session.message().clone();
+    if message.content.as_deref() == Some("!ping") {
+        let _ = session.reply("pong").await;
+    }
+}
 ```
 
-This uses the same client as `ctx.api().send_message(...)`. If a helper function needs an explicit API reference, call `ctx.api()` to get `&BotApi`.
+For generic event sessions, `session.event()` returns the typed gateway payload.
+
+## Calling The API
+
+Every session exposes the shared REST client:
+
+```rust
+let api = session.api();
+```
+
+Sessions also dereference to `BotApi`, so existing REST methods remain available:
+
+```rust
+let pins = session.get_pins(channel_id).await?;
+```
+
+When work must outlive the callback, move an owned API handle into the task:
+
+```rust
+let api = session.api_handle();
+tokio::spawn(async move {
+    let _ = api.get_bot_info().await;
+});
+```
 
 ## bot_info
 
-`ctx.bot_info` comes from startup-time `get_bot_info`. It is normally present for events driven by `Client::start`, but its type is `Option<BotInfo>` because tests and internal construction paths may leave it empty.
-
-A common use is logging or generating response text:
+`session.bot_info()` returns the bot information fetched during startup when it is available.
 
 ```rust
-let bot_name = ctx
-    .bot_info
-    .as_ref()
+let bot_name = session
+    .bot_info()
     .map(|bot| bot.username.as_str())
     .unwrap_or("bot");
-```
-
-## Concurrency
-
-`Context` is cheap to clone. Internally it shares the same API client and token cache. Clone it when you need to move reply work into a background task:
-
-```rust
-let background = ctx.clone();
-tokio::spawn(async move {
-    let params = MessageParams::new_text("background work done");
-    let _ = background.send_message(&channel_id, params).await;
-});
 ```
 
 ## See Also

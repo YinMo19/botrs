@@ -28,19 +28,19 @@ async-trait = "0.1"
 ### 基础示例
 
 ```rust,no_run
-use botrs::{Client, Context, EventHandler, Intents, Message, Ready, Token};
-use botrs::models::message::MessageParams;
+use botrs::{ChannelReplySession, Client, EventHandler, Intents, ReadySession, Token};
 use tracing::info;
 
 struct MyBot;
 
 #[async_trait::async_trait]
 impl EventHandler for MyBot {
-    async fn ready(&self, _ctx: Context, ready: Ready) {
-        info!("Bot {} is ready!", ready.user.username);
+    async fn ready(&self, session: ReadySession) {
+        info!("Bot {} is ready!", session.event().user.username);
     }
 
-    async fn message_create(&self, ctx: Context, message: Message) {
+    async fn message_create(&self, mut session: ChannelReplySession) {
+        let message = session.message().clone();
         if message
             .author
             .as_ref()
@@ -54,12 +54,8 @@ impl EventHandler for MyBot {
             if content.trim() == "!ping" {
                 info!("Received ping command from message ID: {:?}", message.id);
 
-                // 使用新的参数结构 API
-                let params = MessageParams::new_text("Pong! 🏓");
-                if let Some(channel_id) = &message.channel_id {
-                    if let Err(e) = ctx.send_message(channel_id, params).await {
-                        info!("Failed to reply: {}", e);
-                    }
+                if let Err(e) = session.reply("Pong! 🏓").await {
+                    info!("Failed to reply: {}", e);
                 }
             }
         }

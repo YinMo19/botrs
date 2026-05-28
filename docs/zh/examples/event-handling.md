@@ -20,7 +20,7 @@ let intents = Intents::new()
     .with_public_messages();              // c2c/group 管理事件
 ```
 
-handler 内部，`Context` 会解引用到 `BotApi`，可以直接在 `ctx` 上回调 API（例如 `ctx.create_direct_message` + `ctx.send_direct_message` 欢迎新成员；或 `ctx.send_group_message` 配合 `event_id: event.event_id.clone()` 来回应机器人入群事件）。
+handler 内部，session 会解引用到 `BotApi`，可以直接在 `session` 上调用 API（例如 `session.create_direct_message` + `session.send_direct_message` 欢迎新成员）。群/C2C 管理事件的 session 也提供 `session.send_message(...)`，并会尽量自动填充 `event_id` / `msg_seq`。
 
 ## 参见
 

@@ -48,6 +48,7 @@ mod message_reaction;
 mod pins;
 mod resource;
 mod schedule;
+pub mod session;
 
 impl std::fmt::Debug for BotApi {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

@@ -103,7 +103,7 @@ When adding new content:
 - **Advanced Topics**: Complex features and patterns
 
 ### API Reference
-- **Core Components**: Client, EventHandler, Context
+- **Core Components**: Client, EventHandler, Sessions
 - **Models**: Data structures and types
 - **Utilities**: Helper functions and types
 - **Error Handling**: Error types and patterns

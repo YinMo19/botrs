@@ -1,6 +1,6 @@
 # Security
 
-The security boundary is mostly token handling, environment selection, and logging. Bot business code usually runs inside gateway event callbacks and then calls REST through `Context`.
+The security boundary is mostly token handling, environment selection, and logging. Bot business code usually runs inside gateway event callbacks and then calls REST through the event session.
 
 ## Token
 

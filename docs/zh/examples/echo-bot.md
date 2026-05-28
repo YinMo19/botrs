@@ -1,16 +1,17 @@
 # 回声机器人
 
-最朴素的「@我，我回你」模式实现在 [`examples/guild/reply_text.rs`](https://github.com/YinMo19/botrs/blob/main/examples/guild/reply_text.rs)。它注册 `Intents::new().with_public_guild_messages()`、实现 `EventHandler::message_create`、用 `Message::reply` 把字符串发回。这就是 BotRS 中频道回声机器人的全部表面。
+最朴素的「@我，我回你」模式实现在 [`examples/guild/reply_text.rs`](https://github.com/YinMo19/botrs/blob/main/examples/guild/reply_text.rs)。它注册 `Intents::new().with_public_guild_messages()`、实现 `EventHandler::message_create`、用 `session.reply` 把字符串发回。这就是 BotRS 中频道回声机器人的全部表面。
 
 ## 唯一需要记住的调用
 
-`message.reply(&ctx, &reply_content)` 会发送一条自动关联到原始消息的回复。简单场景下不需要 builder。
+`session.reply(&reply_content)` 会发送一条自动关联到原始消息的回复。简单场景下不需要 builder。
 
 ```rust
-async fn message_create(&self, ctx: Context, message: Message) {
+async fn message_create(&self, mut session: ChannelReplySession) {
+    let message = session.message().clone();
     let Some(content) = &message.content else { return };
     let reply = format!("echo: {content}");
-    if let Err(e) = message.reply(&ctx, &reply).await {
+    if let Err(e) = session.reply(&reply).await {
         tracing::warn!("reply failed: {e}");
     }
 }

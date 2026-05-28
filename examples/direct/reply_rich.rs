@@ -10,7 +10,7 @@ use botrs::models::message::{
     Ark, ArkKv, DirectMessageParams, Embed, EmbedField, Keyboard, MarkdownPayload,
     MessageCreateType,
 };
-use botrs::{Client, Context, EventHandler, Intents, Message, Ready, Token};
+use botrs::{Client, DirectReplySession, EventHandler, Intents, ReadySession, Token};
 use common::{Config, init_logging};
 use std::env;
 use tracing::{info, warn};
@@ -19,16 +19,12 @@ struct DirectReplyRichHandler;
 
 #[async_trait::async_trait]
 impl EventHandler for DirectReplyRichHandler {
-    async fn ready(&self, _ctx: Context, ready: Ready) {
-        info!("robot 「{}」 on_ready!", ready.user.username);
+    async fn ready(&self, session: ReadySession) {
+        info!("robot 「{}」 on_ready!", session.event().user.username);
     }
 
-    async fn direct_message_create(&self, ctx: Context, message: Message) {
-        let Some(guild_id) = message.guild_id.as_deref() else {
-            warn!("Direct message has no guild_id");
-            return;
-        };
-
+    async fn direct_message_create(&self, mut session: DirectReplySession) {
+        let message = session.message().clone();
         let content = message.content.as_deref().unwrap_or_default();
         let params = if content.contains("ark") {
             DirectMessageParams {
@@ -41,8 +37,6 @@ impl EventHandler for DirectReplyRichHandler {
                         obj: None,
                     }]),
                 }),
-                msg_id: message.id.clone(),
-                event_id: message.event_id.clone(),
                 ..Default::default()
             }
         } else if content.contains("embed") {
@@ -58,8 +52,6 @@ impl EventHandler for DirectReplyRichHandler {
                     }]),
                     ..Default::default()
                 }),
-                msg_id: message.id.clone(),
-                event_id: message.event_id.clone(),
                 ..Default::default()
             }
         } else if content.contains("keyboard") {
@@ -73,8 +65,6 @@ impl EventHandler for DirectReplyRichHandler {
                     id: Some("62".to_string()),
                     ..Default::default()
                 }),
-                msg_id: message.id.clone(),
-                event_id: message.event_id.clone(),
                 ..Default::default()
             }
         } else {
@@ -84,13 +74,11 @@ impl EventHandler for DirectReplyRichHandler {
                     content: Some(format!("# Direct Markdown\n\n收到私信：{content}")),
                     ..Default::default()
                 }),
-                msg_id: message.id.clone(),
-                event_id: message.event_id.clone(),
                 ..Default::default()
             }
         };
 
-        match ctx.send_direct_message(guild_id, params).await {
+        match session.send_message(params).await {
             Ok(response) => info!("Successfully sent rich direct message: {:?}", response),
             Err(e) => warn!("Failed to send rich direct message: {}", e),
         }

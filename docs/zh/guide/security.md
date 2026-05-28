@@ -1,6 +1,6 @@
 # 安全
 
-安全边界主要集中在 token、运行环境和日志。bot 的业务代码通常运行在 gateway 事件回调里，再通过 `Context` 发起 REST 调用。
+安全边界主要集中在 token、运行环境和日志。bot 的业务代码通常运行在 gateway 事件回调里，再通过事件 session 发起 REST 调用。
 
 ## Token
 

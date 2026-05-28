@@ -74,7 +74,7 @@ RUST_LOG=debug cargo run --example guild_reply_text --features examples
 | Example | Source | Shows |
 |---|---|---|
 | `simple_bot` | `basic/simple_bot.rs` | Minimal `Client`, `Token`, `Intents`, and handler wiring |
-| `guild_reply_text` | `guild/reply_text.rs` | Replying to guild channel @ messages with `Message::reply` |
+| `guild_reply_text` | `guild/reply_text.rs` | Replying to guild channel @ messages with `ChannelReplySession::reply` |
 | `guild_reply_reference` | `guild/reply_reference.rs` | Quoted channel replies with `MessageParams::message_reference` |
 | `guild_command` | `guild/command.rs` | Lightweight text command dispatch in `message_create` |
 | `guild_reply_embed` | `guild/reply_embed.rs` | `Embed` payloads |
@@ -89,7 +89,7 @@ RUST_LOG=debug cargo run --example guild_reply_text --features examples
 | `guild_api_permission` | `guild/api_permission.rs` | API permission list and permission demand creation |
 | `guild_reaction_users` | `guild/reaction_users.rs` | Reaction user pagination |
 
-Guild channel message examples generally use `Intents::new().with_public_guild_messages()` and send through `Message::reply`, `Context::send_message`, or other `BotApi` methods exposed through `Context`.
+Guild channel message examples generally use `Intents::new().with_public_guild_messages()` and send through `session.reply`, `session.send_message`, or other `BotApi` methods exposed through the session.
 
 ## Group Examples
 

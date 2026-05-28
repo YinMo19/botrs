@@ -9,18 +9,20 @@ These examples show how to use `BotApi` for resources beyond plain message posti
 | [`guild/schedule.rs`](https://github.com/YinMo19/botrs/blob/main/examples/guild/schedule.rs)                          | `BotApi::create_schedule`, `get_schedule`, `update_schedule`, `delete_schedule`, `RemindType`                                        |
 | [`guild/pins_message.rs`](https://github.com/YinMo19/botrs/blob/main/examples/guild/pins_message.rs)                  | `BotApi::get_pins`, `BotApi::put_pin`, `BotApi::delete_pin`                                                                          |
 | [`guild/reaction_users.rs`](https://github.com/YinMo19/botrs/blob/main/examples/guild/reaction_users.rs)              | `BotApi::get_reaction_users`, `EmojiType::System`, paginates with the `cookie` field                                                  |
-| [`guild/recall.rs`](https://github.com/YinMo19/botrs/blob/main/examples/guild/recall.rs)                              | `Context::recall_message` (also available as `BotApi::recall_message`)                                                               |
+| [`guild/recall.rs`](https://github.com/YinMo19/botrs/blob/main/examples/guild/recall.rs)                              | `session.recall_message` (also available as `BotApi::recall_message`)                                                                |
 | [`api/message_params.rs`](https://github.com/YinMo19/botrs/blob/main/examples/api/message_params.rs)                  | `MessageParams`, `GroupMessageParams`, `C2CMessageParams`, `DirectMessageParams`                                                     |
 
 ## Pattern
 
-Every REST call is available directly on `ctx` because `Context` dereferences to `BotApi`; the token is stored inside `BotApi`. Errors come back as `botrs::BotError`. Handle them locally — the framework does not wrap calls in retries.
+Every REST call is available directly on `session` because sessions dereference to `BotApi`; the token is stored inside `BotApi`. Errors come back as `botrs::BotError`. Handle them locally — the framework does not wrap calls in retries.
 
 ```rust
 // examples/guild/recall.rs — send, then immediately delete
-let resp = message.reply(&ctx, "this will vanish").await?;
+let resp = session.reply("this will vanish").await?;
 if let Some(message_id) = resp.id {
-    ctx.recall_message(channel_id, &message_id, /* hidetip */ true).await?;
+    session
+        .recall_message(session.channel_id(), &message_id, /* hidetip */ true)
+        .await?;
 }
 ```
 

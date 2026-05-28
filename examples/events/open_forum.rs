@@ -5,8 +5,7 @@
 #[path = "../common/mod.rs"]
 mod common;
 
-use botrs::forum::OpenThread;
-use botrs::{Client, Context, EventHandler, Intents, Ready, Token};
+use botrs::{Client, EventHandler, Intents, OpenForumSession, ReadySession, Token};
 use common::{Config, init_logging};
 use std::env;
 use tracing::{info, warn};
@@ -17,48 +16,55 @@ struct OpenForumEventHandler;
 #[async_trait::async_trait]
 impl EventHandler for OpenForumEventHandler {
     /// Called when the bot is ready and connected.
-    async fn ready(&self, _ctx: Context, ready: Ready) {
-        info!("robot 「{}」 on_ready!", ready.user.username);
+    async fn ready(&self, session: ReadySession) {
+        info!("robot 「{}」 on_ready!", session.event().user.username);
     }
 
     /// Called when an open forum thread is created.
-    async fn open_forum_thread_create(&self, _ctx: Context, open_forum_thread: OpenThread) {
+    async fn open_forum_thread_create(&self, session: OpenForumSession) {
+        let open_forum_thread = session.event();
         let author_id = open_forum_thread.author_id.as_deref().unwrap_or("Unknown");
         info!("{} 创建了主题", author_id);
     }
 
     /// Called when an open forum thread is updated.
-    async fn open_forum_thread_update(&self, _ctx: Context, open_forum_thread: OpenThread) {
+    async fn open_forum_thread_update(&self, session: OpenForumSession) {
+        let open_forum_thread = session.event();
         let author_id = open_forum_thread.author_id.as_deref().unwrap_or("Unknown");
         info!("{} 更新了主题", author_id);
     }
 
     /// Called when an open forum thread is deleted.
-    async fn open_forum_thread_delete(&self, _ctx: Context, open_forum_thread: OpenThread) {
+    async fn open_forum_thread_delete(&self, session: OpenForumSession) {
+        let open_forum_thread = session.event();
         let author_id = open_forum_thread.author_id.as_deref().unwrap_or("Unknown");
         info!("{} 删除了主题", author_id);
     }
 
     /// Called when an open forum post is created.
-    async fn open_forum_post_create(&self, _ctx: Context, open_forum_thread: OpenThread) {
+    async fn open_forum_post_create(&self, session: OpenForumSession) {
+        let open_forum_thread = session.event();
         let author_id = open_forum_thread.author_id.as_deref().unwrap_or("Unknown");
         info!("{} 创建了帖子", author_id);
     }
 
     /// Called when an open forum post is deleted.
-    async fn open_forum_post_delete(&self, _ctx: Context, open_forum_thread: OpenThread) {
+    async fn open_forum_post_delete(&self, session: OpenForumSession) {
+        let open_forum_thread = session.event();
         let author_id = open_forum_thread.author_id.as_deref().unwrap_or("Unknown");
         info!("{} 删除了帖子", author_id);
     }
 
     /// Called when an open forum reply is created.
-    async fn open_forum_reply_create(&self, _ctx: Context, open_forum_thread: OpenThread) {
+    async fn open_forum_reply_create(&self, session: OpenForumSession) {
+        let open_forum_thread = session.event();
         let author_id = open_forum_thread.author_id.as_deref().unwrap_or("Unknown");
         info!("{} 发表了评论", author_id);
     }
 
     /// Called when an open forum reply is deleted.
-    async fn open_forum_reply_delete(&self, _ctx: Context, open_forum_thread: OpenThread) {
+    async fn open_forum_reply_delete(&self, session: OpenForumSession) {
+        let open_forum_thread = session.event();
         let author_id = open_forum_thread.author_id.as_deref().unwrap_or("Unknown");
         info!("{} 删除了评论", author_id);
     }

@@ -29,12 +29,12 @@ let params = MessageParams {
     keyboard: Some(keyboard),
     ..Default::default()
 };
-ctx.send_message(channel_id, params).await?;
+session.send_message(params).await?;
 ```
 
 ## Command dispatch
 
-`examples/guild/command.rs` shows a tiny `CommandRegistry` that maps aliases to handler functions and dispatches inside `message_create`. BotRS does not include a command framework; split on prefix, run the matched handler, then reply via `Message::reply` or `MessageParams`.
+`examples/guild/command.rs` shows a tiny `CommandRegistry` that maps aliases to handler functions and dispatches inside `message_create`. BotRS does not include a command framework; split on prefix, run the matched handler, then reply via `session.reply` or `session.send_message`.
 
 ## See also
 

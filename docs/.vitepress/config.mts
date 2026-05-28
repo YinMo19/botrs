@@ -134,7 +134,7 @@ export default defineConfig({
                                     link: "/api/event-handler",
                                 },
                                 { text: "Bot API", link: "/api/bot-api" },
-                                { text: "Context", link: "/api/context" },
+                                { text: "Sessions", link: "/api/context" },
                             ],
                         },
                         {
@@ -373,7 +373,7 @@ export default defineConfig({
                                     link: "/zh/api/event-handler",
                                 },
                                 { text: "机器人 API", link: "/zh/api/bot-api" },
-                                { text: "上下文", link: "/zh/api/context" },
+                                { text: "Session", link: "/zh/api/context" },
                             ],
                         },
                         {

@@ -13,7 +13,7 @@ All four expose `new_text(content)` for the common case and `with_reply(message_
 use botrs::models::message::MessageParams;
 
 let params = MessageParams::new_text("hello").with_reply(&message_id);
-ctx.send_message(&channel_id, params).await?;
+session.send_message(params).await?;
 ```
 
 For richer payloads, fill the params struct directly:
@@ -27,7 +27,7 @@ let params = MessageParams {
     keyboard: Some(my_keyboard),
     ..Default::default()
 };
-ctx.send_message(&channel_id, params).await?;
+session.send_message(params).await?;
 ```
 
 To include an image in a guild channel message, set `params.image = Some(url.into())` with a remote image URL.
@@ -45,18 +45,19 @@ The send call has a different name and a different ID parameter for each surface
 
 ## Replying from an event
 
-`message.reply(&ctx, content)` is the convenience for replying with plain text in the same channel as the inbound `Message`. `GroupMessage` and `C2CMessage` provide the same shape for their surfaces. Internally these construct the matching `*Params` value with the inbound message id and event id.
+`session.reply(content)` is the convenience for replying with plain text in the same event session. Reply sessions automatically attach the inbound message id, event id, and open-message `msg_seq` where the platform requires it.
 
 ```rust
-async fn message_create(&self, ctx: Context, message: Message) {
+async fn message_create(&self, mut session: ChannelReplySession) {
+    let message = session.message().clone();
     if message.author.as_ref().and_then(|author| author.bot).unwrap_or_default() { return; }
     if let Some("!ping") = message.content.as_deref() {
-        let _ = message.reply(&ctx, "pong").await;
+        let _ = session.reply("pong").await;
     }
 }
 ```
 
-For anything beyond plain text, build a `MessageParams` and call `ctx.send_message` with the `channel_id` from the incoming event.
+For anything beyond plain text, build a `MessageParams` and call `session.send_message(params)`.
 
 ## Recall and audit
 

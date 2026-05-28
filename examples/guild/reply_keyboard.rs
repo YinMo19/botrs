@@ -7,10 +7,10 @@
 mod common;
 
 use botrs::{
-    Client, Context, EventHandler, Intents, Message, Ready, Token,
+    ChannelReplySession, Client, EventHandler, Intents, ReadySession, Token,
     models::message::{
         Keyboard, KeyboardButton, KeyboardButtonAction, KeyboardButtonPermission,
-        KeyboardButtonRenderData, KeyboardContent, KeyboardRow, MarkdownPayload,
+        KeyboardButtonRenderData, KeyboardContent, KeyboardRow, MarkdownPayload, MessageParams,
     },
 };
 use common::{Config, init_logging};
@@ -20,105 +20,87 @@ use tracing::{info, warn};
 /// Event handler that responds to @ mentions with keyboard messages.
 struct KeyboardReplyHandler;
 
-impl KeyboardReplyHandler {
-    /// Send template keyboard message (equivalent to send_template_keyboard)
-    async fn send_template_keyboard(&self, ctx: &Context, channel_id: &str) {
-        let markdown = MarkdownPayload {
-            content: Some("# 123 \n 今天是个好天气".to_string()),
-            ..Default::default()
-        };
+fn template_keyboard_params() -> MessageParams {
+    let markdown = MarkdownPayload {
+        content: Some("# 123 \n 今天是个好天气".to_string()),
+        ..Default::default()
+    };
 
-        let keyboard = Keyboard {
-            id: Some("62".to_string()),
-            ..Default::default()
-        };
+    let keyboard = Keyboard {
+        id: Some("62".to_string()),
+        ..Default::default()
+    };
 
-        // Send keyboard message through the standard MessageParams API.
-        let params = botrs::models::message::MessageParams {
-            markdown: Some(markdown),
-            keyboard: Some(keyboard),
-            ..Default::default()
-        };
-
-        match ctx.send_message(channel_id, params).await {
-            Ok(_) => info!("Successfully sent template keyboard message"),
-            Err(e) => warn!("Failed to send template keyboard message: {}", e),
-        }
+    MessageParams {
+        markdown: Some(markdown),
+        keyboard: Some(keyboard),
+        ..Default::default()
     }
+}
 
-    /// Send self-defined keyboard message (equivalent to send_self_defined_keyboard)
-    async fn send_self_defined_keyboard(&self, ctx: &Context, channel_id: &str) {
-        let markdown = MarkdownPayload {
-            content: Some("# 标题 \n## 简介 \n内容".to_string()),
-            ..Default::default()
-        };
+fn self_defined_keyboard_params() -> MessageParams {
+    let markdown = MarkdownPayload {
+        content: Some("# 标题 \n## 简介 \n内容".to_string()),
+        ..Default::default()
+    };
 
-        let keyboard_content = self.build_keyboard();
-        let keyboard = Keyboard {
-            id: None,
-            content: Some(keyboard_content),
-        };
+    let keyboard = Keyboard {
+        id: None,
+        content: Some(build_keyboard()),
+    };
 
-        // Send keyboard message through MessageParams.
-        let params = botrs::models::message::MessageParams {
-            markdown: Some(markdown),
-            keyboard: Some(keyboard),
-            ..Default::default()
-        };
-
-        match ctx.send_message(channel_id, params).await {
-            Ok(_) => info!("Successfully sent self-defined keyboard message"),
-            Err(e) => warn!("Failed to send self-defined keyboard message: {}", e),
-        }
+    MessageParams {
+        markdown: Some(markdown),
+        keyboard: Some(keyboard),
+        ..Default::default()
     }
+}
 
-    /// Build a keyboard with one row and one button.
-    /// Creates a keyboard with one row and one button
-    fn build_keyboard(&self) -> KeyboardContent {
-        let button1 = KeyboardButton {
-            id: Some("1".to_string()),
-            render_data: Some(KeyboardButtonRenderData {
-                label: Some("button".to_string()),
-                visited_label: Some("BUTTON".to_string()),
-                style: Some(0),
+fn build_keyboard() -> KeyboardContent {
+    let button1 = KeyboardButton {
+        id: Some("1".to_string()),
+        render_data: Some(KeyboardButtonRenderData {
+            label: Some("button".to_string()),
+            visited_label: Some("BUTTON".to_string()),
+            style: Some(0),
+        }),
+        action: Some(KeyboardButtonAction {
+            action_type: Some(2),
+            permission: Some(KeyboardButtonPermission {
+                permission_type: Some(2),
+                specify_role_ids: Some(vec!["1".to_string()]),
+                specify_user_ids: Some(vec!["1".to_string()]),
             }),
-            action: Some(KeyboardButtonAction {
-                action_type: Some(2),
-                permission: Some(KeyboardButtonPermission {
-                    permission_type: Some(2),
-                    specify_role_ids: Some(vec!["1".to_string()]),
-                    specify_user_ids: Some(vec!["1".to_string()]),
-                }),
-                click_limit: Some(10),
-                data: Some("/搜索".to_string()),
-                enter: true,
-                at_bot_show_channel_list: None,
-                modal: None,
-                ..Default::default()
-            }),
-            group_id: None,
-        };
+            click_limit: Some(10),
+            data: Some("/搜索".to_string()),
+            enter: true,
+            at_bot_show_channel_list: None,
+            modal: None,
+            ..Default::default()
+        }),
+        group_id: None,
+    };
 
-        let row1 = KeyboardRow {
-            buttons: Some(vec![button1]),
-        };
+    let row1 = KeyboardRow {
+        buttons: Some(vec![button1]),
+    };
 
-        KeyboardContent {
-            rows: Some(vec![row1]),
-            style: None,
-        }
+    KeyboardContent {
+        rows: Some(vec![row1]),
+        style: None,
     }
 }
 
 #[async_trait::async_trait]
 impl EventHandler for KeyboardReplyHandler {
     /// Called when the bot is ready and connected.
-    async fn ready(&self, _ctx: Context, ready: Ready) {
-        info!("robot 「{}」 on_ready!", ready.user.username);
+    async fn ready(&self, session: ReadySession) {
+        info!("robot 「{}」 on_ready!", session.event().user.username);
     }
 
     /// Called when a message is created that mentions the bot.
-    async fn message_create(&self, ctx: Context, message: Message) {
+    async fn message_create(&self, mut session: ChannelReplySession) {
+        let message = session.message().clone();
         // Get message content
         let content = match &message.content {
             Some(content) => content,
@@ -127,20 +109,17 @@ impl EventHandler for KeyboardReplyHandler {
 
         info!("Received message: {}", content);
 
-        // Get required IDs
-        let channel_id = match &message.channel_id {
-            Some(id) => id,
-            None => {
-                warn!("Message has no channel_id");
-                return;
-            }
-        };
+        // Send template keyboard message.
+        match session.send_message(template_keyboard_params()).await {
+            Ok(_) => info!("Successfully sent template keyboard message"),
+            Err(e) => warn!("Failed to send template keyboard message: {}", e),
+        }
 
-        // Send template keyboard message
-        self.send_template_keyboard(&ctx, channel_id).await;
-
-        // Send self-defined keyboard message
-        self.send_self_defined_keyboard(&ctx, channel_id).await;
+        // Send self-defined keyboard message.
+        match session.send_message(self_defined_keyboard_params()).await {
+            Ok(_) => info!("Successfully sent self-defined keyboard message"),
+            Err(e) => warn!("Failed to send self-defined keyboard message: {}", e),
+        }
     }
 
     /// Called when an error occurs during event processing.

@@ -5,7 +5,7 @@
 #[path = "../common/mod.rs"]
 mod common;
 
-use botrs::{C2CMessage, Client, Context, EventHandler, Intents, Ready, Token};
+use botrs::{C2CReplySession, Client, EventHandler, Intents, ReadySession, Token};
 use common::{Config, init_logging};
 use std::env;
 use tracing::{info, warn};
@@ -16,37 +16,20 @@ struct C2CReplyFileHandler;
 #[async_trait::async_trait]
 impl EventHandler for C2CReplyFileHandler {
     /// Called when the bot is ready and connected.
-    async fn ready(&self, _ctx: Context, ready: Ready) {
-        info!("robot 「{}」 on_ready!", ready.user.username);
+    async fn ready(&self, session: ReadySession) {
+        info!("robot 「{}」 on_ready!", session.event().user.username);
     }
 
     /// Called when a C2C message is created.
-    async fn c2c_message_create(&self, ctx: Context, message: C2CMessage) {
-        // Get user OpenID from the author
-        let user_openid = match &message.author {
-            Some(author) => match &author.user_openid {
-                Some(openid) => openid,
-                None => {
-                    warn!("C2C message author has no user_openid");
-                    return;
-                }
-            },
-            None => {
-                warn!("C2C message has no author");
-                return;
-            }
-        };
-
+    async fn c2c_message_create(&self, mut session: C2CReplySession) {
         // File URL - this needs to be filled with an actual uploaded resource URL
         let file_url = "https://arcaea.lowiro.com/assets/character-card_en_Hikari@2x-UqTl1zuc.png"; // 这里需要填写上传的资源Url，这里夹带一点私货
 
         // Upload media file.
-        let upload_media_result = ctx
-            .post_c2c_file(
-                user_openid,
+        let upload_media_result = session
+            .post_file(
                 1, // file_type: 1 for image, file type should match the actual file
-                file_url,
-                None, // srv_send_msg: Optional flag for server-side message sending
+                file_url, None, // srv_send_msg: Optional flag for server-side message sending
             )
             .await;
 
@@ -63,13 +46,11 @@ impl EventHandler for C2CReplyFileHandler {
         // Send C2C message with media.
         let params = botrs::models::message::C2CMessageParams {
             msg_type: 7, // 7表示富媒体类型 (rich media type)
-            msg_id: message.id.clone(),
-            event_id: message.event_id.clone(),
             media: Some(upload_media),
             ..Default::default()
         };
 
-        match ctx.send_c2c_message(user_openid, params).await {
+        match session.send_message(params).await {
             Ok(response) => {
                 info!("Successfully sent C2C file message");
                 info!("Response: {:?}", response);

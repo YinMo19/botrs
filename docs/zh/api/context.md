@@ -1,44 +1,67 @@
-# Context
+# Sessions
 
-`Context` 是事件回调里的运行上下文。它的作用很简单：把当前事件处理逻辑和共享的 `BotApi` 连接起来，并携带启动时拿到的 bot 信息。
+事件回调现在是 session-first。`Context` 退为框架内部运行时细节，应用侧 handler 收到的是 session 对象。
 
-你不需要手动构造 `Context`。`Client` 在网关事件循环里创建它，然后传给每个 `EventHandler` 方法。
+可回复的消息事件使用专用 session：
 
-## 直接调用 API
+- `ChannelReplySession`
+- `DirectReplySession`
+- `GroupReplySession`
+- `C2CReplySession`
 
-`Context` 会解引用到 `BotApi`，所以 handler 里可以直接写：
+其他事件使用 `EventSession<T>` 的类型别名，例如 `ReadySession`、`MessageDeleteSession`、`MemberSession`、`ReactionSession` 和 `OpenForumSession`。
+
+## 读取事件数据
+
+使用对应 session 的访问方法：
 
 ```rust
-let params = MessageParams::new_text("pong");
-ctx.send_message(&channel_id, params).await?;
+async fn ready(&self, session: ReadySession) {
+    tracing::info!("ready as {}", session.event().user.username);
+}
+
+async fn message_create(&self, mut session: ChannelReplySession) {
+    let message = session.message().clone();
+    if message.content.as_deref() == Some("!ping") {
+        let _ = session.reply("pong").await;
+    }
+}
 ```
 
-这和 `ctx.api().send_message(...)` 是同一个 API 客户端。需要把 API 客户端传给辅助函数时，可以使用 `ctx.api()` 拿到 `&BotApi`。
+对于通用事件 session，`session.event()` 返回类型化网关载荷。
+
+## 调用 API
+
+每个 session 都暴露共享 REST 客户端：
+
+```rust
+let api = session.api();
+```
+
+Session 也会解引用到 `BotApi`，所以仍然可以直接调用 REST 方法：
+
+```rust
+let pins = session.get_pins(channel_id).await?;
+```
+
+需要让工作超过当前回调生命周期时，把拥有型 API handle 移入任务：
+
+```rust
+let api = session.api_handle();
+tokio::spawn(async move {
+    let _ = api.get_bot_info().await;
+});
+```
 
 ## bot_info
 
-`ctx.bot_info` 来自启动阶段的 `get_bot_info`。正常由 `Client::start` 驱动的事件里它会有值，但类型上仍是 `Option<BotInfo>`，因为测试或内部构造场景可能没有填充。
-
-常见用途是日志、判断当前 bot 名称、或生成响应文本：
+`session.bot_info()` 返回启动阶段获取到的 bot 信息。
 
 ```rust
-let bot_name = ctx
-    .bot_info
-    .as_ref()
+let bot_name = session
+    .bot_info()
     .map(|bot| bot.username.as_str())
     .unwrap_or("bot");
-```
-
-## 并发使用
-
-`Context` 克隆成本很低，内部共享同一个 API 客户端和 token 缓存。需要把回复动作放到后台任务时，可以 clone 一份：
-
-```rust
-let background = ctx.clone();
-tokio::spawn(async move {
-    let params = MessageParams::new_text("background work done");
-    let _ = background.send_message(&channel_id, params).await;
-});
 ```
 
 ## 参见

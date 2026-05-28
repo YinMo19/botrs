@@ -6,7 +6,7 @@
 mod common;
 
 use botrs::models::message::{Embed, EmbedField, GroupMessageParams};
-use botrs::{Client, Context, EventHandler, GroupMessage, Intents, Ready, Token};
+use botrs::{Client, EventHandler, GroupReplySession, Intents, ReadySession, Token};
 use common::{Config, init_logging};
 use std::env;
 use tracing::{info, warn};
@@ -15,16 +15,11 @@ struct GroupReplyEmbedHandler;
 
 #[async_trait::async_trait]
 impl EventHandler for GroupReplyEmbedHandler {
-    async fn ready(&self, _ctx: Context, ready: Ready) {
-        info!("robot 「{}」 on_ready!", ready.user.username);
+    async fn ready(&self, session: ReadySession) {
+        info!("robot 「{}」 on_ready!", session.event().user.username);
     }
 
-    async fn group_message_create(&self, ctx: Context, message: GroupMessage) {
-        let Some(group_openid) = message.group_openid.as_deref() else {
-            warn!("Group message has no group_openid");
-            return;
-        };
-
+    async fn group_message_create(&self, mut session: GroupReplySession) {
         let embed = Embed {
             title: Some("Group Embed".to_string()),
             description: Some("This embed was sent to a QQ group.".to_string()),
@@ -45,12 +40,10 @@ impl EventHandler for GroupReplyEmbedHandler {
         let params = GroupMessageParams {
             msg_type: 4,
             embed: Some(embed),
-            msg_id: message.id.clone(),
-            event_id: message.event_id.clone(),
             ..Default::default()
         };
 
-        match ctx.send_group_message(group_openid, params).await {
+        match session.send_message(params).await {
             Ok(response) => info!("Successfully sent group embed message: {:?}", response),
             Err(e) => warn!("Failed to send group embed message: {}", e),
         }

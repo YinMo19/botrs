@@ -2,7 +2,9 @@
 //!
 //! This example shows how to create a basic QQ Guild bot that responds to messages.
 
-use botrs::{Client, Context, EventHandler, Intents, Message, Ready, Token};
+use botrs::{
+    ChannelReplySession, Client, EventHandler, GroupReplySession, Intents, ReadySession, Token,
+};
 
 use tracing::{info, warn};
 
@@ -12,13 +14,17 @@ struct SimpleHandler;
 #[async_trait::async_trait]
 impl EventHandler for SimpleHandler {
     /// Called when the bot is ready and connected.
-    async fn ready(&self, _ctx: Context, ready: Ready) {
-        info!("Bot is ready! Logged in as: {}", ready.user.username);
-        info!("Session ID: {}", ready.session_id);
+    async fn ready(&self, session: ReadySession) {
+        info!(
+            "Bot is ready! Logged in as: {}",
+            session.event().user.username
+        );
+        info!("Session ID: {}", session.event().session_id);
     }
 
     /// Called when a message is created (@ mentions).
-    async fn message_create(&self, ctx: Context, message: Message) {
+    async fn message_create(&self, mut session: ChannelReplySession) {
+        let message = session.message().clone();
         // Ignore messages from bots
         if message
             .author
@@ -70,7 +76,7 @@ impl EventHandler for SimpleHandler {
         // Send response if we have one
         if let Some(response_text) = response {
             // Try to reply using the message's reply method
-            match message.reply(&ctx, &response_text).await {
+            match session.reply(response_text).await {
                 Ok(_) => info!("Successfully sent reply"),
                 Err(e) => warn!("Failed to send reply: {}", e),
             }
@@ -78,7 +84,8 @@ impl EventHandler for SimpleHandler {
     }
 
     /// Called when a group message is created.
-    async fn group_message_create(&self, ctx: Context, message: botrs::GroupMessage) {
+    async fn group_message_create(&self, mut session: GroupReplySession) {
+        let message = session.message().clone();
         // Get message content
         let content = match &message.content {
             Some(content) => content,
@@ -120,7 +127,7 @@ impl EventHandler for SimpleHandler {
         // Send response if we have one
         if let Some(response_text) = response {
             // Use the reply method to properly respond to the group message
-            match message.reply(&ctx, &response_text).await {
+            match session.reply(response_text).await {
                 Ok(_) => info!("Successfully sent group message reply"),
                 Err(e) => warn!("Failed to send group message reply: {}", e),
             }

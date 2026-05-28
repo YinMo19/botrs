@@ -7,7 +7,8 @@
 mod common;
 
 use botrs::{
-    Client, Context, EventHandler, Intents, Message, Ready, Token, models::message::Reference,
+    ChannelReplySession, Client, EventHandler, Intents, ReadySession, Token,
+    models::message::Reference,
 };
 use common::{Config, init_logging};
 use std::env;
@@ -19,12 +20,13 @@ struct ReferenceReplyHandler;
 #[async_trait::async_trait]
 impl EventHandler for ReferenceReplyHandler {
     /// Called when the bot is ready and connected.
-    async fn ready(&self, _ctx: Context, ready: Ready) {
-        info!("robot 「{}」 on_ready!", ready.user.username);
+    async fn ready(&self, session: ReadySession) {
+        info!("robot 「{}」 on_ready!", session.event().user.username);
     }
 
     /// Called when a message is created that mentions the bot.
-    async fn message_create(&self, ctx: Context, message: Message) {
+    async fn message_create(&self, mut session: ChannelReplySession) {
+        let message = session.message().clone();
         // Get message content
         let content = match &message.content {
             Some(content) => content,
@@ -32,15 +34,6 @@ impl EventHandler for ReferenceReplyHandler {
         };
 
         info!("Received message: {}", content);
-
-        // Get required IDs
-        let channel_id = match &message.channel_id {
-            Some(id) => id,
-            None => {
-                warn!("Message has no channel_id");
-                return;
-            }
-        };
 
         let message_id = match &message.id {
             Some(id) => id,
@@ -63,7 +56,7 @@ impl EventHandler for ReferenceReplyHandler {
             ..Default::default()
         };
 
-        match ctx.send_message(channel_id, params).await {
+        match session.send_message(params).await {
             Ok(_) => info!("Successfully sent message with reference"),
             Err(e) => warn!("Failed to send message with reference: {}", e),
         }

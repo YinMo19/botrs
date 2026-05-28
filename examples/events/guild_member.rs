@@ -6,7 +6,7 @@
 mod common;
 
 use botrs::models::message::DirectMessageToCreate;
-use botrs::{Client, Context, EventHandler, Intents, Member, Ready, Token};
+use botrs::{Client, EventHandler, Intents, MemberSession, ReadySession, Token};
 use common::{Config, init_logging};
 use std::env;
 use tracing::{info, warn};
@@ -17,12 +17,13 @@ struct GuildMemberEventHandler;
 #[async_trait::async_trait]
 impl EventHandler for GuildMemberEventHandler {
     /// Called when the bot is ready and connected.
-    async fn ready(&self, _ctx: Context, ready: Ready) {
-        info!("robot 「{}」 on_ready!", ready.user.username);
+    async fn ready(&self, session: ReadySession) {
+        info!("robot 「{}」 on_ready!", session.event().user.username);
     }
 
     /// Called when a guild member is added.
-    async fn guild_member_add(&self, ctx: Context, member: Member) {
+    async fn guild_member_add(&self, session: MemberSession) {
+        let member = session.event();
         // Get member nickname for logging
         let nick = if member.nick.is_empty() {
             "Unknown"
@@ -47,7 +48,7 @@ impl EventHandler for GuildMemberEventHandler {
         }
 
         let dm = DirectMessageToCreate::new(guild_id, user_id);
-        match ctx.create_direct_message(&dm).await {
+        match session.create_direct_message(&dm).await {
             Ok(_dms_payload) => {
                 info!("发送私信");
 
@@ -58,7 +59,7 @@ impl EventHandler for GuildMemberEventHandler {
                     ..Default::default()
                 };
 
-                match ctx.send_direct_message(guild_id, params).await {
+                match session.send_direct_message(guild_id, params).await {
                     Ok(_) => info!("Successfully sent welcome DM"),
                     Err(e) => warn!("Failed to send welcome DM: {}", e),
                 }
@@ -68,7 +69,8 @@ impl EventHandler for GuildMemberEventHandler {
     }
 
     /// Called when a guild member is updated.
-    async fn guild_member_update(&self, _ctx: Context, member: Member) {
+    async fn guild_member_update(&self, session: MemberSession) {
+        let member = session.event();
         let nick = if member.nick.is_empty() {
             "Unknown"
         } else {
@@ -78,7 +80,8 @@ impl EventHandler for GuildMemberEventHandler {
     }
 
     /// Called when a guild member is removed.
-    async fn guild_member_remove(&self, _ctx: Context, member: Member) {
+    async fn guild_member_remove(&self, session: MemberSession) {
+        let member = session.event();
         let nick = if member.nick.is_empty() {
             "Unknown"
         } else {

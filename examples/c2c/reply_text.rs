@@ -5,7 +5,7 @@
 #[path = "../common/mod.rs"]
 mod common;
 
-use botrs::{C2CMessage, Client, Context, EventHandler, Intents, Ready, Token};
+use botrs::{C2CReplySession, Client, EventHandler, Intents, ReadySession, Token};
 use common::{Config, init_logging};
 use std::env;
 use tracing::{info, warn};
@@ -16,12 +16,13 @@ struct C2CReplyHandler;
 #[async_trait::async_trait]
 impl EventHandler for C2CReplyHandler {
     /// Called when the bot is ready and connected.
-    async fn ready(&self, _ctx: Context, ready: Ready) {
-        info!("robot 「{}」 on_ready!", ready.user.username);
+    async fn ready(&self, session: ReadySession) {
+        info!("robot 「{}」 on_ready!", session.event().user.username);
     }
 
     /// Called when a C2C message is created.
-    async fn c2c_message_create(&self, ctx: Context, message: C2CMessage) {
+    async fn c2c_message_create(&self, mut session: C2CReplySession) {
+        let message = session.message().clone();
         // Get message content
         let content = match &message.content {
             Some(content) => content,
@@ -30,37 +31,10 @@ impl EventHandler for C2CReplyHandler {
 
         info!("Received C2C message: {}", content);
 
-        // Get user OpenID from the author
-        let user_openid = match &message.author {
-            Some(author) => match &author.user_openid {
-                Some(openid) => openid,
-                None => {
-                    warn!("C2C message author has no user_openid");
-                    return;
-                }
-            },
-            None => {
-                warn!("C2C message has no author");
-                return;
-            }
-        };
-
-        // Get message ID for reply
-        let msg_id = message.id.as_deref();
-
         // Create reply content.
         let reply_content = format!("我收到了你的消息：{content}");
 
-        // Send C2C message.
-        let params = botrs::models::message::C2CMessageParams {
-            msg_type: 0,
-            content: Some(reply_content),
-            msg_id: msg_id.map(|s| s.to_string()),
-            event_id: message.event_id.clone(),
-            ..Default::default()
-        };
-
-        match ctx.send_c2c_message(user_openid, params).await {
+        match session.reply(reply_content).await {
             Ok(response) => {
                 info!("Successfully sent C2C message reply");
                 info!("Response: {:?}", response);

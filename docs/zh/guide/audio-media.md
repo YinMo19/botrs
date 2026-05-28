@@ -22,14 +22,12 @@
 群和 C2C 消息可以先上传媒体，再发送引用该媒体的消息。
 
 ```rust
-let media = ctx
-    .post_group_file(&group_openid, 1, image_url, None)
-    .await?;
+let media = session.post_file(1, image_url, None).await?;
 
 let mut params = GroupMessageParams::default();
 params.msg_type = 7;
 params.media = Some(media);
-ctx.send_group_message(&group_openid, params).await?;
+session.send_message(params).await?;
 ```
 
 `file_type` 使用平台协议值：常见值为 1 图片、2 视频、3 语音、4 文件。C2C 使用 `post_c2c_file`，参数形态相同。

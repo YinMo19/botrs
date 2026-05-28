@@ -28,14 +28,15 @@ struct MyBot;
 
 #[async_trait::async_trait]
 impl EventHandler for MyBot {
-    async fn ready(&self, _ctx: Context, ready: Ready) {
-        tracing::info!("ready as {}", ready.user.username);
+    async fn ready(&self, session: ReadySession) {
+        tracing::info!("ready as {}", session.event().user.username);
     }
 
-    async fn message_create(&self, ctx: Context, message: Message) {
+    async fn message_create(&self, mut session: ChannelReplySession) {
+        let message = session.message().clone();
         if message.author.as_ref().and_then(|author| author.bot).unwrap_or_default() { return; }
         if message.content.as_deref() == Some("!ping") {
-            let _ = message.reply(&ctx, "pong").await;
+            let _ = session.reply("pong").await;
         }
     }
 }
@@ -43,7 +44,7 @@ impl EventHandler for MyBot {
 
 ## Available callbacks
 
-The complete set of callbacks (each takes `&self, Context, <payload>`):
+The complete set of callbacks receives one session parameter per event:
 
 - Lifecycle: `ready`, `resumed`, `error(BotError)`, `unknown_event(GatewayEvent)`.
 - Messages: `message_create`, `message_delete`, `direct_message_create`, `direct_message_delete`, `group_message_create`, `c2c_message_create`.
@@ -58,20 +59,11 @@ The complete set of callbacks (each takes `&self, Context, <payload>`):
 
 A callback only fires if the matching `Intents` flag is enabled — see the [Intents](/guide/intents) page for the mapping.
 
-## The Context parameter
+## Session Parameters
 
-Every callback receives a `Context`:
+Every callback receives a session object. Message create callbacks use reply sessions such as `ChannelReplySession`, `GroupReplySession`, `C2CReplySession`, and `DirectReplySession`. Other callbacks use event sessions such as `ReadySession`, `MemberSession`, or `MessageDeleteSession`.
 
-```rust
-pub struct Context {
-    api: Arc<BotApi>,
-    pub bot_info: Option<BotInfo>,
-}
-```
-
-The inner API client is the same `BotApi` the client built. `Context` dereferences to `BotApi`, so calls such as `ctx.send_message(...)`, `ctx.get_pins(...)`, and `ctx.create_schedule(...)` work directly. `bot_info` is filled in from `/users/@me` once the client starts.
-
-If you need an explicit API reference, call `ctx.api()`. For event replies, `message.reply(&ctx, "pong")` accepts the context because it dereferences to `BotApi`.
+Use `session.event()` to inspect generic event payloads, and use `session.message()` for reply sessions. Every session exposes the shared REST client through `session.api()`, `session.api_handle()`, and `Deref<Target = BotApi>`.
 
 ## The error callback
 
@@ -79,14 +71,14 @@ If event dispatch fails, the framework calls `EventHandler::error(&self, error: 
 
 ## Spawning work from a handler
 
-A handler call should return promptly so the next event can be dispatched. For long-running work, clone `Context` and move it into `tokio::spawn`:
+A handler call should return promptly so the next event can be dispatched. For long-running work, move an owned API handle into `tokio::spawn`:
 
 ```rust
-async fn message_create(&self, ctx: Context, message: Message) {
-    let context = ctx.clone();
+async fn message_create(&self, session: ChannelReplySession) {
+    let api = session.api_handle();
     tokio::spawn(async move {
         let params = MessageParams::new_text("done");
-        let _ = context.send_message("channel", params).await;
+        let _ = api.send_message("channel", params).await;
     });
 }
 ```

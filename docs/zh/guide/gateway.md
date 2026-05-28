@@ -25,15 +25,15 @@ session manager 会根据 `session_start_limit.max_concurrency` 间隔启动 sha
 
 已知事件名会解析成类型化 payload。例如：
 
-- `READY` -> `ready(ctx, Ready)`
-- `AT_MESSAGE_CREATE` -> `message_create(ctx, Message)`
-- `DIRECT_MESSAGE_CREATE` -> `direct_message_create(ctx, Message)`
-- `GROUP_AT_MESSAGE_CREATE` -> `group_message_create(ctx, GroupMessage)`
-- `C2C_MESSAGE_CREATE` -> `c2c_message_create(ctx, C2CMessage)`
+- `READY` -> `ready(ReadySession)`
+- `AT_MESSAGE_CREATE` -> `message_create(ChannelReplySession)`
+- `DIRECT_MESSAGE_CREATE` -> `direct_message_create(DirectReplySession)`
+- `GROUP_AT_MESSAGE_CREATE` -> `group_message_create(GroupReplySession)`
+- `C2C_MESSAGE_CREATE` -> `c2c_message_create(C2CReplySession)`
 - `MESSAGE_REACTION_ADD` / `MESSAGE_REACTION_REMOVE` -> 表情回应回调
 - guild、channel、member、manage、audio、forum、open-forum 事件 -> 对应回调
 
-未知事件名会进入 `unknown_event(ctx, GatewayEvent)`，这样平台新增事件时仍然可以被观察到。
+未知事件名会进入 `unknown_event(UnknownEventSession)`，这样平台新增事件时仍然可以被观察到。
 
 ## 可配置项
 

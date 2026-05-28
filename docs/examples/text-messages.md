@@ -10,14 +10,14 @@ Plain text replies cover four destinations in BotRS, each backed by its own `*Pa
 
 ## Picking the right call
 
-For a guild channel reply, `Message::reply` is the shortest path. For everything else (group, C2C, DMS, or replies that need a `Reference`, `msg_id`, `event_id`, file, embed, …) build the matching `*Params` and call the corresponding `BotApi` method:
+For a plain reply, `session.reply(...)` is the shortest path. For richer payloads (a `Reference`, explicit ids, file, embed, etc.), build the matching `*Params` and call the current session's send method:
 
 | Destination       | Params                | API method                          |
 |-------------------|----------------------|-------------------------------------|
-| Channel           | `MessageParams`       | `send_message`          |
-| Direct message    | `DirectMessageParams` | `send_direct_message`              |
-| Group             | `GroupMessageParams`  | `send_group_message`    |
-| C2C               | `C2CMessageParams`    | `send_c2c_message`      |
+| Channel           | `MessageParams`       | `ChannelReplySession::send_message` |
+| Direct message    | `DirectMessageParams` | `DirectReplySession::send_message`  |
+| Group             | `GroupMessageParams`  | `GroupReplySession::send_message`   |
+| C2C               | `C2CMessageParams`    | `C2CReplySession::send_message`     |
 
 ```rust
 // Quoted reply (channel) — see examples/guild/reply_reference.rs
@@ -26,10 +26,10 @@ let params = MessageParams {
     message_reference: Some(Reference { message_id: Some(message_id.clone()), ignore_get_message_error: None }),
     ..Default::default()
 };
-ctx.send_message(channel_id, params).await?;
+session.send_message(params).await?;
 ```
 
-For groups and C2C, set `msg_type: 0` for plain text and pass `msg_id: message.id.clone()` plus `event_id: message.event_id.clone()` when those fields are present. Direct messages need the DM `guild_id` from the inbound `Message` or a session created with `BotApi::create_direct_message`.
+Reply sessions fill `msg_id`, `event_id`, and `msg_seq` automatically when you leave them unset. Direct messages need the DM `guild_id` from the inbound `Message` or a session created with `BotApi::create_direct_message`.
 
 ## See also
 

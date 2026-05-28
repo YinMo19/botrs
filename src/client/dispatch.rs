@@ -78,7 +78,22 @@ impl<H: EventHandler + 'static> Client<H> {
                     let event_id = fallback_event_id($event_name, &event.id, event.sequence);
                     if let Some(mut value) = parse_event_json::<$event_type>($event_name, &data) {
                         value.event_id = Some(event_id);
-                        self.handler.$handler(ctx, value).await;
+                        self.handler.$handler(EventSession::new(ctx, value)).await;
+                    }
+                }
+            }};
+        }
+
+        macro_rules! dispatch_reply_session {
+            ($event_name:literal, $event_type:ty, $session_type:ty, $handler:ident) => {{
+                if let Some(data) = event.data {
+                    let event_id = fallback_event_id($event_name, &event.id, event.sequence);
+                    if let Some(mut value) = parse_event_json::<$event_type>($event_name, &data) {
+                        value.event_id = Some(event_id);
+                        match <$session_type>::new(ctx, value) {
+                            Ok(session) => self.handler.$handler(session).await,
+                            Err(error) => self.handler.error(error).await,
+                        }
                     }
                 }
             }};
@@ -89,7 +104,7 @@ impl<H: EventHandler + 'static> Client<H> {
                 if let Some(data) = event.data {
                     let event_id = fallback_event_id($event_name, &event.id, event.sequence);
                     if let Some(value) = parse_message_delete($event_name, event_id, &data) {
-                        self.handler.$handler(ctx, value).await;
+                        self.handler.$handler(EventSession::new(ctx, value)).await;
                     }
                 }
             }};
@@ -99,7 +114,7 @@ impl<H: EventHandler + 'static> Client<H> {
             ($event_name:literal, $event_type:ty, $handler:ident) => {{
                 if let Some(data) = event.data {
                     if let Some(value) = parse_event_json::<$event_type>($event_name, &data) {
-                        self.handler.$handler(ctx, value).await;
+                        self.handler.$handler(EventSession::new(ctx, value)).await;
                     }
                 }
             }};
@@ -110,7 +125,19 @@ impl<H: EventHandler + 'static> Client<H> {
                 if let Some(data) = event.data {
                     let event_id = payload_event_id(&event.id, &data);
                     let value = <$event_type>::new(event_id, &data);
-                    self.handler.$handler(ctx, value).await;
+                    self.handler.$handler(EventSession::new(ctx, value)).await;
+                }
+            }};
+        }
+
+        macro_rules! dispatch_manage_session {
+            ($event_type:ty, $session_type:ty, $handler:ident) => {{
+                if let Some(data) = event.data {
+                    let event_id = payload_event_id(&event.id, &data);
+                    let value = <$event_type>::new(event_id, &data);
+                    self.handler
+                        .$handler(<$session_type>::new(ctx, value))
+                        .await;
                 }
             }};
         }
@@ -119,7 +146,9 @@ impl<H: EventHandler + 'static> Client<H> {
             ($handler:ident) => {{
                 if let Some(data) = event.data {
                     let reaction = Reaction::new(event.id, &data)?;
-                    self.handler.$handler(ctx, reaction).await;
+                    self.handler
+                        .$handler(EventSession::new(ctx, reaction))
+                        .await;
                 }
             }};
         }
@@ -129,7 +158,7 @@ impl<H: EventHandler + 'static> Client<H> {
                 if let Some(data) = event.data {
                     let audio_action = AudioAction::from_value(&data);
                     let audio = Audio::new(event.id, audio_action);
-                    self.handler.$handler(ctx, audio).await;
+                    self.handler.$handler(EventSession::new(ctx, audio)).await;
                 }
             }};
         }
@@ -138,7 +167,7 @@ impl<H: EventHandler + 'static> Client<H> {
             ($event_type:ty, $handler:ident) => {{
                 if let Some(data) = event.data {
                     let value = <$event_type>::new(event.id, &data);
-                    self.handler.$handler(ctx, value).await;
+                    self.handler.$handler(EventSession::new(ctx, value)).await;
                 }
             }};
         }
@@ -148,7 +177,7 @@ impl<H: EventHandler + 'static> Client<H> {
                 if let Some(data) = event.data {
                     let mut thread = OpenThread::new(&data);
                     thread.event_id = event.id;
-                    self.handler.$handler(ctx, thread).await;
+                    self.handler.$handler(EventSession::new(ctx, thread)).await;
                 }
             }};
         }
@@ -159,7 +188,7 @@ impl<H: EventHandler + 'static> Client<H> {
                     match serde_json::from_value::<Ready>(data.clone()) {
                         Ok(ready) => {
                             info!("Bot is ready! Session ID: {}", ready.session_id);
-                            self.handler.ready(ctx, ready).await;
+                            self.handler.ready(EventSession::new(ctx, ready)).await;
                         }
                         Err(e) => {
                             error!("Failed to parse READY event: {}", e);
@@ -172,23 +201,39 @@ impl<H: EventHandler + 'static> Client<H> {
                 }
             }
             Some("RESUMED") => {
-                self.handler.resumed(ctx).await;
+                self.handler.resumed(EventSession::new(ctx, ())).await;
             }
             Some("AT_MESSAGE_CREATE") => {
-                dispatch_with_event_id!("AT_MESSAGE_CREATE", Message, message_create);
+                dispatch_reply_session!(
+                    "AT_MESSAGE_CREATE",
+                    Message,
+                    ChannelReplySession,
+                    message_create
+                );
             }
             Some("DIRECT_MESSAGE_CREATE") => {
-                dispatch_with_event_id!("DIRECT_MESSAGE_CREATE", Message, direct_message_create);
+                dispatch_reply_session!(
+                    "DIRECT_MESSAGE_CREATE",
+                    Message,
+                    DirectReplySession,
+                    direct_message_create
+                );
             }
             Some("GROUP_AT_MESSAGE_CREATE") => {
-                dispatch_with_event_id!(
+                dispatch_reply_session!(
                     "GROUP_AT_MESSAGE_CREATE",
                     GroupMessage,
+                    GroupReplySession,
                     group_message_create
                 );
             }
             Some("C2C_MESSAGE_CREATE") => {
-                dispatch_with_event_id!("C2C_MESSAGE_CREATE", C2CMessage, c2c_message_create);
+                dispatch_reply_session!(
+                    "C2C_MESSAGE_CREATE",
+                    C2CMessage,
+                    C2CReplySession,
+                    c2c_message_create
+                );
             }
             Some("SUBSCRIBE_MESSAGE_STATUS") => {
                 dispatch_payload_new!(SubscribeMessageStatusData, subscribe_message_status);
@@ -214,7 +259,9 @@ impl<H: EventHandler + 'static> Client<H> {
             Some("INTERACTION_CREATE") => {
                 if let Some(data) = event.data {
                     let interaction = Interaction::new(event.id, &data);
-                    self.handler.interaction_create(ctx, interaction).await;
+                    self.handler
+                        .interaction_create(EventSession::new(ctx, interaction))
+                        .await;
                 }
             }
             Some("AUDIO_START") => {
@@ -263,34 +310,34 @@ impl<H: EventHandler + 'static> Client<H> {
                 dispatch_with_event_id!("MESSAGE_AUDIT_REJECT", MessageAudit, message_audit_reject);
             }
             Some("FRIEND_ADD") => {
-                dispatch_payload_new!(C2CManageEvent, friend_add);
+                dispatch_manage_session!(C2CManageEvent, C2CManageSession, friend_add);
             }
             Some("FRIEND_DEL") => {
-                dispatch_payload_new!(C2CManageEvent, friend_del);
+                dispatch_manage_session!(C2CManageEvent, C2CManageSession, friend_del);
             }
             Some("C2C_MSG_REJECT") => {
-                dispatch_payload_new!(C2CManageEvent, c2c_msg_reject);
+                dispatch_manage_session!(C2CManageEvent, C2CManageSession, c2c_msg_reject);
             }
             Some("C2C_MSG_RECEIVE") => {
-                dispatch_payload_new!(C2CManageEvent, c2c_msg_receive);
+                dispatch_manage_session!(C2CManageEvent, C2CManageSession, c2c_msg_receive);
             }
             Some("GROUP_ADD_ROBOT") => {
-                dispatch_payload_new!(GroupManageEvent, group_add_robot);
+                dispatch_manage_session!(GroupManageEvent, GroupManageSession, group_add_robot);
             }
             Some("GROUP_DEL_ROBOT") => {
-                dispatch_payload_new!(GroupManageEvent, group_del_robot);
+                dispatch_manage_session!(GroupManageEvent, GroupManageSession, group_del_robot);
             }
             Some("GROUP_MSG_REJECT") => {
-                dispatch_payload_new!(GroupManageEvent, group_msg_reject);
+                dispatch_manage_session!(GroupManageEvent, GroupManageSession, group_msg_reject);
             }
             Some("GROUP_MSG_RECEIVE") => {
-                dispatch_payload_new!(GroupManageEvent, group_msg_receive);
+                dispatch_manage_session!(GroupManageEvent, GroupManageSession, group_msg_receive);
             }
             Some("AUDIO_OR_LIVE_CHANNEL_MEMBER_ENTER") => {
                 if let Some(data) = event.data {
                     let audio = PublicAudio::new(data);
                     self.handler
-                        .audio_or_live_channel_member_enter(ctx, audio)
+                        .audio_or_live_channel_member_enter(EventSession::new(ctx, audio))
                         .await;
                 }
             }
@@ -298,7 +345,7 @@ impl<H: EventHandler + 'static> Client<H> {
                 if let Some(data) = event.data {
                     let audio = PublicAudio::new(data);
                     self.handler
-                        .audio_or_live_channel_member_exit(ctx, audio)
+                        .audio_or_live_channel_member_exit(EventSession::new(ctx, audio))
                         .await;
                 }
             }
@@ -326,7 +373,9 @@ impl<H: EventHandler + 'static> Client<H> {
             Some("FORUM_PUBLISH_AUDIT_RESULT") => {
                 if let Some(data) = event.data {
                     let result = ForumAuditResult::new(event.id, &data);
-                    self.handler.forum_publish_audit_result(ctx, result).await;
+                    self.handler
+                        .forum_publish_audit_result(EventSession::new(ctx, result))
+                        .await;
                 }
             }
             Some("OPEN_FORUM_THREAD_CREATE") => {
@@ -352,7 +401,9 @@ impl<H: EventHandler + 'static> Client<H> {
             }
             _ => {
                 debug!("Unknown event type: {:?}", event.event_type);
-                self.handler.unknown_event(ctx, event).await;
+                self.handler
+                    .unknown_event(EventSession::new(ctx, event))
+                    .await;
             }
         }
 
@@ -383,24 +434,25 @@ mod tests {
 
     #[async_trait::async_trait]
     impl EventHandler for CountingHandler {
-        async fn message_create(&self, _ctx: Context, message: Message) {
+        async fn message_create(&self, session: ChannelReplySession) {
             self.0.message_create_count.fetch_add(1, Ordering::SeqCst);
+            let message = session.message();
             if message.event_id.as_deref() == Some("AT_MESSAGE_CREATE_42") {
                 self.0.fallback_event_id_seen.fetch_add(1, Ordering::SeqCst);
             }
         }
 
-        async fn message_delete(&self, _ctx: Context, _message: MessageDelete) {
+        async fn message_delete(&self, _session: MessageDeleteSession) {
             self.0.message_delete.fetch_add(1, Ordering::SeqCst);
         }
 
-        async fn public_message_delete(&self, _ctx: Context, _message: MessageDelete) {
+        async fn public_message_delete(&self, _session: MessageDeleteSession) {
             self.0.public_message_delete.fetch_add(1, Ordering::SeqCst);
         }
 
-        async fn friend_add(&self, _ctx: Context, event: C2CManageEvent) {
+        async fn friend_add(&self, session: C2CManageSession) {
             self.0.friend_add.fetch_add(1, Ordering::SeqCst);
-            if event.event_id.as_deref() == Some("inline-event-id") {
+            if session.event().event_id.as_deref() == Some("inline-event-id") {
                 self.0.inline_event_id_seen.fetch_add(1, Ordering::SeqCst);
             }
         }

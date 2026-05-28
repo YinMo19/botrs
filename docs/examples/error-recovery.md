@@ -16,7 +16,7 @@ You implement `EventHandler::error(&self, error: BotError)` if you want to obser
 `BotApi` methods return `botrs::Result<T>`. The variant you care about is `botrs::BotError`, which already exposes whether the error is transient (network, rate limit) or permanent (auth, malformed payload). Match on it where it matters; otherwise log and move on.
 
 ```rust
-match message.reply(&ctx, &reply).await {
+match session.reply(&reply).await {
     Ok(_) => {},
     Err(e) => tracing::warn!("reply failed: {e}"),
 }

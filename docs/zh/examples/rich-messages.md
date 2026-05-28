@@ -11,7 +11,7 @@ Embed、Markdown、ARK 模板和键盘都通过对应目的地的参数结构体
 
 ## 套路
 
-用结构体初始化的方式构造 payload（`Embed`、`MarkdownPayload`、`Ark`），塞进 `MessageParams` 对应字段，再调用 `ctx.send_message(channel_id, params)`。
+用结构体初始化的方式构造 payload（`Embed`、`MarkdownPayload`、`Ark`），塞进对应 params 字段，再调用当前 session 的 `send_message`。
 
 ```rust
 use botrs::models::message::{Embed, EmbedField, MessageParams};
@@ -23,7 +23,7 @@ let embed = Embed {
     ..Default::default()
 };
 let params = MessageParams { embed: Some(embed), ..Default::default() };
-ctx.send_message(channel_id, params).await?;
+session.send_message(params).await?;
 ```
 
 `markdown: Some(MarkdownPayload { ... })` 和 `ark: Some(Ark { template_id: Some(37), kv: Some(vec![ArkKv { ... }]) })` 的写法完全一样。Markdown 支持两种形态：`custom_template_id` + `params`（模板）和直接 `content`（自由格式）。群与 C2C 发送时，Markdown 用 `msg_type: 2`，ARK 用 `msg_type: 3`，Embed 用 `msg_type: 4`。

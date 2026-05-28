@@ -20,7 +20,7 @@ let intents = Intents::new()
     .with_public_messages();              // c2c/group manage events
 ```
 
-Inside the handler, the `Context` argument dereferences to `BotApi`, so you can react by calling APIs directly on `ctx` (e.g. `ctx.create_direct_message` + `ctx.send_direct_message` to greet a new member, or `ctx.send_group_message` with `event_id: event.event_id.clone()` to acknowledge a robot-add event).
+Inside the handler, the session dereferences to `BotApi`, so you can react by calling APIs directly on `session` (for example, `session.create_direct_message` + `session.send_direct_message` to greet a new member). Group/C2C manage sessions also provide `session.send_message(...)` and fill `event_id` / `msg_seq` automatically when possible.
 
 ## See also
 

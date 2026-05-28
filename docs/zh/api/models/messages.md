@@ -11,12 +11,13 @@
 - `GroupMessage` 对应 `GROUP_AT_MESSAGE_CREATE`，核心定位字段是 `group_openid`。
 - `C2CMessage` 对应 `C2C_MESSAGE_CREATE`，核心定位字段通常来自 `author.user_openid`。
 
-这些事件模型都保留了平台可能给出的 message id、content、attachments、mentions、timestamp、reference 和内部 `event_id`。如果只是做回复，优先使用模型自带的 `reply` 方法，或者手动构造对应的参数结构体。
+这些事件模型都保留了平台可能给出的 message id、content、attachments、mentions、timestamp、reference 和内部 `event_id`。如果只是做回复，优先使用对应 reply session 的 `session.reply(...)`；更复杂的回复则手动构造对应的参数结构体。
 
 ```rust
+let message = session.message();
 if let Some(content) = &message.content {
     if content.trim() == "/ping" {
-        message.reply(ctx.api(), "pong").await?;
+        session.reply("pong").await?;
     }
 }
 ```
@@ -36,7 +37,7 @@ if let Some(content) = &message.content {
 
 ```rust
 let params = MessageParams::new_text("pong").with_reply(message_id);
-ctx.send_message(&channel_id, params).await?;
+session.send_message(params).await?;
 ```
 
 复杂消息直接在参数结构体上设置对应字段：
@@ -57,10 +58,10 @@ ctx.send_message(&channel_id, params).await?;
 
 ```rust
 let dm = DirectMessageToCreate::new(&guild_id, &user_id);
-let session = ctx.create_direct_message(&dm).await?;
+let dm_session = session.create_direct_message(&dm).await?;
 
 let params = DirectMessageParams::new_text("hello");
-ctx.send_direct_message(&session.guild_id, params).await?;
+session.send_direct_message(&dm_session.guild_id, params).await?;
 ```
 
 ## Open message 的 msg_type
