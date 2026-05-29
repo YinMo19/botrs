@@ -8,17 +8,18 @@ use crate::models::message::{Ark, Embed};
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct Message {
     /// The message's unique ID
-    pub id: Option<Snowflake>,
+    pub id: Snowflake,
     /// The message content
-    pub content: Option<String>,
+    pub content: String,
     /// The ID of the channel this message was sent in
-    pub channel_id: Option<Snowflake>,
+    pub channel_id: Snowflake,
     /// The ID of the guild this message was sent in
-    pub guild_id: Option<Snowflake>,
+    pub guild_id: Snowflake,
     /// Group ID for group messages when present in API responses
-    pub group_id: Option<Snowflake>,
+    #[serde(default)]
+    pub group_id: Snowflake,
     /// The author of this message
-    pub author: Option<MessageUser>,
+    pub author: MessageUser,
     /// The member information of the author
     pub member: Option<MessageMember>,
     /// Referenced message information
@@ -35,25 +36,30 @@ pub struct Message {
     /// Ark payload in this message
     pub ark: Option<Ark>,
     /// Whether this is a direct message
-    pub direct_message: Option<bool>,
+    #[serde(default)]
+    pub direct_message: bool,
     /// Global message sequence number
     pub seq: Option<u64>,
     /// Channel-specific message sequence number
-    pub seq_in_channel: Option<String>,
+    pub seq_in_channel: String,
     /// When this message was sent
-    pub timestamp: Option<Timestamp>,
+    pub timestamp: Timestamp,
     /// When this message was edited
-    pub edited_timestamp: Option<Timestamp>,
+    #[serde(default)]
+    pub edited_timestamp: Timestamp,
     /// Whether this message mentions everyone
-    pub mention_everyone: Option<bool>,
+    #[serde(default)]
+    pub mention_everyone: bool,
     /// Source guild ID for direct-message scenes
-    pub src_guild_id: Option<Snowflake>,
+    #[serde(default)]
+    pub src_guild_id: Snowflake,
     /// Uploaded rich media file info
     pub file_info: Option<String>,
     /// Rich media file TTL in seconds
     pub ttl: Option<u32>,
     /// Message scene information
-    pub message_scene: Option<MessageScene>,
+    #[serde(default)]
+    pub message_scene: MessageScene,
     /// Event ID from the gateway
     #[serde(skip)]
     pub event_id: Option<String>,

@@ -2,10 +2,10 @@ use std::{ops::Deref, sync::Arc};
 
 use crate::api_impl::BotApi;
 use crate::client::Context;
-use crate::error::{BotError, Result};
+use crate::error::Result;
 use crate::models::{
     api::{BotInfo, MessageResponse},
-    message::{C2CMessage, C2CMessageParams, Media},
+    message::{Ark, C2CMessage, C2CMessageParams, Embed, KeyboardPayload, Media},
 };
 
 use super::advance_msg_seq;
@@ -20,13 +20,7 @@ pub struct C2CReplySession {
 
 impl C2CReplySession {
     pub(crate) fn new(ctx: Context, message: C2CMessage) -> Result<Self> {
-        let openid = message
-            .author
-            .as_ref()
-            .and_then(|author| author.user_openid.clone())
-            .ok_or_else(|| {
-                BotError::InvalidData("Missing user_openid for C2C reply session".to_string())
-            })?;
+        let openid = message.author.user_openid.clone();
 
         Ok(Self {
             ctx,
@@ -63,6 +57,14 @@ impl C2CReplySession {
 
     /// Sends a text reply in the current C2C reply session.
     pub async fn reply(&mut self, content: impl Into<String>) -> Result<MessageResponse> {
+        self.send_text_message(content).await
+    }
+
+    /// Sends a text message in the current C2C reply session.
+    pub async fn send_text_message(
+        &mut self,
+        content: impl Into<String>,
+    ) -> Result<MessageResponse> {
         self.send_message(C2CMessageParams::new_text(content)).await
     }
 
@@ -72,6 +74,31 @@ impl C2CReplySession {
         content: impl Into<String>,
     ) -> Result<MessageResponse> {
         self.send_message(C2CMessageParams::new_markdown(content))
+            .await
+    }
+
+    /// Sends an Ark message in the current C2C reply session.
+    pub async fn send_ark_message(&mut self, ark: Ark) -> Result<MessageResponse> {
+        self.send_message(C2CMessageParams::new_ark(ark)).await
+    }
+
+    /// Sends an embed message in the current C2C reply session.
+    pub async fn send_embed_message(&mut self, embed: Embed) -> Result<MessageResponse> {
+        self.send_message(C2CMessageParams::new_embed(embed)).await
+    }
+
+    /// Sends an uploaded media message in the current C2C reply session.
+    pub async fn send_media_message(&mut self, media: Media) -> Result<MessageResponse> {
+        self.send_message(C2CMessageParams::new_media(media)).await
+    }
+
+    /// Sends a markdown message with a keyboard in the current C2C reply session.
+    pub async fn send_keyboard_message(
+        &mut self,
+        content: impl Into<String>,
+        keyboard: KeyboardPayload,
+    ) -> Result<MessageResponse> {
+        self.send_message(C2CMessageParams::new_keyboard(content, keyboard))
             .await
     }
 
@@ -96,7 +123,7 @@ impl C2CReplySession {
 
     fn prepare_message(&mut self, params: &mut C2CMessageParams) {
         if params.msg_id.is_none() {
-            params.msg_id = self.message.id.clone();
+            params.msg_id = Some(self.message.id.clone());
         }
         if params.event_id.is_none() {
             params.event_id = self.message.event_id.clone();

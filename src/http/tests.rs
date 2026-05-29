@@ -1,4 +1,5 @@
 use super::*;
+use crate::error::BotError;
 use crate::token_impl::Token;
 use reqwest::StatusCode;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
@@ -80,6 +81,57 @@ async fn no_content_response_is_successful_null() {
         .unwrap();
 
     assert_eq!(response, serde_json::Value::Null);
+    server.await.unwrap();
+}
+
+#[tokio::test]
+async fn api_error_response_preserves_platform_code_and_trace() {
+    let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let addr = listener.local_addr().unwrap();
+    let server = tokio::spawn(async move {
+        let (mut stream, _) = listener.accept().await.unwrap();
+        let mut buffer = [0_u8; 4096];
+        let _ = stream.read(&mut buffer).await.unwrap();
+
+        let body = r#"{"code":0,"err_code":50015006,"message":"系统繁忙，请稍后重试"}"#;
+        let response = format!(
+            "HTTP/1.1 500 Internal Server Error\r\n\
+             content-type: application/json\r\n\
+             x-tps-trace-id: trace-from-header\r\n\
+             content-length: {}\r\n\
+             connection: close\r\n\r\n\
+             {}",
+            body.len(),
+            body
+        );
+
+        stream.write_all(response.as_bytes()).await.unwrap();
+    });
+
+    let client = HttpClient::new(30, false).unwrap();
+    let token = Token::new("APPID_XXXXXX", "SECRET_XXXXXX");
+    token
+        .set_cached_access_token_for_test("ACCESS_TOKEN_XXXXXX")
+        .await;
+
+    let err = client
+        .request_json_url(
+            &token,
+            reqwest::Method::POST,
+            &format!("http://{addr}/resource"),
+            None::<&()>,
+            Some(&serde_json::json!({"msg_type": 4})),
+        )
+        .await
+        .unwrap_err();
+
+    assert!(matches!(err, BotError::Server(_)));
+    let message = err.to_string();
+    assert!(message.contains("HTTP 500 Internal Server Error"));
+    assert!(message.contains("API error 50015006"));
+    assert!(message.contains("系统繁忙，请稍后重试"));
+    assert!(message.contains("trace_id=trace-from-header"));
+
     server.await.unwrap();
 }
 

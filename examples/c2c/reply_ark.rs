@@ -5,7 +5,7 @@
 #[path = "../common/mod.rs"]
 mod common;
 
-use botrs::models::message::{Ark, ArkKv, C2CMessageParams};
+use botrs::models::message::{Ark, ArkKv};
 use botrs::{C2CReplySession, Client, EventHandler, Intents, ReadySession, Token};
 use common::{Config, init_logging};
 use std::env;
@@ -39,13 +39,7 @@ impl EventHandler for C2CReplyArkHandler {
             ]),
         };
 
-        let params = C2CMessageParams {
-            msg_type: 3,
-            ark: Some(ark),
-            ..Default::default()
-        };
-
-        match session.send_message(params).await {
+        match session.send_ark_message(ark).await {
             Ok(response) => info!("Successfully sent C2C ARK message: {:?}", response),
             Err(e) => warn!("Failed to send C2C ARK message: {}", e),
         }

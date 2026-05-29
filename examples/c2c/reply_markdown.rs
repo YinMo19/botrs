@@ -20,7 +20,7 @@ impl EventHandler for C2CReplyMarkdownHandler {
 
     async fn c2c_message_create(&self, mut session: C2CReplySession) {
         let message = session.message().clone();
-        let content = message.content.as_deref().unwrap_or_default();
+        let content = message.content.as_str();
         let markdown = format!(
             "# C2C Markdown\n\n收到单聊消息：{}\n\n- 使用 `session.send_markdown_message`\n- 自动填充 `msg_type = 2`",
             content

@@ -96,11 +96,11 @@ Guild channel message examples generally use `Intents::new().with_public_guild_m
 
 | Example | Source | Shows |
 |---|---|---|
-| `group_reply_text` | `group/reply_text.rs` | Plain text group replies with `GroupMessageParams` |
-| `group_reply_file` | `group/reply_file.rs` | `post_group_file` followed by `msg_type: 7` media sending |
-| `group_reply_ark` | `group/reply_ark.rs` | Group ARK payloads with `msg_type: 3` |
-| `group_reply_markdown` | `group/reply_markdown.rs` | Group Markdown payloads with `msg_type: 2` |
-| `group_reply_embed` | `group/reply_embed.rs` | Group Embed payloads with `msg_type: 4` |
+| `group_reply_text` | `group/reply_text.rs` | Plain text group replies through the session |
+| `group_reply_file` | `group/reply_file.rs` | `post_group_file` followed by session media sending |
+| `group_reply_ark` | `group/reply_ark.rs` | Group ARK payloads through the session |
+| `group_reply_markdown` | `group/reply_markdown.rs` | Group Markdown payloads through the session |
+| `group_reply_embed` | `group/reply_embed.rs` | Group Embed payloads through the session |
 | `group_reply_keyboard` | `group/reply_keyboard.rs` | Group Markdown plus keyboard template payloads |
 | `group_manage_event` | `group/manage_event.rs` | Robot add/remove and group active-message toggles |
 
@@ -110,11 +110,11 @@ Group examples use `Intents::new().with_public_messages()`. Replies should prese
 
 | Example | Source | Shows |
 |---|---|---|
-| `c2c_reply_text` | `c2c/reply_text.rs` | Plain text C2C replies with `C2CMessageParams` |
-| `c2c_reply_file` | `c2c/reply_file.rs` | `post_c2c_file` followed by `msg_type: 7` media sending |
-| `c2c_reply_ark` | `c2c/reply_ark.rs` | C2C ARK payloads with `msg_type: 3` |
-| `c2c_reply_markdown` | `c2c/reply_markdown.rs` | C2C Markdown payloads with `msg_type: 2` |
-| `c2c_reply_embed` | `c2c/reply_embed.rs` | C2C Embed payloads with `msg_type: 4` |
+| `c2c_reply_text` | `c2c/reply_text.rs` | Plain text C2C replies through the session |
+| `c2c_reply_file` | `c2c/reply_file.rs` | `post_c2c_file` followed by session media sending |
+| `c2c_reply_ark` | `c2c/reply_ark.rs` | C2C ARK payloads through the session |
+| `c2c_reply_markdown` | `c2c/reply_markdown.rs` | C2C Markdown payloads through the session |
+| `c2c_reply_embed` | `c2c/reply_embed.rs` | C2C Embed payloads through the session |
 | `c2c_reply_keyboard` | `c2c/reply_keyboard.rs` | C2C Markdown plus keyboard template payloads |
 | `c2c_manage_event` | `c2c/manage_event.rs` | Friend add/remove and C2C active-message toggles |
 

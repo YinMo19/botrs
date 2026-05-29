@@ -1,11 +1,11 @@
 use super::{
     Ark, ArkKv, ArkObj, ArkObjKv, C2CMessageParams, DirectMessage, Embed, GroupMessageParams,
     Keyboard, KeyboardButton, KeyboardButtonAction, KeyboardButtonPermission,
-    KeyboardButtonRenderData, KeyboardContent, KeyboardModal, KeyboardRow, KeyboardStyle,
-    KeyboardSubscribeData, KeyboardTemplateId, MarkdownParam, MarkdownPayload, MarkdownStyle,
-    Media, MediaInfo, Message, MessageAttachment, MessageAudit, MessageCreateType, MessageParams,
-    MessageReference, MessageToCreate, MessageUser, MessagesPager, Reference, SettingGuideParams,
-    Stream,
+    KeyboardButtonRenderData, KeyboardContent, KeyboardModal, KeyboardPayload, KeyboardRow,
+    KeyboardStyle, KeyboardSubscribeData, KeyboardTemplateId, MarkdownParam, MarkdownPayload,
+    MarkdownStyle, Media, MediaInfo, Message, MessageAttachment, MessageAudit, MessageCreateType,
+    MessageMember, MessageParams, MessageReference, MessageScene, MessageToCreate, MessageUser,
+    MessagesPager, Reference, SettingGuideParams, Stream,
 };
 
 #[test]
@@ -19,6 +19,7 @@ fn c2c_message_accepts_minimal_gateway_payload() {
         },
         "content": "ping",
         "id": "ROBOT1.0_MESSAGE_ID_XXXXXX",
+        "message_type": 0,
         "msg_seq": 0,
         "source": "default",
         "timestamp": "2026-05-27T00:47:07+08:00"
@@ -26,7 +27,7 @@ fn c2c_message_accepts_minimal_gateway_payload() {
     .unwrap();
     message.event_id = Some("event-1".to_string());
 
-    assert_eq!(message.id.as_deref(), Some("ROBOT1.0_MESSAGE_ID_XXXXXX"));
+    assert_eq!(message.id, "ROBOT1.0_MESSAGE_ID_XXXXXX");
     assert_eq!(message.event_id.as_deref(), Some("event-1"));
     assert!(message.mentions.is_empty());
     assert!(message.attachments.is_empty());
@@ -168,6 +169,59 @@ fn markdown_params_set_expected_message_type() {
     let c2c_value = serde_json::to_value(MessageToCreate::from(c2c)).unwrap();
     assert_eq!(c2c_value["msg_type"], serde_json::json!(2));
     assert_eq!(c2c_value["markdown"]["content"], serde_json::json!("# c2c"));
+}
+
+#[test]
+fn semantic_params_set_expected_message_types() {
+    let channel_ark = MessageParams::new_ark(Ark {
+        template_id: Some(37),
+        kv: None,
+    });
+    let channel_ark_value = serde_json::to_value(MessageToCreate::from(channel_ark)).unwrap();
+    assert_eq!(channel_ark_value["msg_type"], serde_json::json!(3));
+    assert_eq!(
+        channel_ark_value["ark"]["template_id"],
+        serde_json::json!(37)
+    );
+
+    let direct_embed = super::DirectMessageParams::new_embed(Embed {
+        prompt: "Direct embed".to_string(),
+        ..Default::default()
+    });
+    let direct_embed_value = serde_json::to_value(MessageToCreate::from(direct_embed)).unwrap();
+    assert_eq!(direct_embed_value["msg_type"], serde_json::json!(4));
+    assert_eq!(
+        direct_embed_value["embed"]["prompt"],
+        serde_json::json!("Direct embed")
+    );
+
+    let group_keyboard = GroupMessageParams::new_keyboard(
+        "# Group keyboard",
+        KeyboardPayload {
+            content: serde_json::json!({ "id": "62" }),
+        },
+    );
+    let group_keyboard_value = serde_json::to_value(MessageToCreate::from(group_keyboard)).unwrap();
+    assert_eq!(group_keyboard_value["msg_type"], serde_json::json!(2));
+    assert_eq!(
+        group_keyboard_value["markdown"]["content"],
+        serde_json::json!("# Group keyboard")
+    );
+    assert_eq!(
+        group_keyboard_value["keyboard"],
+        serde_json::json!({ "id": "62" })
+    );
+
+    let c2c_media = C2CMessageParams::new_media(Media {
+        file_info: Some("file-info".to_string()),
+        ..Default::default()
+    });
+    let c2c_media_value = serde_json::to_value(MessageToCreate::from(c2c_media)).unwrap();
+    assert_eq!(c2c_media_value["msg_type"], serde_json::json!(7));
+    assert_eq!(
+        c2c_media_value["media"],
+        serde_json::json!({ "file_info": "file-info" })
+    );
 }
 
 #[test]
@@ -487,8 +541,8 @@ fn reference_keeps_official_zero_value_shape() {
 #[test]
 fn test_message_creation() {
     let message = Message::default();
-    assert!(message.id.is_none());
-    assert!(message.content.is_none());
+    assert_eq!(message.id, "");
+    assert_eq!(message.content, "");
     assert!(message.attachments.is_empty());
     assert!(message.mentions.is_empty());
 }
@@ -518,43 +572,33 @@ fn direct_message_is_session_dto() {
 }
 
 #[test]
-fn direct_message_session_uses_required_zero_value_fields() {
-    let session: DirectMessage = serde_json::from_value(serde_json::json!({})).unwrap();
-
-    assert_eq!(session.guild_id, "");
-    assert_eq!(session.channel_id, "");
-    assert_eq!(session.create_time, "");
-
-    let value = serde_json::to_value(&session).unwrap();
-    assert_eq!(
-        value,
-        serde_json::json!({
-            "guild_id": "",
-            "channel_id": "",
-            "create_time": ""
-        })
-    );
+fn direct_message_session_rejects_missing_required_fields() {
+    assert!(serde_json::from_value::<DirectMessage>(serde_json::json!({})).is_err());
 }
 
 #[test]
 fn test_message_with_content() {
     let message = Message {
-        content: Some("Hello, world!".to_string()),
+        content: "Hello, world!".to_string(),
         ..Default::default()
     };
-    assert!(
-        message
-            .content
-            .as_ref()
-            .is_some_and(|content| !content.is_empty())
-    );
+    assert!(!message.content.is_empty());
 }
 
 #[test]
 fn message_event_id_is_internal_only() {
     let mut message: Message = serde_json::from_value(serde_json::json!({
             "id": "message-1",
-            "content": "hello"
+            "content": "hello",
+            "channel_id": "channel-1",
+            "guild_id": "guild-1",
+            "author": {
+                "id": "user-1",
+                "username": "user",
+                "bot": false
+            },
+            "seq_in_channel": "1",
+            "timestamp": "2024-01-01T00:00:00+08:00"
     }))
     .unwrap();
     message.event_id = Some("event-1".to_string());
@@ -572,12 +616,70 @@ fn message_reference_keeps_ignore_error_flag() {
     }))
     .unwrap();
 
-    assert_eq!(reference.message_id.as_deref(), Some("message-1"));
-    assert_eq!(reference.ignore_get_message_error, Some(true));
+    assert_eq!(reference.message_id, "message-1");
+    assert!(reference.ignore_get_message_error);
 
     let value = serde_json::to_value(&reference).unwrap();
     assert_eq!(value["message_id"], serde_json::json!("message-1"));
     assert_eq!(value["ignore_get_message_error"], serde_json::json!(true));
+}
+
+#[test]
+fn message_reference_defaults_missing_ignore_error_flag() {
+    let reference: MessageReference = serde_json::from_value(serde_json::json!({
+        "message_id": "message-1"
+    }))
+    .unwrap();
+
+    assert_eq!(reference.message_id, "message-1");
+    assert!(!reference.ignore_get_message_error);
+}
+
+#[test]
+fn message_reference_rejects_missing_message_id() {
+    assert!(
+        serde_json::from_value::<MessageReference>(serde_json::json!({
+            "ignore_get_message_error": true
+        }))
+        .is_err()
+    );
+}
+
+#[test]
+fn message_events_reject_missing_required_identity_fields() {
+    assert!(serde_json::from_value::<Message>(serde_json::json!({})).is_err());
+    assert!(serde_json::from_value::<super::GroupMessage>(serde_json::json!({})).is_err());
+    assert!(serde_json::from_value::<super::C2CMessage>(serde_json::json!({})).is_err());
+}
+
+#[test]
+fn message_member_accepts_partial_author_member_payload() {
+    let member: MessageMember = serde_json::from_value(serde_json::json!({
+        "joined_at": "2024-01-01T00:00:00+08:00"
+    }))
+    .unwrap();
+
+    assert_eq!(member.nick, "");
+    assert!(member.roles.is_empty());
+    assert_eq!(member.joined_at, "2024-01-01T00:00:00+08:00");
+}
+
+#[test]
+fn message_scene_accepts_callback_without_source() {
+    let scene: MessageScene = serde_json::from_value(serde_json::json!({
+        "callback_data": "payload"
+    }))
+    .unwrap();
+
+    assert_eq!(scene.source, "");
+    assert_eq!(scene.callback_data, "payload");
+    assert!(scene.ext.is_empty());
+    assert_eq!(
+        serde_json::to_value(&scene).unwrap(),
+        serde_json::json!({
+            "callback_data": "payload"
+        })
+    );
 }
 
 #[test]
@@ -587,14 +689,16 @@ fn message_audit_keeps_channel_sequence() {
             "message_id": "message-1",
             "guild_id": "guild-1",
             "channel_id": "channel-1",
+            "audit_time": "2024-01-02T03:04:05+08:00",
+            "create_time": "2024-01-02T03:03:00+08:00",
             "seq_in_channel": "42"
     }))
     .unwrap();
     audit.event_id = Some("event-1".to_string());
 
     assert_eq!(audit.seq_in_channel, "42");
-    assert_eq!(audit.audit_time, "");
-    assert_eq!(audit.create_time, "");
+    assert_eq!(audit.audit_time, "2024-01-02T03:04:05+08:00");
+    assert_eq!(audit.create_time, "2024-01-02T03:03:00+08:00");
 
     let value = serde_json::to_value(&audit).unwrap();
     assert_eq!(value["seq_in_channel"], serde_json::json!("42"));
@@ -602,25 +706,8 @@ fn message_audit_keeps_channel_sequence() {
 }
 
 #[test]
-fn message_audit_uses_required_zero_value_fields() {
-    let audit: MessageAudit = serde_json::from_value(serde_json::json!({})).unwrap();
-
-    assert_eq!(audit.audit_id, "");
-    assert_eq!(audit.message_id, "");
-    assert_eq!(audit.guild_id, "");
-    assert_eq!(audit.channel_id, "");
-    assert_eq!(audit.audit_time, "");
-    assert_eq!(audit.create_time, "");
-    assert_eq!(audit.seq_in_channel, "");
-
-    let value = serde_json::to_value(&audit).unwrap();
-    assert_eq!(value["audit_id"], "");
-    assert_eq!(value["message_id"], "");
-    assert_eq!(value["guild_id"], "");
-    assert_eq!(value["channel_id"], "");
-    assert_eq!(value["audit_time"], "");
-    assert_eq!(value["create_time"], "");
-    assert_eq!(value["seq_in_channel"], "");
+fn message_audit_rejects_missing_required_fields() {
+    assert!(serde_json::from_value::<MessageAudit>(serde_json::json!({})).is_err());
 }
 
 #[test]
@@ -638,42 +725,90 @@ fn embed_keeps_prompt_field() {
 }
 
 #[test]
-fn message_attachment_omits_go_zero_values() {
-    let attachment = MessageAttachment {
-        id: Some(String::new()),
-        filename: Some(String::new()),
-        content_type: Some(String::new()),
-        size: Some(0),
-        url: Some(String::new()),
-        width: Some(0),
-        height: Some(0),
-    };
+fn message_attachment_value_fields_serialize_in_official_shape() {
+    let attachment = MessageAttachment::default();
+
+    assert_eq!(attachment.id, None);
+    assert_eq!(attachment.filename, "");
+    assert_eq!(attachment.content_type, "");
+    assert_eq!(attachment.content, "");
+    assert_eq!(attachment.size, 0);
+    assert_eq!(attachment.url, "");
+    assert_eq!(attachment.width, 0);
+    assert_eq!(attachment.height, 0);
 
     assert_eq!(
         serde_json::to_value(&attachment).unwrap(),
         serde_json::json!({})
     );
+}
 
-    let attachment = MessageAttachment {
-        id: Some("attachment-1".to_string()),
-        filename: Some("image.png".to_string()),
-        content_type: Some("image/png".to_string()),
-        size: Some(128),
-        url: Some("https://example.com/image.png".to_string()),
-        width: Some(64),
-        height: Some(32),
-    };
+#[test]
+fn message_attachment_rejects_missing_required_fields() {
+    assert!(serde_json::from_value::<MessageAttachment>(serde_json::json!({})).is_err());
+}
+
+#[test]
+fn message_attachment_defaults_missing_dimensions_for_non_image() {
+    let attachment: MessageAttachment = serde_json::from_value(serde_json::json!({
+        "content_type": "audio/silk",
+        "filename": "voice.silk",
+        "size": 1024,
+        "url": "https://multimedia.nt.qq.com.cn/download?appid=1407"
+    }))
+    .unwrap();
+
+    assert_eq!(attachment.content_type, "audio/silk");
+    assert_eq!(attachment.filename, "voice.silk");
+    assert_eq!(attachment.size, 1024);
+    assert_eq!(attachment.width, 0);
+    assert_eq!(attachment.height, 0);
 
     assert_eq!(
         serde_json::to_value(&attachment).unwrap(),
         serde_json::json!({
-            "id": "attachment-1",
-            "filename": "image.png",
+            "filename": "voice.silk",
+            "content_type": "audio/silk",
+            "size": 1024,
+            "url": "https://multimedia.nt.qq.com.cn/download?appid=1407"
+        })
+    );
+}
+
+#[test]
+fn message_attachment_keeps_open_message_shape() {
+    let attachment: MessageAttachment = serde_json::from_value(serde_json::json!({
+        "content": "",
+        "content_type": "image/png",
+        "filename": "91FE1A7D6BEE23893635173599CE58DF.png",
+        "height": 512,
+        "size": 67372,
+        "url": "https://multimedia.nt.qq.com.cn/download?appid=1407",
+        "width": 754
+    }))
+    .unwrap();
+
+    assert_eq!(attachment.id, None);
+    assert_eq!(attachment.content, "");
+    assert_eq!(attachment.content_type, "image/png");
+    assert_eq!(attachment.filename, "91FE1A7D6BEE23893635173599CE58DF.png");
+    assert_eq!(attachment.height, 512);
+    assert_eq!(attachment.size, 67372);
+    assert_eq!(
+        attachment.url,
+        "https://multimedia.nt.qq.com.cn/download?appid=1407"
+    );
+    assert_eq!(attachment.width, 754);
+
+    assert_eq!(
+        serde_json::to_value(&attachment).unwrap(),
+        serde_json::json!({
+            "filename": "91FE1A7D6BEE23893635173599CE58DF.png",
             "content_type": "image/png",
-            "size": 128,
-            "url": "https://example.com/image.png",
-            "width": 64,
-            "height": 32
+            "size": 67372,
+            "url": "https://multimedia.nt.qq.com.cn/download?appid=1407",
+            "width": 754,
+            "height": 512
         })
     );
 }
@@ -681,29 +816,17 @@ fn message_attachment_omits_go_zero_values() {
 #[test]
 fn test_bot_detection() {
     let mut message = Message {
-        author: Some(MessageUser {
-            id: Some("123".to_string()),
-            username: Some("Bot".to_string()),
-            bot: Some(true),
-            avatar: None,
-        }),
+        author: MessageUser {
+            id: "123".to_string(),
+            username: "Bot".to_string(),
+            bot: true,
+            ..Default::default()
+        },
         ..Default::default()
     };
 
-    assert!(
-        message
-            .author
-            .as_ref()
-            .and_then(|author| author.bot)
-            .unwrap_or_default()
-    );
+    assert!(message.author.bot);
 
-    message.author.as_mut().unwrap().bot = Some(false);
-    assert!(
-        !message
-            .author
-            .as_ref()
-            .and_then(|author| author.bot)
-            .unwrap_or_default()
-    );
+    message.author.bot = false;
+    assert!(!message.author.bot);
 }

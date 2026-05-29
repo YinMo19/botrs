@@ -155,6 +155,11 @@ path = "examples/group/reply_multi.rs"
 required-features = ["examples"]
 
 [[example]]
+name = "group_parse_input"
+path = "examples/group/parse_input.rs"
+required-features = ["examples"]
+
+[[example]]
 name = "group_reply_markdown"
 path = "examples/group/reply_markdown.rs"
 required-features = ["examples"]

@@ -7,7 +7,7 @@
 mod common;
 
 use botrs::models::prelude::*;
-use botrs::{Client, Context, EventHandler, Intents, Token};
+use botrs::{ChannelReplySession, Client, EventHandler, Intents, ReadySession, Token};
 use common::{Config, init_logging};
 use std::env;
 use tracing::{info, warn};
@@ -16,32 +16,28 @@ struct GuildToolsHandler;
 
 #[async_trait::async_trait]
 impl EventHandler for GuildToolsHandler {
-    async fn ready(&self, _ctx: Context, ready: Ready) {
-        info!("robot 「{}」 on_ready!", ready.user.username);
+    async fn ready(&self, session: ReadySession) {
+        info!("robot 「{}」 on_ready!", session.event().user.username);
     }
 
-    async fn message_create(&self, ctx: Context, message: Message) {
-        let Some(content) = message.content.as_deref().map(str::trim) else {
-            return;
-        };
+    async fn message_create(&self, mut session: ChannelReplySession) {
+        let message = session.message().clone();
+        let content = message.content.trim();
         if !content.starts_with("/tools") {
             return;
         }
 
-        let Some(channel_id) = message.channel_id.as_deref() else {
-            warn!("tools command has no channel_id");
-            return;
-        };
+        let channel_id = message.channel_id.as_str();
 
         let parts = content.split_whitespace().collect::<Vec<_>>();
         match parts.as_slice() {
             ["/tools", "recent"] => {
                 let pager = MessagesPager::new(Some(5));
-                match ctx.list_messages(channel_id, &pager).await {
+                match session.list_messages(channel_id, &pager).await {
                     Ok(messages) => {
                         let ids = messages
                             .iter()
-                            .filter_map(|message| message.id.as_deref())
+                            .map(|message| message.id.as_str())
                             .collect::<Vec<_>>()
                             .join("\n");
                         let reply = if ids.is_empty() {
@@ -49,49 +45,61 @@ impl EventHandler for GuildToolsHandler {
                         } else {
                             format!("Recent message IDs:\n{ids}")
                         };
-                        let _ = message.reply(&ctx, &reply).await;
+                        let _ = session.reply(reply).await;
                     }
                     Err(err) => warn!("list messages failed: {}", err),
                 }
             }
-            ["/tools", "get", message_id] => match ctx.get_message(channel_id, message_id).await {
-                Ok(found) => {
-                    let text = found.content.as_deref().unwrap_or("<empty>");
-                    let _ = message.reply(&ctx, text).await;
+            ["/tools", "get", message_id] => {
+                match session.get_message(channel_id, message_id).await {
+                    Ok(found) => {
+                        let text = if found.content.is_empty() {
+                            "<empty>"
+                        } else {
+                            found.content.as_str()
+                        };
+                        let _ = session.reply(text).await;
+                    }
+                    Err(err) => warn!("get message failed: {}", err),
                 }
-                Err(err) => warn!("get message failed: {}", err),
-            },
+            }
             ["/tools", "edit", message_id, rest @ ..] if !rest.is_empty() => {
                 let params = MessageParams::new_text(rest.join(" "));
-                match ctx.update_message(channel_id, message_id, params).await {
+                match session.update_message(channel_id, message_id, params).await {
                     Ok(updated) => info!("updated message {:?}", updated.id),
                     Err(err) => warn!("update message failed: {}", err),
                 }
             }
             ["/tools", "guide", user_id] => {
                 let params = SettingGuideParams::for_users([*user_id]);
-                if let Err(err) = ctx.send_setting_guide(channel_id, params).await {
+                if let Err(err) = session.send_setting_guide(channel_id, params).await {
                     warn!("send setting guide failed: {}", err);
                 }
             }
             ["/tools", "announce", message_id] if destructive_examples_enabled() => {
-                if let Err(err) = ctx.create_channel_announce(channel_id, message_id).await {
+                if let Err(err) = session
+                    .create_channel_announce(channel_id, message_id)
+                    .await
+                {
                     warn!("create channel announce failed: {}", err);
                 }
             }
             ["/tools", "recall", message_id] if destructive_examples_enabled() => {
-                if let Err(err) = ctx.recall_message(channel_id, message_id, Some(true)).await {
+                if let Err(err) = session
+                    .recall_message(channel_id, message_id, Some(true))
+                    .await
+                {
                     warn!("recall message failed: {}", err);
                 }
             }
             ["/tools", "clean_pins"] if destructive_examples_enabled() => {
-                if let Err(err) = ctx.clean_pins(channel_id).await {
+                if let Err(err) = session.clean_pins(channel_id).await {
                     warn!("clean pins failed: {}", err);
                 }
             }
             _ => {
                 let help = "Commands: /tools recent | /tools get <message_id> | /tools edit <message_id> <text> | /tools guide <user_id>";
-                let _ = message.reply(&ctx, help).await;
+                let _ = session.reply(help).await;
             }
         }
     }

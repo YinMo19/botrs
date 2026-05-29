@@ -2,10 +2,10 @@ use std::{ops::Deref, sync::Arc};
 
 use crate::api_impl::BotApi;
 use crate::client::Context;
-use crate::error::{BotError, Result};
+use crate::error::Result;
 use crate::models::{
     api::{BotInfo, MessageResponse},
-    message::{Message, MessageParams},
+    message::{Ark, Embed, Keyboard, Message, MessageParams},
 };
 
 use super::advance_msg_seq;
@@ -20,9 +20,7 @@ pub struct ChannelReplySession {
 
 impl ChannelReplySession {
     pub(crate) fn new(ctx: Context, message: Message) -> Result<Self> {
-        let channel_id = message.channel_id.clone().ok_or_else(|| {
-            BotError::InvalidData("Missing channel_id for channel reply session".to_string())
-        })?;
+        let channel_id = message.channel_id.clone();
 
         Ok(Self {
             ctx,
@@ -59,6 +57,14 @@ impl ChannelReplySession {
 
     /// Sends a text reply in the current channel reply session.
     pub async fn reply(&mut self, content: impl Into<String>) -> Result<MessageResponse> {
+        self.send_text_message(content).await
+    }
+
+    /// Sends a text message in the current channel reply session.
+    pub async fn send_text_message(
+        &mut self,
+        content: impl Into<String>,
+    ) -> Result<MessageResponse> {
         self.send_message(MessageParams::new_text(content)).await
     }
 
@@ -71,6 +77,26 @@ impl ChannelReplySession {
             .await
     }
 
+    /// Sends an Ark message in the current channel reply session.
+    pub async fn send_ark_message(&mut self, ark: Ark) -> Result<MessageResponse> {
+        self.send_message(MessageParams::new_ark(ark)).await
+    }
+
+    /// Sends an embed message in the current channel reply session.
+    pub async fn send_embed_message(&mut self, embed: Embed) -> Result<MessageResponse> {
+        self.send_message(MessageParams::new_embed(embed)).await
+    }
+
+    /// Sends a markdown message with a keyboard in the current channel reply session.
+    pub async fn send_keyboard_message(
+        &mut self,
+        content: impl Into<String>,
+        keyboard: Keyboard,
+    ) -> Result<MessageResponse> {
+        self.send_message(MessageParams::new_keyboard(content, keyboard))
+            .await
+    }
+
     /// Sends a channel message, filling reply ids and msg_seq when omitted.
     pub async fn send_message(&mut self, mut params: MessageParams) -> Result<MessageResponse> {
         self.prepare_message(&mut params);
@@ -79,7 +105,7 @@ impl ChannelReplySession {
 
     fn prepare_message(&mut self, params: &mut MessageParams) {
         if params.msg_id.is_none() {
-            params.msg_id = self.message.id.clone();
+            params.msg_id = Some(self.message.id.clone());
         }
         if params.event_id.is_none() {
             params.event_id = self.message.event_id.clone();

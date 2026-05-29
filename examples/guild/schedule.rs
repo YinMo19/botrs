@@ -28,10 +28,7 @@ impl EventHandler for ScheduleHandler {
     async fn message_create(&self, mut session: ChannelReplySession) {
         let message = session.message().clone();
         // Get message content
-        let content = match &message.content {
-            Some(content) => content,
-            None => return,
-        };
+        let content = &message.content;
 
         // Schedule ID - can be filled in or obtained after sending "/创建日程" command
         let schedule_id = String::new(); // 日程ID，可以填写或者发送/创建日程 命令后获取

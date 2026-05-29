@@ -53,13 +53,7 @@ impl EventHandler for AtReplyArkHandler {
             ]),
         };
 
-        // Send message with ARK payload.
-        let params = botrs::models::message::MessageParams {
-            ark: Some(ark_payload),
-            ..Default::default()
-        };
-
-        match session.send_message(params).await {
+        match session.send_ark_message(ark_payload).await {
             Ok(_) => info!("Successfully sent ARK message"),
             Err(e) => warn!("Failed to send ARK message: {}", e),
         }

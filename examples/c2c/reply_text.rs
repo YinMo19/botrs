@@ -24,10 +24,7 @@ impl EventHandler for C2CReplyHandler {
     async fn c2c_message_create(&self, mut session: C2CReplySession) {
         let message = session.message().clone();
         // Get message content
-        let content = match &message.content {
-            Some(content) => content,
-            None => return,
-        };
+        let content = &message.content;
 
         info!("Received C2C message: {}", content);
 

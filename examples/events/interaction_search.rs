@@ -6,7 +6,7 @@
 mod common;
 
 use botrs::models::prelude::*;
-use botrs::{Client, Context, EventHandler, Intents, Token};
+use botrs::{Client, EventHandler, Intents, InteractionSession, ReadySession, Token};
 use common::{Config, init_logging};
 use std::env;
 use tracing::{info, warn};
@@ -15,11 +15,12 @@ struct InteractionSearchHandler;
 
 #[async_trait::async_trait]
 impl EventHandler for InteractionSearchHandler {
-    async fn ready(&self, _ctx: Context, ready: Ready) {
-        info!("robot 「{}」 on_ready!", ready.user.username);
+    async fn ready(&self, session: ReadySession) {
+        info!("robot 「{}」 on_ready!", session.event().user.username);
     }
 
-    async fn interaction_create(&self, ctx: Context, interaction: Interaction) {
+    async fn interaction_create(&self, session: InteractionSession) {
+        let interaction = session.event();
         if interaction.data.data_type != Some(InteractionDataType::ChatInputSearch) {
             return;
         }
@@ -45,7 +46,7 @@ impl EventHandler for InteractionSearchHandler {
             }],
         };
 
-        if let Err(err) = ctx.put_interaction(interaction_id, &response).await {
+        if let Err(err) = session.put_interaction(interaction_id, &response).await {
             warn!("put interaction failed: {}", err);
         }
     }

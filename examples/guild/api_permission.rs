@@ -24,10 +24,7 @@ impl EventHandler for ApiPermissionHandler {
     async fn message_create(&self, mut session: ChannelReplySession) {
         let message = session.message().clone();
         // Get message content
-        let content = match &message.content {
-            Some(content) => content,
-            None => return,
-        };
+        let content = &message.content;
 
         // Get bot name from the bot info if available
         let bot_name = session
@@ -44,22 +41,10 @@ impl EventHandler for ApiPermissionHandler {
         }
 
         // Get guild ID for permission operations
-        let _guild_id = match &message.guild_id {
-            Some(guild_id) => guild_id,
-            None => {
-                warn!("Message has no guild_id");
-                return;
-            }
-        };
+        let _guild_id = &message.guild_id;
 
         // Get channel ID for permission operations
-        let _channel_id = match &message.channel_id {
-            Some(channel_id) => channel_id,
-            None => {
-                warn!("Message has no channel_id");
-                return;
-            }
-        };
+        let _channel_id = &message.channel_id;
 
         // Handle different permission commands
         if content.contains("/权限列表") {

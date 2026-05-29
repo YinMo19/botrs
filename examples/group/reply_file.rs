@@ -43,14 +43,7 @@ impl EventHandler for GroupReplyFileHandler {
 
         info!("Successfully uploaded group file: {:?}", upload_media);
 
-        // Send group message with media.
-        let params = botrs::models::message::GroupMessageParams {
-            msg_type: 7, // 7表示富媒体类型 (rich media type)
-            media: Some(upload_media),
-            ..Default::default()
-        };
-
-        match session.send_message(params).await {
+        match session.send_media_message(upload_media).await {
             Ok(response) => {
                 info!("Successfully sent group file message");
                 info!("Response: {:?}", response);

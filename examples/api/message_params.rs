@@ -35,10 +35,7 @@ const HELP_TEXT: &str = r#"**Message Params Commands:**
 impl EventHandler for MessageParamsHandler {
     async fn message_create(&self, mut session: ChannelReplySession) {
         let message = session.message().clone();
-        let content = match &message.content {
-            Some(content) => content.trim(),
-            None => return,
-        };
+        let content = message.content.trim();
 
         if !content.starts_with("/params") {
             return;
@@ -142,10 +139,7 @@ impl EventHandler for MessageParamsHandler {
 
     async fn group_message_create(&self, mut session: GroupReplySession) {
         let message = session.message().clone();
-        let content = match &message.content {
-            Some(content) => content.trim(),
-            None => return,
-        };
+        let content = message.content.trim();
 
         if content == "/params group" {
             let params = GroupMessageParams::new_text("Hello from GroupMessageParams.");
@@ -159,10 +153,7 @@ impl EventHandler for MessageParamsHandler {
 
     async fn c2c_message_create(&self, mut session: C2CReplySession) {
         let message = session.message().clone();
-        let content = match &message.content {
-            Some(content) => content.trim(),
-            None => return,
-        };
+        let content = message.content.trim();
 
         if content == "/params c2c" {
             let params = C2CMessageParams::new_text("Hello from C2CMessageParams.");
@@ -176,10 +167,7 @@ impl EventHandler for MessageParamsHandler {
 
     async fn direct_message_create(&self, mut session: DirectReplySession) {
         let message = session.message().clone();
-        let content = match &message.content {
-            Some(content) => content.trim(),
-            None => return,
-        };
+        let content = message.content.trim();
 
         if content == "/params dm" {
             let params = DirectMessageParams::new_text("Hello from DirectMessageParams.");

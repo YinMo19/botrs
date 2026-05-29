@@ -28,10 +28,7 @@ impl EventHandler for EmbedReplyHandler {
     async fn message_create(&self, mut session: ChannelReplySession) {
         let message = session.message().clone();
         // Get message content
-        let content = match &message.content {
-            Some(content) => content,
-            None => return,
-        };
+        let content = &message.content;
 
         info!("Received message: {}", content);
 
@@ -52,12 +49,7 @@ impl EventHandler for EmbedReplyHandler {
             ..Default::default()
         };
 
-        let params = botrs::models::message::MessageParams {
-            embed: Some(embed),
-            ..Default::default()
-        };
-
-        match session.send_message(params).await {
+        match session.send_embed_message(embed).await {
             Ok(_) => info!("Successfully sent embed message"),
             Err(e) => warn!("Failed to send embed message: {}", e),
         }

@@ -80,8 +80,8 @@ mod tests {
     #[test]
     fn group_session_fills_reply_fields_and_increments_msg_seq() {
         let message = GroupMessage {
-            id: Some("message-1".to_string()),
-            group_openid: Some("group-openid-1".to_string()),
+            id: "message-1".to_string(),
+            group_openid: "group-openid-1".to_string(),
             event_id: Some("event-1".to_string()),
             ..Default::default()
         };
@@ -101,8 +101,8 @@ mod tests {
     #[test]
     fn group_session_respects_explicit_msg_seq_and_advances_after_it() {
         let message = GroupMessage {
-            id: Some("message-1".to_string()),
-            group_openid: Some("group-openid-1".to_string()),
+            id: "message-1".to_string(),
+            group_openid: "group-openid-1".to_string(),
             event_id: Some("event-1".to_string()),
             ..Default::default()
         };

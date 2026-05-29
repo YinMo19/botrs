@@ -28,10 +28,7 @@ impl EventHandler for DmsReplyHandler {
     async fn direct_message_create(&self, mut session: DirectReplySession) {
         let message = session.message().clone();
         // Get message content
-        let content = match &message.content {
-            Some(content) => content,
-            None => return,
-        };
+        let content = &message.content;
 
         info!("Received direct message: {}", content);
 
@@ -53,37 +50,16 @@ impl EventHandler for DmsReplyHandler {
     async fn message_create(&self, session: ChannelReplySession) {
         let message = session.message().clone();
         // Get message content
-        let content = match &message.content {
-            Some(content) => content,
-            None => return,
-        };
+        let content = &message.content;
 
         info!("Received @ message: {}", content);
 
         // Check if the message contains "/私信" to trigger DM creation
         if content.contains("/私信") {
             // Get required IDs
-            let guild_id = match &message.guild_id {
-                Some(id) => id,
-                None => {
-                    warn!("Message has no guild_id");
-                    return;
-                }
-            };
+            let guild_id = &message.guild_id;
 
-            let user_id = match &message.author {
-                Some(author) => match &author.id {
-                    Some(id) => id,
-                    None => {
-                        warn!("Message author has no id");
-                        return;
-                    }
-                },
-                None => {
-                    warn!("Message has no author");
-                    return;
-                }
-            };
+            let user_id = &message.author.id;
 
             info!(
                 "Creating DM session for user {} in guild {}",

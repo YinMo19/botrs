@@ -24,10 +24,7 @@ impl EventHandler for AnnounceHandler {
     async fn message_create(&self, mut session: ChannelReplySession) {
         let message = session.message().clone();
         // Get message content
-        let content = match &message.content {
-            Some(content) => content,
-            None => return,
-        };
+        let content = &message.content;
 
         // Get bot name from the bot info if available
         let bot_name = session
@@ -38,13 +35,7 @@ impl EventHandler for AnnounceHandler {
         info!("{}receive message {}", bot_name, content);
 
         // Get channel ID for operations
-        let channel_id = match &message.channel_id {
-            Some(channel_id) => channel_id,
-            None => {
-                warn!("Message has no channel_id");
-                return;
-            }
-        };
+        let channel_id = &message.channel_id;
 
         // Send an acknowledgment message first.
         let ack_content = format!("command received: {content}");
@@ -59,23 +50,11 @@ impl EventHandler for AnnounceHandler {
         }
 
         // Get guild ID for announcement operations
-        let _guild_id = match &message.guild_id {
-            Some(guild_id) => guild_id,
-            None => {
-                warn!("Message has no guild_id");
-                return;
-            }
-        };
+        let _guild_id = &message.guild_id;
 
         // Handle referenced message for announcement operations
         let _referenced_message_id = match &message.message_reference {
-            Some(reference) => match &reference.message_id {
-                Some(message_id) => message_id,
-                None => {
-                    warn!("Message reference has no message_id");
-                    return;
-                }
-            },
+            Some(reference) => &reference.message_id,
             None => {
                 warn!("No message reference found for announcement operation");
                 return;

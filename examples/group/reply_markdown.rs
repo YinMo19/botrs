@@ -20,7 +20,7 @@ impl EventHandler for GroupReplyMarkdownHandler {
 
     async fn group_message_create(&self, mut session: GroupReplySession) {
         let message = session.message().clone();
-        let content = message.content.as_deref().unwrap_or_default();
+        let content = message.content.as_str();
         info!("Received group message: {}", content);
 
         let markdown = format!(

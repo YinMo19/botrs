@@ -41,22 +41,15 @@ impl EventHandler for MyBot {
 
     async fn message_create(&self, mut session: ChannelReplySession) {
         let message = session.message().clone();
-        if message
-            .author
-            .as_ref()
-            .and_then(|author| author.bot)
-            .unwrap_or_default()
-        {
+        if message.author.bot {
             return;
         }
 
-        if let Some(content) = &message.content {
-            if content.trim() == "!ping" {
-                info!("Received ping command from message ID: {:?}", message.id);
+        if message.content.trim() == "!ping" {
+            info!("Received ping command from message ID: {:?}", message.id);
 
-                if let Err(e) = session.reply("Pong! 🏓").await {
-                    info!("Failed to reply: {}", e);
-                }
+            if let Err(e) = session.reply("Pong! 🏓").await {
+                info!("Failed to reply: {}", e);
             }
         }
     }

@@ -6,7 +6,7 @@ use crate::error::{BotError, Result};
 use crate::manage::{C2CManageEvent, GroupManageEvent};
 use crate::models::{
     api::{BotInfo, MessageResponse},
-    message::{C2CMessageParams, GroupMessageParams},
+    message::{Ark, C2CMessageParams, Embed, GroupMessageParams, KeyboardPayload, Media},
 };
 
 use super::advance_msg_seq;
@@ -53,6 +53,51 @@ impl GroupManageSession {
     /// Returns the target group openid.
     pub fn group_openid(&self) -> Option<&str> {
         self.group_openid.as_deref()
+    }
+
+    /// Sends a text message for this group management event.
+    pub async fn send_text_message(
+        &mut self,
+        content: impl Into<String>,
+    ) -> Result<MessageResponse> {
+        self.send_message(GroupMessageParams::new_text(content))
+            .await
+    }
+
+    /// Sends a raw markdown message for this group management event.
+    pub async fn send_markdown_message(
+        &mut self,
+        content: impl Into<String>,
+    ) -> Result<MessageResponse> {
+        self.send_message(GroupMessageParams::new_markdown(content))
+            .await
+    }
+
+    /// Sends an Ark message for this group management event.
+    pub async fn send_ark_message(&mut self, ark: Ark) -> Result<MessageResponse> {
+        self.send_message(GroupMessageParams::new_ark(ark)).await
+    }
+
+    /// Sends an embed message for this group management event.
+    pub async fn send_embed_message(&mut self, embed: Embed) -> Result<MessageResponse> {
+        self.send_message(GroupMessageParams::new_embed(embed))
+            .await
+    }
+
+    /// Sends an uploaded media message for this group management event.
+    pub async fn send_media_message(&mut self, media: Media) -> Result<MessageResponse> {
+        self.send_message(GroupMessageParams::new_media(media))
+            .await
+    }
+
+    /// Sends a markdown message with a keyboard for this group management event.
+    pub async fn send_keyboard_message(
+        &mut self,
+        content: impl Into<String>,
+        keyboard: KeyboardPayload,
+    ) -> Result<MessageResponse> {
+        self.send_message(GroupMessageParams::new_keyboard(content, keyboard))
+            .await
     }
 
     /// Sends a group message, filling event_id and msg_seq when omitted.
@@ -128,6 +173,48 @@ impl C2CManageSession {
     /// Returns the target user openid.
     pub fn openid(&self) -> Option<&str> {
         self.openid.as_deref()
+    }
+
+    /// Sends a text message for this C2C management event.
+    pub async fn send_text_message(
+        &mut self,
+        content: impl Into<String>,
+    ) -> Result<MessageResponse> {
+        self.send_message(C2CMessageParams::new_text(content)).await
+    }
+
+    /// Sends a raw markdown message for this C2C management event.
+    pub async fn send_markdown_message(
+        &mut self,
+        content: impl Into<String>,
+    ) -> Result<MessageResponse> {
+        self.send_message(C2CMessageParams::new_markdown(content))
+            .await
+    }
+
+    /// Sends an Ark message for this C2C management event.
+    pub async fn send_ark_message(&mut self, ark: Ark) -> Result<MessageResponse> {
+        self.send_message(C2CMessageParams::new_ark(ark)).await
+    }
+
+    /// Sends an embed message for this C2C management event.
+    pub async fn send_embed_message(&mut self, embed: Embed) -> Result<MessageResponse> {
+        self.send_message(C2CMessageParams::new_embed(embed)).await
+    }
+
+    /// Sends an uploaded media message for this C2C management event.
+    pub async fn send_media_message(&mut self, media: Media) -> Result<MessageResponse> {
+        self.send_message(C2CMessageParams::new_media(media)).await
+    }
+
+    /// Sends a markdown message with a keyboard for this C2C management event.
+    pub async fn send_keyboard_message(
+        &mut self,
+        content: impl Into<String>,
+        keyboard: KeyboardPayload,
+    ) -> Result<MessageResponse> {
+        self.send_message(C2CMessageParams::new_keyboard(content, keyboard))
+            .await
     }
 
     /// Sends a C2C message, filling event_id and msg_seq when omitted.

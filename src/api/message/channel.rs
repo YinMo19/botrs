@@ -103,7 +103,7 @@ mod tests {
         tokio::task::JoinHandle<()>,
     ) {
         spawn_capture_server_with_body(
-            r#"{"id":"message-1","timestamp":"2026-01-01T00:00:00+08:00"}"#,
+            r#"{"id":"message-1","content":"hello","channel_id":"channel-1","guild_id":"guild-1","author":{"id":"user-1","username":"user","bot":false},"seq_in_channel":"1","timestamp":"2026-01-01T00:00:00+08:00"}"#,
         )
         .await
     }
@@ -206,14 +206,17 @@ mod tests {
     #[tokio::test]
     async fn list_messages_uses_pager_query() {
         let (base_url, request, server) =
-            spawn_capture_server_with_body(r#"[{"id":"message-1"}]"#).await;
+            spawn_capture_server_with_body(
+                r#"[{"id":"message-1","content":"hello","channel_id":"channel-1","guild_id":"guild-1","author":{"id":"user-1","username":"user","bot":false},"seq_in_channel":"1","timestamp":"2024-01-01T00:00:00+08:00"}]"#,
+            )
+            .await;
         let api = test_api(base_url).await;
         let messages = api
             .list_messages("channel-1", &MessagesPager::before("message-0", 3))
             .await
             .unwrap();
 
-        assert_eq!(messages[0].id.as_deref(), Some("message-1"));
+        assert_eq!(messages[0].id, "message-1");
         let request = request.await.unwrap();
         assert!(request.starts_with("GET /channels/channel-1/messages?"));
         assert!(request.contains("before=message-0"));
@@ -224,11 +227,14 @@ mod tests {
     #[tokio::test]
     async fn get_message_accepts_wrapped_message_response() {
         let (base_url, request, server) =
-            spawn_capture_server_with_body(r#"{"message":{"id":"message-1"}}"#).await;
+            spawn_capture_server_with_body(
+                r#"{"message":{"id":"message-1","content":"hello","channel_id":"channel-1","guild_id":"guild-1","author":{"id":"user-1","username":"user","bot":false},"seq_in_channel":"1","timestamp":"2024-01-01T00:00:00+08:00"}}"#,
+            )
+            .await;
         let api = test_api(base_url).await;
         let message = api.get_message("channel-1", "message-1").await.unwrap();
 
-        assert_eq!(message.id.as_deref(), Some("message-1"));
+        assert_eq!(message.id, "message-1");
         let request = request.await.unwrap();
         assert!(request.starts_with("GET /channels/channel-1/messages/message-1 HTTP/1.1"));
         server.await.unwrap();

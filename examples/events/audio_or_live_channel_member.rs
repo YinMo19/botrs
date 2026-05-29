@@ -5,9 +5,8 @@
 #[path = "../common/mod.rs"]
 mod common;
 
-use botrs::{
-    Client, EventHandler, Intents, PublicAudioSession, PublicAudioType, ReadySession, Token,
-};
+use botrs::models::audio::PublicAudioType;
+use botrs::{Client, EventHandler, Intents, PublicAudioSession, ReadySession, Token};
 use common::{Config, init_logging};
 use std::env;
 use tracing::{info, warn};

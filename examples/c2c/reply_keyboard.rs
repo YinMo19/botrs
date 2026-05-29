@@ -5,7 +5,7 @@
 #[path = "../common/mod.rs"]
 mod common;
 
-use botrs::models::message::{C2CMessageParams, KeyboardPayload, MarkdownPayload};
+use botrs::models::message::KeyboardPayload;
 use botrs::{C2CReplySession, Client, EventHandler, Intents, ReadySession, Token};
 use common::{Config, init_logging};
 use std::env;
@@ -20,22 +20,14 @@ impl EventHandler for C2CReplyKeyboardHandler {
     }
 
     async fn c2c_message_create(&self, mut session: C2CReplySession) {
-        let markdown = MarkdownPayload {
-            content: Some("# C2C Keyboard\n\n点击下方按钮继续。".to_string()),
-            ..Default::default()
-        };
         let keyboard = KeyboardPayload {
             content: serde_json::json!({ "id": "62" }),
         };
 
-        let params = C2CMessageParams {
-            msg_type: 2,
-            markdown: Some(markdown),
-            keyboard: Some(keyboard),
-            ..Default::default()
-        };
-
-        match session.send_message(params).await {
+        match session
+            .send_keyboard_message("# C2C Keyboard\n\n点击下方按钮继续。", keyboard)
+            .await
+        {
             Ok(response) => info!("Successfully sent C2C keyboard message: {:?}", response),
             Err(e) => warn!("Failed to send C2C keyboard message: {}", e),
         }
