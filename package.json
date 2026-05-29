@@ -1,15 +1,15 @@
 {
     "name": "botrs-docs",
     "version": "0.13.0",
-    "description": "Documentation for BotRS - A Rust QQ Bot framework",
+    "description": "Documentation for BotRS - A Rust QQ bot framework",
     "scripts": {
         "docs:dev": "vitepress dev docs",
         "docs:build": "vitepress build docs",
         "docs:preview": "vitepress preview docs",
         "docs:serve": "vitepress serve docs",
-        "build": "npm run docs:build",
-        "dev": "npm run docs:dev",
-        "preview": "npm run docs:preview"
+        "build": "pnpm docs:build",
+        "dev": "pnpm docs:dev",
+        "preview": "pnpm docs:preview"
     },
     "keywords": [
         "rust",
@@ -34,7 +34,7 @@
         "vitepress": "^1.6.3"
     },
     "engines": {
-        "node": ">=16.0.0",
-        "npm": ">=7.0.0"
+        "node": ">=22.0.0",
+        "pnpm": ">=9.0.0"
     }
 }

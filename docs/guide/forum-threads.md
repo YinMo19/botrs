@@ -17,7 +17,7 @@ With `Intents::FORUMS`, the following `EventHandler` methods become live:
 
 ## Public forum callbacks
 
-`Intents::OPEN_FORUM_EVENT` enables the same lifecycle on a single payload type, `OpenThread`, which carries optional `thread_info`, `post_info`, and `reply_info` blocks depending on which sub-event fired:
+`Intents::OPEN_FORUM_EVENT` enables the same lifecycle on a single payload type, `OpenThread`, which currently carries optional `guild_id`, `channel_id`, `author_id`, and internal `event_id`:
 
 - `open_forum_thread_create` / `_update` / `_delete`
 - `open_forum_post_create` / `_delete`
@@ -25,9 +25,9 @@ With `Intents::FORUMS`, the following `EventHandler` methods become live:
 
 ## Payload shapes
 
-`Thread` carries `channel_id`, `guild_id`, `author_id`, `event_id` (`Option<String>`), and a `thread_info: ThreadInfo`. `ThreadInfo` exposes the title and rich-content blocks the forum editor produced.
+`Thread` carries `channel_id`, `guild_id`, `author_id`, `event_id` (`Option<String>`), and a `thread_info: ThreadInfo`. `ThreadInfo` exposes `title`, `content`, `thread_id`, and `date_time`.
 
-`Post` and `Reply` follow the same shape but with `post_info: PostInfo` / `reply_info: ReplyInfo` instead. Use the callback session when a forum event needs to make REST calls.
+`Post` and `Reply` follow the same shape but with `post_info: PostInfo` / `reply_info: ReplyInfo`; those info structs keep ids, string content, and creation time. Use the callback session when a forum event needs to make REST calls.
 
 `ForumAuditResult` mirrors the audit payload directly:
 
@@ -50,15 +50,9 @@ pub struct ForumAuditResult {
 
 `forum_publish_audit_result` fires once per audit decision. The framework's gateway layer ACKs the dispatch automatically — your handler does not need to send anything back. `result == 0` indicates the publish went through; otherwise `err_msg` carries the reason supplied by the platform.
 
-## Reading rich content
+## Reading Content
 
-`ThreadInfo`, `PostInfo`, and `ReplyInfo` deserialize the QQ "paragraph" structure:
-
-- `Content { paragraphs: Vec<Paragraph> }`
-- `Paragraph { elems: Vec<Elem>, props }`
-- `Elem` is a tagged union (`Text`, `Image`, `Video`, `Url`).
-
-The exact field names and types are in `botrs::forum`; pattern-matching `Elem` is the typical way to extract text or attachments from a thread body.
+Forum info structs are exposed under `botrs::models::forum`. The current public DTOs keep forum body content as `String`; parse that string in application code if your bot needs structured text or attachment extraction.
 
 ## Minimal handler
 

@@ -4,12 +4,12 @@ There is no specific example for error recovery in `examples/`; the framework do
 
 ## What the framework already handles
 
-- WebSocket reconnect with exponential backoff
+- WebSocket reconnect with session-start throttling
 - Session resume after transient disconnects
 - Heartbeat keepalive
 - Token validation on `Token::validate()`
 
-You implement `EventHandler::error(&self, error: BotError)` if you want to observe handler-level errors (it has a default impl that just logs). Every example in `examples/` does exactly this: a one-line `warn!("…: {}", e)`.
+You implement `EventHandler::error(&self, error: BotError)` if you want to observe dispatch errors surfaced by the framework. The default implementation logs them.
 
 ## Per-call
 
@@ -25,4 +25,4 @@ match session.reply(&reply).await {
 ## See also
 
 - Guide: [`docs/guide/error-handling.md`](../guide/error-handling.md) — the canonical reference for `BotError` variants and patterns
-- `BotError` definition: `src/error.rs`
+- `BotError` definition: `src/error/bot_error.rs`

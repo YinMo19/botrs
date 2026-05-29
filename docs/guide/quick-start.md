@@ -30,16 +30,10 @@ impl EventHandler for MyBot {
 
     async fn message_create(&self, mut session: ChannelReplySession) {
         let message = session.message().clone();
-        if message
-            .author
-            .as_ref()
-            .and_then(|author| author.bot)
-            .unwrap_or_default()
-        {
+        if message.author.bot {
             return;
         }
-        let Some(content) = message.content.as_deref() else { return };
-        if content.trim() == "!ping" {
+        if message.content.trim() == "!ping" {
             let _ = session.reply("pong").await;
         }
     }
@@ -68,7 +62,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 - `Token` carries the App ID and Secret. `Token::from_env()` is also available; it reads `QQ_BOT_APP_ID` and `QQ_BOT_SECRET`.
 - `Intents` is a bitflag set. `Intents::new()` starts empty, and each `with_*` method enables one event category. `Intents::default()` is the standard public preset: it enables public, non-privileged event categories while leaving privileged events and `ENTER_AIO` opt-in.
 - `Client::new(token, intents, handler, is_sandbox)` — pass `true` for the sandbox base URL while developing, `false` for production.
-- `session.reply(text)` is the convenience for replying to the current event; for richer payloads use `session.send_message` with `MessageParams` (see [Messages](/guide/messages)).
+- `session.reply(text)` replies to the current event. Rich common payloads use `send_markdown_message`, `send_embed_message`, `send_ark_message`, `send_keyboard_message`, or the typed params constructors shown in [Messages](/guide/messages).
 
 ## Next
 

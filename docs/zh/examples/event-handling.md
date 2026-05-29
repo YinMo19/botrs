@@ -25,5 +25,5 @@ handler 内部，session 会解引用到 `BotApi`，可以直接在 `session` �
 ## 参见
 
 - 指南：[`docs/zh/guide/intents.md`](../guide/intents.md)、[`docs/zh/guide/client-handler.md`](../guide/client-handler.md)
-- `EventHandler` 全部方法：`src/client.rs`
+- `EventHandler` 全部方法：`src/client/handler.rs`
 - 上面列出的 `examples/` 中的示例

@@ -25,5 +25,5 @@ Inside the handler, the session dereferences to `BotApi`, so you can react by ca
 ## See also
 
 - Guide: [`docs/guide/intents.md`](../guide/intents.md), [`docs/guide/client-handler.md`](../guide/client-handler.md)
-- Full list of `EventHandler` methods: `src/client.rs`
+- Full list of `EventHandler` methods: `src/client/handler.rs`
 - Examples listed above under `examples/`

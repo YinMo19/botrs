@@ -10,7 +10,7 @@ let mut client = Client::new(token, intents, MyHandler, /* is_sandbox: */ false)
 client.start().await?;
 ```
 
-`Client::new` 返回 `Result<Client<H>>`，因为它会构造底层 `HttpClient`，TLS/DNS 配置异常时会失败。
+`Client::new` 返回 `Result<Client<H>>`，因为它会校验 token 并构造底层 `HttpClient`。
 
 ## 构造器
 
@@ -21,14 +21,14 @@ client.start().await?;
 
 ## 生命周期
 
-- `start().await` —— 建立连接、完成 identify，并运行事件循环；事件循环退出（正常或致命错误）后返回。
+- `start().await` —— 执行启动阶段 REST 调用、启动网关 session，并运行事件循环直到事件通道关闭。
 丢弃正在运行的 `Client` 任务会关闭网关连接。
 
 框架特意保持小表面，没有 `stop` / `is_connected` / `get_session_info` 这些方法 —— 会话状态应当通过事件感知。请用 `EventHandler::ready` 与 `EventHandler::resumed` 监听生命周期变化。
 
 ## 重连行为
 
-`start()` 会按照 [网关指南](../guide/gateway.md) 描述的节流策略，自动处理瞬时网关故障。检测到不可恢复错误（无效 token、握手失败）时，`start()` 直接返回对应的 `BotError`。
+`start()` 会把 token 校验、`get_bot_info`、`get_gateway` 的启动阶段错误直接返回。网关 session 启动后，瞬时故障会按照 [网关指南](../guide/gateway.md) 描述的节流策略自动重试；不可恢复的 identify 错误会停止该 shard 的重连循环，并由 session manager 记录日志。
 
 ## 优雅停机
 

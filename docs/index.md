@@ -5,7 +5,7 @@ layout: home
 hero:
   name: "BotRS"
   text: "Rust QQ Bot Framework"
-  tagline: "A focused async framework for QQ Guild gateway events and core bot REST actions"
+  tagline: "A focused async framework for QQ gateway events and core bot REST actions"
   actions:
     - theme: brand
       text: Get Started
@@ -33,7 +33,7 @@ features:
 
   - icon: 📝
     title: Structured Messages
-    details: Send guild, group, C2C, and direct messages with MessageParams, GroupMessageParams, C2CMessageParams, and DirectMessageParams.
+    details: Reply through session helpers or send guild, group, C2C, and direct messages with typed params constructors.
 
   - icon: 🔄
     title: Intent System
@@ -45,12 +45,12 @@ features:
 
   - icon: 📚
     title: Core REST Actions
-    details: BotApi covers bot info, gateway discovery, messages, recalls, media uploads, announcements, schedules, permissions, reactions, and pins.
+    details: BotApi covers bot info, gateway discovery, messages, media uploads, guild/channel resources, roles, permissions, announcements, schedules, reactions, pins, and audio controls.
 ---
 
 ## What Is BotRS?
 
-BotRS is an asynchronous Rust framework for building QQ Guild bots around the QQ gateway and a focused REST surface. It provides the pieces most bots need in the live event path: gateway connection management, typed event payloads, a shared REST client, token handling, and intent selection.
+BotRS is an asynchronous Rust framework for building QQ bots around the QQ gateway and a focused bot OpenAPI surface. It provides the pieces most bots need in the live event path: gateway connection management, typed event payloads, a shared REST client, token handling, and intent selection.
 
 The central types are:
 
@@ -66,10 +66,10 @@ The central types are:
 BotRS handles the core event-to-action loop:
 
 - Receive typed gateway events for guild/channel/member changes, guild messages, direct messages, group and C2C messages, reactions, interactions, audits, manage events, audio events, and forum events.
-- Reply with `session.reply("text")` for plain text, or build a matching params struct for richer payloads.
+- Reply with `session.reply("text")`, `send_markdown_message`, `send_embed_message`, `send_ark_message`, `send_keyboard_message`, or a matching params struct when you need direct field control.
 - Send guild, group, C2C, and direct messages through `BotApi`.
 - Upload group/C2C media, then send it as a media message.
-- Work with announcements, schedules, API permission requests, reactions, and pinned messages.
+- Work with guild/channel resources, roles, mute state, channel permissions, announcements, schedules, API permission requests, reactions, pinned messages, and audio controls.
 
 ## Quick Example
 
@@ -86,7 +86,11 @@ impl EventHandler for MyBot {
 
     async fn message_create(&self, mut session: ChannelReplySession) {
         let message = session.message().clone();
-        if message.content.as_deref() == Some("!ping") {
+        if message.author.bot {
+            return;
+        }
+
+        if message.content.trim() == "!ping" {
             let _ = session.reply("pong").await;
         }
     }

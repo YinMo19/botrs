@@ -7,7 +7,7 @@
 - `C2CMessageParams` —— 单聊 C2C 消息。
 - `DirectMessageParams` —— 私信（DM）消息。
 
-四者都提供常见场景的 `new_text(content)`、`new_markdown(content)`，以及设置 `msg_id` 引用的 `with_reply(message_id)`。富文本载荷（embed、ark、模板 markdown、keyboard、图片 URL、群/C2C media）通过结构体字段直接赋值。
+四者都提供常见场景的 `new_text(content)`、`new_markdown(content)`、`new_ark(...)`、`new_embed(...)`、`new_keyboard(...)`，以及设置 `msg_id` 引用的 `with_reply(message_id)`。`GroupMessageParams` 和 `C2CMessageParams` 还提供 `new_media(...)`。更特殊的协议字段仍可通过结构体字段直接赋值。
 
 ```rust
 use botrs::models::message::MessageParams;
@@ -16,21 +16,16 @@ let params = MessageParams::new_text("你好").with_reply(&message_id);
 session.send_message(params).await?;
 ```
 
-更复杂的载荷直接初始化字段：
+常见组合优先使用构造器，这样协议消息类型会被正确设置：
 
 ```rust
 use botrs::models::message::MessageParams;
 
-let params = MessageParams {
-    content: Some("带 markdown".into()),
-    markdown: Some(my_markdown),
-    keyboard: Some(my_keyboard),
-    ..Default::default()
-};
+let params = MessageParams::new_keyboard("带 markdown", my_keyboard);
 session.send_message(params).await?;
 ```
 
-频道消息需要带图片时，把远程图片 URL 写入 `params.image = Some(url.into())`。
+构造器覆盖不到的平台字段，可以从最接近的构造器开始，再只覆盖额外字段。频道消息需要带图片时，把远程图片 URL 写入 `params.image = Some(url.into())`。
 
 ## 各场景的发送方法
 
@@ -45,13 +40,16 @@ session.send_message(params).await?;
 
 ## 在事件中回复
 
-`session.reply(content)` 是在当前事件会话中回复纯文本的便捷方法。`session.send_markdown_message(content)` 则用于发送自由格式 markdown。Reply session 会自动带上入站消息 id、event id，以及平台要求的 open-message `msg_seq`。
+`session.reply(content)` 在当前事件会话中回复纯文本。Reply session 还提供 `send_text_message`、`send_markdown_message`、`send_ark_message`、`send_embed_message`、`send_keyboard_message`，群/C2C/manage session 还提供 `send_media_message`。这些方法会自动带上入站消息 id、event id，以及平台要求的 open-message `msg_seq`。
 
 ```rust
 async fn message_create(&self, mut session: ChannelReplySession) {
     let message = session.message().clone();
-    if message.author.as_ref().and_then(|author| author.bot).unwrap_or_default() { return; }
-    if let Some("!ping") = message.content.as_deref() {
+    if message.author.bot {
+        return;
+    }
+
+    if message.content.trim() == "!ping" {
         let _ = session.reply("pong").await;
     }
 }
@@ -59,9 +57,10 @@ async fn message_create(&self, mut session: ChannelReplySession) {
 
 ```rust
 session.send_markdown_message("# hello\n\n- one line").await?;
+session.send_embed_message(embed).await?;
 ```
 
-模板 markdown 或 markdown + keyboard 组合仍然自行构造对应 params，然后调用 `session.send_message(params)`。
+模板 markdown 或 helper 覆盖不到的字段组合，仍然自行构造对应 params，然后调用 `session.send_message(params)`。
 
 ## 撤回与审核
 

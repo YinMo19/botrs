@@ -9,8 +9,7 @@ The plain "@-me, I reply" pattern is implemented in [`examples/guild/reply_text.
 ```rust
 async fn message_create(&self, mut session: ChannelReplySession) {
     let message = session.message().clone();
-    let Some(content) = &message.content else { return };
-    let reply = format!("echo: {content}");
+    let reply = format!("echo: {}", message.content);
     if let Err(e) = session.reply(&reply).await {
         tracing::warn!("reply failed: {e}");
     }

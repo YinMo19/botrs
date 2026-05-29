@@ -19,7 +19,10 @@ impl EventHandler for Handler {
 
     async fn message_create(&self, mut session: ChannelReplySession) {
         let message = session.message().clone();
-        if message.author.as_ref().and_then(|author| author.bot).unwrap_or_default() { return; }
+        if message.author.bot {
+            return;
+        }
+
         let _ = session.reply("pong").await;
     }
 }

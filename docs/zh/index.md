@@ -5,7 +5,7 @@ layout: home
 hero:
   name: "BotRS"
   text: "Rust QQ 机器人框架"
-  tagline: "聚焦 QQ 频道网关事件与核心 REST 动作的异步 Rust 框架"
+  tagline: "聚焦 QQ 网关事件与核心机器人 REST 动作的异步 Rust 框架"
   actions:
     - theme: brand
       text: 开始使用
@@ -33,7 +33,7 @@ features:
 
   - icon: 📝
     title: 结构化消息
-    details: 使用 MessageParams、GroupMessageParams、C2CMessageParams 和 DirectMessageParams 发送频道、群、C2C 和私信消息。
+    details: 通过 session helper 或类型化 params 构造器发送频道、群、C2C 和私信消息。
 
   - icon: 🔄
     title: Intent 系统
@@ -45,12 +45,12 @@ features:
 
   - icon: 📚
     title: 核心 REST 动作
-    details: BotApi 覆盖 bot 信息、网关发现、消息、撤回、媒体上传、公告、日程、权限、表情回应和精华消息。
+    details: BotApi 覆盖 bot 信息、网关发现、消息、媒体上传、频道资源、身份组、权限、公告、日程、表情回应、精华和音频控制。
 ---
 
 ## 什么是 BotRS？
 
-BotRS 是围绕 QQ 网关和核心 REST 能力构建的异步 Rust QQ 频道机器人框架。它提供多数机器人在实时事件路径中需要的组件：网关连接管理、类型化事件载荷、共享 REST 客户端、token 处理和 intent 选择。
+BotRS 是围绕 QQ 网关和核心机器人 OpenAPI 能力构建的异步 Rust QQ 机器人框架。它提供多数机器人在实时事件路径中需要的组件：网关连接管理、类型化事件载荷、共享 REST 客户端、token 处理和 intent 选择。
 
 核心类型包括：
 
@@ -66,10 +66,10 @@ BotRS 是围绕 QQ 网关和核心 REST 能力构建的异步 Rust QQ 频道机�
 BotRS 处理核心的“事件到动作”链路：
 
 - 接收 guild/channel/member 变化、频道消息、私信、群与 C2C 消息、表情回应、互动、审核、管理、音频和论坛等类型化网关事件。
-- 纯文本回复可用 `session.reply("text")`，更复杂的回复可构造对应 params。
+- 用 `session.reply("text")`、`send_markdown_message`、`send_embed_message`、`send_ark_message`、`send_keyboard_message` 回复常见内容；需要精确控制字段时再构造对应 params。
 - 通过 `BotApi` 发送频道、群、C2C 和私信消息。
 - 上传群/C2C 媒体，再作为 media 消息发送。
-- 使用公告、日程、API 权限申请、表情回应和精华消息相关 API。
+- 使用频道资源、身份组、禁言、子频道权限、公告、日程、API 权限申请、表情回应、精华消息和音频控制相关 API。
 
 ## 快速示例
 
@@ -86,7 +86,11 @@ impl EventHandler for MyBot {
 
     async fn message_create(&self, mut session: ChannelReplySession) {
         let message = session.message().clone();
-        if message.content.as_deref() == Some("!ping") {
+        if message.author.bot {
+            return;
+        }
+
+        if message.content.trim() == "!ping" {
             let _ = session.reply("pong").await;
         }
     }

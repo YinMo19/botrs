@@ -1,28 +1,24 @@
 # Example Resources
 
-This directory contains example files for demonstrating file upload functionality in BotRS examples.
+This directory is reserved for local notes or scratch assets while trying the media examples.
 
 ## Files
 
 ### test.png
-A sample image file for testing image upload functionality. 
+A sample image file for local experiments.
 
-**Note**: Since this is a Git repository, we don't include actual image files. To test file upload examples:
+**Note**: The current group/C2C media APIs upload by remote URL (`post_group_file` / `post_c2c_file`), not by reading local bytes directly. To use a local file with the examples, host it somewhere reachable by QQ first, then pass that URL.
 
-1. Add a PNG image file named `test.png` to this directory
-2. The image should be a small test image (recommended size: under 1MB)
-3. Common formats supported: PNG, JPG, JPEG, GIF
+1. Add a PNG image file named `test.png` to this directory for manual testing.
+2. Upload or serve it from a public URL.
+3. Use that URL as the `file_url` in the group/C2C media examples.
 
 ### Usage in Examples
 
-The rich media examples use remote URLs. You can keep local test assets in this directory when experimenting manually:
+The rich media examples use remote URLs. After hosting a local test asset, pass that URL to the example:
 
 ```rust
-// Method 1: Read file as bytes
-let img_bytes = std::fs::read("examples/resource/test.png")?;
-
-// Method 2: Use file path directly
-let file_path = "examples/resource/test.png";
+let file_url = "https://example.com/test.png";
 ```
 
 ### Creating Test Files
@@ -45,10 +41,10 @@ img.save('examples/resource/test.png')
 
 ## File Upload Support
 
-BotRS supports uploading various file types:
+The platform media upload endpoint accepts a `file_type` plus a remote URL. Common file types include:
 - Images: PNG, JPG, JPEG, GIF
 - Documents: PDF, TXT, DOC, DOCX
 - Audio: MP3, WAV, OGG
 - Video: MP4, AVI, MOV
 
-File size limits depend on the QQ Guild API restrictions.
+Supported formats and size limits are enforced by the QQ OpenAPI side.

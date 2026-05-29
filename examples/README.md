@@ -104,7 +104,7 @@ Guild channel message examples generally use `Intents::new().with_public_guild_m
 | `group_reply_keyboard` | `group/reply_keyboard.rs` | Group Markdown plus keyboard template payloads |
 | `group_manage_event` | `group/manage_event.rs` | Robot add/remove and group active-message toggles |
 
-Group examples use `Intents::new().with_public_messages()`. Replies should preserve `msg_id` and `event_id` from the inbound event when those fields are present.
+Group examples use `Intents::new().with_public_messages()`. Reply sessions preserve inbound `msg_id`, `event_id`, and `msg_seq` when the platform requires them.
 
 ## C2C Examples
 
@@ -148,19 +148,11 @@ These examples focus on gateway event parsing and the corresponding `EventHandle
 
 Use `/params` commands in the relevant scene to trigger the API example.
 
-## Message Type Notes
+## Message Helper Notes
 
-Open-platform group and C2C messages use numeric `msg_type` values:
+Reply sessions provide semantic helpers for common payloads: `reply` / `send_text_message`, `send_markdown_message`, `send_ark_message`, `send_embed_message`, `send_keyboard_message`, and, for group/C2C scenes, `send_media_message`.
 
-| `msg_type` | Meaning |
-|---|---|
-| `0` | Plain text |
-| `2` | Markdown |
-| `3` | ARK |
-| `4` | Embed |
-| `7` | Rich media returned by file upload |
-
-Guild channel and direct-message params use `MessageCreateType` for explicit rich types when needed. Plain text can usually omit the type and set only `content`.
+When you need the lower-level API surface, use the matching params constructors such as `MessageParams::new_markdown(...)`, `GroupMessageParams::new_embed(...)`, or `C2CMessageParams::new_media(...)`. These constructors fill the platform message type for you.
 
 ## Troubleshooting
 

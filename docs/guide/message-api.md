@@ -9,29 +9,23 @@ The message API uses typed parameter structs. Each send surface has one paramete
 | C2C | `C2CMessageParams` | `send_c2c_message` |
 | Direct message | `DirectMessageParams` | `send_direct_message` |
 
-All parameter structs provide `new_text(content)` and `with_reply(message_id)`. Rich payloads are expressed by setting fields on the struct.
+All parameter structs provide `new_text(content)`, `new_markdown(content)`, `new_ark(...)`, `new_embed(...)`, `new_keyboard(...)`, and `with_reply(message_id)`. Group and C2C params also provide `new_media(...)`.
 
 ```rust
 let params = MessageParams::new_text("Hello!").with_reply(&message_id);
 api.send_message("channel_id", params).await?;
 ```
 
-## Field-based payloads
+## Rich Payloads
 
-Use struct fields for content that is not plain text:
+Use constructors for common rich payloads:
 
 ```rust
-let params = MessageParams {
-    content: Some("with embed".into()),
-    embed: Some(my_embed),
-    markdown: Some(my_markdown),
-    keyboard: Some(my_keyboard),
-    ..Default::default()
-};
+let params = MessageParams::new_embed(my_embed);
 api.send_message(channel_id, params).await?;
 ```
 
-This keeps the call site explicit: every optional protocol field has a name, and `..Default::default()` leaves unrelated fields absent from the outgoing JSON.
+For custom combinations, start from the closest constructor and then set extra fields directly with `..Default::default()` so unrelated protocol fields stay absent from the outgoing JSON.
 
 ## Choosing the right parameter type
 
@@ -42,4 +36,4 @@ Use the event payload to choose the ID and parameter type:
 - `C2CMessage` carries `author.user_openid`; send with `C2CMessageParams`.
 - `DirectMessage` is the DM session returned by `create_direct_message`; send with `DirectMessageParams` and the session `guild_id`.
 
-For plain-text replies, prefer the event model's `reply` method. For richer replies, build the matching params value and call the corresponding `BotApi` method.
+Inside event handlers, prefer the session helpers: `reply`, `send_markdown_message`, `send_embed_message`, `send_ark_message`, `send_keyboard_message`, and group/C2C `send_media_message`. For standalone `BotApi` calls, build the matching params value and call the corresponding send method.

@@ -1,14 +1,20 @@
 # API client
 
-`BotApi` is the REST client used by the current bot runtime path. After a gateway event arrives, handlers usually reach it through the session object to reply, recall messages, upload group/C2C files, manage announcements, schedules and pins, inspect reaction users, and create API permission requests.
+`BotApi` is the REST client used by the current bot runtime path. After a gateway event arrives, handlers usually reach it through the session object to reply, recall messages, upload group/C2C files, manage guild/channel resources, announcements, schedules, pins, reactions, permissions, roles, mute state, and audio controls.
 
 ## In a Handler
 
-Every session can be used directly as a `BotApi`:
+Reply sessions provide scene-aware send helpers:
 
 ```rust
 let params = MessageParams::new_text("hi");
 session.send_message(params).await?;
+```
+
+All sessions also dereference to `BotApi`, so regular REST methods are available directly on `session`:
+
+```rust
+let pins = session.get_pins(channel_id).await?;
 ```
 
 No token is passed in this path. `Client` creates the API client during startup; sessions expose that shared client to handlers through `session.api()` and `session.api_handle()`.
@@ -17,12 +23,13 @@ Common calls include:
 
 - Messages: `send_message`, `send_group_message`, `send_c2c_message`, `send_direct_message`, `recall_message`
 - Direct-message session: `create_direct_message`
+- Guilds/channels/members/roles: `get_guild`, `list_channels`, `create_channel`, `get_guild_member`, `list_roles`
 - Files: `post_group_file`, `post_c2c_file`
 - Reactions: `put_reaction`, `delete_reaction`, `get_reaction_users`
-- Pins: `put_pin`, `delete_pin`, `get_pins`
-- Announcements: `create_announce`, `create_recommend_announce`, `delete_announce`
+- Pins: `put_pin`, `delete_pin`, `clean_pins`, `get_pins`
+- Announcements: `create_channel_announce`, `delete_channel_announce`, `create_announce`, `create_recommend_announce`, `delete_announce`
 - Schedules: `get_schedules`, `get_schedule`, `create_schedule`, `update_schedule`, `delete_schedule`
-- Permissions: `get_api_permissions`, `post_permission_demand`
+- Permissions and audio: `get_api_permissions`, `post_permission_demand`, `get_channel_permissions`, `post_audio`, `put_mic`, `delete_mic`
 
 ## Standalone Use
 
@@ -49,7 +56,7 @@ group_session.send_message(GroupMessageParams::new_text("group")).await?;
 c2c_session.send_message(C2CMessageParams::new_text("c2c")).await?;
 ```
 
-Rich payloads are field combinations: ark, embed, markdown, keyboard, media, and related fields are set directly on the corresponding params value. This keeps protocol fields explicit at the call site.
+Common rich payloads use constructors such as `new_markdown`, `new_embed`, `new_ark`, `new_keyboard`, and group/C2C `new_media`. Inside reply sessions, prefer the matching `send_*_message` helper. Set params fields directly only for custom protocol combinations not covered by those helpers.
 
 ## Errors
 

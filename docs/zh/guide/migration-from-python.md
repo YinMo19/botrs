@@ -17,10 +17,8 @@ struct MyBot;
 impl EventHandler for MyBot {
     async fn message_create(&self, mut session: ChannelReplySession) {
         let message = session.message().clone();
-        if let Some(content) = message.content.as_deref() {
-            if content.contains("ping") {
-                let _ = session.reply("pong").await;
-            }
+        if message.content.contains("ping") {
+            let _ = session.reply("pong").await;
         }
     }
 }
@@ -65,7 +63,7 @@ session.send_message(params).await?;
 
 群、C2C、私信的形态相同：`GroupMessageParams` → `send_group_message`、`C2CMessageParams` → `send_c2c_message`、`DirectMessageParams` → `send_direct_message`。
 
-复杂载荷（embed、ark、markdown、keyboard）直接 `..Default::default()` 初始化字段即可 —— 不会出现一长串 kwargs，每种场景只有一个构建器类型。
+事件处理器里的常用场景由 `session.reply`、`send_markdown_message`、`send_embed_message`、`send_ark_message`、`send_keyboard_message` 以及群/C2C 的 `send_media_message` 覆盖。直接调用 `BotApi` 或需要自定义字段时，使用 `new_markdown`、`new_embed`、`new_ark`、`new_keyboard`、`new_media` 等 params 构造器。
 
 ## 启动机器人
 

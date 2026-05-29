@@ -4,12 +4,12 @@
 
 ## 键盘
 
-频道键盘作为普通 `MessageParams` 的一部分与 Markdown 一起发送。可以通过 id 引用服务端模板，也可以用 `KeyboardContent`、`KeyboardRow`、`KeyboardButton`、`KeyboardButtonRenderData`、`KeyboardButtonAction`、`KeyboardButtonPermission` 内联定义行/按钮。群与 C2C 示例使用 `KeyboardPayload`，并设置 `msg_type: 2`。
+键盘与 Markdown 一起发送。可以通过 id 引用服务端模板，也可以用 `KeyboardContent`、`KeyboardRow`、`KeyboardButton`、`KeyboardButtonRenderData`、`KeyboardButtonAction`、`KeyboardButtonPermission` 内联定义行/按钮。群与 C2C session 使用 `KeyboardPayload`，频道和私信用 `Keyboard`。
 
 ```rust
 use botrs::models::message::{
     Keyboard, KeyboardButton, KeyboardButtonAction, KeyboardButtonRenderData,
-    KeyboardContent, KeyboardRow, MarkdownPayload, MessageParams,
+    KeyboardContent, KeyboardRow,
 };
 
 let keyboard = Keyboard {
@@ -24,17 +24,14 @@ let keyboard = Keyboard {
         style: None,
     }),
 };
-let params = MessageParams {
-    markdown: Some(MarkdownPayload { content: Some("# title \n## body".into()), ..Default::default() }),
-    keyboard: Some(keyboard),
-    ..Default::default()
-};
-session.send_message(params).await?;
+session.send_keyboard_message("# title\n\n## body", keyboard).await?;
 ```
+
+独立调用 `BotApi` 时，使用对应的 params 构造器，例如 `MessageParams::new_keyboard(content, keyboard)`。群和 C2C 使用带 `KeyboardPayload` 的 `GroupMessageParams::new_keyboard` / `C2CMessageParams::new_keyboard`。
 
 ## 命令分发
 
-`examples/guild/command.rs` 展示了一个极小的 `CommandRegistry`：把别名映射到 handler 函数，在 `message_create` 中分发。框架本身没有命令系统；按前缀切分、调用匹配的 handler、再用 `session.reply` 或 `session.send_message` 回复即可。
+`examples/guild/command.rs` 展示了一个极小的 `CommandRegistry`：把别名映射到 handler 函数，在 `message_create` 中分发。框架本身没有命令系统；按前缀切分、调用匹配的 handler、再用 `session.reply` 或语义化 `send_*_message` helper 回复即可。
 
 ## 参见
 

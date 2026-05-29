@@ -10,9 +10,9 @@
 
 ### 前置条件
 
-- Rust 1.70 或更高版本
+- Rust 1.85 或更高版本
 - Git
-- 一个 QQ 频道机器人应用程序（用于测试）
+- 一个 QQ 机器人应用程序（用于测试）
 
 ### 设置开发环境
 
@@ -131,7 +131,7 @@
 // 使用描述性名称
 pub struct MessageParams {
     content: Option<String>,
-    embed: Option<MessageEmbed>,
+    embed: Option<Embed>,
 }
 
 // 记录公共 API

@@ -1,6 +1,6 @@
 # Other Types
 
-This page covers common models outside messages, users, guilds, and channels: gateway startup data, schedules, permissions, pins, announcements, reactions, interactions, audio events, manage events, and forum events.
+This page covers common models outside messages, users, guilds, and channels: gateway startup data, schedules, permissions, roles, mute, pins, announcements, reactions, interactions, audio, manage events, and forum events.
 
 ## Gateway
 
@@ -29,6 +29,8 @@ Permission listing uses `get_api_permissions`. Permission requests use `post_per
 
 `post_permission_demand` builds the request body from those fields, so callers only need to describe the target API and the reason.
 
+Channel permission APIs use `ChannelPermissions`, `ChannelRolePermissions`, and `UpdateChannelPermissions`. Role APIs use `Role`, `GuildRoles`, `UpdateRoleResult`, and `MemberRoleParams`. Mute APIs use `GuildMute` and `GuildMuteResponse`.
+
 ## Pins and Announcements
 
 Pinned messages are represented by `PinsMessage`, which stores the pinned message ids for a channel. The common flow is pin, unpin, and list.
@@ -53,7 +55,7 @@ When listing reaction users, pass the previous response's `cookie` and a `limit`
 
 ## Audio, Manage, and Forum Events
 
-Audio models are gateway event payloads: `Audio`, `PublicAudio`, and `PublicAudioType`.
+Audio models include gateway event payloads (`Audio`, `PublicAudio`, `PublicAudioType`) and REST control payloads (`AudioControl`, `AudioStatus`).
 
 Manage events are dispatched as:
 

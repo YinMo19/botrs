@@ -1,6 +1,6 @@
 # 富文本消息
 
-Embed、Markdown、ARK 模板和键盘都通过对应目的地的参数结构体发送。频道与私信用 `MessageParams` / `DirectMessageParams`，群与 C2C 用 `GroupMessageParams` / `C2CMessageParams` 并设置数字 `msg_type`。
+Embed、Markdown、ARK 模板和键盘可以直接从当前 reply session 发送。只有需要自定义协议字段时，才使用更底层的 params 结构体。
 
 可运行的示例：
 
@@ -11,10 +11,10 @@ Embed、Markdown、ARK 模板和键盘都通过对应目的地的参数结构体
 
 ## 套路
 
-用结构体初始化的方式构造 payload（`Embed`、`MarkdownPayload`、`Ark`），塞进对应 params 字段，再调用当前 session 的 `send_message`。
+用结构体初始化的方式构造 payload（`Embed`、`Ark`、键盘 payload），再传给语义化 session helper。
 
 ```rust
-use botrs::models::message::{Embed, EmbedField, MessageParams};
+use botrs::models::message::{Embed, EmbedField};
 
 let embed = Embed {
     title: Some("embed消息".to_string()),
@@ -22,17 +22,16 @@ let embed = Embed {
     fields: Some(vec![EmbedField { name: Some("hello world".to_string()), ..Default::default() }]),
     ..Default::default()
 };
-let params = MessageParams { embed: Some(embed), ..Default::default() };
-session.send_message(params).await?;
+session.send_embed_message(embed).await?;
 ```
 
-自由格式 markdown 有 session helper：
+自由格式 markdown 也有 session helper：
 
 ```rust
 session.send_markdown_message("# title\n\nbody").await?;
 ```
 
-需要 `custom_template_id` + `params` 或 markdown + keyboard 同发时，再使用 `markdown: Some(MarkdownPayload { ... })`。手动构造群与 C2C 富消息时，Markdown 用 `msg_type: 2`，ARK 用 `msg_type: 3`，Embed 用 `msg_type: 4`。
+不在 reply session 内发送时，使用 `MessageParams::new_keyboard(...)`、`GroupMessageParams::new_ark(...)`、`C2CMessageParams::new_embed(...)` 这类构造器。需要模板 markdown 参数等 helper 覆盖不到的组合时，再手动设置字段。
 
 ## 参见
 

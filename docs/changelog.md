@@ -8,8 +8,8 @@ This page summarizes the currently documented BotRS release line. The main API s
 
 - `Client` owns the gateway lifecycle and dispatches typed events to `EventHandler`.
 - Event callbacks receive session objects that expose the shared `BotApi` and add reply helpers for the current event.
-- `BotApi` covers bot info, gateway discovery, message sending, message recall, group/C2C file upload, announcements, schedules, API permissions, reactions, and pinned messages.
-- Message sending uses `MessageParams`, `GroupMessageParams`, `C2CMessageParams`, and `DirectMessageParams`.
+- `BotApi` covers bot info, gateway discovery, message sending/recall, group/C2C file upload, guild/channel resources, roles, mute, channel permissions, announcements, schedules, API permissions, reactions, pinned messages, and audio controls.
+- Message sending uses session helpers for common replies and `MessageParams`, `GroupMessageParams`, `C2CMessageParams`, and `DirectMessageParams` constructors for lower-level calls.
 - Gateway events are decoded into typed payloads for messages, direct messages, group/C2C messages, reactions, interactions, guilds, channels, members, audits, manage events, audio events, and forum events.
 
 ### Notes

@@ -9,15 +9,8 @@ docs/
 ├── .vitepress/          # VitePress configuration
 │   └── config.mts       # Site configuration
 ├── guide/               # English guides
-│   ├── introduction.md
-│   ├── installation.md
-│   ├── quick-start.md
-│   └── configuration.md
 ├── api/                 # English API reference
-│   ├── client.md
-│   └── event-handler.md
 ├── examples/            # English examples
-│   └── getting-started.md
 ├── zh/                  # Chinese documentation
 │   ├── guide/           # Chinese guides
 │   ├── api/             # Chinese API reference
@@ -36,31 +29,31 @@ docs/
 
 ### Prerequisites
 
-- Node.js 16+ 
-- npm 7+
+- Node.js 22 (same as CI)
+- pnpm 9
 
 ### Local Development
 
 ```bash
 # Install dependencies
-npm install
+pnpm install
 
 # Start development server
-npm run docs:dev
+pnpm docs:dev
 
 # Build for production
-npm run docs:build
+pnpm docs:build
 
 # Preview production build
-npm run docs:preview
+pnpm docs:preview
 ```
 
 ### Available Scripts
 
-- `npm run docs:dev` - Start development server with hot reload
-- `npm run docs:build` - Build static site for production
-- `npm run docs:preview` - Preview production build locally
-- `npm run docs:serve` - Serve built documentation
+- `pnpm docs:dev` - Start development server with hot reload
+- `pnpm docs:build` - Build static site for production
+- `pnpm docs:preview` - Preview production build locally
+- `pnpm docs:serve` - Serve built documentation
 
 ## Documentation Guidelines
 
@@ -145,15 +138,13 @@ VitePress supports extended markdown features:
 - Syntax highlighting with line numbers
 - Custom containers (info, tip, warning, danger)
 - Code group tabs
-- Math expressions
-- Mermaid diagrams
 
 ## Deployment
 
 The documentation is automatically deployed when changes are pushed to the main branch. The build process:
 
-1. Installs dependencies
-2. Runs `npm run docs:build`
+1. Installs dependencies with pnpm
+2. Runs `pnpm docs:build`
 3. Deploys to the hosting platform
 
 ## Maintenance

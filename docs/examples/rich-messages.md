@@ -1,6 +1,6 @@
 # Rich Messages
 
-Embeds, Markdown, ARK templates, and keyboards use the message parameter struct for the destination you are sending to. Guild channel and direct messages use `MessageParams` / `DirectMessageParams`; group and C2C messages use `GroupMessageParams` / `C2CMessageParams` with a numeric `msg_type`.
+Embeds, Markdown, ARK templates, and keyboards can be sent directly from the current reply session. Use the lower-level params structs only when you need custom protocol fields.
 
 Working examples:
 
@@ -11,10 +11,10 @@ Working examples:
 
 ## Pattern
 
-Build a payload (`Embed`, `MarkdownPayload`, `Ark`) using its struct-init form, drop it into the matching params field, then call the current session's `send_message`.
+Build a payload (`Embed`, `Ark`, keyboard payload), then pass it to the semantic session helper.
 
 ```rust
-use botrs::models::message::{Embed, EmbedField, MessageParams};
+use botrs::models::message::{Embed, EmbedField};
 
 let embed = Embed {
     title: Some("embed消息".to_string()),
@@ -22,17 +22,16 @@ let embed = Embed {
     fields: Some(vec![EmbedField { name: Some("hello world".to_string()), ..Default::default() }]),
     ..Default::default()
 };
-let params = MessageParams { embed: Some(embed), ..Default::default() };
-session.send_message(params).await?;
+session.send_embed_message(embed).await?;
 ```
 
-Raw markdown has a session helper:
+Raw markdown is also a session helper:
 
 ```rust
 session.send_markdown_message("# title\n\nbody").await?;
 ```
 
-Use `markdown: Some(MarkdownPayload { ... })` when you need `custom_template_id` + `params` or markdown plus keyboard in the same message. For manually built group and C2C rich messages, set `msg_type` to `2` for Markdown, `3` for ARK, and `4` for Embed.
+Use params constructors such as `MessageParams::new_keyboard(...)`, `GroupMessageParams::new_ark(...)`, or `C2CMessageParams::new_embed(...)` when you are sending outside a reply session. Set fields manually only for custom combinations such as template markdown params not covered by the helpers.
 
 ## See also
 

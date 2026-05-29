@@ -25,7 +25,7 @@ impl CommandRegistry {
 }
 ```
 
-示例注册了两个命令（`你好` / `hello` 与 `晚安`），并演示了两种回复写法：方便的 `session.reply(&response)` 与显式的 `MessageParams { content: Some(response), ..Default::default() }` + `session.send_message(...)`。两种写法落到同一个接口，按需选择。
+示例注册了两个命令（`你好` / `hello` 与 `晚安`），并通过 `session.reply(&response)` 回复。命令需要返回富消息时，使用 `send_markdown_message`、`send_embed_message`、`send_ark_message` 或 `send_keyboard_message`。
 
 ## 参见
 

@@ -30,14 +30,10 @@
 
 ## 使用建议
 
-处理消息时不要假设所有用户字段都存在。平台在不同事件中可能省略用户名、头像或 member 信息，因此 author/member 字段大多是 `Option`。
+常规消息事件里的 `message.author` 是必有字段。member 详情和部分平台特定用户字段仍可能按事件类型缺省或使用默认值。
 
 ```rust
-let is_bot = message
-    .author
-    .as_ref()
-    .and_then(|author| author.bot)
-    .unwrap_or(false);
+let is_bot = message.author.bot;
 ```
 
 群和 C2C 回复时优先使用事件模型中的 openid 字段。

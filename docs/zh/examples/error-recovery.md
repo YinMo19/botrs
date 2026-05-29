@@ -4,12 +4,12 @@
 
 ## 框架已经做了什么
 
-- WebSocket 重连（指数退避）
+- WebSocket 重连（按 session-start 间隔节流）
 - 临时断开后的会话恢复
 - 心跳保活
 - `Token::validate()` 校验 token
 
-如果想观察 handler 级错误，实现 `EventHandler::error(&self, error: BotError)`（默认实现只打日志）。`examples/` 中的每个示例都用一行 `warn!("…: {}", e)` 记录错误。
+如果想观察框架抛出的分派错误，实现 `EventHandler::error(&self, error: BotError)`；默认实现会记录日志。
 
 ## 单次调用
 
@@ -25,4 +25,4 @@ match session.reply(&reply).await {
 ## 参见
 
 - 指南：[`docs/zh/guide/error-handling.md`](../guide/error-handling.md) ——`BotError` 变体与处理模式的权威参考
-- `BotError` 定义：`src/error.rs`
+- `BotError` 定义：`src/error/bot_error.rs`

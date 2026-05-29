@@ -10,9 +10,9 @@ By participating in this project, you agree to abide by our [Code of Conduct](CO
 
 ### Prerequisites
 
-- Rust 1.70 or later
+- Rust 1.85 or later
 - Git
-- A QQ Guild Bot application (for testing)
+- A QQ bot application (for testing)
 
 ### Setting Up Your Development Environment
 
@@ -131,7 +131,7 @@ We welcome contributions for:
 // Use descriptive names
 pub struct MessageParams {
     content: Option<String>,
-    embed: Option<MessageEmbed>,
+    embed: Option<Embed>,
 }
 
 // Document public APIs

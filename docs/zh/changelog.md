@@ -8,8 +8,8 @@
 
 - `Client` 负责网关生命周期，并把类型化事件分发给 `EventHandler`。
 - 事件回调收到 session 对象；session 暴露共享 `BotApi`，并提供当前事件的回复辅助方法。
-- `BotApi` 覆盖 bot 信息、网关发现、消息发送、消息撤回、群/C2C 文件上传、公告、日程、API 权限、表情回应和精华消息。
-- 消息发送使用 `MessageParams`、`GroupMessageParams`、`C2CMessageParams` 和 `DirectMessageParams`。
+- `BotApi` 覆盖 bot 信息、网关发现、消息发送/撤回、群/C2C 文件上传、频道资源、身份组、禁言、子频道权限、公告、日程、API 权限、表情回应、精华消息和音频控制。
+- 消息发送在常见回复场景使用 session helper，底层调用使用 `MessageParams`、`GroupMessageParams`、`C2CMessageParams` 和 `DirectMessageParams` 构造器。
 - 网关事件会解析成消息、私信、群/C2C、表情回应、互动、频道、子频道、成员、审核、管理、音频和论坛等类型化 payload。
 
 ### 说明

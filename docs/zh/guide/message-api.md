@@ -9,29 +9,23 @@
 | C2C | `C2CMessageParams` | `send_c2c_message` |
 | 私信 | `DirectMessageParams` | `send_direct_message` |
 
-所有参数结构体都提供 `new_text(content)` 和 `with_reply(message_id)`。富文本载荷通过结构体字段表达。
+所有参数结构体都提供 `new_text(content)`、`new_markdown(content)`、`new_ark(...)`、`new_embed(...)`、`new_keyboard(...)` 和 `with_reply(message_id)`。群和 C2C 参数还提供 `new_media(...)`。
 
 ```rust
 let params = MessageParams::new_text("你好").with_reply(&message_id);
 api.send_message("channel_id", params).await?;
 ```
 
-## 基于字段的载荷
+## 富消息载荷
 
-非纯文本内容直接设置结构体字段：
+常见富消息使用构造器：
 
 ```rust
-let params = MessageParams {
-    content: Some("带 embed".into()),
-    embed: Some(my_embed),
-    markdown: Some(my_markdown),
-    keyboard: Some(my_keyboard),
-    ..Default::default()
-};
+let params = MessageParams::new_embed(my_embed);
 api.send_message(channel_id, params).await?;
 ```
 
-这样调用点会很明确：每个可选协议字段都有名字，`..Default::default()` 会让无关字段不进入发出的 JSON。
+自定义组合先从最接近的构造器开始，再直接设置额外字段，并用 `..Default::default()` 让无关协议字段不进入发出的 JSON。
 
 ## 选择正确的参数类型
 
@@ -42,4 +36,4 @@ api.send_message(channel_id, params).await?;
 - `C2CMessage` 带 `author.user_openid`；使用 `C2CMessageParams`。
 - `DirectMessage` 是 `create_direct_message` 返回的私信会话；使用 `DirectMessageParams` 和会话 `guild_id`。
 
-纯文本回复优先使用事件模型自带的 `reply` 方法。需要更丰富的回复时，构造对应 params 并调用相应的 `BotApi` 方法。
+事件处理器里优先使用 session helper：`reply`、`send_markdown_message`、`send_embed_message`、`send_ark_message`、`send_keyboard_message`，以及群/C2C 的 `send_media_message`。独立调用 `BotApi` 时，构造对应 params 并调用相应发送方法。

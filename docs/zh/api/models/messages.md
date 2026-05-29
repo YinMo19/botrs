@@ -11,14 +11,14 @@
 - `GroupMessage` 对应 `GROUP_AT_MESSAGE_CREATE`，核心定位字段是 `group_openid`。
 - `C2CMessage` 对应 `C2C_MESSAGE_CREATE`，核心定位字段通常来自 `author.user_openid`。
 
-这些事件模型都保留了平台可能给出的 message id、content、attachments、mentions、timestamp、reference 和内部 `event_id`。如果只是做回复，优先使用对应 reply session 的 `session.reply(...)`；更复杂的回复则手动构造对应的参数结构体。
+这些事件模型都保留了平台给出的 message id、content、attachments、mentions、timestamp、reference 和内部 `event_id`。常规消息事件里的 message id、content、author、路由 id、timestamp 是必有字段；群/C2C 消息还会携带必有的开放消息 `message_type`。协议本身可缺省的字段仍然保持可选。
+
+附件使用 `MessageAttachment`。只要附件出现，filename、content type、size、url 都是普通字段。`id` 仍是可选字段，因为开放消息附件可能不带该值；`width` / `height` 在非图片或平台未给尺寸时默认为 `0`。
 
 ```rust
 let message = session.message();
-if let Some(content) = &message.content {
-    if content.trim() == "/ping" {
-        session.reply("pong").await?;
-    }
+if !message.author.bot && message.content.trim() == "/ping" {
+    session.reply("pong").await?;
 }
 ```
 
@@ -33,14 +33,22 @@ if let Some(content) = &message.content {
 | `GroupMessageParams` | 群聊消息 |
 | `C2CMessageParams` | C2C 消息 |
 
-最常用的是 `new_text` 和 `with_reply`：
+在可回复事件里优先使用 session helper：
+
+```rust
+session.reply("pong").await?;
+session.send_markdown_message("# hello").await?;
+session.send_embed_message(embed).await?;
+```
+
+直接调用 `BotApi` 或需要自定义字段时，使用 params 构造器：
 
 ```rust
 let params = MessageParams::new_text("pong").with_reply(message_id);
 session.send_message(params).await?;
 ```
 
-复杂消息直接在参数结构体上设置对应字段：
+富消息构造器包括 `new_markdown`、`new_ark`、`new_embed`、`new_keyboard`，群/C2C 还支持 `new_media`。只有在 helper 和构造器覆盖不到时，再直接设置字段：
 
 - `embed` 用于 embed 消息。
 - `ark` 用于 ark 模板。
@@ -64,9 +72,9 @@ let params = DirectMessageParams::new_text("hello");
 session.send_direct_message(&dm_session.guild_id, params).await?;
 ```
 
-## Open message 的 msg_type
+## Open message 类型
 
-群和 C2C 消息沿用开放平台的数字 `msg_type`。文本一般保持默认值 0；媒体消息使用 7；markdown、ark、embed 等类型按平台协议值填写。频道消息则使用 `MessageCreateType`，在 Rust 侧有 enum 建模。
+群和 C2C 消息最终仍会序列化为开放平台的消息类型码，但应用代码应使用 session helper 或 params 构造器，不需要手写数字。频道和私信参数内部使用 `MessageCreateType`。
 
 ## 参见
 

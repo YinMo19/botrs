@@ -3,7 +3,7 @@ import { defineConfig } from "vitepress";
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
     title: "BotRS",
-    description: "A Rust QQ Bot framework based on QQ Guild Bot API",
+    description: "A Rust QQ bot framework for QQ gateway events and bot OpenAPI",
     head: [
         ["link", { rel: "icon", href: "/favicon.ico" }],
         ["meta", { name: "theme-color", content: "#646cff" }],
@@ -17,7 +17,7 @@ export default defineConfig({
             label: "English",
             lang: "en",
             title: "BotRS",
-            description: "A Rust QQ Bot framework based on QQ Guild Bot API",
+            description: "A Rust QQ bot framework for QQ gateway events and bot OpenAPI",
             themeConfig: {
                 nav: [
                     { text: "Guide", link: "/guide/introduction" },
@@ -101,12 +101,12 @@ export default defineConfig({
                             text: "Performance and Security",
                             items: [
                                 {
-                                    text: "Performace",
-                                    link: "/guide/performance.md",
+                                    text: "Performance",
+                                    link: "/guide/performance",
                                 },
                                 {
                                     text: "Security",
-                                    link: "/guide/security.md",
+                                    link: "/guide/security",
                                 },
                             ],
                         },
@@ -256,7 +256,7 @@ export default defineConfig({
             label: "简体中文",
             lang: "zh-CN",
             title: "BotRS",
-            description: "基于 QQ 频道机器人 API 的 Rust QQ 机器人框架",
+            description: "面向 QQ 网关事件与机器人 OpenAPI 的 Rust QQ 机器人框架",
             themeConfig: {
                 nav: [
                     { text: "指南", link: "/zh/guide/introduction" },
@@ -341,11 +341,11 @@ export default defineConfig({
                             items: [
                                 {
                                     text: "高性能指南",
-                                    link: "/zh/guide/performance.md",
+                                    link: "/zh/guide/performance",
                                 },
                                 {
                                     text: "安全指南",
-                                    link: "/zh/guide/security.md",
+                                    link: "/zh/guide/security",
                                 },
                             ],
                         },

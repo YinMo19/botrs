@@ -11,8 +11,8 @@ The variants you'll match on most often correspond to outcomes the QQ API and ga
 - `BotError::Forbidden(String)` — HTTP 403. The bot lacks permission for the action.
 - `BotError::NotFound(String)` — HTTP 404. Targeted resource (channel, message, member) does not exist.
 - `BotError::MethodNotAllowed(String)` — HTTP 405. Wrong endpoint or method.
-- `BotError::Server(String)` — HTTP 500 / 504. QQ-side outage; transient.
-- `BotError::SequenceNumber(String)` — HTTP 429-shaped sequence error. Distinct from `RateLimit` below; usually means message ordering, not throttling.
+- `BotError::Server(String)` — HTTP 500 / 504 with the parsed platform diagnostic. Inspect the embedded code/message before deciding whether to retry.
+- `BotError::SequenceNumber(String)` — reserved for sequence/order errors from the low-level status mapper; normal REST 429 responses are returned as `RateLimit`.
 - `BotError::RateLimit { retry_after }` — explicit rate-limit response. `retry_after` is in seconds.
 - `BotError::Auth(String)` / `BotError::Config(String)` / `BotError::InvalidData(String)` — local validation failures (bad app id, malformed env, payload that can't serialize).
 - `BotError::Connection(String)` / `BotError::Gateway(String)` / `BotError::Session(String)` — gateway lifecycle failures.
@@ -41,7 +41,7 @@ async fn message_create(&self, mut session: ChannelReplySession) {
 }
 ```
 
-If event dispatch itself fails (a malformed payload, a panic in your handler converted to error, etc.), the framework calls `EventHandler::error(&self, error: BotError)` once and then continues consuming events. The default implementation logs with `error!`. Override it to plug in metrics, alerting, or your own panic handling — but note that the framework does not retry the original event for you.
+If dispatch setup fails before your handler is called, the framework calls `EventHandler::error(&self, error: BotError)` once and then continues consuming events. Payload parse failures are logged and dropped; handler panics are not converted into `BotError`. Override `error` to plug in metrics or alerting, but note that the framework does not retry the original event for you.
 
 ## Retry helpers
 
@@ -77,6 +77,6 @@ The HTTP layer maps status codes into `BotError` variants before returning from 
 | 403         | `Forbidden`                   |
 | 404         | `NotFound`                    |
 | 405         | `MethodNotAllowed`            |
-| 429         | `SequenceNumber`              |
+| 429         | `RateLimit`                   |
 | 500 / 504   | `Server`                      |
 | other       | `Api { code: status, message }` |

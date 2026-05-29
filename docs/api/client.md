@@ -10,7 +10,7 @@ let mut client = Client::new(token, intents, MyHandler, /* is_sandbox: */ false)
 client.start().await?;
 ```
 
-`Client::new` returns `Result<Client<H>>` because it constructs the underlying `HttpClient` and may fail if TLS / DNS configuration is invalid.
+`Client::new` returns `Result<Client<H>>` because it validates the token and constructs the underlying `HttpClient`.
 
 ## Constructors
 
@@ -21,14 +21,14 @@ client.start().await?;
 
 ## Lifecycle
 
-- `start().await` — connects, identifies, and runs the event loop. Returns once the loop terminates (gracefully or via fatal error).
+- `start().await` — performs startup REST calls, starts gateway sessions, and runs the event loop until the event channel closes.
 Dropping the running `Client` task closes the gateway connection.
 
 There are no `stop` / `is_connected` / `get_session_info` methods — the framework intentionally exposes a small surface and pushes session details into events instead. Use `EventHandler::ready` and `EventHandler::resumed` to observe lifecycle changes.
 
 ## Reconnect behaviour
 
-`start()` reconnects automatically on transient gateway failures, applying the throttling described in the [gateway guide](../guide/gateway.md). When a fatal failure (invalid token, unrecoverable handshake) is detected, `start()` resolves with the propagated `BotError`.
+`start()` propagates startup failures from token validation, `get_bot_info`, and `get_gateway`. After gateway sessions are spawned, transient gateway failures are retried with the throttling described in the [gateway guide](../guide/gateway.md); unrecoverable identify failures stop that shard's reconnect loop and are logged by the session manager.
 
 ## Graceful shutdown
 

@@ -23,13 +23,9 @@
 
 ```rust
 let media = session.post_file(1, image_url, None).await?;
-
-let mut params = GroupMessageParams::default();
-params.msg_type = 7;
-params.media = Some(media);
-session.send_message(params).await?;
+session.send_media_message(media).await?;
 ```
 
 `file_type` 使用平台协议值：常见值为 1 图片、2 视频、3 语音、4 文件。C2C 使用 `post_c2c_file`，参数形态相同。
 
-`srv_send_msg` 传 `Some(true)` 时，平台会在上传后直接发送；传 `None` 或 `Some(false)` 时，通常把返回的 `Media` 放进消息参数里自行发送。
+`srv_send_msg` 传 `Some(true)` 时，平台会在上传后直接发送；传 `None` 或 `Some(false)` 时，把返回的 `Media` 传给 `send_media_message`，或使用 `GroupMessageParams::new_media` / `C2CMessageParams::new_media`。

@@ -25,7 +25,7 @@ impl CommandRegistry {
 }
 ```
 
-The example registers two commands (`你好` / `hello` and `晚安`) and demonstrates two ways to send the response: the convenience `session.reply(&response)` and the explicit `MessageParams { content: Some(response), ..Default::default() }` followed by `session.send_message(...)`. Use whichever fits; they hit the same endpoint.
+The example registers two commands (`你好` / `hello` and `晚安`) and replies with `session.reply(&response)`. Use `send_markdown_message`, `send_embed_message`, `send_ark_message`, or `send_keyboard_message` when a command returns a richer payload.
 
 ## See also
 

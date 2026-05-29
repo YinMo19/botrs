@@ -17,10 +17,8 @@ struct MyBot;
 impl EventHandler for MyBot {
     async fn message_create(&self, mut session: ChannelReplySession) {
         let message = session.message().clone();
-        if let Some(content) = message.content.as_deref() {
-            if content.contains("ping") {
-                let _ = session.reply("pong").await;
-            }
+        if message.content.contains("ping") {
+            let _ = session.reply("pong").await;
         }
     }
 }
@@ -65,7 +63,7 @@ session.send_message(params).await?;
 
 The same pattern applies to group, C2C, and DM messages: `GroupMessageParams` → `send_group_message`, `C2CMessageParams` → `send_c2c_message`, `DirectMessageParams` → `send_direct_message`.
 
-For richer payloads (embed, ark, markdown, keyboard) build the params struct directly with `..Default::default()`. There is no kwarg explosion — every channel kind has exactly one builder type.
+In event handlers, `session.reply`, `send_markdown_message`, `send_embed_message`, `send_ark_message`, `send_keyboard_message`, and group/C2C `send_media_message` cover the common cases. For direct `BotApi` calls or custom fields, use params constructors such as `new_markdown`, `new_embed`, `new_ark`, `new_keyboard`, and `new_media`.
 
 ## Starting the bot
 

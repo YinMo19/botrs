@@ -11,14 +11,14 @@ Group and C2C messages have their own models:
 - `GroupMessage` maps to `GROUP_AT_MESSAGE_CREATE`; the key routing field is `group_openid`.
 - `C2CMessage` maps to `C2C_MESSAGE_CREATE`; the key routing field usually comes from `author.user_openid`.
 
-These event models retain platform-provided message id, content, attachments, mentions, timestamp, references, and internal `event_id`. For plain replies, prefer `session.reply(...)` from the matching reply session. For richer replies, build the matching parameter struct manually.
+These event models retain platform-provided message id, content, attachments, mentions, timestamp, references, and internal `event_id`. Message id, content, author, routing id, and timestamp are required fields on normal message events; group/C2C messages also carry the required open-message `message_type`. Optional protocol fields stay optional.
+
+Attachments use `MessageAttachment`. When an attachment appears, the filename, content type, size, and URL are plain fields. `id` stays optional because open-message attachment payloads may omit it, while `width` and `height` default to `0` for non-image or payloads that do not include dimensions.
 
 ```rust
 let message = session.message();
-if let Some(content) = &message.content {
-    if content.trim() == "/ping" {
-        session.reply("pong").await?;
-    }
+if !message.author.bot && message.content.trim() == "/ping" {
+    session.reply("pong").await?;
 }
 ```
 
@@ -33,14 +33,22 @@ Outbound sending uses four parameter types:
 | `GroupMessageParams` | Group messages |
 | `C2CMessageParams` | C2C messages |
 
-The most common helpers are `new_text` and `with_reply`:
+Use session helpers inside reply-capable handlers:
+
+```rust
+session.reply("pong").await?;
+session.send_markdown_message("# hello").await?;
+session.send_embed_message(embed).await?;
+```
+
+For direct `BotApi` calls or custom fields, use params constructors:
 
 ```rust
 let params = MessageParams::new_text("pong").with_reply(message_id);
 session.send_message(params).await?;
 ```
 
-For complex messages, set fields directly:
+The rich constructors are `new_markdown`, `new_ark`, `new_embed`, `new_keyboard`, and, for group/C2C messages, `new_media`. Set fields directly only when you need a protocol field not covered by those constructors:
 
 - `embed` for embed messages.
 - `ark` for ark templates.
@@ -64,9 +72,9 @@ let params = DirectMessageParams::new_text("hello");
 session.send_direct_message(&dm_session.guild_id, params).await?;
 ```
 
-## Open Message msg_type
+## Open Message Types
 
-Group and C2C messages use the platform's numeric `msg_type`. Text generally keeps the default value 0; media uses 7; markdown, ark, embed, and other types follow the platform's protocol values. Guild channel messages use the Rust-modeled `MessageCreateType`.
+Group and C2C messages still serialize to the platform's open-message type codes, but normal user code should use session helpers or params constructors instead of setting the numeric value by hand. Guild channel and direct-message params use `MessageCreateType` internally.
 
 ## See Also
 

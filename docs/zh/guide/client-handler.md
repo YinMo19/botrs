@@ -34,8 +34,11 @@ impl EventHandler for MyBot {
 
     async fn message_create(&self, mut session: ChannelReplySession) {
         let message = session.message().clone();
-        if message.author.as_ref().and_then(|author| author.bot).unwrap_or_default() { return; }
-        if message.content.as_deref() == Some("!ping") {
+        if message.author.bot {
+            return;
+        }
+
+        if message.content.trim() == "!ping" {
             let _ = session.reply("pong").await;
         }
     }
@@ -46,7 +49,7 @@ impl EventHandler for MyBot {
 
 每个回调都接收一个 session 参数：
 
-- 生命周期：`ready`、`resumed`、`error(BotError)`、`unknown_event(GatewayEvent)`。
+- 生命周期：`ready`、`resumed`、`error(BotError)`、`unknown_event(UnknownEventSession)`。
 - 消息：`message_create`、`message_delete`、`direct_message_create`、`direct_message_delete`、`group_message_create`、`c2c_message_create`。
 - 表情：`message_reaction_add`、`message_reaction_remove`。
 - 交互：`interaction_create`。
@@ -67,7 +70,7 @@ impl EventHandler for MyBot {
 
 ## 错误回调
 
-事件分派若发生错误，框架会调用一次 `EventHandler::error(&self, error: BotError)` 然后继续处理下一个事件。默认实现以 `error!` 级别记录日志，可按需重写。框架本身不会替你重试，处理器内部的重试必须自行实现。
+在调用你的 handler 之前，如果分派准备阶段失败，框架会调用一次 `EventHandler::error(&self, error: BotError)` 并继续处理下一个事件。payload 解析失败会被记录并丢弃，handler panic 不会被转换成 `BotError`。需要指标或告警时可以重写 `error`，但重试必须由你的代码自行实现。
 
 ## 在处理器中派发任务
 

@@ -11,8 +11,8 @@
 - `BotError::Forbidden(String)` —— HTTP 403，机器人无权执行。
 - `BotError::NotFound(String)` —— HTTP 404，目标资源（频道、消息、成员）不存在。
 - `BotError::MethodNotAllowed(String)` —— HTTP 405，端点或方法错误。
-- `BotError::Server(String)` —— HTTP 500 / 504，QQ 侧故障，可重试。
-- `BotError::SequenceNumber(String)` —— HTTP 429 的 sequence 错误，与下方的 `RateLimit` 不同，通常是消息顺序而非限流。
+- `BotError::Server(String)` —— HTTP 500 / 504，并带有解析后的平台诊断信息。是否可重试需要看其中的 code/message。
+- `BotError::SequenceNumber(String)` —— 低层状态码映射中保留的 sequence/order 错误；普通 REST 429 会作为 `RateLimit` 返回。
 - `BotError::RateLimit { retry_after }` —— 显式限流响应，`retry_after` 单位为秒。
 - `BotError::Auth(String)` / `BotError::Config(String)` / `BotError::InvalidData(String)` —— 本地校验失败（错误的 app id、错误的环境变量、无法序列化的载荷）。
 - `BotError::Connection(String)` / `BotError::Gateway(String)` / `BotError::Session(String)` —— 网关生命周期失败。
@@ -41,7 +41,7 @@ async fn message_create(&self, mut session: ChannelReplySession) {
 }
 ```
 
-事件分派本身失败时（载荷异常、处理器内部错误等），框架会调用一次 `EventHandler::error(&self, error: BotError)` 并继续消费后续事件。默认实现使用 `error!` 记录日志。需要接入指标、告警或自定义 panic 处理时可以重写它 —— 但请注意框架不会替你重试原事件。
+在调用你的 handler 之前，如果分派准备阶段失败，框架会调用一次 `EventHandler::error(&self, error: BotError)` 并继续消费后续事件。payload 解析失败会被记录并丢弃；handler panic 不会被转换成 `BotError`。需要接入指标或告警时可以重写 `error`，但框架不会替你重试原事件。
 
 ## 重试辅助方法
 
@@ -77,6 +77,6 @@ HTTP 层会先把状态码映射为 `BotError` 变体，再从 `BotApi` 调用�
 | 403         | `Forbidden`                   |
 | 404         | `NotFound`                    |
 | 405         | `MethodNotAllowed`            |
-| 429         | `SequenceNumber`              |
+| 429         | `RateLimit`                   |
 | 500 / 504   | `Server`                      |
 | 其他        | `Api { code: status, message }` |

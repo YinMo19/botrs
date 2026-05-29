@@ -23,8 +23,8 @@ pub type Result<T> = std::result::Result<T, BotError>;
 | `MethodNotAllowed(String)`                   | 405.                                                     |
 | `Forbidden(String)`                          | 403 / permission denied.                                 |
 | `RateLimit { retry_after: u64 }`             | 429 with parsed `Retry-After` (in seconds).              |
-| `SequenceNumber(String)`                     | Gateway sequence skew that demands resume / reconnect.   |
-| `Server(String)`                             | 5xx responses without structured codes.                  |
+| `SequenceNumber(String)`                     | Reserved sequence/order error from the low-level mapper. |
+| `Server(String)`                             | 5xx responses with the parsed platform diagnostic.       |
 | `Auth(String)`                               | Higher-level authentication / session issue.             |
 | `Connection(String)`                         | Gateway lifecycle / heartbeat failure.                   |
 | `Config(String)`                             | Invalid configuration before requests run.               |
@@ -83,4 +83,4 @@ Constants for these codes are exposed from `botrs::error`, for example `botrs::e
 
 - [Bot API](./bot-api.md) — every route that can produce these errors.
 - [Token](./token.md) — credential refresh logic that surfaces `Auth` errors.
-- [Gateway guide](../guide/gateway.md) — how the framework reacts to `Connection` / `SequenceNumber` errors.
+- [Gateway guide](../guide/gateway.md) — how the framework handles gateway connection failures.

@@ -22,7 +22,11 @@ async fn ready(&self, session: ReadySession) {
 
 async fn message_create(&self, mut session: ChannelReplySession) {
     let message = session.message().clone();
-    if message.content.as_deref() == Some("!ping") {
+    if message.author.bot {
+        return;
+    }
+
+    if message.content.trim() == "!ping" {
         let _ = session.reply("pong").await;
     }
 }

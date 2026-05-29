@@ -23,8 +23,8 @@ pub type Result<T> = std::result::Result<T, BotError>;
 | `MethodNotAllowed(String)`                    | 405。                                                   |
 | `Forbidden(String)`                           | 403 / 权限不足。                                        |
 | `RateLimit { retry_after: u64 }`              | 429，附带解析后的 `Retry-After`（秒）。                 |
-| `SequenceNumber(String)`                      | 网关序号偏移，需要 resume 或重连。                      |
-| `Server(String)`                              | 5xx 响应，且未携带结构化错误码。                        |
+| `SequenceNumber(String)`                      | 低层映射保留的 sequence/order 错误。                    |
+| `Server(String)`                              | 5xx 响应，并携带解析后的平台诊断信息。                  |
 | `Auth(String)`                                | 更高层级的鉴权 / 会话问题。                             |
 | `Connection(String)`                          | 网关生命周期或心跳失败。                                |
 | `Config(String)`                              | 请求开始之前的配置错误。                                |
@@ -83,4 +83,4 @@ if let BotError::Sdk(ref err) = e {
 
 - [Bot API](./bot-api.md) —— 可能产生这些错误的全部接口。
 - [Token](./token.md) —— 凭证刷新逻辑，会触发 `Auth` 错误。
-- [网关指南](../guide/gateway.md) —— 框架如何对 `Connection` / `SequenceNumber` 错误做出反应。
+- [网关指南](../guide/gateway.md) —— 框架如何处理网关连接故障。

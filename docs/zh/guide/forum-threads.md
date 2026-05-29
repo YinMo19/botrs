@@ -17,7 +17,7 @@
 
 ## 公开论坛回调
 
-`Intents::OPEN_FORUM_EVENT` 触发的所有事件共用 `OpenThread` 一种载荷，依据子事件不同它会带 `thread_info` / `post_info` / `reply_info` 中的某一项：
+`Intents::OPEN_FORUM_EVENT` 触发的所有事件共用 `OpenThread` 一种载荷。当前它携带可选的 `guild_id`、`channel_id`、`author_id` 和内部 `event_id`：
 
 - `open_forum_thread_create` / `_update` / `_delete`
 - `open_forum_post_create` / `_delete`
@@ -25,9 +25,9 @@
 
 ## 载荷结构
 
-`Thread` 带有 `channel_id`、`guild_id`、`author_id`、`event_id`（均为 `Option<String>`），以及 `thread_info: ThreadInfo`，其中 `ThreadInfo` 暴露主题标题和编辑器生成的富文本块。
+`Thread` 带有 `channel_id`、`guild_id`、`author_id`、`event_id`（`Option<String>`），以及 `thread_info: ThreadInfo`。`ThreadInfo` 暴露 `title`、`content`、`thread_id` 和 `date_time`。
 
-`Post` 与 `Reply` 形态相同，仅把 `thread_info` 换成 `post_info: PostInfo` / `reply_info: ReplyInfo`。论坛事件需要发起 REST 调用时，直接使用回调里的 session。
+`Post` 与 `Reply` 形态相同，仅把 `thread_info` 换成 `post_info: PostInfo` / `reply_info: ReplyInfo`；这些 info 结构保留 id、字符串 content 和创建时间。论坛事件需要发起 REST 调用时，直接使用回调里的 session。
 
 `ForumAuditResult` 直接映射审核载荷：
 
@@ -50,15 +50,9 @@ pub struct ForumAuditResult {
 
 每次审核结果触发一次 `forum_publish_audit_result`。网关层会自动 ACK，处理器无需主动回执。`result == 0` 表示通过，否则 `err_msg` 即平台给出的拒绝原因。
 
-## 解析富文本
+## 读取内容
 
-`ThreadInfo`、`PostInfo`、`ReplyInfo` 反序列化 QQ 的“段落”结构：
-
-- `Content { paragraphs: Vec<Paragraph> }`
-- `Paragraph { elems: Vec<Elem>, props }`
-- `Elem` 为标签联合（`Text`、`Image`、`Video`、`Url`）。
-
-字段命名见 `botrs::forum`；从主题正文里提取文字或附件通常通过对 `Elem` 模式匹配实现。
+论坛 info 结构通过 `botrs::models::forum` 暴露。当前公开 DTO 将正文保留为 `String`；如果业务需要结构化文本或附件提取，请在应用代码里解析这个字符串。
 
 ## 最小处理器示例
 

@@ -94,11 +94,12 @@ impl EventHandler for MyBot {
 
     async fn message_create(&self, mut session: ChannelReplySession) {
         let message = session.message().clone();
-        if message.author.as_ref().and_then(|author| author.bot).unwrap_or_default() { return; }
-        if let Some(content) = &message.content {
-            if content.trim() == "!ping" {
-                let _ = session.reply("Pong!").await;
-            }
+        if message.author.bot {
+            return;
+        }
+
+        if message.content.trim() == "!ping" {
+            let _ = session.reply("Pong!").await;
         }
     }
 }

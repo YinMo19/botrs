@@ -30,14 +30,10 @@ Direct-message events use `Message`; direct-message sessions use `DirectMessage`
 
 ## Practical Guidance
 
-Do not assume every user field is present. The platform may omit username, avatar, or member info in different events, so author/member fields are often `Option`.
+For normal message events, `message.author` is a required field. Member details and some platform-specific user fields may still be absent or defaulted depending on the event.
 
 ```rust
-let is_bot = message
-    .author
-    .as_ref()
-    .and_then(|author| author.bot)
-    .unwrap_or(false);
+let is_bot = message.author.bot;
 ```
 
 For group and C2C replies, use the openid fields from the event model.

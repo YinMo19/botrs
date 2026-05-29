@@ -1,6 +1,6 @@
 # 其他类型
 
-这一页记录除了消息、用户、guild/channel 以外的常用模型：网关启动信息、日程、权限、精华、公告、表情回应、互动事件、音频事件、管理事件和论坛事件。
+这一页记录除了消息、用户、guild/channel 以外的常用模型：网关启动信息、日程、权限、身份组、禁言、精华、公告、表情回应、互动事件、音频、管理事件和论坛事件。
 
 ## 网关
 
@@ -29,6 +29,8 @@ session.create_schedule(&schedule_channel_id, &schedule).await?;
 
 `post_permission_demand` 会根据这些参数生成请求体；调用方只需要关心目标接口和说明文本。
 
+子频道权限 API 使用 `ChannelPermissions`、`ChannelRolePermissions` 和 `UpdateChannelPermissions`。身份组 API 使用 `Role`、`GuildRoles`、`UpdateRoleResult` 和 `MemberRoleParams`。禁言 API 使用 `GuildMute` 和 `GuildMuteResponse`。
+
 ## 精华与公告
 
 精华消息用 `PinsMessage` 表示当前 pinned message id 列表。常用流程是置顶、取消置顶和查询。
@@ -53,7 +55,7 @@ reaction 事件和 REST 查询共享同一套核心类型：
 
 ## 音频、管理和论坛事件
 
-音频相关模型用于 gateway 事件：`Audio`、`PublicAudio` 和 `PublicAudioType`。
+音频模型包括 gateway 事件 payload（`Audio`、`PublicAudio`、`PublicAudioType`）和 REST 控制 payload（`AudioControl`、`AudioStatus`）。
 
 管理类事件仍会分发：
 

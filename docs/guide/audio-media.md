@@ -23,13 +23,9 @@ Group and C2C messages can upload media first, then send a message that referenc
 
 ```rust
 let media = session.post_file(1, image_url, None).await?;
-
-let mut params = GroupMessageParams::default();
-params.msg_type = 7;
-params.media = Some(media);
-session.send_message(params).await?;
+session.send_media_message(media).await?;
 ```
 
 `file_type` follows platform values: commonly 1 image, 2 video, 3 audio, 4 file. C2C uses `post_c2c_file` with the same parameter shape.
 
-When `srv_send_msg` is `Some(true)`, the platform sends the uploaded file directly. When it is `None` or `Some(false)`, place the returned `Media` into your own message params.
+When `srv_send_msg` is `Some(true)`, the platform sends the uploaded file directly. When it is `None` or `Some(false)`, pass the returned `Media` to `send_media_message` or `GroupMessageParams::new_media` / `C2CMessageParams::new_media`.

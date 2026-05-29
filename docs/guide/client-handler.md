@@ -34,8 +34,11 @@ impl EventHandler for MyBot {
 
     async fn message_create(&self, mut session: ChannelReplySession) {
         let message = session.message().clone();
-        if message.author.as_ref().and_then(|author| author.bot).unwrap_or_default() { return; }
-        if message.content.as_deref() == Some("!ping") {
+        if message.author.bot {
+            return;
+        }
+
+        if message.content.trim() == "!ping" {
             let _ = session.reply("pong").await;
         }
     }
@@ -46,7 +49,7 @@ impl EventHandler for MyBot {
 
 The complete set of callbacks receives one session parameter per event:
 
-- Lifecycle: `ready`, `resumed`, `error(BotError)`, `unknown_event(GatewayEvent)`.
+- Lifecycle: `ready`, `resumed`, `error(BotError)`, `unknown_event(UnknownEventSession)`.
 - Messages: `message_create`, `message_delete`, `direct_message_create`, `direct_message_delete`, `group_message_create`, `c2c_message_create`.
 - Reactions: `message_reaction_add`, `message_reaction_remove`.
 - Interactions: `interaction_create`.
@@ -67,7 +70,7 @@ Use `session.event()` to inspect generic event payloads, and use `session.messag
 
 ## The error callback
 
-If event dispatch fails, the framework calls `EventHandler::error(&self, error: BotError)` once and continues processing the next event. The default implementation logs at `error!`. Override it if you want custom behavior — but the framework does not retry on your behalf, so handler-level retry must come from your own code.
+If dispatch setup fails before your handler is called, the framework calls `EventHandler::error(&self, error: BotError)` once and continues processing the next event. Payload parse failures are logged and dropped, and handler panics are not converted into `BotError`. Override `error` if you want custom metrics or alerts, but retries must come from your own code.
 
 ## Spawning work from a handler
 

@@ -17,7 +17,7 @@ The client then parses each gateway dispatch into the relevant Rust model and ca
 
 ## Heartbeat and reconnect
 
-After `HELLO`, the runtime starts a heartbeat task using the server-provided heartbeat interval. Heartbeats carry the last received sequence number. If the socket closes, the runtime tries to resume with the cached session id and sequence number. Non-resumable close codes force a new identify; fatal identify errors stop reconnecting and surface as `BotError`.
+After `HELLO`, the runtime starts a heartbeat task using the server-provided heartbeat interval. Heartbeats carry the last received sequence number. If the socket closes, the runtime tries to resume with the cached session id and sequence number. Non-resumable close codes force a new identify; fatal identify errors stop that shard's reconnect loop and are logged by the session manager.
 
 The session manager spaces shard starts according to `session_start_limit.max_concurrency`. This keeps reconnects from hammering the platform after a network failure.
 

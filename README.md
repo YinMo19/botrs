@@ -1,14 +1,14 @@
-# BotRS - Rust QQ Guild Bot Framework
+# BotRS - Rust QQ Bot Framework
 ## Author: YinMo19
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Rust](https://img.shields.io/badge/rust-1.70+-blue.svg)](https://www.rust-lang.org)
+[![Rust](https://img.shields.io/badge/rust-1.85+-blue.svg)](https://www.rust-lang.org)
 [![GitHub](https://img.shields.io/badge/github-YinMo19-blue.svg)](https://github.com/YinMo19)
 [![Crates.io](https://img.shields.io/crates/v/botrs.svg)](https://crates.io/crates/botrs)
 
 > 本实现不是 qqbot 的官方 rust 版本实现。
 
-BotRS 是一个用 Rust 实现的 QQ 频道机器人框架，基于 [QQ 频道机器人 API](https://bot.q.qq.com/wiki/develop/api/)。它提供了类型安全、高性能、易于使用的接口来开发 QQ 频道机器人。
+BotRS 是一个用 Rust 实现的 QQ 机器人框架，基于 [QQ 频道机器人 API](https://bot.q.qq.com/wiki/develop/api/) 与当前开放平台接口，覆盖频道、私信、群和 C2C 消息场景。它提供类型安全、异步、session-first 的接口来开发 QQ 机器人。
 
 ## 快速开始
 

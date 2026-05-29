@@ -17,7 +17,7 @@
 
 ## 心跳与重连
 
-收到 `HELLO` 后，runtime 使用服务端给出的 heartbeat interval 启动心跳任务。心跳会携带最后一次收到的 sequence number。socket 关闭时，runtime 会用缓存的 session id 和 sequence number 尝试 resume。不可 resume 的关闭码会触发新的 identify；致命 identify 错误会停止重连，并以 `BotError` 的形式暴露。
+收到 `HELLO` 后，runtime 使用服务端给出的 heartbeat interval 启动心跳任务。心跳会携带最后一次收到的 sequence number。socket 关闭时，runtime 会用缓存的 session id 和 sequence number 尝试 resume。不可 resume 的关闭码会触发新的 identify；致命 identify 错误会停止该 shard 的重连循环，并由 session manager 记录日志。
 
 session manager 会根据 `session_start_limit.max_concurrency` 间隔启动 shard，避免网络恢复后集中重连。
 
