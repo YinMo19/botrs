@@ -1,7 +1,7 @@
 use super::HttpClient;
 use crate::error::{BotError, Result, http_error_from_status};
 use crate::models::api::{ApiError, RateLimit};
-use reqwest::{Response, StatusCode};
+use reqwest::{Response, StatusCode, header::HeaderMap};
 use serde_json::Value;
 use tracing::{debug, error, warn};
 
@@ -35,9 +35,13 @@ impl HttpClient {
         })?;
 
         if !is_success_status(status) {
-            let api_error = self.parse_api_error(status, &json);
-            error!("API error: {}", api_error);
-            return Err(http_error_from_status(status.as_u16(), api_error.message));
+            let mut api_error = self.parse_api_error(status, &json);
+            if api_error.trace_id.is_none() {
+                api_error.trace_id = response_trace_id(&headers);
+            }
+            let diagnostic = format_api_error(status, &api_error);
+            error!("API request failed: {}; response: {}", diagnostic, json);
+            return Err(http_error_from_status(status.as_u16(), diagnostic));
         }
 
         if let Some(rate_limit) = self.parse_rate_limit(&headers) {
@@ -128,4 +132,33 @@ impl HttpClient {
 
 fn is_success_status(status: StatusCode) -> bool {
     matches!(status.as_u16(), 200 | 204)
+}
+
+fn response_trace_id(headers: &HeaderMap) -> Option<String> {
+    headers
+        .get("x-tps-trace-id")
+        .and_then(|value| value.to_str().ok())
+        .map(str::to_string)
+}
+
+fn format_api_error(status: StatusCode, api_error: &ApiError) -> String {
+    let reason = status.canonical_reason().unwrap_or("Unknown");
+    let mut message = format!(
+        "HTTP {} {}; API error {}: {}",
+        status.as_u16(),
+        reason,
+        api_error.code,
+        api_error.message
+    );
+
+    if let Some(trace_id) = api_error
+        .trace_id
+        .as_deref()
+        .filter(|trace_id| !trace_id.is_empty())
+    {
+        message.push_str("; trace_id=");
+        message.push_str(trace_id);
+    }
+
+    message
 }
