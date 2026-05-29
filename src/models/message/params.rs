@@ -177,6 +177,37 @@ macro_rules! impl_channel_like_message_params {
                 }
             }
 
+            /// Creates a new parameter object with an Ark payload.
+            pub fn new_ark(ark: Ark) -> Self {
+                Self {
+                    msg_type: Some(MessageCreateType::Ark),
+                    ark: Some(ark),
+                    ..Default::default()
+                }
+            }
+
+            /// Creates a new parameter object with an embed payload.
+            pub fn new_embed(embed: Embed) -> Self {
+                Self {
+                    msg_type: Some(MessageCreateType::Embed),
+                    embed: Some(embed),
+                    ..Default::default()
+                }
+            }
+
+            /// Creates a new markdown message with a keyboard payload.
+            pub fn new_keyboard(content: impl Into<String>, keyboard: Keyboard) -> Self {
+                Self {
+                    msg_type: Some(MessageCreateType::Markdown),
+                    markdown: Some(MarkdownPayload {
+                        content: Some(content.into()),
+                        ..Default::default()
+                    }),
+                    keyboard: Some(keyboard),
+                    ..Default::default()
+                }
+            }
+
             /// Sets the message reference for replying.
             pub fn with_reply(mut self, message_id: impl Into<String>) -> Self {
                 self.msg_id = Some(message_id.into());
@@ -231,6 +262,46 @@ macro_rules! impl_open_message_params {
                         content: Some(content.into()),
                         ..Default::default()
                     }),
+                    ..Default::default()
+                }
+            }
+
+            /// Creates a new parameter object with an Ark payload.
+            pub fn new_ark(ark: Ark) -> Self {
+                Self {
+                    msg_type: 3,
+                    ark: Some(ark),
+                    ..Default::default()
+                }
+            }
+
+            /// Creates a new parameter object with an embed payload.
+            pub fn new_embed(embed: Embed) -> Self {
+                Self {
+                    msg_type: 4,
+                    embed: Some(embed),
+                    ..Default::default()
+                }
+            }
+
+            /// Creates a new parameter object with an uploaded media payload.
+            pub fn new_media(media: Media) -> Self {
+                Self {
+                    msg_type: 7,
+                    media: Some(media),
+                    ..Default::default()
+                }
+            }
+
+            /// Creates a new markdown message with a keyboard payload.
+            pub fn new_keyboard(content: impl Into<String>, keyboard: KeyboardPayload) -> Self {
+                Self {
+                    msg_type: 2,
+                    markdown: Some(MarkdownPayload {
+                        content: Some(content.into()),
+                        ..Default::default()
+                    }),
+                    keyboard: Some(keyboard),
                     ..Default::default()
                 }
             }

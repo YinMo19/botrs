@@ -6,10 +6,7 @@
 #[path = "../common/mod.rs"]
 mod common;
 
-use botrs::models::message::{
-    Ark, ArkKv, DirectMessageParams, Embed, EmbedField, Keyboard, MarkdownPayload,
-    MessageCreateType,
-};
+use botrs::models::message::{Ark, ArkKv, Embed, EmbedField, Keyboard};
 use botrs::{Client, DirectReplySession, EventHandler, Intents, ReadySession, Token};
 use common::{Config, init_logging};
 use std::env;
@@ -26,23 +23,20 @@ impl EventHandler for DirectReplyRichHandler {
     async fn direct_message_create(&self, mut session: DirectReplySession) {
         let message = session.message().clone();
         let content = message.content.as_str();
-        let params = if content.contains("ark") {
-            DirectMessageParams {
-                msg_type: Some(MessageCreateType::Ark),
-                ark: Some(Ark {
+        let result = if content.contains("ark") {
+            session
+                .send_ark_message(Ark {
                     template_id: Some(37),
                     kv: Some(vec![ArkKv {
                         key: Some("#METATITLE#".to_string()),
                         value: Some("Direct ARK".to_string()),
                         obj: None,
                     }]),
-                }),
-                ..Default::default()
-            }
+                })
+                .await
         } else if content.contains("embed") {
-            DirectMessageParams {
-                msg_type: Some(MessageCreateType::Embed),
-                embed: Some(Embed {
+            session
+                .send_embed_message(Embed {
                     title: Some("Direct Embed".to_string()),
                     description: Some("This embed was sent as a direct message.".to_string()),
                     prompt: "Direct embed".to_string(),
@@ -51,34 +45,25 @@ impl EventHandler for DirectReplyRichHandler {
                         value: Some("DirectMessageParams".to_string()),
                     }]),
                     ..Default::default()
-                }),
-                ..Default::default()
-            }
+                })
+                .await
         } else if content.contains("keyboard") {
-            DirectMessageParams {
-                msg_type: Some(MessageCreateType::Markdown),
-                markdown: Some(MarkdownPayload {
-                    content: Some("# Direct Keyboard\n\n点击下方按钮继续。".to_string()),
-                    ..Default::default()
-                }),
-                keyboard: Some(Keyboard {
-                    id: Some("62".to_string()),
-                    ..Default::default()
-                }),
-                ..Default::default()
-            }
+            session
+                .send_keyboard_message(
+                    "# Direct Keyboard\n\n点击下方按钮继续。",
+                    Keyboard {
+                        id: Some("62".to_string()),
+                        ..Default::default()
+                    },
+                )
+                .await
         } else {
-            DirectMessageParams {
-                msg_type: Some(MessageCreateType::Markdown),
-                markdown: Some(MarkdownPayload {
-                    content: Some(format!("# Direct Markdown\n\n收到私信：{content}")),
-                    ..Default::default()
-                }),
-                ..Default::default()
-            }
+            session
+                .send_markdown_message(format!("# Direct Markdown\n\n收到私信：{content}"))
+                .await
         };
 
-        match session.send_message(params).await {
+        match result {
             Ok(response) => info!("Successfully sent rich direct message: {:?}", response),
             Err(e) => warn!("Failed to send rich direct message: {}", e),
         }

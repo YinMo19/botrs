@@ -5,7 +5,7 @@ use crate::client::Context;
 use crate::error::Result;
 use crate::models::{
     api::{BotInfo, MessageResponse},
-    message::{GroupMessage, GroupMessageParams, Media},
+    message::{Ark, Embed, GroupMessage, GroupMessageParams, KeyboardPayload, Media},
 };
 
 use super::advance_msg_seq;
@@ -57,6 +57,14 @@ impl GroupReplySession {
 
     /// Sends a text reply in the current group reply session.
     pub async fn reply(&mut self, content: impl Into<String>) -> Result<MessageResponse> {
+        self.send_text_message(content).await
+    }
+
+    /// Sends a text message in the current group reply session.
+    pub async fn send_text_message(
+        &mut self,
+        content: impl Into<String>,
+    ) -> Result<MessageResponse> {
         self.send_message(GroupMessageParams::new_text(content))
             .await
     }
@@ -67,6 +75,33 @@ impl GroupReplySession {
         content: impl Into<String>,
     ) -> Result<MessageResponse> {
         self.send_message(GroupMessageParams::new_markdown(content))
+            .await
+    }
+
+    /// Sends an Ark message in the current group reply session.
+    pub async fn send_ark_message(&mut self, ark: Ark) -> Result<MessageResponse> {
+        self.send_message(GroupMessageParams::new_ark(ark)).await
+    }
+
+    /// Sends an embed message in the current group reply session.
+    pub async fn send_embed_message(&mut self, embed: Embed) -> Result<MessageResponse> {
+        self.send_message(GroupMessageParams::new_embed(embed))
+            .await
+    }
+
+    /// Sends an uploaded media message in the current group reply session.
+    pub async fn send_media_message(&mut self, media: Media) -> Result<MessageResponse> {
+        self.send_message(GroupMessageParams::new_media(media))
+            .await
+    }
+
+    /// Sends a markdown message with a keyboard in the current group reply session.
+    pub async fn send_keyboard_message(
+        &mut self,
+        content: impl Into<String>,
+        keyboard: KeyboardPayload,
+    ) -> Result<MessageResponse> {
+        self.send_message(GroupMessageParams::new_keyboard(content, keyboard))
             .await
     }
 

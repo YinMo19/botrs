@@ -10,7 +10,7 @@ use botrs::{
     ChannelReplySession, Client, EventHandler, Intents, ReadySession, Token,
     models::message::{
         Keyboard, KeyboardButton, KeyboardButtonAction, KeyboardButtonPermission,
-        KeyboardButtonRenderData, KeyboardContent, KeyboardRow, MarkdownPayload, MessageParams,
+        KeyboardButtonRenderData, KeyboardContent, KeyboardRow,
     },
 };
 use common::{Config, init_logging};
@@ -20,40 +20,24 @@ use tracing::{info, warn};
 /// Event handler that responds to @ mentions with keyboard messages.
 struct KeyboardReplyHandler;
 
-fn template_keyboard_params() -> MessageParams {
-    let markdown = MarkdownPayload {
-        content: Some("# 123 \n 今天是个好天气".to_string()),
-        ..Default::default()
-    };
-
-    let keyboard = Keyboard {
-        id: Some("62".to_string()),
-        ..Default::default()
-    };
-
-    MessageParams {
-        markdown: Some(markdown),
-        keyboard: Some(keyboard),
-        ..Default::default()
-    }
+fn template_keyboard() -> (&'static str, Keyboard) {
+    (
+        "# 123 \n 今天是个好天气",
+        Keyboard {
+            id: Some("62".to_string()),
+            ..Default::default()
+        },
+    )
 }
 
-fn self_defined_keyboard_params() -> MessageParams {
-    let markdown = MarkdownPayload {
-        content: Some("# 标题 \n## 简介 \n内容".to_string()),
-        ..Default::default()
-    };
-
-    let keyboard = Keyboard {
-        id: None,
-        content: Some(build_keyboard()),
-    };
-
-    MessageParams {
-        markdown: Some(markdown),
-        keyboard: Some(keyboard),
-        ..Default::default()
-    }
+fn self_defined_keyboard() -> (&'static str, Keyboard) {
+    (
+        "# 标题 \n## 简介 \n内容",
+        Keyboard {
+            id: None,
+            content: Some(build_keyboard()),
+        },
+    )
 }
 
 fn build_keyboard() -> KeyboardContent {
@@ -106,14 +90,14 @@ impl EventHandler for KeyboardReplyHandler {
 
         info!("Received message: {}", content);
 
-        // Send template keyboard message.
-        match session.send_message(template_keyboard_params()).await {
+        let (content, keyboard) = template_keyboard();
+        match session.send_keyboard_message(content, keyboard).await {
             Ok(_) => info!("Successfully sent template keyboard message"),
             Err(e) => warn!("Failed to send template keyboard message: {}", e),
         }
 
-        // Send self-defined keyboard message.
-        match session.send_message(self_defined_keyboard_params()).await {
+        let (content, keyboard) = self_defined_keyboard();
+        match session.send_keyboard_message(content, keyboard).await {
             Ok(_) => info!("Successfully sent self-defined keyboard message"),
             Err(e) => warn!("Failed to send self-defined keyboard message: {}", e),
         }

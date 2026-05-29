@@ -5,7 +5,7 @@
 #[path = "../common/mod.rs"]
 mod common;
 
-use botrs::models::message::{Ark, ArkKv, GroupMessageParams};
+use botrs::models::message::{Ark, ArkKv};
 use botrs::{Client, EventHandler, GroupReplySession, Intents, ReadySession, Token};
 use common::{Config, init_logging};
 use std::env;
@@ -46,14 +46,7 @@ impl EventHandler for GroupReplyArkHandler {
             ]),
         };
 
-        // Send group ARK message. Open-platform group ARK messages use msg_type = 3.
-        let params = GroupMessageParams {
-            msg_type: 3,
-            ark: Some(ark_payload),
-            ..Default::default()
-        };
-
-        match session.send_message(params).await {
+        match session.send_ark_message(ark_payload).await {
             Ok(response) => {
                 info!("Successfully sent group ARK message");
                 info!("Response: {:?}", response);

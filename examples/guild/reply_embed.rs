@@ -49,12 +49,7 @@ impl EventHandler for EmbedReplyHandler {
             ..Default::default()
         };
 
-        let params = botrs::models::message::MessageParams {
-            embed: Some(embed),
-            ..Default::default()
-        };
-
-        match session.send_message(params).await {
+        match session.send_embed_message(embed).await {
             Ok(_) => info!("Successfully sent embed message"),
             Err(e) => warn!("Failed to send embed message: {}", e),
         }

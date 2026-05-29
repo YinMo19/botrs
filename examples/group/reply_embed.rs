@@ -5,7 +5,7 @@
 #[path = "../common/mod.rs"]
 mod common;
 
-use botrs::models::message::{Embed, EmbedField, GroupMessageParams};
+use botrs::models::message::{Embed, EmbedField};
 use botrs::{Client, EventHandler, GroupReplySession, Intents, ReadySession, Token};
 use common::{Config, init_logging};
 use std::env;
@@ -37,13 +37,7 @@ impl EventHandler for GroupReplyEmbedHandler {
             ..Default::default()
         };
 
-        let params = GroupMessageParams {
-            msg_type: 4,
-            embed: Some(embed),
-            ..Default::default()
-        };
-
-        match session.send_message(params).await {
+        match session.send_embed_message(embed).await {
             Ok(response) => info!("Successfully sent group embed message: {:?}", response),
             Err(e) => warn!("Failed to send group embed message: {}", e),
         }

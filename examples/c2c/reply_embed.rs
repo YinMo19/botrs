@@ -5,7 +5,7 @@
 #[path = "../common/mod.rs"]
 mod common;
 
-use botrs::models::message::{C2CMessageParams, Embed, EmbedField};
+use botrs::models::message::{Embed, EmbedField};
 use botrs::{C2CReplySession, Client, EventHandler, Intents, ReadySession, Token};
 use common::{Config, init_logging};
 use std::env;
@@ -31,13 +31,7 @@ impl EventHandler for C2CReplyEmbedHandler {
             ..Default::default()
         };
 
-        let params = C2CMessageParams {
-            msg_type: 4,
-            embed: Some(embed),
-            ..Default::default()
-        };
-
-        match session.send_message(params).await {
+        match session.send_embed_message(embed).await {
             Ok(response) => info!("Successfully sent C2C embed message: {:?}", response),
             Err(e) => warn!("Failed to send C2C embed message: {}", e),
         }

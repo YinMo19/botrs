@@ -1,11 +1,11 @@
 use super::{
     Ark, ArkKv, ArkObj, ArkObjKv, C2CMessageParams, DirectMessage, Embed, GroupMessageParams,
     Keyboard, KeyboardButton, KeyboardButtonAction, KeyboardButtonPermission,
-    KeyboardButtonRenderData, KeyboardContent, KeyboardModal, KeyboardRow, KeyboardStyle,
-    KeyboardSubscribeData, KeyboardTemplateId, MarkdownParam, MarkdownPayload, MarkdownStyle,
-    Media, MediaInfo, Message, MessageAttachment, MessageAudit, MessageCreateType, MessageMember,
-    MessageParams, MessageReference, MessageScene, MessageToCreate, MessageUser, MessagesPager,
-    Reference, SettingGuideParams, Stream,
+    KeyboardButtonRenderData, KeyboardContent, KeyboardModal, KeyboardPayload, KeyboardRow,
+    KeyboardStyle, KeyboardSubscribeData, KeyboardTemplateId, MarkdownParam, MarkdownPayload,
+    MarkdownStyle, Media, MediaInfo, Message, MessageAttachment, MessageAudit, MessageCreateType,
+    MessageMember, MessageParams, MessageReference, MessageScene, MessageToCreate, MessageUser,
+    MessagesPager, Reference, SettingGuideParams, Stream,
 };
 
 #[test]
@@ -169,6 +169,59 @@ fn markdown_params_set_expected_message_type() {
     let c2c_value = serde_json::to_value(MessageToCreate::from(c2c)).unwrap();
     assert_eq!(c2c_value["msg_type"], serde_json::json!(2));
     assert_eq!(c2c_value["markdown"]["content"], serde_json::json!("# c2c"));
+}
+
+#[test]
+fn semantic_params_set_expected_message_types() {
+    let channel_ark = MessageParams::new_ark(Ark {
+        template_id: Some(37),
+        kv: None,
+    });
+    let channel_ark_value = serde_json::to_value(MessageToCreate::from(channel_ark)).unwrap();
+    assert_eq!(channel_ark_value["msg_type"], serde_json::json!(3));
+    assert_eq!(
+        channel_ark_value["ark"]["template_id"],
+        serde_json::json!(37)
+    );
+
+    let direct_embed = super::DirectMessageParams::new_embed(Embed {
+        prompt: "Direct embed".to_string(),
+        ..Default::default()
+    });
+    let direct_embed_value = serde_json::to_value(MessageToCreate::from(direct_embed)).unwrap();
+    assert_eq!(direct_embed_value["msg_type"], serde_json::json!(4));
+    assert_eq!(
+        direct_embed_value["embed"]["prompt"],
+        serde_json::json!("Direct embed")
+    );
+
+    let group_keyboard = GroupMessageParams::new_keyboard(
+        "# Group keyboard",
+        KeyboardPayload {
+            content: serde_json::json!({ "id": "62" }),
+        },
+    );
+    let group_keyboard_value = serde_json::to_value(MessageToCreate::from(group_keyboard)).unwrap();
+    assert_eq!(group_keyboard_value["msg_type"], serde_json::json!(2));
+    assert_eq!(
+        group_keyboard_value["markdown"]["content"],
+        serde_json::json!("# Group keyboard")
+    );
+    assert_eq!(
+        group_keyboard_value["keyboard"],
+        serde_json::json!({ "id": "62" })
+    );
+
+    let c2c_media = C2CMessageParams::new_media(Media {
+        file_info: Some("file-info".to_string()),
+        ..Default::default()
+    });
+    let c2c_media_value = serde_json::to_value(MessageToCreate::from(c2c_media)).unwrap();
+    assert_eq!(c2c_media_value["msg_type"], serde_json::json!(7));
+    assert_eq!(
+        c2c_media_value["media"],
+        serde_json::json!({ "file_info": "file-info" })
+    );
 }
 
 #[test]
