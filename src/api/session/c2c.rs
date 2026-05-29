@@ -2,7 +2,7 @@ use std::{ops::Deref, sync::Arc};
 
 use crate::api_impl::BotApi;
 use crate::client::Context;
-use crate::error::{BotError, Result};
+use crate::error::Result;
 use crate::models::{
     api::{BotInfo, MessageResponse},
     message::{C2CMessage, C2CMessageParams, Media},
@@ -20,13 +20,7 @@ pub struct C2CReplySession {
 
 impl C2CReplySession {
     pub(crate) fn new(ctx: Context, message: C2CMessage) -> Result<Self> {
-        let openid = message
-            .author
-            .as_ref()
-            .and_then(|author| author.user_openid.clone())
-            .ok_or_else(|| {
-                BotError::InvalidData("Missing user_openid for C2C reply session".to_string())
-            })?;
+        let openid = message.author.user_openid.clone();
 
         Ok(Self {
             ctx,
@@ -96,7 +90,7 @@ impl C2CReplySession {
 
     fn prepare_message(&mut self, params: &mut C2CMessageParams) {
         if params.msg_id.is_none() {
-            params.msg_id = self.message.id.clone();
+            params.msg_id = Some(self.message.id.clone());
         }
         if params.event_id.is_none() {
             params.event_id = self.message.event_id.clone();

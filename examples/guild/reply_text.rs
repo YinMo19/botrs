@@ -24,20 +24,13 @@ impl EventHandler for AtReplyHandler {
     async fn message_create(&self, mut session: ChannelReplySession) {
         let message = session.message().clone();
         // Log user avatar and username.
-        if let Some(author) = &message.author {
-            if let Some(avatar) = &author.avatar {
-                info!("User avatar: {}", avatar);
-            }
-            if let Some(username) = &author.username {
-                info!("Username: {}", username);
-            }
+        if !message.author.avatar.is_empty() {
+            info!("User avatar: {}", message.author.avatar);
         }
+        info!("Username: {}", message.author.username);
 
         // Get message content
-        let content = match &message.content {
-            Some(content) => content,
-            None => return,
-        };
+        let content = &message.content;
 
         // Handle "sleep" command (similar to Python asyncio.sleep)
         if content.contains("sleep") {

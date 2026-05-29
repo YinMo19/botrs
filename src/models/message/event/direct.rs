@@ -5,13 +5,10 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct DirectMessage {
     /// Guild ID of the DM session
-    #[serde(default)]
     pub guild_id: Snowflake,
     /// Channel ID of the DM session
-    #[serde(default)]
     pub channel_id: Snowflake,
     /// Creation timestamp
-    #[serde(default)]
     pub create_time: Timestamp,
 }
 

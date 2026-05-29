@@ -24,28 +24,13 @@ impl EventHandler for PinsMessageHandler {
     async fn message_create(&self, mut session: ChannelReplySession) {
         let message = session.message().clone();
         // Get message content
-        let content = match &message.content {
-            Some(content) => content,
-            None => return,
-        };
+        let content = &message.content;
 
         // Get channel ID for operations
-        let channel_id = match &message.channel_id {
-            Some(channel_id) => channel_id,
-            None => {
-                warn!("Message has no channel_id");
-                return;
-            }
-        };
+        let channel_id = &message.channel_id;
 
         // Get message ID for operations
-        let message_id = match &message.id {
-            Some(message_id) => message_id,
-            None => {
-                warn!("Message has no message_id");
-                return;
-            }
-        };
+        let message_id = &message.id;
 
         // Get bot name from the bot info if available
         let bot_name = session

@@ -2,7 +2,7 @@ use std::{ops::Deref, sync::Arc};
 
 use crate::api_impl::BotApi;
 use crate::client::Context;
-use crate::error::{BotError, Result};
+use crate::error::Result;
 use crate::models::{
     api::{BotInfo, MessageResponse},
     message::{GroupMessage, GroupMessageParams, Media},
@@ -20,9 +20,7 @@ pub struct GroupReplySession {
 
 impl GroupReplySession {
     pub(crate) fn new(ctx: Context, message: GroupMessage) -> Result<Self> {
-        let group_openid = message.group_openid.clone().ok_or_else(|| {
-            BotError::InvalidData("Missing group_openid for group reply session".to_string())
-        })?;
+        let group_openid = message.group_openid.clone();
 
         Ok(Self {
             ctx,
@@ -98,7 +96,7 @@ impl GroupReplySession {
 
     pub(crate) fn prepare_message(&mut self, params: &mut GroupMessageParams) {
         if params.msg_id.is_none() {
-            params.msg_id = self.message.id.clone();
+            params.msg_id = Some(self.message.id.clone());
         }
         if params.event_id.is_none() {
             params.event_id = self.message.event_id.clone();

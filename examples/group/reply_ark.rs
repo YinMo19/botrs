@@ -24,9 +24,7 @@ impl EventHandler for GroupReplyArkHandler {
     /// Called when a group @ message is created.
     async fn group_message_create(&self, mut session: GroupReplySession) {
         let message = session.message().clone();
-        if let Some(content) = &message.content {
-            info!("Received group message: {}", content);
-        }
+        info!("Received group message: {}", message.content);
 
         // Create ARK payload. Template variables depend on the configured template_id.
         let ark_payload = Ark {

@@ -476,8 +476,16 @@ mod tests {
             data: Some(json!({
                 "message": {
                     "id": "message_id",
+                    "content": "deleted",
                     "channel_id": "channel_id",
-                    "guild_id": "guild_id"
+                    "guild_id": "guild_id",
+                    "author": {
+                        "id": "author_id",
+                        "username": "author",
+                        "bot": false
+                    },
+                    "seq_in_channel": "1",
+                    "timestamp": "2024-01-01T00:00:00+08:00"
                 },
                 "op_user": {
                     "id": "operator_id",
@@ -515,8 +523,16 @@ mod tests {
                     event_type: Some("AT_MESSAGE_CREATE".to_string()),
                     data: Some(json!({
                         "id": "message_id",
+                        "content": "hello",
                         "channel_id": "channel_id",
-                        "guild_id": "guild_id"
+                        "guild_id": "guild_id",
+                        "author": {
+                            "id": "author_id",
+                            "username": "author",
+                            "bot": false
+                        },
+                        "seq_in_channel": "1",
+                        "timestamp": "2024-01-01T00:00:00+08:00"
                     })),
                     sequence: Some(42),
                     opcode: 0,

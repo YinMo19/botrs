@@ -102,10 +102,7 @@ impl EventHandler for KeyboardReplyHandler {
     async fn message_create(&self, mut session: ChannelReplySession) {
         let message = session.message().clone();
         // Get message content
-        let content = match &message.content {
-            Some(content) => content,
-            None => return,
-        };
+        let content = &message.content;
 
         info!("Received message: {}", content);
 

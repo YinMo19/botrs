@@ -26,29 +26,16 @@ impl EventHandler for SimpleHandler {
     async fn message_create(&self, mut session: ChannelReplySession) {
         let message = session.message().clone();
         // Ignore messages from bots
-        if message
-            .author
-            .as_ref()
-            .and_then(|author| author.bot)
-            .unwrap_or_default()
-        {
+        if message.author.bot {
             return;
         }
 
         // Get message content
-        let content = match &message.content {
-            Some(content) => content,
-            None => return,
-        };
+        let content = &message.content;
 
         info!(
             "Received message from {}: {}",
-            message
-                .author
-                .as_ref()
-                .map(|a| a.username.as_deref().unwrap_or("Unknown"))
-                .unwrap_or("Unknown"),
-            content
+            message.author.username, content
         );
 
         // Respond to specific commands
@@ -87,19 +74,11 @@ impl EventHandler for SimpleHandler {
     async fn group_message_create(&self, mut session: GroupReplySession) {
         let message = session.message().clone();
         // Get message content
-        let content = match &message.content {
-            Some(content) => content,
-            None => return,
-        };
+        let content = &message.content;
 
         info!(
             "Received group message from {}: {}",
-            message
-                .author
-                .as_ref()
-                .and_then(|a| a.member_openid.as_deref())
-                .unwrap_or("Unknown"),
-            content
+            message.author.member_openid, content
         );
 
         // Respond to specific commands

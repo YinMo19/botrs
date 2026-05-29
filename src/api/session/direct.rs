@@ -2,7 +2,7 @@ use std::{ops::Deref, sync::Arc};
 
 use crate::api_impl::BotApi;
 use crate::client::Context;
-use crate::error::{BotError, Result};
+use crate::error::Result;
 use crate::models::{
     api::{BotInfo, MessageResponse},
     message::{DirectMessageParams, Message},
@@ -20,9 +20,7 @@ pub struct DirectReplySession {
 
 impl DirectReplySession {
     pub(crate) fn new(ctx: Context, message: Message) -> Result<Self> {
-        let guild_id = message.guild_id.clone().ok_or_else(|| {
-            BotError::InvalidData("Missing guild_id for direct reply session".to_string())
-        })?;
+        let guild_id = message.guild_id.clone();
 
         Ok(Self {
             ctx,
@@ -83,7 +81,7 @@ impl DirectReplySession {
 
     fn prepare_message(&mut self, params: &mut DirectMessageParams) {
         if params.msg_id.is_none() {
-            params.msg_id = self.message.id.clone();
+            params.msg_id = Some(self.message.id.clone());
         }
         if params.event_id.is_none() {
             params.event_id = self.message.event_id.clone();

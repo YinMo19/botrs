@@ -22,17 +22,12 @@ impl EventHandler for GuildToolsHandler {
 
     async fn message_create(&self, mut session: ChannelReplySession) {
         let message = session.message().clone();
-        let Some(content) = message.content.as_deref().map(str::trim) else {
-            return;
-        };
+        let content = message.content.trim();
         if !content.starts_with("/tools") {
             return;
         }
 
-        let Some(channel_id) = message.channel_id.as_deref() else {
-            warn!("tools command has no channel_id");
-            return;
-        };
+        let channel_id = message.channel_id.as_str();
 
         let parts = content.split_whitespace().collect::<Vec<_>>();
         match parts.as_slice() {
@@ -42,7 +37,7 @@ impl EventHandler for GuildToolsHandler {
                     Ok(messages) => {
                         let ids = messages
                             .iter()
-                            .filter_map(|message| message.id.as_deref())
+                            .map(|message| message.id.as_str())
                             .collect::<Vec<_>>()
                             .join("\n");
                         let reply = if ids.is_empty() {
@@ -58,7 +53,11 @@ impl EventHandler for GuildToolsHandler {
             ["/tools", "get", message_id] => {
                 match session.get_message(channel_id, message_id).await {
                     Ok(found) => {
-                        let text = found.content.as_deref().unwrap_or("<empty>");
+                        let text = if found.content.is_empty() {
+                            "<empty>"
+                        } else {
+                            found.content.as_str()
+                        };
                         let _ = session.reply(text).await;
                     }
                     Err(err) => warn!("get message failed: {}", err),

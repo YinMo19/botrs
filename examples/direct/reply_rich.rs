@@ -25,7 +25,7 @@ impl EventHandler for DirectReplyRichHandler {
 
     async fn direct_message_create(&self, mut session: DirectReplySession) {
         let message = session.message().clone();
-        let content = message.content.as_deref().unwrap_or_default();
+        let content = message.content.as_str();
         let params = if content.contains("ark") {
             DirectMessageParams {
                 msg_type: Some(MessageCreateType::Ark),
