@@ -99,8 +99,8 @@ impl<H: EventHandler + 'static> Client<H> {
         // Create context
         let ctx = Context::new(self.api.clone()).with_bot_info(bot_info);
 
-        // Set up event channel
-        let (event_sender, mut event_receiver) = mpsc::unbounded_channel();
+        // Bound queued payloads across shards when application handlers fall behind.
+        let (event_sender, mut event_receiver) = mpsc::channel(1024);
 
         let mut manager = ChanManager::new();
         let run = manager.start(

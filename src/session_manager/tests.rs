@@ -55,7 +55,7 @@ fn sessions_are_generated_per_shard() {
 
 #[tokio::test]
 async fn non_resumable_error_clears_session_before_requeue() {
-    let (event_tx, _event_rx) = mpsc::unbounded_channel();
+    let (event_tx, _event_rx) = mpsc::channel(16);
     let connect_fn = std::sync::Arc::new(|session: Session, _event_sender| -> SessionFuture {
         Box::pin(async move {
             let mut next = session;
@@ -95,7 +95,7 @@ async fn terminal_identify_error_stops_manager_and_closes_event_channel() {
             )
         })
     });
-    let (tx, mut rx) = mpsc::unbounded_channel();
+    let (tx, mut rx) = mpsc::channel(16);
     let info = ap_info(2, 2, 1);
     let run = manager.start(&info, Token::new("app", "secret"), Intents::new(), tx);
     let err = tokio::time::timeout(std::time::Duration::from_secs(2), run)
@@ -109,12 +109,12 @@ async fn terminal_identify_error_stops_manager_and_closes_event_channel() {
 #[tokio::test]
 async fn cancelling_manager_drops_active_shard_and_event_sender() {
     let info = ap_info(1, 1, 1);
-    let (tx, mut rx) = mpsc::unbounded_channel();
+    let (tx, mut rx) = mpsc::channel(16);
     let mut manager = ChanManager::with_connect_fn(|_, tx| {
         Box::pin(async move {
             let started =
                 serde_json::from_value(serde_json::json!({"op":0,"t":"RESUMED"})).unwrap();
-            tx.send(started).unwrap();
+            tx.send(started).await.unwrap();
             let result = std::future::pending().await;
             drop(tx);
             result

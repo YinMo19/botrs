@@ -16,7 +16,7 @@ impl Gateway {
     pub(super) async fn handle_message_content(
         &mut self,
         text: &str,
-        event_sender: &mpsc::UnboundedSender<GatewayEvent>,
+        event_sender: &mpsc::Sender<GatewayEvent>,
         write: &SharedWriter,
     ) -> Result<GatewayAction> {
         // Parse the gateway event
@@ -87,7 +87,7 @@ impl Gateway {
             }
 
             // Regular event dispatch
-            if let Err(e) = event_sender.send(event) {
+            if let Err(e) = event_sender.send(event).await {
                 debug!("Failed to send event: {}", e);
             }
         }

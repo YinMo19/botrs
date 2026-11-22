@@ -13,6 +13,6 @@ pub trait SessionManager: Send + Sync {
         ap_info: &GatewayResponse,
         token: Token,
         intents: Intents,
-        event_sender: mpsc::UnboundedSender<GatewayEvent>,
+        event_sender: mpsc::Sender<GatewayEvent>,
     ) -> crate::Result<()>;
 }

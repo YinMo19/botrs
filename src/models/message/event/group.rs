@@ -79,6 +79,22 @@ pub struct GroupMessage {
 }
 
 impl GroupMessage {
+    /// Visible quote for this incoming message. QQ supplies its index in
+    /// `message_scene.ext`; `ref_msg_idx` refers to an earlier quoted message.
+    /// The session supplies the separate passive reply ID when sending.
+    pub fn quote_reference(&self) -> Option<crate::models::message::Reference> {
+        self.message_scene
+            .ext
+            .iter()
+            .filter_map(|field| field.strip_prefix("msg_idx="))
+            .map(str::trim)
+            .find(|index| !index.is_empty())
+            .map(|index| crate::models::message::Reference {
+                message_id: Some(index.to_owned()),
+                ignore_get_message_error: Some(true),
+            })
+    }
+
     /// Current text with an explicitly marked leading mention of this bot removed.
     /// QQ already strips this prefix from mention-only deliveries. Mentions of
     /// other members and `<@all>` are preserved.

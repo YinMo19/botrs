@@ -14,10 +14,7 @@ impl Gateway {
     /// This is the primitive used by session managers: reconnect
     /// throttling and requeueing are owned by the manager, not by recursive
     /// websocket connection loops.
-    pub async fn connect_once(
-        &mut self,
-        event_sender: mpsc::UnboundedSender<GatewayEvent>,
-    ) -> Result<()> {
+    pub async fn connect_once(&mut self, event_sender: mpsc::Sender<GatewayEvent>) -> Result<()> {
         self.connection_alive.store(false, Ordering::Relaxed);
         self.is_ready.store(false, Ordering::Relaxed);
         self.heartbeat_count.store(0, Ordering::Relaxed);
@@ -33,7 +30,7 @@ impl Gateway {
     /// Opens one WebSocket connection and runs its event loop.
     pub(super) async fn try_connect(
         &mut self,
-        event_sender: &mpsc::UnboundedSender<GatewayEvent>,
+        event_sender: &mpsc::Sender<GatewayEvent>,
     ) -> Result<()> {
         // Parse gateway URL
         let url = Url::parse(&self.url).map_err(BotError::Url)?;

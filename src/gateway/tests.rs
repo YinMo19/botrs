@@ -130,7 +130,7 @@ async fn fatal_close_after_identify_propagates_to_the_session_manager() {
             max_concurrency: 1,
         },
     };
-    let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel();
+    let (tx, mut rx) = tokio::sync::mpsc::channel(16);
     let mut manager = ChanManager::new();
     let run = manager.start(&info, token, Intents::new(), tx);
     let error = tokio::time::timeout(Duration::from_secs(3), run)

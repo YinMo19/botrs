@@ -18,7 +18,7 @@ use crate::token_impl::Token;
 
 pub(super) type SessionFuture = Pin<Box<dyn Future<Output = (Session, crate::Result<()>)> + Send>>;
 pub(super) type SessionConnectFn =
-    dyn Fn(Session, mpsc::UnboundedSender<GatewayEvent>) -> SessionFuture + Send + Sync;
+    dyn Fn(Session, mpsc::Sender<GatewayEvent>) -> SessionFuture + Send + Sync;
 
 /// Local, channel-backed default session manager.
 #[derive(Clone)]
@@ -53,10 +53,7 @@ impl ChanManager {
 
     pub(super) fn with_connect_fn<F>(connect_fn: F) -> Self
     where
-        F: Fn(Session, mpsc::UnboundedSender<GatewayEvent>) -> SessionFuture
-            + Send
-            + Sync
-            + 'static,
+        F: Fn(Session, mpsc::Sender<GatewayEvent>) -> SessionFuture + Send + Sync + 'static,
     {
         Self {
             connect_fn: Arc::new(connect_fn),
@@ -79,7 +76,7 @@ impl ChanManager {
 
     pub(super) async fn new_connect(
         connect_fn: Arc<SessionConnectFn>,
-        event_sender: mpsc::UnboundedSender<GatewayEvent>,
+        event_sender: mpsc::Sender<GatewayEvent>,
         session: Session,
     ) -> crate::Result<Session> {
         let (mut reconnect_session, result) = connect_fn(session, event_sender).await;
@@ -104,7 +101,7 @@ impl SessionManager for ChanManager {
         ap_info: &GatewayResponse,
         token: Token,
         intents: Intents,
-        event_sender: mpsc::UnboundedSender<GatewayEvent>,
+        event_sender: mpsc::Sender<GatewayEvent>,
     ) -> crate::Result<()> {
         check_session_limit(ap_info)?;
         let start_interval =

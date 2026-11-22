@@ -16,7 +16,7 @@ impl Gateway {
     pub(super) async fn run_event_loop(
         &mut self,
         ws_stream: WsStream,
-        event_sender: mpsc::UnboundedSender<GatewayEvent>,
+        event_sender: mpsc::Sender<GatewayEvent>,
     ) -> Result<()> {
         let (write_stream, mut read) = ws_stream.split();
         let write: SharedWriter = Arc::new(Mutex::new(write_stream));

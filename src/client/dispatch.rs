@@ -222,6 +222,72 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn bounded_gateway_drains_a_burst_of_full_group_messages_in_order() {
+        use futures_util::{SinkExt, StreamExt};
+        use tokio_tungstenite::tungstenite::Message as Frame;
+
+        const COUNT: usize = 10_000;
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let url = format!("ws://{}", listener.local_addr().unwrap());
+        let server = tokio::spawn(async move {
+            let (stream, _) = listener.accept().await.unwrap();
+            let mut ws = tokio_tungstenite::accept_async(stream).await.unwrap();
+            ws.send(Frame::Text(
+                r#"{"op":10,"d":{"heartbeat_interval":60000}}"#.into(),
+            ))
+            .await
+            .unwrap();
+            ws.next().await.unwrap().unwrap();
+            for seq in 1..=COUNT {
+                ws.feed(Frame::Text(json!({"op":0,"s":seq,"t":"GROUP_MESSAGE_CREATE","d":{
+                    "id":seq.to_string(),"author":{"member_openid":"sender"},"group_openid":"group",
+                    "timestamp":"2026-11-23T00:00:00+08:00","content":"ordinary chat"
+                }}).to_string())).await.unwrap();
+            }
+            ws.flush().await.unwrap();
+            ws.close(None).await.unwrap();
+        });
+        let token = Token::new("app", "secret");
+        token
+            .set_cached_access_token_for_test("test-access-token")
+            .await;
+        let client = Client::new(
+            token.clone(),
+            Intents::new(),
+            |_: Event| async { Ok(()) },
+            false,
+        )
+        .unwrap();
+        let ctx = Context::new(client.api.clone());
+        let mut gateway = crate::gateway::Gateway::new(url, token, Intents::new(), Some([0, 1]));
+        let (tx, mut rx) = tokio::sync::mpsc::channel(8);
+        let started = std::time::Instant::now();
+        let reader = tokio::spawn(async move { gateway.connect_once(tx).await });
+        tokio::time::timeout(std::time::Duration::from_secs(30), async {
+            while rx.len() < 8 {
+                tokio::task::yield_now().await;
+            }
+            for seq in 1..=COUNT {
+                let event = rx.recv().await.unwrap();
+                let Event::GroupFullMessageCreate(session) =
+                    Event::decode(ctx.clone(), event).unwrap()
+                else {
+                    panic!("wrong event")
+                };
+                assert_eq!(session.message().id, seq.to_string());
+            }
+        })
+        .await
+        .unwrap();
+        eprintln!(
+            "decoded {COUNT} ordered group events over loopback in {:?}",
+            started.elapsed()
+        );
+        server.await.unwrap();
+        let _closed = reader.await.unwrap();
+    }
+
+    #[tokio::test]
     async fn full_group_delivery_preserves_context_and_reply_target() {
         let client = Client::new(
             Token::new("app", "secret"),
