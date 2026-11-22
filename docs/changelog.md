@@ -2,7 +2,15 @@
 
 This page summarizes the currently documented BotRS release line. The main API surface is intentionally small and follows the runtime path used by examples and gateway event handling.
 
-## [0.14.0] - Current
+## [0.14.1] - Current
+
+- Handle ordinary group messages with `group_full_message_create`. Read the group's receive mode, proactive messaging permission and bot role with `get_group_bot_state`.
+- Use `GroupMessage::quote_reference()` to quote the triggering message. Incoming messages also expose structured elements and mention details.
+- Remove group members with `remove_group_members` when QQ grants the required permissions.
+- The WebSocket gateway buffers up to 1,024 events across shards and waits for capacity when handlers fall behind.
+- Incoming message structs gained fields. Code that initializes every field explicitly can use `..Default::default()` for the new fields.
+
+## [0.14.0]
 
 - WebSocket and signed Webhook callbacks share typed events. Handlers can return a result and use the question-mark operator.
 - Message sessions use platform reply IDs and handle QQ's minimal payloads. REST errors expose the HTTP status, QQ code, trace ID and response body.

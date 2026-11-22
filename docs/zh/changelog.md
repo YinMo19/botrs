@@ -2,7 +2,15 @@
 
 本页概述当前文档对应的 BotRS 版本线。主 API 表面保持较小，围绕 examples 和 gateway 事件处理实际使用的运行路径组织。
 
-## [0.14.0] - 当前版本
+## [0.14.1] - 当前版本
+
+- 通过 `group_full_message_create` 接收普通群消息。通过 `get_group_bot_state` 查询群接收范围、主动发言权限和机器人角色。
+- 通过 `GroupMessage::quote_reference()` 引用触发回复的消息。收到的群消息也可读取结构化消息元素和提及信息。
+- QQ 授权后，可通过 `remove_group_members` 移除群成员。
+- WebSocket 网关各分片共享 1,024 个事件缓冲位。处理器积压时，网关等待队列腾出空间。
+- 入站消息结构体增加了字段。逐项构造结构体的调用方可以用 `..Default::default()` 填充新增字段。
+
+## [0.14.0]
 
 - WebSocket 和签名 Webhook 共用类型化事件。处理器可以返回 Result，并通过问号操作符传播错误。
 - 消息会话使用平台提供的回复 ID，兼容 QQ 的最小消息载荷。REST 错误保留 HTTP 状态、QQ 错误码、trace ID 和响应体。

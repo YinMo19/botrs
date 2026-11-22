@@ -37,7 +37,7 @@ Error message here
 **Environment (please complete the following information):**
  - OS: [e.g. Linux, macOS, Windows]
  - Rust version: [e.g. 1.85.0]
- - BotRS version: [e.g. 0.14.0]
+ - BotRS version: [e.g. 0.14.1]
  - QQ Bot API: [e.g. Guild Bot API, Group Bot API]
 
 **Additional context**
