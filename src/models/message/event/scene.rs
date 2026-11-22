@@ -13,4 +13,7 @@ pub struct MessageScene {
     /// Extra scene metadata returned by open-message events.
     #[serde(default, skip_serializing_if = "is_default")]
     pub ext: Vec<String>,
+    /// Additional platform-provided scene fields.
+    #[serde(flatten)]
+    pub extra: serde_json::Map<String, serde_json::Value>,
 }

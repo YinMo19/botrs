@@ -50,7 +50,7 @@ impl EventHandler for MyBot {
 每个回调都接收一个 session 参数：
 
 - 生命周期：`ready`、`resumed`、`error(BotError)`、`unknown_event(UnknownEventSession)`。
-- 消息：`message_create`、`message_delete`、`direct_message_create`、`direct_message_delete`、`group_message_create`、`c2c_message_create`。
+- 消息：`message_create`、`message_delete`、`direct_message_create`、`direct_message_delete`、`group_message_create`、`group_full_message_create`、`c2c_message_create`。
 - 表情：`message_reaction_add`、`message_reaction_remove`。
 - 交互：`interaction_create`。
 - 审核：`message_audit_pass`、`message_audit_reject`。

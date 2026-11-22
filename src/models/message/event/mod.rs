@@ -14,7 +14,7 @@ pub use audit::MessageAudit;
 pub use c2c::C2CMessage;
 pub use delete::MessageDelete;
 pub use direct::{DirectMessage, DirectMessageToCreate};
-pub use group::GroupMessage;
+pub use group::{GroupMessage, GroupMessageElement, ReceivedArk};
 pub use message::Message;
 pub use reference::MessageReference;
 pub use scene::MessageScene;

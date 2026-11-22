@@ -8,7 +8,7 @@ Guild channel `@bot` messages use `Message`, delivered to `EventHandler::message
 
 Group and C2C messages have their own models:
 
-- `GroupMessage` maps to `GROUP_AT_MESSAGE_CREATE`; the key routing field is `group_openid`.
+- `GroupMessage` maps to both `GROUP_AT_MESSAGE_CREATE` and `GROUP_MESSAGE_CREATE`; the key routing field is `group_openid`.
 - `C2CMessage` maps to `C2C_MESSAGE_CREATE`; the key routing field usually comes from `author.user_openid`.
 
 These event models retain platform-provided message id, content, attachments, mentions, timestamp, references, and internal `event_id`. Message id, content, author, routing id, and timestamp are required fields on normal message events; group/C2C messages also carry the required open-message `message_type`. Optional protocol fields stay optional.
@@ -21,6 +21,20 @@ if !message.author.bot && message.content.trim() == "/ping" {
     session.reply("pong").await?;
 }
 ```
+
+## Group receive modes and proactive messages
+
+Read the group's settings with `session.bot_state().await?` or `api.get_group_bot_state(group_openid).await?`. The returned `GroupBotState.recv_msg_setting` uses `botrs::models::group::GroupReceiveMode`.
+
+| QQ group setting | Rust value | Delivery |
+| --- | --- | --- |
+| Mentions only | `OnlyMention` | Handle mentions in `group_message_create`. |
+| Recent context on mention (up to 10 messages) | `MentionAndContext` | Handle the current mention and inspect the context QQ supplies. |
+| All group messages | `All` | Handle ordinary messages in `group_full_message_create`. |
+
+Both events use `Intents::default().with_public_messages()`. Match `Event::GroupMessageCreate(s) | Event::GroupFullMessageCreate(s)` to share logic. Read the current command from `s.message().content_without_bot_mention()`. Recursive `msg_elements` carry quoted messages and records. Additional top-level fields are available in `extra`. QQ has not documented a dedicated recent-history field. Element counts cannot identify the receive mode. The state endpoint requires an allowlisted application and may return platform code 11253.
+
+The independent `allow_proactive_msg` flag controls proactive delivery. A scheduled job can call `api.send_group_message(group_openid, GroupMessageParams::new_text(text)).await?`. Use `session.reply(text).await?` to attach the current message ID and reply sequence.
 
 ## Sending Messages
 

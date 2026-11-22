@@ -45,6 +45,7 @@ mod channel;
 mod channel_permissions;
 mod direct_message;
 mod gateway;
+mod group;
 mod guild;
 mod interaction;
 mod me;

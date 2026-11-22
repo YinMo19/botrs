@@ -5,6 +5,7 @@ use crate::client::Context;
 use crate::error::Result;
 use crate::models::{
     api::{BotInfo, MessageResponse},
+    group::GroupBotState,
     message::{Ark, Embed, GroupMessage, GroupMessageParams, Keyboard, Media},
 };
 
@@ -55,6 +56,11 @@ impl GroupReplySession {
         } else {
             &self.message.group_openid
         }
+    }
+
+    /// Reads this group's current bot settings on demand.
+    pub async fn bot_state(&self) -> Result<GroupBotState> {
+        self.api().get_group_bot_state(self.group_openid()).await
     }
 
     /// Sends a text reply in the current group reply session.

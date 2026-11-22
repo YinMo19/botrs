@@ -8,7 +8,7 @@
 
 群聊和 C2C 是独立模型：
 
-- `GroupMessage` 对应 `GROUP_AT_MESSAGE_CREATE`，核心定位字段是 `group_openid`。
+- `GroupMessage` 对应 `GROUP_AT_MESSAGE_CREATE` 和 `GROUP_MESSAGE_CREATE`，核心定位字段是 `group_openid`。
 - `C2CMessage` 对应 `C2C_MESSAGE_CREATE`，核心定位字段通常来自 `author.user_openid`。
 
 这些事件模型都保留了平台给出的 message id、content、attachments、mentions、timestamp、reference 和内部 `event_id`。常规消息事件里的 message id、content、author、路由 id、timestamp 是必有字段；群/C2C 消息还会携带必有的开放消息 `message_type`。协议本身可缺省的字段仍然保持可选。
@@ -21,6 +21,20 @@ if !message.author.bot && message.content.trim() == "/ping" {
     session.reply("pong").await?;
 }
 ```
+
+## 群消息接收范围和主动发言
+
+通过 `session.bot_state().await?` 或 `api.get_group_bot_state(group_openid).await?` 查询这个群的设置。`GroupBotState.recv_msg_setting` 使用 `botrs::models::group::GroupReceiveMode`。
+
+| QQ 群设置 | Rust 值 | 应用如何处理 |
+| --- | --- | --- |
+| 仅获取 @ 机器人的消息 | `OnlyMention` | 用 `group_message_create` 接收 @ 事件。 |
+| 获取 @ 机器人的最近 10 条消息 | `MentionAndContext` | 处理当前 @ 消息，从事件读取 QQ 实际附带的上下文。 |
+| 获取群内全部消息 | `All` | 用 `group_full_message_create` 接收普通群消息。 |
+
+两种事件共用 `Intents::default().with_public_messages()`。匹配 `Event::GroupMessageCreate(s) | Event::GroupFullMessageCreate(s)` 即可共用处理逻辑。命令使用 `s.message().content_without_bot_mention()`，引用及聊天记录位于递归的 `msg_elements`，未建模的顶层字段在 `extra`。QQ 的公开协议没有指定“最近 10 条”的专属字段。引用元素数量不能用来判定接收模式。状态接口要求应用白名单，错误码 11253 表示无法查询。
+
+主动发言由独立的 `allow_proactive_msg` 控制。定时任务可调用 `api.send_group_message(group_openid, GroupMessageParams::new_text(text)).await?`。回复当前消息使用 `session.reply(text).await?`，SDK 会附加当前消息 ID 和回复序号。
 
 ## 发送消息
 

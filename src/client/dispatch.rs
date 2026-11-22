@@ -87,6 +87,9 @@ impl Event {
             "GROUP_AT_MESSAGE_CREATE" => {
                 Event::GroupMessageCreate(message!(GroupMessage, GroupReplySession))
             }
+            "GROUP_MESSAGE_CREATE" => {
+                Event::GroupFullMessageCreate(message!(GroupMessage, GroupReplySession))
+            }
             "C2C_MESSAGE_CREATE" => Event::C2CMessageCreate(message!(C2CMessage, C2CReplySession)),
             "DIRECT_MESSAGE_DELETE" => Event::DirectMessageDelete(typed!(decode_delete)),
             "MESSAGE_DELETE" => Event::MessageDelete(typed!(decode_delete)),
@@ -216,6 +219,41 @@ mod tests {
                 .await
                 .unwrap();
         }
+    }
+
+    #[tokio::test]
+    async fn full_group_delivery_preserves_context_and_reply_target() {
+        let client = Client::new(
+            Token::new("app", "secret"),
+            Intents::new(),
+            |_: Event| async { Ok(()) },
+            false,
+        )
+        .unwrap();
+        let event = serde_json::from_value(
+            json!({"op":0,"t":"GROUP_MESSAGE_CREATE","id":"delivery","d":{
+                "id":"current","group_openid":"group","author":{"member_openid":"sender"},
+                "timestamp":"2026-07-21T08:00:00+08:00","content":"<@bot> /ping",
+                "mentions":[{"member_openid":"bot","is_you":true,"scope":"single"}],
+                "msg_elements":[{"message_type":102,"msg_elements":[{"content":"/earlier"}]}],
+                "new_context_field":[{"id":"previous"}]
+            }}),
+        )
+        .unwrap();
+        let Event::GroupFullMessageCreate(mut s) =
+            Event::decode(Context::new(client.api.clone()), event).unwrap()
+        else {
+            panic!("expected full group delivery");
+        };
+        let msg = s.message();
+        assert_eq!(s.group_openid(), "group");
+        assert_eq!(msg.event_id.as_deref(), Some("delivery"));
+        assert_eq!(msg.content_without_bot_mention(), "/ping");
+        assert_eq!(msg.msg_elements[0].msg_elements[0].content, "/earlier");
+        assert_eq!(msg.extra["new_context_field"][0]["id"], "previous");
+        let mut reply = crate::models::message::GroupMessageParams::new_text("pong");
+        s.prepare_message(&mut reply);
+        assert_eq!(reply.msg_id.as_deref(), Some("current"));
     }
 
     #[tokio::test]

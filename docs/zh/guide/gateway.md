@@ -29,6 +29,7 @@ session manager 会根据 `session_start_limit.max_concurrency` 间隔启动 sha
 - `MESSAGE_CREATE` / `AT_MESSAGE_CREATE` -> `message_create(ChannelReplySession)`
 - `DIRECT_MESSAGE_CREATE` -> `direct_message_create(DirectReplySession)`
 - `GROUP_AT_MESSAGE_CREATE` -> `group_message_create(GroupReplySession)`
+- `GROUP_MESSAGE_CREATE` -> `group_full_message_create(GroupReplySession)`
 - `C2C_MESSAGE_CREATE` -> `c2c_message_create(C2CReplySession)`
 - `MESSAGE_REACTION_ADD` / `MESSAGE_REACTION_REMOVE` -> 表情回应回调
 - guild、channel、member、manage、audio、forum、open-forum 事件 -> 对应回调

@@ -48,8 +48,10 @@ event_handlers! {
     DirectMessageCreate(DirectReplySession) => direct_message_create,
     /// Called when a direct message is deleted.
     DirectMessageDelete(MessageDeleteSession) => direct_message_delete,
-    /// Called when a group message is created.
+    /// A group mention delivered as `GROUP_AT_MESSAGE_CREATE`.
     GroupMessageCreate(GroupReplySession) => group_message_create,
+    /// A group message delivered as `GROUP_MESSAGE_CREATE` in full-message mode.
+    GroupFullMessageCreate(GroupReplySession) => group_full_message_create,
     /// Called when a C2C message is created.
     C2CMessageCreate(C2CReplySession) => c2c_message_create,
     /// Called when a message is deleted.
@@ -108,9 +110,9 @@ event_handlers! {
     GroupAddRobot(GroupManageSession) => group_add_robot,
     /// Called when robot is deleted from group.
     GroupDelRobot(GroupManageSession) => group_del_robot,
-    /// Called when group message is rejected.
+    /// A group administrator disabled bot notifications (`GROUP_MSG_REJECT`).
     GroupMsgReject(GroupManageSession) => group_msg_reject,
-    /// Called when group message is received.
+    /// A group administrator enabled bot notifications (`GROUP_MSG_RECEIVE`).
     GroupMsgReceive(GroupManageSession) => group_msg_receive,
     /// Called when a user enters an audio or live channel.
     AudioOrLiveChannelMemberEnter(PublicAudioSession) => audio_or_live_channel_member_enter,

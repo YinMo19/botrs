@@ -37,6 +37,7 @@ Methods are grouped by the gateway category that produces them.
 ### Group / C2C
 
 - `group_message_create(GroupReplySession)`
+- `group_full_message_create(GroupReplySession)`
 - `c2c_message_create(C2CReplySession)`
 - `friend_add(C2CManageSession)` / `friend_del(C2CManageSession)`
 - `c2c_msg_reject(C2CManageSession)` / `c2c_msg_receive(C2CManageSession)`

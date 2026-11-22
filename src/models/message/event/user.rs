@@ -21,6 +21,21 @@ pub struct MessageUser {
 /// Represents a user in a group message.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct GroupMessageUser {
+    /// Set by QQ on a mention identifying the receiving bot.
+    #[serde(
+        default,
+        skip_serializing_if = "crate::models::serde_helpers::is_default"
+    )]
+    pub is_you: bool,
+    /// Mention scope, e.g. `single` or `all`.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub scope: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub member_role: Option<crate::models::group::GroupMemberRole>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub member_nickname: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub avatar: Option<String>,
     /// The user's ID
     #[serde(default)]
     pub id: String,

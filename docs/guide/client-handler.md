@@ -50,7 +50,7 @@ impl EventHandler for MyBot {
 The complete set of callbacks receives one session parameter per event:
 
 - Lifecycle: `ready`, `resumed`, `error(BotError)`, `unknown_event(UnknownEventSession)`.
-- Messages: `message_create`, `message_delete`, `direct_message_create`, `direct_message_delete`, `group_message_create`, `c2c_message_create`.
+- Messages: `message_create`, `message_delete`, `direct_message_create`, `direct_message_delete`, `group_message_create`, `group_full_message_create`, `c2c_message_create`.
 - Reactions: `message_reaction_add`, `message_reaction_remove`.
 - Interactions: `interaction_create`.
 - Audit: `message_audit_pass`, `message_audit_reject`.

@@ -76,6 +76,10 @@ pub(crate) fn group_messages(group_openid: &str) -> String {
     format!("/v2/groups/{group_openid}/messages")
 }
 
+pub(crate) fn group_bot_state(group_openid: &str) -> String {
+    format!("/v2/groups/{group_openid}/bot_state")
+}
+
 pub(crate) fn group_message(group_openid: &str, message_id: &str) -> String {
     format!("/v2/groups/{group_openid}/messages/{message_id}")
 }

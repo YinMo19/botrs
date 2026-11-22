@@ -29,4 +29,10 @@ pub struct MessageAttachment {
     /// The attachment's height (for images)
     #[serde(default, skip_serializing_if = "is_default")]
     pub height: u32,
+    /// Converted audio URL on incoming voice attachments.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub voice_wav_url: Option<String>,
+    /// Platform-supplied transcript on incoming voice attachments.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub asr_refer_text: Option<String>,
 }

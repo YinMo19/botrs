@@ -21,6 +21,7 @@ pub mod forum {
     };
 }
 pub mod gateway;
+pub mod group;
 pub mod guild;
 pub mod interaction;
 pub mod manage {
@@ -63,6 +64,7 @@ pub mod prelude {
         ForumAuditResult, OpenThread, Post, PostInfo, Reply, ReplyInfo, Thread, ThreadInfo,
     };
     pub use super::gateway::{GatewayEvent, Hello, Identify, IdentifyProperties, Ready, Resume};
+    pub use super::group::{GroupBotState, GroupMemberRole, GroupReceiveMode};
     pub use super::guild::{
         DeleteHistoryMsgDays, Guild, GuildMembersPager, GuildPager, GuildRoleMembers,
         GuildRoleMembersPager, Member, Member as GuildMember, MemberDeleteOptions, MessageSetting,
@@ -78,14 +80,14 @@ pub mod prelude {
     pub use super::message::{
         ActionButton, Ark, ArkKv, ArkObj, ArkObjKv, C2CMessage, C2CMessageParams, C2CMessageUser,
         DirectMessage, DirectMessageParams, DirectMessageToCreate, Embed, EmbedField,
-        EmbedThumbnail, GroupMessage, GroupMessageParams, GroupMessageUser, InputNotify, Keyboard,
-        KeyboardButton, KeyboardButtonAction, KeyboardButtonPermission, KeyboardButtonRenderData,
-        KeyboardContent, KeyboardModal, KeyboardPayload, KeyboardRow, KeyboardStyle,
-        KeyboardSubscribeData, KeyboardTemplateId, MarkdownParam, MarkdownPayload, MarkdownStyle,
-        Media, Message, MessageAttachment, MessageAudit, MessageCreateType, MessageDelete,
-        MessageMember, MessagePagerType, MessageParams, MessageReference, MessageScene,
-        MessageUser, MessagesPager, PromptKeyboard, Reference, SettingGuide, SettingGuideParams,
-        Stream,
+        EmbedThumbnail, GroupMessage, GroupMessageElement, GroupMessageParams, GroupMessageUser,
+        InputNotify, Keyboard, KeyboardButton, KeyboardButtonAction, KeyboardButtonPermission,
+        KeyboardButtonRenderData, KeyboardContent, KeyboardModal, KeyboardPayload, KeyboardRow,
+        KeyboardStyle, KeyboardSubscribeData, KeyboardTemplateId, MarkdownParam, MarkdownPayload,
+        MarkdownStyle, Media, Message, MessageAttachment, MessageAudit, MessageCreateType,
+        MessageDelete, MessageMember, MessagePagerType, MessageParams, MessageReference,
+        MessageScene, MessageUser, MessagesPager, PromptKeyboard, ReceivedArk, Reference,
+        SettingGuide, SettingGuideParams, Stream,
     };
     pub use super::mute::{GuildMute, GuildMuteResponse};
     pub use super::permission::{
