@@ -19,7 +19,10 @@ impl BotApi {
         Ok(())
     }
 
-    /// Recalls (deletes) a group message.
+    /// Recalls a QQ group message within two minutes of sending.
+    /// A bot that is a group administrator can also recall a regular member's
+    /// message using the incoming `GroupMessage.id`. For the bot's own message,
+    /// use the ID from the send response. Pass `None` for the documented route.
     pub async fn recall_group_message(
         &self,
         group_openid: &str,
@@ -98,7 +101,7 @@ mod tests {
             let request = String::from_utf8_lossy(&request_bytes).to_string();
             let _ = tx.send(request);
 
-            let response = "HTTP/1.1 200 OK\r\ncontent-type: application/json\r\ncontent-length: 2\r\nconnection: close\r\n\r\n{}";
+            let response = "HTTP/1.1 200 OK\r\ncontent-length: 0\r\nconnection: close\r\n\r\n";
             stream.write_all(response.as_bytes()).await.unwrap();
         });
 

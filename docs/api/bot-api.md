@@ -40,6 +40,11 @@ let me = api.get_bot_info().await?;
 | Pins | `put_pin`, `delete_pin`, `clean_pins`, `get_pins` |
 | Audio controls | `post_audio`, `put_mic`, `delete_mic` |
 
+## QQ group moderation
+
+- Call `api.recall_group_message(group_openid, message_id, None).await?` within two minutes of sending. Bots can recall their own messages. Group administrators can also recall a regular member's message using `session.message().id` from the incoming group event. [QQ message recall](https://bot.q.qq.com/wiki/develop/api-v2/autogen/api/v2_groups_group_openid_messages_message_id.delete.html)
+- Call `api.remove_group_members(group_openid, &[member_openid]).await?` with 1–20 group-scoped member OpenIDs. Both the bot's web console and the group owner must enable member removal. QQ returns `40103011` for a disabled console setting or `40103012` for a disabled group setting. [QQ group member removal](https://bot.q.qq.com/wiki/develop/api-v2/autogen/api/v2_groups_group_openid_batch_remove_members.post.html)
+
 ## Custom endpoints
 
 Use `api.with_url(url).send_group_message(...)` to direct a typed call to a trusted, fully resolved URL. `HttpClient::with_base_url` sets a shared prefix for typed routes. `api.transport(method, &url, |r| r.json(&payload)).await?` sends an authenticated request and returns a `reqwest::Response` for access to successful response headers and bytes.

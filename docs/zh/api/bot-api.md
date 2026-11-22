@@ -40,6 +40,11 @@ let me = api.get_bot_info().await?;
 | 精华消息 | `put_pin`、`delete_pin`、`clean_pins`、`get_pins` |
 | 音频控制 | `post_audio`、`put_mic`、`delete_mic` |
 
+## QQ 群管理
+
+- 撤回群消息用 `api.recall_group_message(group_openid, message_id, None).await?`。机器人可撤回自己发送的消息，成为群管理员后还可撤回普通成员的消息。成员消息 ID 取自群事件的 `session.message().id`，时限为发送后两分钟。[腾讯撤回接口](https://bot.q.qq.com/wiki/develop/api-v2/autogen/api/v2_groups_group_openid_messages_message_id.delete.html)
+- 移除群成员用 `api.remove_group_members(group_openid, &[member_openid]).await?`，每次可传 1 至 20 个本群成员的 OpenID。机器人 Web 管理端与群主均须开启“移除群成员”。QQ 的错误码 `40103011` 对应 Web 端开关，`40103012` 对应群主开关。[腾讯群成员移除接口](https://bot.q.qq.com/wiki/develop/api-v2/autogen/api/v2_groups_group_openid_batch_remove_members.post.html)
+
 ## 自定义请求地址
 
 `api.with_url(url).send_group_message(...)` 可让一次类型化调用使用完整的可信端点。`HttpClient::with_base_url` 为所有路由设置公共前缀。`api.transport(method, &url, |r| r.json(&payload)).await?` 会附带机器人凭据，成功时返回 `reqwest::Response`，可读取响应头和原始字节。

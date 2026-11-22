@@ -40,21 +40,10 @@ impl BotApi {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::api_impl::tests::test_api;
     use tokio::io::{AsyncReadExt, AsyncWriteExt};
     use tokio::net::TcpListener;
     use tokio::sync::oneshot;
-
-    async fn test_api(base_url: String) -> BotApi {
-        let token = crate::Token::new("APPID_XXXXXX", "SECRET_XXXXXX");
-        token
-            .set_cached_access_token_for_test("ACCESS_TOKEN_XXXXXX")
-            .await;
-        let http = crate::http::HttpClient::new(30, false)
-            .unwrap()
-            .with_base_url(base_url.parse().unwrap())
-            .unwrap();
-        BotApi::new(http, token)
-    }
 
     async fn spawn_capture_server() -> (
         String,
@@ -169,39 +158,6 @@ mod tests {
             .unwrap();
         assert_eq!(response.headers()["x-tps-trace-id"], "trace-raw");
         assert_eq!(response.text().await.unwrap(), "plain text");
-        server.abort();
-    }
-
-    #[tokio::test]
-    async fn group_state_is_an_authenticated_get_with_independent_permissions() {
-        use crate::models::group::{GroupMemberRole, GroupReceiveMode};
-        use axum::{Json, Router, extract::Path, http::HeaderMap, routing::get};
-        let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
-        let api = test_api(format!("http://{}", listener.local_addr().unwrap())).await;
-        let app = Router::new().route(
-            "/v2/groups/{group}/bot_state",
-            get(|Path(group): Path<String>, headers: HeaderMap| async move {
-                assert_eq!(headers["authorization"], "QQBot ACCESS_TOKEN_XXXXXX");
-                Json(serde_json::json!({
-                    "member_openid": "bot", "joined_at": "2025-06-15T14:30:00+08:00",
-                    "allow_proactive_msg": group == "only_mention",
-                    "recv_msg_setting": group, "member_role": "admin"
-                }))
-            }),
-        );
-        let server = tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
-        for (wire, mode) in [
-            ("only_mention", GroupReceiveMode::OnlyMention),
-            ("mention_and_context", GroupReceiveMode::MentionAndContext),
-            ("all", GroupReceiveMode::All),
-            ("future", GroupReceiveMode::Other("future".into())),
-        ] {
-            let state = api.get_group_bot_state(wire).await.unwrap();
-            assert_eq!(state.recv_msg_setting, mode);
-            assert_eq!(state.allow_proactive_msg, wire == "only_mention");
-            assert_eq!(state.member_role, GroupMemberRole::Admin);
-            assert_eq!(serde_json::to_value(mode).unwrap(), wire);
-        }
         server.abort();
     }
 

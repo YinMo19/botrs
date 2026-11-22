@@ -70,6 +70,18 @@ mod tests {
 
     use super::BotApi;
 
+    pub(super) async fn test_api(base_url: String) -> BotApi {
+        let token = crate::Token::new("APPID_XXXXXX", "SECRET_XXXXXX");
+        token
+            .set_cached_access_token_for_test("ACCESS_TOKEN_XXXXXX")
+            .await;
+        let http = crate::http::HttpClient::new(30, false)
+            .unwrap()
+            .with_base_url(base_url.parse().unwrap())
+            .unwrap();
+        BotApi::new(http, token)
+    }
+
     #[test]
     fn test_api_creation() {
         let token = crate::Token::new("app-id", "secret");
