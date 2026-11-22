@@ -1,11 +1,11 @@
-use crate::models::serde_helpers::{is_zero_u32, option_is_none_or_default};
+use crate::models::serde_helpers::option_is_none_or_default;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 use super::payload::option_message_type_is_none_or_zero;
 use super::{
-    ActionButton, Ark, Embed, InputNotify, Keyboard, KeyboardPayload, MarkdownPayload, Media,
-    MessageCreateType, MessageToCreate, PromptKeyboard, Reference, Stream,
+    ActionButton, Ark, Embed, InputNotify, Keyboard, MarkdownPayload, Media, MessageCreateType,
+    MessageToCreate, PromptKeyboard, Reference, Stream,
 };
 
 macro_rules! channel_like_message_params_struct {
@@ -80,7 +80,7 @@ macro_rules! open_message_params_struct {
         #[derive(Debug, Clone, Default, Serialize, Deserialize)]
         pub struct $name {
             /// Message type (0=text, 1=rich text, 2=markdown, 3=ark, 4=embed, 7=media)
-            #[serde(skip_serializing_if = "is_zero_u32")]
+            #[serde(default)]
             pub msg_type: u32,
             /// Message content
             #[serde(skip_serializing_if = "option_is_none_or_default")]
@@ -111,7 +111,7 @@ macro_rules! open_message_params_struct {
             pub markdown: Option<MarkdownPayload>,
             /// Keyboard payload
             #[serde(skip_serializing_if = "Option::is_none")]
-            pub keyboard: Option<KeyboardPayload>,
+            pub keyboard: Option<Keyboard>,
             /// Subscribe message template ID
             #[serde(skip_serializing_if = "option_is_none_or_default")]
             pub subscribe_id: Option<String>,
@@ -219,7 +219,7 @@ macro_rules! impl_channel_like_message_params {
             fn from(params: $name) -> Self {
                 Self {
                     content: params.content,
-                    msg_type: params.msg_type,
+                    msg_type: params.msg_type.filter(|kind| u32::from(*kind) != 0),
                     embed: params.embed,
                     ark: params.ark,
                     image: params.image,
@@ -288,13 +288,15 @@ macro_rules! impl_open_message_params {
             pub fn new_media(media: Media) -> Self {
                 Self {
                     msg_type: 7,
+                    // QQ requires non-empty content on group and C2C media messages.
+                    content: Some(" ".to_owned()),
                     media: Some(media),
                     ..Default::default()
                 }
             }
 
             /// Creates a new markdown message with a keyboard payload.
-            pub fn new_keyboard(content: impl Into<String>, keyboard: KeyboardPayload) -> Self {
+            pub fn new_keyboard(content: impl Into<String>, keyboard: Keyboard) -> Self {
                 Self {
                     msg_type: 2,
                     markdown: Some(MarkdownPayload {
@@ -323,7 +325,7 @@ macro_rules! impl_open_message_params {
                     msg_id: params.msg_id,
                     message_reference: params.message_reference,
                     markdown: params.markdown,
-                    keyboard: params.keyboard.map(Into::into),
+                    keyboard: params.keyboard,
                     event_id: params.event_id,
                     msg_seq: params.msg_seq,
                     media: params.media.map(Into::into),

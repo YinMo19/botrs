@@ -7,6 +7,7 @@ pub struct MessageAudit {
     /// The audit ID
     pub audit_id: Snowflake,
     /// The message ID that was audited
+    #[serde(default)]
     pub message_id: Snowflake,
     /// The guild ID where the message was posted
     pub guild_id: Snowflake,
@@ -17,6 +18,7 @@ pub struct MessageAudit {
     /// The create time
     pub create_time: Timestamp,
     /// Channel-specific sequence number for ordering audited messages
+    #[serde(default)]
     pub seq_in_channel: String,
     /// Event ID from the gateway
     #[serde(skip)]

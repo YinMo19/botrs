@@ -17,7 +17,7 @@ The client then parses each gateway dispatch into the relevant Rust model and ca
 
 ## Heartbeat and reconnect
 
-After `HELLO`, the runtime starts a heartbeat task using the server-provided heartbeat interval. Heartbeats carry the last received sequence number. If the socket closes, the runtime tries to resume with the cached session id and sequence number. Non-resumable close codes force a new identify; fatal identify errors stop that shard's reconnect loop and are logged by the session manager.
+The runtime records the heartbeat interval from `HELLO` and starts the heartbeat task on `READY` or `RESUMED`. Heartbeats carry the last received sequence number. If the socket closes, the runtime tries to resume with the cached session id and sequence number. Non-resumable close codes force a fresh identify. A fatal identify error stops the shard workers and returns from `Client::start`. Cancelling the start future also stops the workers and heartbeat tasks.
 
 The session manager spaces shard starts according to `session_start_limit.max_concurrency`. This keeps reconnects from hammering the platform after a network failure.
 
@@ -26,7 +26,7 @@ The session manager spaces shard starts according to `session_start_limit.max_co
 Known event names are parsed into typed payloads. Examples:
 
 - `READY` -> `ready(ReadySession)`
-- `AT_MESSAGE_CREATE` -> `message_create(ChannelReplySession)`
+- `MESSAGE_CREATE` / `AT_MESSAGE_CREATE` -> `message_create(ChannelReplySession)`
 - `DIRECT_MESSAGE_CREATE` -> `direct_message_create(DirectReplySession)`
 - `GROUP_AT_MESSAGE_CREATE` -> `group_message_create(GroupReplySession)`
 - `C2C_MESSAGE_CREATE` -> `c2c_message_create(C2CReplySession)`

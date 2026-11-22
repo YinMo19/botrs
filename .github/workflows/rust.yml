@@ -10,6 +10,13 @@ env:
     CARGO_TERM_COLOR: always
 
 jobs:
+    msrv:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v6
+            - run: rustup toolchain install 1.88.0 --profile minimal
+            - run: cargo +1.88.0 check --locked --all-features --all-targets
+
     build:
         runs-on: ubuntu-latest
 

@@ -2,7 +2,13 @@
 
 This page summarizes the currently documented BotRS release line. The main API surface is intentionally small and follows the runtime path used by examples and gateway event handling.
 
-## [0.13.0] - Current
+## [0.14.0] - Current
+
+- WebSocket and signed Webhook callbacks share typed events. Handlers can return a result and use the question-mark operator.
+- Message sessions use platform reply IDs and handle QQ's minimal payloads. REST errors expose the HTTP status, QQ code, trace ID and response body.
+- The minimum Rust version is 1.88. Channel sequence numbers are optional, and group and C2C keyboards use the typed Keyboard model.
+
+## [0.13.0]
 
 ### Current Surface
 
@@ -14,7 +20,6 @@ This page summarizes the currently documented BotRS release line. The main API s
 
 ### Notes
 
-- The crate version in `Cargo.toml` is `0.13.0`.
 - The public docs focus on what users can build with the current API.
 - Examples under `examples/` are the best entry point for end-to-end usage.
 

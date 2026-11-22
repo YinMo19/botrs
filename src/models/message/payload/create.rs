@@ -1,7 +1,7 @@
 use crate::models::serde_helpers::option_is_none_or_default;
 use serde::{Deserialize, Serialize};
 
-use super::{MediaInfo, MessageCreateType, option_message_type_is_none_or_zero};
+use super::{MediaInfo, MessageCreateType};
 use crate::models::message::{
     ActionButton, Ark, Embed, InputNotify, Keyboard, MarkdownPayload, PromptKeyboard, Reference,
     Stream,
@@ -14,7 +14,7 @@ pub(crate) struct MessageToCreate {
     #[serde(skip_serializing_if = "option_is_none_or_default")]
     pub(crate) content: Option<String>,
     /// Message type
-    #[serde(skip_serializing_if = "option_message_type_is_none_or_zero")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) msg_type: Option<MessageCreateType>,
     /// Message embed
     #[serde(skip_serializing_if = "Option::is_none")]

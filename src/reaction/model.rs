@@ -25,8 +25,8 @@ pub struct Reaction {
 
 impl Reaction {
     /// Parses a reaction event from the gateway payload.
-    pub(crate) fn new(event_id: Option<String>, data: &Value) -> crate::Result<Self> {
-        let message_reaction = serde_json::from_value(data.clone())?;
+    pub(crate) fn new(event_id: Option<String>, data: Value) -> crate::Result<Self> {
+        let message_reaction = serde_json::from_value(data)?;
         Ok(Self::from_message_reaction(event_id, message_reaction))
     }
 

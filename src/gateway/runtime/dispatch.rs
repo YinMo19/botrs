@@ -1,7 +1,7 @@
 use super::super::Gateway;
 use super::super::types::GatewayAction;
 use super::SharedWriter;
-use crate::error::{BotError, Result};
+use crate::error::Result;
 use crate::models::gateway::{GatewayEvent, Ready, opcodes};
 use std::sync::atomic::Ordering;
 use std::time::Duration;
@@ -20,7 +20,13 @@ impl Gateway {
         write: &SharedWriter,
     ) -> Result<GatewayAction> {
         // Parse the gateway event
-        let event: GatewayEvent = serde_json::from_str(text).map_err(BotError::Json)?;
+        let event: GatewayEvent = match serde_json::from_str(text) {
+            Ok(event) => event,
+            Err(err) => {
+                debug!("Invalid gateway frame: {err}");
+                return Ok(GatewayAction::Continue);
+            }
+        };
 
         // Check if this is a system event first (like Python's _is_system_event)
         if let Some(action) = self.handle_system_event(&event, write).await? {

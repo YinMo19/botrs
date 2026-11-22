@@ -6,14 +6,14 @@ Every fallible function in `botrs` returns `Result<T, BotError>`. `BotError` is 
 
 The variants you'll match on most often correspond to outcomes the QQ API and gateway produce:
 
-- `BotError::Api { code, message }` — QQ-side rejection from any REST call. `code` is the platform error code; `message` is the human-readable reason.
-- `BotError::AuthenticationFailed(String)` — HTTP 401. The `Token` is wrong or revoked.
-- `BotError::Forbidden(String)` — HTTP 403. The bot lacks permission for the action.
-- `BotError::NotFound(String)` — HTTP 404. Targeted resource (channel, message, member) does not exist.
-- `BotError::MethodNotAllowed(String)` — HTTP 405. Wrong endpoint or method.
-- `BotError::Server(String)` — HTTP 500 / 504 with the parsed platform diagnostic. Inspect the embedded code/message before deciding whether to retry.
+- `BotError::Api { code, message, .. }` — QQ-side rejection from any REST call. `code` is the platform error code; `message` is the human-readable reason.
+- `BotError::AuthenticationFailed(Box<HttpFailure>)` — HTTP 401. The `Token` is wrong or revoked.
+- `BotError::Forbidden(Box<HttpFailure>)` — HTTP 403. The bot lacks permission for the action.
+- `BotError::NotFound(Box<HttpFailure>)` — HTTP 404. Targeted resource (channel, message, member) does not exist.
+- `BotError::MethodNotAllowed(Box<HttpFailure>)` — HTTP 405. Wrong endpoint or method.
+- `BotError::Server(Box<HttpFailure>)` — HTTP 5xx with the parsed platform diagnostic. Inspect the embedded code/message before deciding whether to retry.
 - `BotError::SequenceNumber(String)` — reserved for sequence/order errors from the low-level status mapper; normal REST 429 responses are returned as `RateLimit`.
-- `BotError::RateLimit { retry_after }` — explicit rate-limit response. `retry_after` is in seconds.
+- `BotError::RateLimit { retry_after, .. }` — explicit rate-limit response. `retry_after` is in seconds.
 - `BotError::Auth(String)` / `BotError::Config(String)` / `BotError::InvalidData(String)` — local validation failures (bad app id, malformed env, payload that can't serialize).
 - `BotError::Connection(String)` / `BotError::Gateway(String)` / `BotError::Session(String)` — gateway lifecycle failures.
 - `BotError::Timeout` — request didn't complete inside the configured `HttpClient` timeout.
@@ -29,7 +29,7 @@ async fn message_create(&self, mut session: ChannelReplySession) {
     let params = MessageParams::new_text("hi");
     if let Err(e) = session.send_message(params).await {
         match e {
-            BotError::RateLimit { retry_after } => {
+            BotError::RateLimit { retry_after, .. } => {
                 tracing::warn!(retry_after, "rate limited; dropping reply");
             }
             BotError::Forbidden(_) => {
@@ -41,7 +41,7 @@ async fn message_create(&self, mut session: ChannelReplySession) {
 }
 ```
 
-If dispatch setup fails before your handler is called, the framework calls `EventHandler::error(&self, error: BotError)` once and then continues consuming events. Payload parse failures are logged and dropped; handler panics are not converted into `BotError`. Override `error` to plug in metrics or alerting, but note that the framework does not retry the original event for you.
+A decoding failure or an error returned by `handle` reaches `EventHandler::error` once. WebSocket delivery continues with the next event. Webhook delivery returns `{"op":12,"d":1}` so QQ can retry the event.
 
 ## Retry helpers
 

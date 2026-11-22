@@ -8,11 +8,11 @@ mod debug;
 mod dispatch;
 mod handler;
 mod lifecycle;
+pub mod webhook;
 
 pub(crate) use context::Context;
-pub use handler::EventHandler;
+pub use handler::{Event, EventHandler};
 
-#[allow(unused_imports)]
 mod prelude {
     pub(super) use crate::api_impl::BotApi;
     pub(super) use crate::api_impl::session::{
@@ -23,7 +23,7 @@ mod prelude {
         PublicAudioSession, ReactionSession, ReadySession, ResumeSession,
         SubscribeMessageStatusSession, ThreadSession, UnknownEventSession,
     };
-    pub(super) use crate::audio::{Audio, PublicAudio};
+    pub(super) use crate::audio::Audio;
     pub(super) use crate::error::{BotError, Result};
     pub(super) use crate::forum::{ForumAuditResult, OpenThread, Post, Reply, Thread};
     pub(super) use crate::intents::Intents;
@@ -31,20 +31,18 @@ mod prelude {
     pub(super) use crate::manage::{
         C2CManageEvent, EnterAioEvent, GroupManageEvent, SubscribeMessageStatusData,
     };
-    pub(super) use crate::models::api::{AudioAction, BotInfo};
-    pub(super) use crate::models::channel::Channel;
-    pub(super) use crate::models::gateway::{GatewayEvent, Ready};
-    pub(super) use crate::models::guild::{Guild, Member};
+    pub(super) use crate::models::api::BotInfo;
+    pub(super) use crate::models::gateway::GatewayEvent;
     pub(super) use crate::models::message::{
         C2CMessage, GroupMessage, Message, MessageAudit, MessageDelete,
     };
     pub(super) use crate::models::reaction::Reaction;
     pub(super) use crate::models::user::User;
-    pub(super) use crate::session_manager::{check_session_limit, new_session_manager};
+    pub(super) use crate::session_manager::check_session_limit;
     pub(super) use crate::token_impl::Token;
     pub(super) use std::sync::Arc;
     pub(super) use tokio::sync::mpsc;
-    pub(super) use tracing::{debug, error, info};
+    pub(super) use tracing::{error, info};
 }
 
 use prelude::{Arc, BotApi, Intents};
@@ -55,6 +53,7 @@ pub struct Client<H: EventHandler> {
     intents: Intents,
     /// API client
     api: Arc<BotApi>,
+    webhook_key: ring::signature::Ed25519KeyPair,
     /// Event handler
     handler: Arc<H>,
 }

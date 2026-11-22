@@ -40,6 +40,10 @@ let me = api.get_bot_info().await?;
 | Pins | `put_pin`, `delete_pin`, `clean_pins`, `get_pins` |
 | Audio controls | `post_audio`, `put_mic`, `delete_mic` |
 
+## Custom endpoints
+
+Use `api.with_url(url).send_group_message(...)` to direct a typed call to a trusted, fully resolved URL. `HttpClient::with_base_url` sets a shared prefix for typed routes. `api.transport(method, &url, |r| r.json(&payload)).await?` sends an authenticated request and returns a `reqwest::Response` for access to successful response headers and bytes.
+
 ## Sending Messages
 
 Message sending uses parameter structs:

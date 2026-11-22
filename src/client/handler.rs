@@ -1,175 +1,162 @@
 use super::prelude::*;
+use std::future::Future;
 
-/// Event handler trait for processing gateway events.
-#[async_trait::async_trait]
-pub trait EventHandler: Send + Sync {
+macro_rules! event_handlers {
+    ($( $(#[$doc:meta])* $variant:ident($session:ty) => $method:ident ),+ $(,)?) => {
+        /// A decoded event and its event-scoped API session.
+        #[non_exhaustive]
+        pub enum Event {
+            $( $(#[$doc])* $variant($session), )+
+        }
+
+        impl Event {
+            /// Calls the corresponding individual callback on a handler.
+            pub async fn dispatch<H: EventHandler + ?Sized>(self, handler: &H) {
+                match self {
+                    $(Self::$variant(session) => handler.$method(session).await,)+
+                }
+            }
+        }
+
+        /// Handles events from WebSocket or Webhook delivery.
+        #[async_trait::async_trait]
+        pub trait EventHandler: Send + Sync {
+            /// Override to use `?` in business logic, or implement individual callbacks.
+            async fn handle(&self, event: Event) -> Result<()> {
+                event.dispatch(self).await;
+                Ok(())
+            }
+
+            $( $(#[$doc])* async fn $method(&self, _session: $session) {} )+
+
+            /// Reports decoding or handler errors.
+            async fn error(&self, error: BotError) {
+                error!("Event handler error: {}", error);
+            }
+        }
+    };
+}
+
+event_handlers! {
     /// Called when the bot is ready and connected.
-    async fn ready(&self, _session: ReadySession) {}
-
+    Ready(ReadySession) => ready,
     /// Called when the bot session has resumed.
-    async fn resumed(&self, _session: ResumeSession) {}
-
-    /// Called when a message is created (@ mentions).
-    async fn message_create(&self, _session: ChannelReplySession) {}
-
+    Resumed(ResumeSession) => resumed,
+    /// Called when a message is created (including @ mentions).
+    MessageCreate(ChannelReplySession) => message_create,
     /// Called when a direct message is created.
-    async fn direct_message_create(&self, _session: DirectReplySession) {}
-
+    DirectMessageCreate(DirectReplySession) => direct_message_create,
     /// Called when a direct message is deleted.
-    async fn direct_message_delete(&self, _session: MessageDeleteSession) {}
-
+    DirectMessageDelete(MessageDeleteSession) => direct_message_delete,
     /// Called when a group message is created.
-    async fn group_message_create(&self, _session: GroupReplySession) {}
-
+    GroupMessageCreate(GroupReplySession) => group_message_create,
     /// Called when a C2C message is created.
-    async fn c2c_message_create(&self, _session: C2CReplySession) {}
-
+    C2CMessageCreate(C2CReplySession) => c2c_message_create,
     /// Called when a message is deleted.
-    async fn message_delete(&self, _session: MessageDeleteSession) {}
-
+    MessageDelete(MessageDeleteSession) => message_delete,
     /// Called when a public guild message is deleted.
-    async fn public_message_delete(&self, _session: MessageDeleteSession) {}
-
+    PublicMessageDelete(MessageDeleteSession) => public_message_delete,
     /// Called when a reaction is added to a message.
-    async fn message_reaction_add(&self, _session: ReactionSession) {}
-
+    MessageReactionAdd(ReactionSession) => message_reaction_add,
     /// Called when a reaction is removed from a message.
-    async fn message_reaction_remove(&self, _session: ReactionSession) {}
-
+    MessageReactionRemove(ReactionSession) => message_reaction_remove,
     /// Called when an interaction event is created.
-    async fn interaction_create(&self, _session: InteractionSession) {}
-
+    InteractionCreate(InteractionSession) => interaction_create,
     /// Called when audio starts.
-    async fn audio_start(&self, _session: AudioSession) {}
-
+    AudioStart(AudioSession) => audio_start,
     /// Called when audio finishes.
-    async fn audio_finish(&self, _session: AudioSession) {}
-
+    AudioFinish(AudioSession) => audio_finish,
     /// Called when microphone is turned on.
-    async fn on_mic(&self, _session: AudioSession) {}
-
+    OnMic(AudioSession) => on_mic,
     /// Called when microphone is turned off.
-    async fn off_mic(&self, _session: AudioSession) {}
-
+    OffMic(AudioSession) => off_mic,
     /// Called when a guild is created (bot joins).
-    async fn guild_create(&self, _session: GuildSession) {}
-
+    GuildCreate(GuildSession) => guild_create,
     /// Called when a guild is updated.
-    async fn guild_update(&self, _session: GuildSession) {}
-
+    GuildUpdate(GuildSession) => guild_update,
     /// Called when a guild is deleted (bot leaves).
-    async fn guild_delete(&self, _session: GuildSession) {}
-
+    GuildDelete(GuildSession) => guild_delete,
     /// Called when a channel is created.
-    async fn channel_create(&self, _session: ChannelSession) {}
-
+    ChannelCreate(ChannelSession) => channel_create,
     /// Called when a channel is updated.
-    async fn channel_update(&self, _session: ChannelSession) {}
-
+    ChannelUpdate(ChannelSession) => channel_update,
     /// Called when a channel is deleted.
-    async fn channel_delete(&self, _session: ChannelSession) {}
-
+    ChannelDelete(ChannelSession) => channel_delete,
     /// Called when a guild member is added.
-    async fn guild_member_add(&self, _session: MemberSession) {}
-
+    GuildMemberAdd(MemberSession) => guild_member_add,
     /// Called when a guild member is updated.
-    async fn guild_member_update(&self, _session: MemberSession) {}
-
+    GuildMemberUpdate(MemberSession) => guild_member_update,
     /// Called when a guild member is removed.
-    async fn guild_member_remove(&self, _session: MemberSession) {}
-
+    GuildMemberRemove(MemberSession) => guild_member_remove,
     /// Called when a message audit passes.
-    async fn message_audit_pass(&self, _session: MessageAuditSession) {}
-
+    MessageAuditPass(MessageAuditSession) => message_audit_pass,
     /// Called when a message audit is rejected.
-    async fn message_audit_reject(&self, _session: MessageAuditSession) {}
-
+    MessageAuditReject(MessageAuditSession) => message_audit_reject,
     /// Called when a friend is added.
-    async fn friend_add(&self, _session: C2CManageSession) {}
-
+    FriendAdd(C2CManageSession) => friend_add,
     /// Called when a friend is deleted.
-    async fn friend_del(&self, _session: C2CManageSession) {}
-
+    FriendDel(C2CManageSession) => friend_del,
     /// Called when C2C message is rejected.
-    async fn c2c_msg_reject(&self, _session: C2CManageSession) {}
-
+    C2CMsgReject(C2CManageSession) => c2c_msg_reject,
     /// Called when C2C message is received.
-    async fn c2c_msg_receive(&self, _session: C2CManageSession) {}
-
+    C2CMsgReceive(C2CManageSession) => c2c_msg_receive,
     /// Called when subscribe message authorization status changes.
-    async fn subscribe_message_status(&self, _session: SubscribeMessageStatusSession) {}
-
+    SubscribeMessageStatus(SubscribeMessageStatusSession) => subscribe_message_status,
     /// Called when a user enters AIO.
-    async fn enter_aio(&self, _session: EnterAioSession) {}
-
+    EnterAio(EnterAioSession) => enter_aio,
     /// Called when robot is added to group.
-    async fn group_add_robot(&self, _session: GroupManageSession) {}
-
+    GroupAddRobot(GroupManageSession) => group_add_robot,
     /// Called when robot is deleted from group.
-    async fn group_del_robot(&self, _session: GroupManageSession) {}
-
+    GroupDelRobot(GroupManageSession) => group_del_robot,
     /// Called when group message is rejected.
-    async fn group_msg_reject(&self, _session: GroupManageSession) {}
-
+    GroupMsgReject(GroupManageSession) => group_msg_reject,
     /// Called when group message is received.
-    async fn group_msg_receive(&self, _session: GroupManageSession) {}
-
+    GroupMsgReceive(GroupManageSession) => group_msg_receive,
     /// Called when a user enters an audio or live channel.
-    async fn audio_or_live_channel_member_enter(&self, _session: PublicAudioSession) {}
-
+    AudioOrLiveChannelMemberEnter(PublicAudioSession) => audio_or_live_channel_member_enter,
     /// Called when a user exits an audio or live channel.
-    async fn audio_or_live_channel_member_exit(&self, _session: PublicAudioSession) {}
-
+    AudioOrLiveChannelMemberExit(PublicAudioSession) => audio_or_live_channel_member_exit,
     /// Called when a forum thread is created.
-    async fn forum_thread_create(&self, _session: ThreadSession) {}
-
+    ForumThreadCreate(ThreadSession) => forum_thread_create,
     /// Called when a forum thread is updated.
-    async fn forum_thread_update(&self, _session: ThreadSession) {}
-
+    ForumThreadUpdate(ThreadSession) => forum_thread_update,
     /// Called when a forum thread is deleted.
-    async fn forum_thread_delete(&self, _session: ThreadSession) {}
-
+    ForumThreadDelete(ThreadSession) => forum_thread_delete,
     /// Called when a forum post is created.
-    async fn forum_post_create(&self, _session: PostSession) {}
-
+    ForumPostCreate(PostSession) => forum_post_create,
     /// Called when a forum post is deleted.
-    async fn forum_post_delete(&self, _session: PostSession) {}
-
+    ForumPostDelete(PostSession) => forum_post_delete,
     /// Called when a forum reply is created.
-    async fn forum_reply_create(&self, _session: ForumReplySession) {}
-
+    ForumReplyCreate(ForumReplySession) => forum_reply_create,
     /// Called when a forum reply is deleted.
-    async fn forum_reply_delete(&self, _session: ForumReplySession) {}
-
+    ForumReplyDelete(ForumReplySession) => forum_reply_delete,
     /// Called when a forum publish audit result arrives.
-    async fn forum_publish_audit_result(&self, _session: ForumAuditSession) {}
-
+    ForumPublishAuditResult(ForumAuditSession) => forum_publish_audit_result,
     /// Called when an open forum thread is created.
-    async fn open_forum_thread_create(&self, _session: OpenForumSession) {}
-
+    OpenForumThreadCreate(OpenForumSession) => open_forum_thread_create,
     /// Called when an open forum thread is updated.
-    async fn open_forum_thread_update(&self, _session: OpenForumSession) {}
-
+    OpenForumThreadUpdate(OpenForumSession) => open_forum_thread_update,
     /// Called when an open forum thread is deleted.
-    async fn open_forum_thread_delete(&self, _session: OpenForumSession) {}
-
+    OpenForumThreadDelete(OpenForumSession) => open_forum_thread_delete,
     /// Called when an open forum post is created.
-    async fn open_forum_post_create(&self, _session: OpenForumSession) {}
-
+    OpenForumPostCreate(OpenForumSession) => open_forum_post_create,
     /// Called when an open forum post is deleted.
-    async fn open_forum_post_delete(&self, _session: OpenForumSession) {}
-
+    OpenForumPostDelete(OpenForumSession) => open_forum_post_delete,
     /// Called when an open forum reply is created.
-    async fn open_forum_reply_create(&self, _session: OpenForumSession) {}
-
+    OpenForumReplyCreate(OpenForumSession) => open_forum_reply_create,
     /// Called when an open forum reply is deleted.
-    async fn open_forum_reply_delete(&self, _session: OpenForumSession) {}
-
+    OpenForumReplyDelete(OpenForumSession) => open_forum_reply_delete,
     /// Called for any unhandled events.
-    async fn unknown_event(&self, _session: UnknownEventSession) {}
+    UnknownEvent(UnknownEventSession) => unknown_event,
+}
 
-    /// Called when an error occurs during event processing.
-    async fn error(&self, _error: BotError) {
-        error!("Event handler error: {}", _error);
+#[async_trait::async_trait]
+impl<F, Fut> EventHandler for F
+where
+    F: Fn(Event) -> Fut + Send + Sync,
+    Fut: Future<Output = Result<()>> + Send,
+{
+    async fn handle(&self, event: Event) -> Result<()> {
+        self(event).await
     }
 }

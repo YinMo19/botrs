@@ -48,15 +48,35 @@ pub type ForumAuditSession = EventSession<ForumAuditResult>;
 pub type OpenForumSession = EventSession<OpenThread>;
 pub type UnknownEventSession = EventSession<GatewayEvent>;
 
-pub(crate) fn advance_msg_seq(next_msg_seq: &mut u32, msg_seq: Option<u32>) {
-    match msg_seq {
-        Some(0) | None => {
-            *next_msg_seq = next_msg_seq.saturating_add(1);
-        }
-        Some(seq) => {
-            *next_msg_seq = (*next_msg_seq).max(seq.saturating_add(1));
-        }
+fn validate_reply(message_id: &str, target: &str) -> crate::Result<()> {
+    if message_id.is_empty() || target.is_empty() {
+        return Err(crate::BotError::invalid_data(
+            "message requires a non-empty ID and reply target",
+        ));
     }
+    Ok(())
+}
+
+fn prepare_reply(
+    message_id: &str,
+    msg_id: &mut Option<String>,
+    event_id: Option<&str>,
+    next_seq: &mut u32,
+    msg_seq: &mut Option<u32>,
+) {
+    if msg_id.is_none() && event_id.is_none() {
+        *msg_id = Some(message_id.to_owned());
+    }
+    advance_msg_seq(next_seq, msg_seq);
+}
+
+fn advance_msg_seq(next: &mut u32, msg_seq: &mut Option<u32>) {
+    let seq = *msg_seq.get_or_insert(*next);
+    *next = if seq == 0 {
+        next.saturating_add(1)
+    } else {
+        (*next).max(seq.saturating_add(1))
+    };
 }
 
 #[cfg(test)]
@@ -78,6 +98,32 @@ mod tests {
     }
 
     #[test]
+    fn old_payloads_keep_their_reply_targets_and_empty_targets_fail_early() {
+        let mut group = GroupMessage {
+            id: "msg".into(),
+            group_id: "old-group".into(),
+            ..Default::default()
+        };
+        let s = GroupReplySession::new(test_context(), group.clone()).unwrap();
+        assert_eq!(s.group_openid(), "old-group");
+        group.group_id.clear();
+        assert!(GroupReplySession::new(test_context(), group).is_err());
+
+        let mut c2c = crate::models::message::C2CMessage {
+            id: "msg".into(),
+            ..Default::default()
+        };
+        c2c.author.id = "old-user".into();
+        let session = super::C2CReplySession::new(test_context(), c2c.clone()).unwrap();
+        assert_eq!(session.openid(), "old-user");
+        c2c.author.user_openid = "user-openid".into();
+        let session = super::C2CReplySession::new(test_context(), c2c.clone()).unwrap();
+        assert_eq!(session.openid(), "user-openid");
+        c2c.id.clear();
+        assert!(super::C2CReplySession::new(test_context(), c2c).is_err());
+    }
+
+    #[test]
     fn group_session_fills_reply_fields_and_increments_msg_seq() {
         let message = GroupMessage {
             id: "message-1".to_string(),
@@ -90,12 +136,15 @@ mod tests {
         let mut first = GroupMessageParams::new_text("first");
         session.prepare_message(&mut first);
         assert_eq!(first.msg_id.as_deref(), Some("message-1"));
-        assert_eq!(first.event_id.as_deref(), Some("event-1"));
+        assert!(first.event_id.is_none());
         assert_eq!(first.msg_seq, Some(1));
 
         let mut second = GroupMessageParams::new_text("second");
+        second.event_id = Some("explicit-event".into());
         session.prepare_message(&mut second);
         assert_eq!(second.msg_seq, Some(2));
+        assert!(second.msg_id.is_none());
+        assert_eq!(second.event_id.as_deref(), Some("explicit-event"));
     }
 
     #[test]

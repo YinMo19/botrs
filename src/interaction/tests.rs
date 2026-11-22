@@ -81,7 +81,7 @@ fn interaction_types_serialize_as_numeric_wire_values() {
 fn interaction_payload_uses_expected_type_fields() {
     let interaction = Interaction::new(
         Some("event-1".to_string()),
-        &serde_json::json!({
+        serde_json::json!({
             "id": "interaction-1",
             "application_id": "app-1",
             "type": 2,
@@ -97,7 +97,8 @@ fn interaction_payload_uses_expected_type_fields() {
             },
             "version": 1
         }),
-    );
+    )
+    .unwrap();
 
     let value = serde_json::to_value(&interaction).unwrap();
     assert_eq!(value["type"], serde_json::json!(2));

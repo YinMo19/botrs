@@ -47,8 +47,10 @@ mod tests {
         token
             .set_cached_access_token_for_test("ACCESS_TOKEN_XXXXXX")
             .await;
-        let mut http = crate::http::HttpClient::new(30, false).unwrap();
-        http.base_url = base_url;
+        let http = crate::http::HttpClient::new(30, false)
+            .unwrap()
+            .with_base_url(base_url.parse().unwrap())
+            .unwrap();
         BotApi::new(http, token)
     }
 
@@ -91,7 +93,7 @@ mod tests {
             let request = String::from_utf8_lossy(&request_bytes).to_string();
             let _ = tx.send(request);
 
-            let body = r#"{"id":"message-1","timestamp":"2026-01-01T00:00:00+08:00"}"#;
+            let body = r#"{"id":"message-1","timestamp":1700000000}"#;
             let response = format!(
                 "HTTP/1.1 200 OK\r\ncontent-type: application/json\r\ncontent-length: {}\r\nconnection: close\r\n\r\n{}",
                 body.len(),
@@ -109,6 +111,66 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn scoped_url_changes_only_the_selected_request() {
+        let (base, normal_request, normal_server) = spawn_capture_server().await;
+        let (other, custom_request, custom_server) = spawn_capture_server().await;
+        let api = test_api(base).await;
+        let url = format!("{other}/custom?trace=1").parse().unwrap();
+        api.with_url(url)
+            .send_group_message("group", GroupMessageParams::new_text("hello"))
+            .await
+            .unwrap();
+        api.send_group_message("group", GroupMessageParams::new_text("hello"))
+            .await
+            .unwrap();
+        assert!(
+            custom_request
+                .await
+                .unwrap()
+                .starts_with("POST /custom?trace=1 ")
+        );
+        assert!(
+            normal_request
+                .await
+                .unwrap()
+                .starts_with("POST /v2/groups/group/messages ")
+        );
+        custom_server.await.unwrap();
+        normal_server.await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn transport_returns_headers_and_unparsed_body() {
+        let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let addr = listener.local_addr().unwrap();
+        let app = axum::Router::new().route(
+            "/raw",
+            axum::routing::post(
+                |headers: axum::http::HeaderMap, bytes: axum::body::Bytes| async move {
+                    assert_eq!(headers["authorization"], "QQBot ACCESS_TOKEN_XXXXXX");
+                    assert_eq!(&bytes[..], &[0xff, 0x00, 0x01]);
+                    ([("x-tps-trace-id", "trace-raw")], "plain text")
+                },
+            ),
+        );
+        let server = tokio::spawn(async move {
+            axum::serve(listener, app).await.unwrap();
+        });
+        let api = test_api(format!("http://{addr}")).await;
+        let response = api
+            .transport(
+                Method::POST,
+                &format!("http://{addr}/raw").parse().unwrap(),
+                |r| r.body(vec![0xff, 0x00, 0x01]),
+            )
+            .await
+            .unwrap();
+        assert_eq!(response.headers()["x-tps-trace-id"], "trace-raw");
+        assert_eq!(response.text().await.unwrap(), "plain text");
+        server.abort();
+    }
+
+    #[tokio::test]
     async fn group_message_params_send_message_body() {
         let (base_url, request, server) = spawn_capture_server().await;
         let api = test_api(base_url).await;
@@ -117,13 +179,15 @@ mod tests {
             .await
             .unwrap();
 
+        assert_eq!(response.timestamp.as_deref(), Some("1700000000"));
         assert_eq!(response.id.as_deref(), Some("message-1"));
         let request = request.await.unwrap();
         assert!(request.starts_with("POST /v2/groups/group-openid-1/messages HTTP/1.1"));
         assert_eq!(
             request_body(&request),
             serde_json::json!({
-                "content": "hello"
+                "content": "hello",
+                "msg_type": 0
             })
         );
         server.await.unwrap();
@@ -138,13 +202,15 @@ mod tests {
             .await
             .unwrap();
 
+        assert_eq!(response.timestamp.as_deref(), Some("1700000000"));
         assert_eq!(response.id.as_deref(), Some("message-1"));
         let request = request.await.unwrap();
         assert!(request.starts_with("POST /v2/users/openid-1/messages HTTP/1.1"));
         assert_eq!(
             request_body(&request),
             serde_json::json!({
-                "content": "hello"
+                "content": "hello",
+                "msg_type": 0
             })
         );
         server.await.unwrap();

@@ -56,6 +56,22 @@ impl From<&Channel> for ChannelValueBody {
     }
 }
 
+impl ChannelValueBody {
+    fn private(channel: &Channel, user_ids: impl IntoIterator<Item = impl Into<String>>) -> Self {
+        let private_user_ids: Vec<_> = user_ids.into_iter().map(Into::into).collect();
+        let private_type = if private_user_ids.is_empty() {
+            PrivateType::OnlyAdmin
+        } else {
+            PrivateType::AdminAndMember
+        };
+        Self {
+            private_type,
+            private_user_ids,
+            ..Self::from(channel)
+        }
+    }
+}
+
 impl BotApi {
     /// Fetches one channel.
     pub async fn get_channel(&self, channel_id: &str) -> Result<Channel> {
@@ -106,15 +122,10 @@ impl BotApi {
         channel: &Channel,
         user_ids: impl IntoIterator<Item = impl Into<String>>,
     ) -> Result<Channel> {
-        let mut channel = channel.clone();
-        let user_ids = user_ids.into_iter().map(Into::into).collect::<Vec<_>>();
-        channel.private_type = if user_ids.is_empty() {
-            PrivateType::AdminAndMember
-        } else {
-            channel.private_user_ids = user_ids;
-            PrivateType::OnlyAdmin
-        };
-        self.create_channel(guild_id, &channel).await
+        let body = ChannelValueBody::private(channel, user_ids);
+        let path = resource::guild_channels(guild_id);
+        self.request_json(Method::POST, &path, None::<&()>, Some(&body))
+            .await
     }
 
     /// Lists members currently in a voice channel.
@@ -130,6 +141,22 @@ impl BotApi {
 mod tests {
     use super::*;
     use crate::models::channel::{ChannelSubType, ChannelType, SpeakPermission};
+
+    #[test]
+    fn private_channel_visibility_uses_explicit_member_list() {
+        let channel = Channel {
+            private_user_ids: vec!["stale".into()],
+            ..Default::default()
+        };
+        let admins =
+            serde_json::to_value(ChannelValueBody::private(&channel, [] as [&str; 0])).unwrap();
+        assert_eq!(admins["private_type"], 1);
+        assert!(admins.get("private_user_ids").is_none());
+        let members =
+            serde_json::to_value(ChannelValueBody::private(&channel, ["member"])).unwrap();
+        assert_eq!(members["private_type"], 2);
+        assert_eq!(members["private_user_ids"], serde_json::json!(["member"]));
+    }
 
     #[test]
     fn channel_value_body_matches_platform_value_object_shape() {

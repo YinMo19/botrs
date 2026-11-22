@@ -24,7 +24,7 @@ export default defineConfig({
                     { text: "API Reference", link: "/api/client" },
                     { text: "Examples", link: "/examples/getting-started" },
                     {
-                        text: "v0.13.0",
+                        text: "v0.14.0",
                         items: [
                             { text: "Changelog", link: "/changelog" },
                             { text: "Contributing", link: "/contributing" },
@@ -263,7 +263,7 @@ export default defineConfig({
                     { text: "API 参考", link: "/zh/api/client" },
                     { text: "示例", link: "/zh/examples/getting-started" },
                     {
-                        text: "v0.13.0",
+                        text: "v0.14.0",
                         items: [
                             { text: "更新日志", link: "/zh/changelog" },
                             { text: "贡献指南", link: "/zh/contributing" },

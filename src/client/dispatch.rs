@@ -1,413 +1,164 @@
 use super::prelude::*;
-use super::{Client, Context, EventHandler};
+use super::{Client, Context, Event, EventHandler};
+use serde::de::DeserializeOwned;
+use serde_json::Value;
+
+fn decode<T: DeserializeOwned>(name: &str, data: Value) -> Result<T> {
+    serde_json::from_value(data).map_err(|err| BotError::invalid_data(format!("{name}: {err}")))
+}
+
+fn decode_delete(name: &str, data: Value, id: Option<String>) -> Result<MessageDelete> {
+    let mut deleted = if data.get("message").is_some() {
+        decode::<MessageDelete>(name, data)?
+    } else {
+        MessageDelete {
+            message: decode(name, data)?,
+            op_user: User::default(),
+            event_id: None,
+        }
+    };
+    deleted.message.event_id = id.clone();
+    deleted.event_id = id;
+    Ok(deleted)
+}
+
+fn decode_audio(name: &str, data: Value, id: Option<String>) -> Result<Audio> {
+    Ok(Audio::new(id, decode(name, data)?))
+}
+
+fn decode_audit(name: &str, data: Value, id: Option<String>) -> Result<MessageAudit> {
+    let mut audit: MessageAudit = decode(name, data)?;
+    audit.event_id = id;
+    Ok(audit)
+}
+
+impl Event {
+    fn decode(ctx: Context, mut event: GatewayEvent) -> Result<Self> {
+        let name = event
+            .event_type
+            .as_deref()
+            .filter(|name| !name.is_empty())
+            .ok_or_else(|| BotError::invalid_data("dispatch event is missing its type"))?
+            .to_ascii_uppercase();
+        let mut payload = || {
+            event
+                .data
+                .take()
+                .ok_or_else(|| BotError::invalid_data(format!("{name}: missing event data")))
+        };
+        macro_rules! typed {
+            () => {
+                EventSession::new(ctx, decode(&name, payload()?)?)
+            };
+            ($decode:ident) => {
+                EventSession::new(ctx, $decode(&name, payload()?, event.id)?)
+            };
+        }
+        macro_rules! message {
+            ($message:ty, $session:ty) => {{
+                let mut message: $message = decode(&name, payload()?)?;
+                message.event_id = event.id;
+                <$session>::new(ctx, message)?
+            }};
+        }
+        macro_rules! with_id {
+            ($ty:ty) => {
+                EventSession::new(ctx, <$ty>::new(event.id, payload()?)?)
+            };
+        }
+        macro_rules! management {
+            ($ty:ty, $session:ty) => {{
+                let data = payload()?;
+                let id = event
+                    .id
+                    .or_else(|| data.get("id")?.as_str().map(str::to_owned));
+                <$session>::new(ctx, <$ty>::new(id, data)?)
+            }};
+        }
+        Ok(match name.as_str() {
+            "READY" => Event::Ready(typed!()),
+            "RESUMED" => Event::Resumed(EventSession::new(ctx, ())),
+            "MESSAGE_CREATE" | "AT_MESSAGE_CREATE" => {
+                Event::MessageCreate(message!(Message, ChannelReplySession))
+            }
+            "DIRECT_MESSAGE_CREATE" => {
+                Event::DirectMessageCreate(message!(Message, DirectReplySession))
+            }
+            "GROUP_AT_MESSAGE_CREATE" => {
+                Event::GroupMessageCreate(message!(GroupMessage, GroupReplySession))
+            }
+            "C2C_MESSAGE_CREATE" => Event::C2CMessageCreate(message!(C2CMessage, C2CReplySession)),
+            "DIRECT_MESSAGE_DELETE" => Event::DirectMessageDelete(typed!(decode_delete)),
+            "MESSAGE_DELETE" => Event::MessageDelete(typed!(decode_delete)),
+            "PUBLIC_MESSAGE_DELETE" => Event::PublicMessageDelete(typed!(decode_delete)),
+            "MESSAGE_REACTION_ADD" => Event::MessageReactionAdd(with_id!(Reaction)),
+            "MESSAGE_REACTION_REMOVE" => Event::MessageReactionRemove(with_id!(Reaction)),
+            "INTERACTION_CREATE" => Event::InteractionCreate(with_id!(Interaction)),
+            "AUDIO_START" => Event::AudioStart(typed!(decode_audio)),
+            "AUDIO_FINISH" => Event::AudioFinish(typed!(decode_audio)),
+            "AUDIO_ON_MIC" | "ON_MIC" => Event::OnMic(typed!(decode_audio)),
+            "AUDIO_OFF_MIC" | "OFF_MIC" => Event::OffMic(typed!(decode_audio)),
+            "GUILD_CREATE" => Event::GuildCreate(typed!()),
+            "GUILD_UPDATE" => Event::GuildUpdate(typed!()),
+            "GUILD_DELETE" => Event::GuildDelete(typed!()),
+            "CHANNEL_CREATE" => Event::ChannelCreate(typed!()),
+            "CHANNEL_UPDATE" => Event::ChannelUpdate(typed!()),
+            "CHANNEL_DELETE" => Event::ChannelDelete(typed!()),
+            "GUILD_MEMBER_ADD" => Event::GuildMemberAdd(typed!()),
+            "GUILD_MEMBER_UPDATE" => Event::GuildMemberUpdate(typed!()),
+            "GUILD_MEMBER_REMOVE" => Event::GuildMemberRemove(typed!()),
+            "MESSAGE_AUDIT_PASS" => Event::MessageAuditPass(typed!(decode_audit)),
+            "MESSAGE_AUDIT_REJECT" => Event::MessageAuditReject(typed!(decode_audit)),
+            "FRIEND_ADD" => Event::FriendAdd(management!(C2CManageEvent, C2CManageSession)),
+            "FRIEND_DEL" => Event::FriendDel(management!(C2CManageEvent, C2CManageSession)),
+            "C2C_MSG_REJECT" => Event::C2CMsgReject(management!(C2CManageEvent, C2CManageSession)),
+            "C2C_MSG_RECEIVE" => {
+                Event::C2CMsgReceive(management!(C2CManageEvent, C2CManageSession))
+            }
+            "SUBSCRIBE_MESSAGE_STATUS" => Event::SubscribeMessageStatus(management!(
+                SubscribeMessageStatusData,
+                SubscribeMessageStatusSession
+            )),
+            "ENTER_AIO" => Event::EnterAio(management!(EnterAioEvent, EnterAioSession)),
+            "GROUP_ADD_ROBOT" => {
+                Event::GroupAddRobot(management!(GroupManageEvent, GroupManageSession))
+            }
+            "GROUP_DEL_ROBOT" => {
+                Event::GroupDelRobot(management!(GroupManageEvent, GroupManageSession))
+            }
+            "GROUP_MSG_REJECT" => {
+                Event::GroupMsgReject(management!(GroupManageEvent, GroupManageSession))
+            }
+            "GROUP_MSG_RECEIVE" => {
+                Event::GroupMsgReceive(management!(GroupManageEvent, GroupManageSession))
+            }
+            "AUDIO_OR_LIVE_CHANNEL_MEMBER_ENTER" => Event::AudioOrLiveChannelMemberEnter(typed!()),
+            "AUDIO_OR_LIVE_CHANNEL_MEMBER_EXIT" => Event::AudioOrLiveChannelMemberExit(typed!()),
+            "FORUM_THREAD_CREATE" => Event::ForumThreadCreate(with_id!(Thread)),
+            "FORUM_THREAD_UPDATE" => Event::ForumThreadUpdate(with_id!(Thread)),
+            "FORUM_THREAD_DELETE" => Event::ForumThreadDelete(with_id!(Thread)),
+            "FORUM_POST_CREATE" => Event::ForumPostCreate(with_id!(Post)),
+            "FORUM_POST_DELETE" => Event::ForumPostDelete(with_id!(Post)),
+            "FORUM_REPLY_CREATE" => Event::ForumReplyCreate(with_id!(Reply)),
+            "FORUM_REPLY_DELETE" => Event::ForumReplyDelete(with_id!(Reply)),
+            "FORUM_PUBLISH_AUDIT_RESULT" => {
+                Event::ForumPublishAuditResult(with_id!(ForumAuditResult))
+            }
+            "OPEN_FORUM_THREAD_CREATE" => Event::OpenForumThreadCreate(with_id!(OpenThread)),
+            "OPEN_FORUM_THREAD_UPDATE" => Event::OpenForumThreadUpdate(with_id!(OpenThread)),
+            "OPEN_FORUM_THREAD_DELETE" => Event::OpenForumThreadDelete(with_id!(OpenThread)),
+            "OPEN_FORUM_POST_CREATE" => Event::OpenForumPostCreate(with_id!(OpenThread)),
+            "OPEN_FORUM_POST_DELETE" => Event::OpenForumPostDelete(with_id!(OpenThread)),
+            "OPEN_FORUM_REPLY_CREATE" => Event::OpenForumReplyCreate(with_id!(OpenThread)),
+            "OPEN_FORUM_REPLY_DELETE" => Event::OpenForumReplyDelete(with_id!(OpenThread)),
+            _ => Event::UnknownEvent(EventSession::new(ctx, event)),
+        })
+    }
+}
 
 impl<H: EventHandler + 'static> Client<H> {
-    /// Converts one gateway envelope into the typed event passed to `EventHandler`.
-    ///
-    /// Unknown event names are forwarded unchanged so callers can still observe
-    /// newer gateway events before this crate has first-class models for them.
     pub(super) async fn handle_event(&self, ctx: Context, event: GatewayEvent) -> Result<()> {
-        debug!("Handling event: {:?}", event.event_type);
-
-        let event_type = event.event_type.as_deref().map(str::to_ascii_uppercase);
-
-        // Some payloads carry a fallback event ID inside `data.id`; pick the gateway
-        // envelope id first and fall back to the inline value.
-        fn payload_event_id(
-            envelope_id: &Option<String>,
-            data: &serde_json::Value,
-        ) -> Option<String> {
-            envelope_id.clone().or_else(|| {
-                data.get("id")
-                    .and_then(|v| v.as_str())
-                    .map(|s| s.to_string())
-            })
-        }
-
-        fn fallback_event_id(
-            event_name: &str,
-            envelope_id: &Option<String>,
-            sequence: Option<u64>,
-        ) -> String {
-            envelope_id
-                .clone()
-                .unwrap_or_else(|| format!("{}_{}", event_name, sequence.unwrap_or(0)))
-        }
-
-        fn parse_event_json<T>(event_name: &str, data: &serde_json::Value) -> Option<T>
-        where
-            T: serde::de::DeserializeOwned,
-        {
-            match serde_json::from_value::<T>(data.clone()) {
-                Ok(value) => Some(value),
-                Err(e) => {
-                    error!("Failed to parse {} event: {}", event_name, e);
-                    debug!(
-                        "Raw event data: {}",
-                        serde_json::to_string_pretty(data).unwrap_or_default()
-                    );
-                    None
-                }
-            }
-        }
-
-        fn parse_message_delete(
-            event_name: &str,
-            event_id: String,
-            data: &serde_json::Value,
-        ) -> Option<MessageDelete> {
-            let mut value = if data.get("message").is_some() {
-                parse_event_json::<MessageDelete>(event_name, data)?
-            } else {
-                let message = parse_event_json::<Message>(event_name, data)?;
-                MessageDelete {
-                    message,
-                    op_user: User::default(),
-                    event_id: None,
-                }
-            };
-
-            value.event_id = Some(event_id.clone());
-            value.message.event_id = Some(event_id);
-            Some(value)
-        }
-
-        macro_rules! dispatch_with_event_id {
-            ($event_name:literal, $event_type:ty, $handler:ident) => {{
-                if let Some(data) = event.data {
-                    let event_id = fallback_event_id($event_name, &event.id, event.sequence);
-                    if let Some(mut value) = parse_event_json::<$event_type>($event_name, &data) {
-                        value.event_id = Some(event_id);
-                        self.handler.$handler(EventSession::new(ctx, value)).await;
-                    }
-                }
-            }};
-        }
-
-        macro_rules! dispatch_reply_session {
-            ($event_name:literal, $event_type:ty, $session_type:ty, $handler:ident) => {{
-                if let Some(data) = event.data {
-                    let event_id = fallback_event_id($event_name, &event.id, event.sequence);
-                    if let Some(mut value) = parse_event_json::<$event_type>($event_name, &data) {
-                        value.event_id = Some(event_id);
-                        match <$session_type>::new(ctx, value) {
-                            Ok(session) => self.handler.$handler(session).await,
-                            Err(error) => self.handler.error(error).await,
-                        }
-                    }
-                }
-            }};
-        }
-
-        macro_rules! dispatch_message_delete {
-            ($event_name:literal, $handler:ident) => {{
-                if let Some(data) = event.data {
-                    let event_id = fallback_event_id($event_name, &event.id, event.sequence);
-                    if let Some(value) = parse_message_delete($event_name, event_id, &data) {
-                        self.handler.$handler(EventSession::new(ctx, value)).await;
-                    }
-                }
-            }};
-        }
-
-        macro_rules! dispatch_json {
-            ($event_name:literal, $event_type:ty, $handler:ident) => {{
-                if let Some(data) = event.data {
-                    if let Some(value) = parse_event_json::<$event_type>($event_name, &data) {
-                        self.handler.$handler(EventSession::new(ctx, value)).await;
-                    }
-                }
-            }};
-        }
-
-        macro_rules! dispatch_payload_new {
-            ($event_type:ty, $handler:ident) => {{
-                if let Some(data) = event.data {
-                    let event_id = payload_event_id(&event.id, &data);
-                    let value = <$event_type>::new(event_id, &data);
-                    self.handler.$handler(EventSession::new(ctx, value)).await;
-                }
-            }};
-        }
-
-        macro_rules! dispatch_manage_session {
-            ($event_type:ty, $session_type:ty, $handler:ident) => {{
-                if let Some(data) = event.data {
-                    let event_id = payload_event_id(&event.id, &data);
-                    let value = <$event_type>::new(event_id, &data);
-                    self.handler
-                        .$handler(<$session_type>::new(ctx, value))
-                        .await;
-                }
-            }};
-        }
-
-        macro_rules! dispatch_reaction {
-            ($handler:ident) => {{
-                if let Some(data) = event.data {
-                    let reaction = Reaction::new(event.id, &data)?;
-                    self.handler
-                        .$handler(EventSession::new(ctx, reaction))
-                        .await;
-                }
-            }};
-        }
-
-        macro_rules! dispatch_audio {
-            ($handler:ident) => {{
-                if let Some(data) = event.data {
-                    let audio_action = AudioAction::from_value(&data);
-                    let audio = Audio::new(event.id, audio_action);
-                    self.handler.$handler(EventSession::new(ctx, audio)).await;
-                }
-            }};
-        }
-
-        macro_rules! dispatch_forum {
-            ($event_type:ty, $handler:ident) => {{
-                if let Some(data) = event.data {
-                    let value = <$event_type>::new(event.id, &data);
-                    self.handler.$handler(EventSession::new(ctx, value)).await;
-                }
-            }};
-        }
-
-        macro_rules! dispatch_open_forum {
-            ($handler:ident) => {{
-                if let Some(data) = event.data {
-                    let mut thread = OpenThread::new(&data);
-                    thread.event_id = event.id;
-                    self.handler.$handler(EventSession::new(ctx, thread)).await;
-                }
-            }};
-        }
-
-        match event_type.as_deref() {
-            Some("READY") => {
-                if let Some(data) = event.data {
-                    match serde_json::from_value::<Ready>(data.clone()) {
-                        Ok(ready) => {
-                            info!("Bot is ready! Session ID: {}", ready.session_id);
-                            self.handler.ready(EventSession::new(ctx, ready)).await;
-                        }
-                        Err(e) => {
-                            error!("Failed to parse READY event: {}", e);
-                            debug!(
-                                "Raw event data: {}",
-                                serde_json::to_string_pretty(&data).unwrap_or_default()
-                            );
-                        }
-                    }
-                }
-            }
-            Some("RESUMED") => {
-                self.handler.resumed(EventSession::new(ctx, ())).await;
-            }
-            Some("AT_MESSAGE_CREATE") => {
-                dispatch_reply_session!(
-                    "AT_MESSAGE_CREATE",
-                    Message,
-                    ChannelReplySession,
-                    message_create
-                );
-            }
-            Some("DIRECT_MESSAGE_CREATE") => {
-                dispatch_reply_session!(
-                    "DIRECT_MESSAGE_CREATE",
-                    Message,
-                    DirectReplySession,
-                    direct_message_create
-                );
-            }
-            Some("GROUP_AT_MESSAGE_CREATE") => {
-                dispatch_reply_session!(
-                    "GROUP_AT_MESSAGE_CREATE",
-                    GroupMessage,
-                    GroupReplySession,
-                    group_message_create
-                );
-            }
-            Some("C2C_MESSAGE_CREATE") => {
-                dispatch_reply_session!(
-                    "C2C_MESSAGE_CREATE",
-                    C2CMessage,
-                    C2CReplySession,
-                    c2c_message_create
-                );
-            }
-            Some("SUBSCRIBE_MESSAGE_STATUS") => {
-                dispatch_payload_new!(SubscribeMessageStatusData, subscribe_message_status);
-            }
-            Some("ENTER_AIO") => {
-                dispatch_payload_new!(EnterAioEvent, enter_aio);
-            }
-            Some("DIRECT_MESSAGE_DELETE") => {
-                dispatch_message_delete!("DIRECT_MESSAGE_DELETE", direct_message_delete);
-            }
-            Some("PUBLIC_MESSAGE_DELETE") => {
-                dispatch_message_delete!("PUBLIC_MESSAGE_DELETE", public_message_delete);
-            }
-            Some("MESSAGE_DELETE") => {
-                dispatch_message_delete!("MESSAGE_DELETE", message_delete);
-            }
-            Some("MESSAGE_REACTION_ADD") => {
-                dispatch_reaction!(message_reaction_add);
-            }
-            Some("MESSAGE_REACTION_REMOVE") => {
-                dispatch_reaction!(message_reaction_remove);
-            }
-            Some("INTERACTION_CREATE") => {
-                if let Some(data) = event.data {
-                    let interaction = Interaction::new(event.id, &data);
-                    self.handler
-                        .interaction_create(EventSession::new(ctx, interaction))
-                        .await;
-                }
-            }
-            Some("AUDIO_START") => {
-                dispatch_audio!(audio_start);
-            }
-            Some("AUDIO_FINISH") => {
-                dispatch_audio!(audio_finish);
-            }
-            Some("ON_MIC") => {
-                dispatch_audio!(on_mic);
-            }
-            Some("OFF_MIC") => {
-                dispatch_audio!(off_mic);
-            }
-            Some("GUILD_CREATE") => {
-                dispatch_json!("GUILD_CREATE", Guild, guild_create);
-            }
-            Some("GUILD_UPDATE") => {
-                dispatch_json!("GUILD_UPDATE", Guild, guild_update);
-            }
-            Some("GUILD_DELETE") => {
-                dispatch_json!("GUILD_DELETE", Guild, guild_delete);
-            }
-            Some("CHANNEL_CREATE") => {
-                dispatch_json!("CHANNEL_CREATE", Channel, channel_create);
-            }
-            Some("CHANNEL_UPDATE") => {
-                dispatch_json!("CHANNEL_UPDATE", Channel, channel_update);
-            }
-            Some("CHANNEL_DELETE") => {
-                dispatch_json!("CHANNEL_DELETE", Channel, channel_delete);
-            }
-            Some("GUILD_MEMBER_ADD") => {
-                dispatch_json!("GUILD_MEMBER_ADD", Member, guild_member_add);
-            }
-            Some("GUILD_MEMBER_UPDATE") => {
-                dispatch_json!("GUILD_MEMBER_UPDATE", Member, guild_member_update);
-            }
-            Some("GUILD_MEMBER_REMOVE") => {
-                dispatch_json!("GUILD_MEMBER_REMOVE", Member, guild_member_remove);
-            }
-            Some("MESSAGE_AUDIT_PASS") => {
-                dispatch_with_event_id!("MESSAGE_AUDIT_PASS", MessageAudit, message_audit_pass);
-            }
-            Some("MESSAGE_AUDIT_REJECT") => {
-                dispatch_with_event_id!("MESSAGE_AUDIT_REJECT", MessageAudit, message_audit_reject);
-            }
-            Some("FRIEND_ADD") => {
-                dispatch_manage_session!(C2CManageEvent, C2CManageSession, friend_add);
-            }
-            Some("FRIEND_DEL") => {
-                dispatch_manage_session!(C2CManageEvent, C2CManageSession, friend_del);
-            }
-            Some("C2C_MSG_REJECT") => {
-                dispatch_manage_session!(C2CManageEvent, C2CManageSession, c2c_msg_reject);
-            }
-            Some("C2C_MSG_RECEIVE") => {
-                dispatch_manage_session!(C2CManageEvent, C2CManageSession, c2c_msg_receive);
-            }
-            Some("GROUP_ADD_ROBOT") => {
-                dispatch_manage_session!(GroupManageEvent, GroupManageSession, group_add_robot);
-            }
-            Some("GROUP_DEL_ROBOT") => {
-                dispatch_manage_session!(GroupManageEvent, GroupManageSession, group_del_robot);
-            }
-            Some("GROUP_MSG_REJECT") => {
-                dispatch_manage_session!(GroupManageEvent, GroupManageSession, group_msg_reject);
-            }
-            Some("GROUP_MSG_RECEIVE") => {
-                dispatch_manage_session!(GroupManageEvent, GroupManageSession, group_msg_receive);
-            }
-            Some("AUDIO_OR_LIVE_CHANNEL_MEMBER_ENTER") => {
-                if let Some(data) = event.data {
-                    let audio = PublicAudio::new(data);
-                    self.handler
-                        .audio_or_live_channel_member_enter(EventSession::new(ctx, audio))
-                        .await;
-                }
-            }
-            Some("AUDIO_OR_LIVE_CHANNEL_MEMBER_EXIT") => {
-                if let Some(data) = event.data {
-                    let audio = PublicAudio::new(data);
-                    self.handler
-                        .audio_or_live_channel_member_exit(EventSession::new(ctx, audio))
-                        .await;
-                }
-            }
-            Some("FORUM_THREAD_CREATE") => {
-                dispatch_forum!(Thread, forum_thread_create);
-            }
-            Some("FORUM_THREAD_UPDATE") => {
-                dispatch_forum!(Thread, forum_thread_update);
-            }
-            Some("FORUM_THREAD_DELETE") => {
-                dispatch_forum!(Thread, forum_thread_delete);
-            }
-            Some("FORUM_POST_CREATE") => {
-                dispatch_forum!(Post, forum_post_create);
-            }
-            Some("FORUM_POST_DELETE") => {
-                dispatch_forum!(Post, forum_post_delete);
-            }
-            Some("FORUM_REPLY_CREATE") => {
-                dispatch_forum!(Reply, forum_reply_create);
-            }
-            Some("FORUM_REPLY_DELETE") => {
-                dispatch_forum!(Reply, forum_reply_delete);
-            }
-            Some("FORUM_PUBLISH_AUDIT_RESULT") => {
-                if let Some(data) = event.data {
-                    let result = ForumAuditResult::new(event.id, &data);
-                    self.handler
-                        .forum_publish_audit_result(EventSession::new(ctx, result))
-                        .await;
-                }
-            }
-            Some("OPEN_FORUM_THREAD_CREATE") => {
-                dispatch_open_forum!(open_forum_thread_create);
-            }
-            Some("OPEN_FORUM_THREAD_UPDATE") => {
-                dispatch_open_forum!(open_forum_thread_update);
-            }
-            Some("OPEN_FORUM_THREAD_DELETE") => {
-                dispatch_open_forum!(open_forum_thread_delete);
-            }
-            Some("OPEN_FORUM_POST_CREATE") => {
-                dispatch_open_forum!(open_forum_post_create);
-            }
-            Some("OPEN_FORUM_POST_DELETE") => {
-                dispatch_open_forum!(open_forum_post_delete);
-            }
-            Some("OPEN_FORUM_REPLY_CREATE") => {
-                dispatch_open_forum!(open_forum_reply_create);
-            }
-            Some("OPEN_FORUM_REPLY_DELETE") => {
-                dispatch_open_forum!(open_forum_reply_delete);
-            }
-            _ => {
-                debug!("Unknown event type: {:?}", event.event_type);
-                self.handler
-                    .unknown_event(EventSession::new(ctx, event))
-                    .await;
-            }
-        }
-
-        Ok(())
+        self.handler.handle(Event::decode(ctx, event)?).await
     }
 }
 
@@ -420,6 +171,82 @@ mod tests {
         atomic::{AtomicUsize, Ordering},
     };
 
+    // The five envelopes wrap the QQ message event examples from
+    // https://github.com/tencent-connect/bot-docs/blob/645787a/docs/develop/api-v2/server-inter/message/send-receive/event.md
+    #[tokio::test]
+    async fn official_message_events_reach_the_correct_reply_session() {
+        let events: Vec<GatewayEvent> =
+            serde_json::from_str(include_str!("fixtures/message_events.json")).unwrap();
+        for event in events {
+            let kind = event.event_type.clone().unwrap();
+            let client = Client::new(
+                Token::new("test", "secret"),
+                Intents::new(),
+                move |decoded| {
+                    let kind = kind.clone();
+                    async move {
+                        match (kind.as_str(), decoded) {
+                            ("C2C_MESSAGE_CREATE", Event::C2CMessageCreate(s)) => {
+                                assert_eq!(s.openid(), "E4F4AEA33253A2797FB897C50B81D7ED")
+                            }
+                            ("GROUP_AT_MESSAGE_CREATE", Event::GroupMessageCreate(s)) => {
+                                assert_eq!(s.group_openid(), "C9F778FE6ADF9D1D1DBE395BF744A33A");
+                                assert_eq!(
+                                    s.message().author.member_openid,
+                                    "E4F4AEA33253A2797FB897C50B81D7ED"
+                                );
+                            }
+                            ("DIRECT_MESSAGE_CREATE", Event::DirectMessageCreate(s)) => {
+                                assert_eq!(s.guild_id(), "18700000000001")
+                            }
+                            ("MESSAGE_CREATE" | "AT_MESSAGE_CREATE", Event::MessageCreate(s)) => {
+                                assert_eq!(s.channel_id(), "100010");
+                                assert!(s.message().seq_in_channel.is_none());
+                            }
+                            _ => panic!("incorrect session for {kind}"),
+                        }
+                        Ok(())
+                    }
+                },
+                false,
+            )
+            .unwrap();
+            client
+                .handle_event(Context::new(client.api.clone()), event)
+                .await
+                .unwrap();
+        }
+    }
+
+    #[tokio::test]
+    async fn microphone_events_accept_platform_and_legacy_names() {
+        for (name, on) in [
+            ("AUDIO_ON_MIC", true),
+            ("AUDIO_OFF_MIC", false),
+            ("ON_MIC", true),
+            ("OFF_MIC", false),
+        ] {
+            let client = Client::new(
+                Token::new("test", "secret"),
+                Intents::new(),
+                move |event| async move {
+                    assert!(matches!(
+                        (event, on),
+                        (Event::OnMic(_), true) | (Event::OffMic(_), false)
+                    ));
+                    Ok(())
+                },
+                false,
+            )
+            .unwrap();
+            let event = serde_json::from_value(json!({"op":0,"t":name,"d":{}})).unwrap();
+            client
+                .handle_event(Context::new(client.api.clone()), event)
+                .await
+                .unwrap();
+        }
+    }
+
     #[derive(Default)]
     struct DeleteCounters {
         message_delete: AtomicUsize,
@@ -427,7 +254,7 @@ mod tests {
         message_create_count: AtomicUsize,
         friend_add: AtomicUsize,
         inline_event_id_seen: AtomicUsize,
-        fallback_event_id_seen: AtomicUsize,
+        missing_event_id_seen: AtomicUsize,
     }
 
     struct CountingHandler(Arc<DeleteCounters>);
@@ -437,8 +264,8 @@ mod tests {
         async fn message_create(&self, session: ChannelReplySession) {
             self.0.message_create_count.fetch_add(1, Ordering::SeqCst);
             let message = session.message();
-            if message.event_id.as_deref() == Some("AT_MESSAGE_CREATE_42") {
-                self.0.fallback_event_id_seen.fetch_add(1, Ordering::SeqCst);
+            if message.event_id.is_none() {
+                self.0.missing_event_id_seen.fetch_add(1, Ordering::SeqCst);
             }
         }
 
@@ -503,7 +330,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn generated_dispatch_keeps_event_id_fallbacks() {
+    async fn dispatch_preserves_real_ids_and_leaves_absent_ids_unset() {
         let counters = Arc::new(DeleteCounters::default());
         let handler = CountingHandler(counters.clone());
         let client = Client::new(
@@ -560,7 +387,7 @@ mod tests {
             .expect("dispatch friend add");
 
         assert_eq!(counters.message_create_count.load(Ordering::SeqCst), 1);
-        assert_eq!(counters.fallback_event_id_seen.load(Ordering::SeqCst), 1);
+        assert_eq!(counters.missing_event_id_seen.load(Ordering::SeqCst), 1);
         assert_eq!(counters.friend_add.load(Ordering::SeqCst), 1);
         assert_eq!(counters.inline_event_id_seen.load(Ordering::SeqCst), 1);
     }

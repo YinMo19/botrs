@@ -8,8 +8,10 @@ pub struct MessageUser {
     /// The user's ID
     pub id: Snowflake,
     /// The user's username
+    #[serde(default)]
     pub username: String,
     /// Whether the user is a bot
+    #[serde(default)]
     pub bot: bool,
     /// The user's avatar hash
     #[serde(default)]
@@ -20,14 +22,19 @@ pub struct MessageUser {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct GroupMessageUser {
     /// The user's ID
+    #[serde(default)]
     pub id: String,
     /// The member's OpenID in the group
+    #[serde(default)]
     pub member_openid: String,
     /// The union OpenID
+    #[serde(default)]
     pub union_openid: String,
     /// The user's username
+    #[serde(default)]
     pub username: String,
     /// Whether the user is a bot
+    #[serde(default)]
     pub bot: bool,
 }
 /// User information in a C2C message.
@@ -35,10 +42,13 @@ pub struct GroupMessageUser {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct C2CMessageUser {
     /// The user's ID
+    #[serde(default)]
     pub id: String,
     /// The user's union openid
+    #[serde(default)]
     pub union_openid: String,
     /// The user's openid
+    #[serde(default)]
     pub user_openid: String,
 }
 /// Member information in a message.

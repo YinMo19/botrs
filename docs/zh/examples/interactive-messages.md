@@ -4,7 +4,7 @@
 
 ## 键盘
 
-键盘与 Markdown 一起发送。可以通过 id 引用服务端模板，也可以用 `KeyboardContent`、`KeyboardRow`、`KeyboardButton`、`KeyboardButtonRenderData`、`KeyboardButtonAction`、`KeyboardButtonPermission` 内联定义行/按钮。群与 C2C session 使用 `KeyboardPayload`，频道和私信用 `Keyboard`。
+键盘与 Markdown 一起发送。可以通过 id 引用服务端模板，也可以用 `KeyboardContent`、`KeyboardRow`、`KeyboardButton`、`KeyboardButtonRenderData`、`KeyboardButtonAction`、`KeyboardButtonPermission` 内联定义行/按钮。四类消息 session 都使用 `Keyboard`。
 
 ```rust
 use botrs::models::message::{
@@ -27,7 +27,7 @@ let keyboard = Keyboard {
 session.send_keyboard_message("# title\n\n## body", keyboard).await?;
 ```
 
-独立调用 `BotApi` 时，使用对应的 params 构造器，例如 `MessageParams::new_keyboard(content, keyboard)`。群和 C2C 使用带 `KeyboardPayload` 的 `GroupMessageParams::new_keyboard` / `C2CMessageParams::new_keyboard`。
+独立调用 `BotApi` 时，使用对应的 params 构造器，例如 `MessageParams::new_keyboard(content, keyboard)`。群和 C2C 使用带 `Keyboard` 的 `GroupMessageParams::new_keyboard` / `C2CMessageParams::new_keyboard`。原有 `KeyboardPayload` 可通过 `Keyboard::try_from(payload)?` 转换。
 
 ## 命令分发
 

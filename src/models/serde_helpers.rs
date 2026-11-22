@@ -43,11 +43,6 @@ where
     }
 }
 
-/// True when an unsigned 32-bit value is zero.
-pub(crate) fn is_zero_u32(value: &u32) -> bool {
-    *value == 0
-}
-
 /// True when a signed 32-bit value is zero.
 pub(crate) fn is_zero_i32(value: &i32) -> bool {
     *value == 0

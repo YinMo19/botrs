@@ -18,24 +18,15 @@ impl Gateway {
     ) -> Result<Option<GatewayAction>> {
         match event.opcode {
             opcodes::HELLO => {
-                // Hello message with heartbeat interval
-                if let Some(data) = &event.data
-                    && let Ok(hello) = serde_json::from_value::<Hello>(data.clone())
-                {
-                    debug!(
-                        "[botrs] 收到 HELLO 事件，使用服务器建议心跳间隔: {}ms",
-                        hello.heartbeat_interval
-                    );
-                    self.heartbeat_interval = Some(hello.heartbeat_interval);
-                    self.heartbeat_interval_ms
-                        .store(hello.heartbeat_interval.max(1), Ordering::Relaxed);
-
-                    // Send identify or resume like Python's on_connected
-                    debug!("[botrs] 发送身份验证信息");
-                    if let Err(e) = self.send_identify(write).await {
-                        debug!("Failed to send identify: {}", e);
-                    }
-                }
+                let data = event
+                    .data
+                    .as_ref()
+                    .ok_or_else(|| crate::BotError::gateway("HELLO is missing its data"))?;
+                let hello: Hello = serde::Deserialize::deserialize(data)?;
+                self.heartbeat_interval = Some(hello.heartbeat_interval);
+                self.heartbeat_interval_ms
+                    .store(hello.heartbeat_interval.max(1), Ordering::Relaxed);
+                self.send_identify(write).await?;
                 Ok(Some(GatewayAction::Continue))
             }
             opcodes::HEARTBEAT_ACK => {
@@ -101,9 +92,7 @@ impl Gateway {
                     debug!("[botrs] 发送立即心跳: seq={}", seq);
                     debug!("[botrs] 发送消息: {}", payload);
                     let mut writer = write.lock().await;
-                    if let Err(e) = writer.send(Message::Text(payload)).await {
-                        debug!("Failed to send immediate heartbeat: {}", e);
-                    }
+                    writer.send(Message::Text(payload)).await?;
                 }
                 Ok(Some(GatewayAction::Continue))
             }

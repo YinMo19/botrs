@@ -74,7 +74,7 @@ fn non_empty(value: String) -> Option<String> {
 }
 
 /// Public audio event data structure for live channels
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct PublicAudio {
     /// Guild ID
     pub guild_id: Option<String>,
@@ -86,28 +86,10 @@ pub struct PublicAudio {
     pub user_id: Option<String>,
 }
 
-#[derive(Debug, Default, Deserialize)]
-struct PublicAudioWire {
-    #[serde(default)]
-    guild_id: Option<String>,
-    #[serde(default)]
-    channel_id: Option<String>,
-    #[serde(default)]
-    channel_type: Option<PublicAudioType>,
-    #[serde(default)]
-    user_id: Option<String>,
-}
-
 impl PublicAudio {
     /// Builds public audio event data from the gateway payload.
     pub fn new(data: serde_json::Value) -> Self {
-        let wire: PublicAudioWire = serde_json::from_value(data).unwrap_or_default();
-        Self {
-            guild_id: wire.guild_id,
-            channel_id: wire.channel_id,
-            channel_type: wire.channel_type,
-            user_id: wire.user_id,
-        }
+        serde_json::from_value(data).unwrap_or_default()
     }
 }
 

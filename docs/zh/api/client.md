@@ -22,13 +22,17 @@ client.start().await?;
 ## 生命周期
 
 - `start().await` —— 执行启动阶段 REST 调用、启动网关 session，并运行事件循环直到事件通道关闭。
-丢弃正在运行的 `Client` 任务会关闭网关连接。
+取消 `start()` future 会关闭网关连接。在 Tokio 任务中运行时，可通过 `JoinHandle::abort()` 取消。
 
 框架特意保持小表面，没有 `stop` / `is_connected` / `get_session_info` 这些方法 —— 会话状态应当通过事件感知。请用 `EventHandler::ready` 与 `EventHandler::resumed` 监听生命周期变化。
 
+## HTTP 回调
+
+将 HTTP 请求头和原始 body 传给 `client.handle_webhook(&headers, &body).await`，把成功返回的 `WebhookReply` 序列化为 JSON，使用 HTTP 200 响应。该方法负责 Ed25519 验签、地址校验、心跳和事件 ACK。通过 Webhook 接收事件时无需调用 `start()`。Webhook session 的 `bot_info()` 为 `None`，需要时可调用 `session.api().get_bot_info().await`。可运行仓库中的 `cargo run --example webhook` 启动示例。
+
 ## 重连行为
 
-`start()` 会把 token 校验、`get_bot_info`、`get_gateway` 的启动阶段错误直接返回。网关 session 启动后，瞬时故障会按照 [网关指南](../guide/gateway.md) 描述的节流策略自动重试；不可恢复的 identify 错误会停止该 shard 的重连循环，并由 session manager 记录日志。
+`start()` 会把 token 校验、`get_bot_info`、`get_gateway` 的启动阶段错误直接返回。网关 session 启动后，瞬时故障会按照 [网关指南](../guide/gateway.md) 描述的节流策略自动重试；致命 identify 错误会终止所有分片，并从 `start()` 返回。
 
 ## 优雅停机
 

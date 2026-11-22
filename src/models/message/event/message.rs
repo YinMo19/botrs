@@ -10,6 +10,7 @@ pub struct Message {
     /// The message's unique ID
     pub id: Snowflake,
     /// The message content
+    #[serde(default)]
     pub content: String,
     /// The ID of the channel this message was sent in
     pub channel_id: Snowflake,
@@ -41,8 +42,9 @@ pub struct Message {
     /// Global message sequence number
     pub seq: Option<u64>,
     /// Channel-specific message sequence number
-    pub seq_in_channel: String,
+    pub seq_in_channel: Option<String>,
     /// When this message was sent
+    #[serde(default)]
     pub timestamp: Timestamp,
     /// When this message was edited
     #[serde(default)]

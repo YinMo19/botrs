@@ -56,7 +56,7 @@ pub struct ReplyInfo {
 }
 
 /// Forum thread structure
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Thread {
     /// Thread information
     #[serde(default)]
@@ -75,34 +75,17 @@ pub struct Thread {
     pub event_id: Option<String>,
 }
 
-#[derive(Debug, Default, Deserialize)]
-struct ThreadWire {
-    #[serde(default)]
-    thread_info: ThreadInfo,
-    #[serde(default)]
-    channel_id: String,
-    #[serde(default)]
-    guild_id: String,
-    #[serde(default)]
-    author_id: String,
-}
-
 impl Thread {
     /// Builds a forum thread event from the gateway payload.
-    pub(crate) fn new(event_id: Option<String>, data: &Value) -> Self {
-        let wire: ThreadWire = serde_json::from_value(data.clone()).unwrap_or_default();
-        Self {
-            thread_info: wire.thread_info,
-            channel_id: wire.channel_id,
-            guild_id: wire.guild_id,
-            author_id: wire.author_id,
-            event_id,
-        }
+    pub(crate) fn new(event_id: Option<String>, data: Value) -> serde_json::Result<Self> {
+        let mut event: Self = serde_json::from_value(data)?;
+        event.event_id = event_id;
+        Ok(event)
     }
 }
 
 /// Forum post structure.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Post {
     /// Guild ID
     #[serde(default)]
@@ -121,34 +104,17 @@ pub struct Post {
     pub event_id: Option<String>,
 }
 
-#[derive(Debug, Default, Deserialize)]
-struct PostWire {
-    #[serde(default)]
-    guild_id: String,
-    #[serde(default)]
-    channel_id: String,
-    #[serde(default)]
-    author_id: String,
-    #[serde(default)]
-    post_info: PostInfo,
-}
-
 impl Post {
     /// Create a new Post instance.
-    pub(crate) fn new(event_id: Option<String>, data: &Value) -> Self {
-        let wire: PostWire = serde_json::from_value(data.clone()).unwrap_or_default();
-        Self {
-            guild_id: wire.guild_id,
-            channel_id: wire.channel_id,
-            author_id: wire.author_id,
-            post_info: wire.post_info,
-            event_id,
-        }
+    pub(crate) fn new(event_id: Option<String>, data: Value) -> serde_json::Result<Self> {
+        let mut event: Self = serde_json::from_value(data)?;
+        event.event_id = event_id;
+        Ok(event)
     }
 }
 
 /// Forum reply structure.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Reply {
     /// Guild ID
     #[serde(default)]
@@ -167,28 +133,11 @@ pub struct Reply {
     pub event_id: Option<String>,
 }
 
-#[derive(Debug, Default, Deserialize)]
-struct ReplyWire {
-    #[serde(default)]
-    guild_id: String,
-    #[serde(default)]
-    channel_id: String,
-    #[serde(default)]
-    author_id: String,
-    #[serde(default)]
-    reply_info: ReplyInfo,
-}
-
 impl Reply {
     /// Create a new Reply instance.
-    pub(crate) fn new(event_id: Option<String>, data: &Value) -> Self {
-        let wire: ReplyWire = serde_json::from_value(data.clone()).unwrap_or_default();
-        Self {
-            guild_id: wire.guild_id,
-            channel_id: wire.channel_id,
-            author_id: wire.author_id,
-            reply_info: wire.reply_info,
-            event_id,
-        }
+    pub(crate) fn new(event_id: Option<String>, data: Value) -> serde_json::Result<Self> {
+        let mut event: Self = serde_json::from_value(data)?;
+        event.event_id = event_id;
+        Ok(event)
     }
 }

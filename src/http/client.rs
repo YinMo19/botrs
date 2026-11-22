@@ -9,6 +9,7 @@ pub struct HttpClient {
     pub(crate) client: Client,
     /// The base URL for API requests
     pub(crate) base_url: String,
+    pub(crate) endpoint: Option<url::Url>,
     /// OpenAPI instance app ID used by the X-Union-Appid header.
     pub(crate) union_app_id: Option<String>,
 }
@@ -39,8 +40,24 @@ impl HttpClient {
         Ok(Self {
             client,
             base_url,
+            endpoint: None,
             union_app_id: None,
         })
+    }
+
+    /// Selects a trusted OpenAPI base URL for typed requests, including message sends.
+    pub fn with_base_url(mut self, url: url::Url) -> Result<Self> {
+        if !matches!(url.scheme(), "http" | "https")
+            || url.host().is_none()
+            || url.query().is_some()
+            || url.fragment().is_some()
+        {
+            return Err(BotError::config(
+                "expected an HTTP(S) API base URL without query or fragment",
+            ));
+        }
+        self.base_url = url.as_str().trim_end_matches('/').to_owned();
+        Ok(self)
     }
 
     pub(crate) fn with_union_app_id(&self, app_id: impl Into<String>) -> Self {

@@ -85,3 +85,59 @@ fn test_close_code_classification() {
         WS_CODE_BACKEND_AUTHENTICATION_FAIL
     ));
 }
+
+#[tokio::test]
+async fn fatal_close_after_identify_propagates_to_the_session_manager() {
+    use crate::models::api::{GatewayResponse, SessionStartLimit};
+    use crate::session_manager::{ChanManager, SessionManager, can_not_identify};
+    use futures_util::{SinkExt, StreamExt};
+    use tokio_tungstenite::tungstenite::{Message, protocol::CloseFrame};
+
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let url = format!("ws://{}", listener.local_addr().unwrap());
+    let server = tokio::spawn(async move {
+        let (stream, _) = listener.accept().await.unwrap();
+        let mut socket = tokio_tungstenite::accept_async(stream).await.unwrap();
+        socket
+            .send(Message::Text(
+                r#"{"op":10,"d":{"heartbeat_interval":60000}}"#.into(),
+            ))
+            .await
+            .unwrap();
+        let identify = socket.next().await.unwrap().unwrap().into_text().unwrap();
+        let identify: serde_json::Value = serde_json::from_str(&identify).unwrap();
+        assert_eq!(identify["op"], 2);
+        assert_eq!(identify["d"]["shard"], serde_json::json!([0, 1]));
+        socket
+            .close(Some(CloseFrame {
+                code: WS_CODE_BACKEND_BOT_OFFLINE.into(),
+                reason: "offline".into(),
+            }))
+            .await
+            .unwrap();
+    });
+    let token = Token::new("app", "secret");
+    token
+        .set_cached_access_token_for_test("test-access-token")
+        .await;
+    let info = GatewayResponse {
+        url,
+        shards: 1,
+        session_start_limit: SessionStartLimit {
+            total: 1,
+            remaining: 1,
+            reset_after: 1000,
+            max_concurrency: 1,
+        },
+    };
+    let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel();
+    let mut manager = ChanManager::new();
+    let run = manager.start(&info, token, Intents::new(), tx);
+    let error = tokio::time::timeout(Duration::from_secs(3), run)
+        .await
+        .unwrap()
+        .unwrap_err();
+    assert!(can_not_identify(&error));
+    assert!(rx.recv().await.is_none());
+    server.await.unwrap();
+}

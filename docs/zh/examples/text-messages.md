@@ -29,7 +29,7 @@ let params = MessageParams {
 session.send_message(params).await?;
 ```
 
-Reply session 会在字段为空时自动填充 `msg_id`、`event_id` 和 `msg_seq`。私信还需要从入站 `Message` 拿 DM `guild_id`，或使用 `BotApi::create_direct_message` 创建会话。
+消息回复使用收到的消息 ID 填写 `msg_id`。管理事件回复使用平台提供的 `event_id`。两类 session 都会递增 `msg_seq`，并保留调用者显式指定的回复 ID。私信还需要从入站 `Message` 拿 DM `guild_id`，或使用 `BotApi::create_direct_message` 创建会话。
 
 ## 参见
 

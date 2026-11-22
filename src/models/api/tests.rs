@@ -126,10 +126,10 @@ fn audio_action_keeps_official_json_shape() {
 
 #[test]
 fn audio_action_from_value_tolerates_missing_fields() {
-    let action = AudioAction::from_value(&serde_json::json!({
+    let action: AudioAction = serde_json::from_value(serde_json::json!({
         "guild_id": "guild-1",
-        "channel_id": 123,
-    }));
+    }))
+    .unwrap();
 
     assert_eq!(action.guild_id, "guild-1");
     assert_eq!(action.channel_id, "");

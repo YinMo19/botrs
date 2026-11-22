@@ -4,7 +4,7 @@ Inline keyboards are sent together with Markdown. Guild channel keyboards live i
 
 ## Keyboards
 
-A keyboard is sent alongside Markdown. You can either reference a server-side template by id, or define rows + buttons inline using `KeyboardContent`, `KeyboardRow`, `KeyboardButton`, `KeyboardButtonRenderData`, `KeyboardButtonAction`, and `KeyboardButtonPermission`. Group and C2C sessions use `KeyboardPayload`; channel and DM sessions use `Keyboard`.
+A keyboard is sent alongside Markdown. You can either reference a server-side template by id, or define rows + buttons inline using `KeyboardContent`, `KeyboardRow`, `KeyboardButton`, `KeyboardButtonRenderData`, `KeyboardButtonAction`, and `KeyboardButtonPermission`. All four message sessions accept `Keyboard`.
 
 ```rust
 use botrs::models::message::{
@@ -27,7 +27,7 @@ let keyboard = Keyboard {
 session.send_keyboard_message("# title\n\n## body", keyboard).await?;
 ```
 
-For standalone `BotApi` calls, use the matching params constructor, for example `MessageParams::new_keyboard(content, keyboard)`. Group and C2C use `GroupMessageParams::new_keyboard` / `C2CMessageParams::new_keyboard` with `KeyboardPayload`.
+For standalone `BotApi` calls, use the matching params constructor, for example `MessageParams::new_keyboard(content, keyboard)`. Group and C2C use `GroupMessageParams::new_keyboard` / `C2CMessageParams::new_keyboard` with `Keyboard`. Convert a raw `KeyboardPayload` with `Keyboard::try_from(payload)?`.
 
 ## Command dispatch
 

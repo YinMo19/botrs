@@ -10,7 +10,7 @@ By participating in this project, you agree to abide by our [Code of Conduct](CO
 
 ### Prerequisites
 
-- Rust 1.85 or later
+- Rust 1.88 or later
 - Git
 - A QQ bot application (for testing)
 

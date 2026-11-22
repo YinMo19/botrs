@@ -14,39 +14,43 @@ fn test_http_client_creation() {
     assert_eq!(sandbox_client.base_url, crate::SANDBOX_API_URL);
 }
 
-#[test]
-fn test_api_error_parsing() {
+#[tokio::test]
+async fn failures_keep_status_trace_and_body_even_when_the_body_is_not_json() {
     let client = HttpClient::new(30, false).unwrap();
-
-    let json = serde_json::json!({
-        "code": 404,
-        "message": "Not found",
-        "trace_id": "test-trace"
-    });
-
-    let error = client.parse_api_error(StatusCode::NOT_FOUND, &json);
-    assert_eq!(error.code, 404);
-    assert_eq!(error.err_code, None);
-    assert_eq!(error.message, "Not found");
-    assert_eq!(error.trace_id, Some("test-trace".to_string()));
+    for status in [StatusCode::BAD_GATEWAY, StatusCode::TOO_MANY_REQUESTS] {
+        let response = axum::http::Response::builder()
+            .status(status)
+            .header("x-tps-trace-id", "trace")
+            .header("retry-after", "7")
+            .body("unavailable")
+            .unwrap();
+        let error = client.checked_response(response.into()).await.unwrap_err();
+        let failure = error.response().unwrap();
+        assert_eq!(failure.status, status);
+        assert_eq!(failure.trace_id.as_deref(), Some("trace"));
+        assert_eq!(failure.body, "unavailable");
+        assert_eq!(failure.platform_code, None);
+        if status == StatusCode::TOO_MANY_REQUESTS {
+            assert_eq!(error.retry_after(), Some(7));
+        }
+    }
 }
 
-#[test]
-fn api_error_parsing_prefers_official_err_code() {
+#[tokio::test]
+async fn api_error_keeps_message_and_raw_audit_fields() {
     let client = HttpClient::new(30, false).unwrap();
-
-    let json = serde_json::json!({
-        "code": 0,
-        "err_code": 11244,
-        "message": "token expired",
-        "trace_id": "trace-err-code"
-    });
-
-    let error = client.parse_api_error(StatusCode::UNAUTHORIZED, &json);
-    assert_eq!(error.code, 11244);
-    assert_eq!(error.err_code, Some(11244));
-    assert_eq!(error.message, "token expired");
-    assert_eq!(error.trace_id, Some("trace-err-code".to_string()));
+    let body = r#"{"code":0,"err_code":304023,"message":"under audit","data":{"message_audit":{"audit_id":"audit-1"}}}"#;
+    let response = axum::http::Response::builder()
+        .status(StatusCode::ACCEPTED)
+        .header("x-tps-trace-id", "trace")
+        .body(body)
+        .unwrap();
+    let err = client.checked_response(response.into()).await.unwrap_err();
+    let diagnostic = err.response().unwrap();
+    assert_eq!(diagnostic.status, StatusCode::ACCEPTED);
+    assert_eq!(diagnostic.platform_code, Some(304023));
+    assert_eq!(diagnostic.body, body);
+    assert!(matches!(err, BotError::Api { code: 304023, message, .. } if message == "under audit"));
 }
 
 #[tokio::test]
@@ -70,10 +74,12 @@ async fn no_content_response_is_successful_null() {
         .await;
 
     let response = client
-        .request_json_url(
-            &token,
+        .with_base_url(format!("http://{addr}").parse().unwrap())
+        .unwrap()
+        .request(
             reqwest::Method::DELETE,
-            &format!("http://{addr}/resource"),
+            &token,
+            "/resource",
             None::<&()>,
             None::<&()>,
         )
@@ -115,10 +121,12 @@ async fn api_error_response_preserves_platform_code_and_trace() {
         .await;
 
     let err = client
-        .request_json_url(
-            &token,
+        .with_base_url(format!("http://{addr}").parse().unwrap())
+        .unwrap()
+        .request(
             reqwest::Method::POST,
-            &format!("http://{addr}/resource"),
+            &token,
+            "/resource",
             None::<&()>,
             Some(&serde_json::json!({"msg_type": 4})),
         )
@@ -126,6 +134,7 @@ async fn api_error_response_preserves_platform_code_and_trace() {
         .unwrap_err();
 
     assert!(matches!(err, BotError::Server(_)));
+    assert_eq!(err.response().unwrap().platform_code, Some(50015006));
     let message = err.to_string();
     assert!(message.contains("HTTP 500 Internal Server Error"));
     assert!(message.contains("API error 50015006"));
@@ -160,10 +169,8 @@ async fn authorized_headers_include_union_app_id() {
     let token = Token::new("token-app", "secret");
     token.set_cached_access_token_for_test("cached-token").await;
 
-    let headers = client
-        .authorized_headers(&token, reqwest::header::HeaderMap::new())
-        .await
-        .unwrap();
+    let mut headers = reqwest::header::HeaderMap::new();
+    client.authorize(&token, &mut headers).await.unwrap();
 
     assert_eq!(
         headers
@@ -185,10 +192,8 @@ async fn authorized_headers_fall_back_to_token_app_id() {
     let token = Token::new("token-app", "secret");
     token.set_cached_access_token_for_test("cached-token").await;
 
-    let headers = client
-        .authorized_headers(&token, reqwest::header::HeaderMap::new())
-        .await
-        .unwrap();
+    let mut headers = reqwest::header::HeaderMap::new();
+    client.authorize(&token, &mut headers).await.unwrap();
 
     assert_eq!(
         headers

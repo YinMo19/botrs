@@ -30,9 +30,9 @@ fn check_session_limit_matches_expected() {
 
 #[test]
 fn resume_and_identify_error_sets_match_expected() {
-    let resume = sdk_error(CODE_CONN_CLOSE_CANT_RESUME, "invalid session");
-    let identify = sdk_error(CODE_CONN_CLOSE_CANT_IDENTIFY, "bot banned");
-    let other = sdk_error(9999, "unknown sdk error");
+    let resume = sdk_error(CODE_CONN_CLOSE_CANT_RESUME, "invalid session").into();
+    let identify = sdk_error(CODE_CONN_CLOSE_CANT_IDENTIFY, "bot banned").into();
+    let other = sdk_error(9999, "unknown sdk error").into();
 
     assert!(can_not_resume(&resume));
     assert!(!can_not_resume(&identify));
@@ -55,7 +55,6 @@ fn sessions_are_generated_per_shard() {
 
 #[tokio::test]
 async fn non_resumable_error_clears_session_before_requeue() {
-    let (session_tx, mut session_rx) = mpsc::unbounded_channel();
     let (event_tx, _event_rx) = mpsc::unbounded_channel();
     let connect_fn = std::sync::Arc::new(|session: Session, _event_sender| -> SessionFuture {
         Box::pin(async move {
@@ -69,8 +68,7 @@ async fn non_resumable_error_clears_session_before_requeue() {
         })
     });
 
-    ChanManager::new_connect(
-        session_tx,
+    let session = ChanManager::new_connect(
         connect_fn,
         event_tx,
         Session::new(
@@ -81,9 +79,57 @@ async fn non_resumable_error_clears_session_before_requeue() {
             1,
         ),
     )
-    .await;
-
-    let session = session_rx.recv().await.unwrap();
+    .await
+    .unwrap();
     assert!(session.id.is_empty());
     assert_eq!(session.last_seq, 0);
+}
+
+#[tokio::test]
+async fn terminal_identify_error_stops_manager_and_closes_event_channel() {
+    let mut manager = ChanManager::with_connect_fn(|session, _| {
+        Box::pin(async {
+            (
+                session,
+                Err(sdk_error(CODE_CONN_CLOSE_CANT_IDENTIFY, "banned").into()),
+            )
+        })
+    });
+    let (tx, mut rx) = mpsc::unbounded_channel();
+    let info = ap_info(2, 2, 1);
+    let run = manager.start(&info, Token::new("app", "secret"), Intents::new(), tx);
+    let err = tokio::time::timeout(std::time::Duration::from_secs(2), run)
+        .await
+        .unwrap()
+        .unwrap_err();
+    assert!(can_not_identify(&err));
+    assert!(rx.recv().await.is_none());
+}
+
+#[tokio::test]
+async fn cancelling_manager_drops_active_shard_and_event_sender() {
+    let info = ap_info(1, 1, 1);
+    let (tx, mut rx) = mpsc::unbounded_channel();
+    let mut manager = ChanManager::with_connect_fn(|_, tx| {
+        Box::pin(async move {
+            let started =
+                serde_json::from_value(serde_json::json!({"op":0,"t":"RESUMED"})).unwrap();
+            tx.send(started).unwrap();
+            let result = std::future::pending().await;
+            drop(tx);
+            result
+        })
+    });
+    let mut run = Box::pin(manager.start(&info, Token::new("app", "secret"), Intents::new(), tx));
+    tokio::select! {
+        result = &mut run => panic!("unexpected manager exit: {result:?}"),
+        event = rx.recv() => assert!(event.is_some()),
+    }
+    drop(run);
+    assert!(
+        tokio::time::timeout(std::time::Duration::from_secs(2), rx.recv())
+            .await
+            .unwrap()
+            .is_none()
+    );
 }

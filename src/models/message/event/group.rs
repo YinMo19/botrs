@@ -8,6 +8,7 @@ pub struct GroupMessage {
     /// The message's unique ID
     pub id: Snowflake,
     /// The message content
+    #[serde(default)]
     pub content: String,
     /// Referenced message information
     pub message_reference: Option<MessageReference>,
@@ -24,12 +25,16 @@ pub struct GroupMessage {
     /// The author of this message
     pub author: GroupMessageUser,
     /// Group ID
+    #[serde(default)]
     pub group_id: Snowflake,
     /// Group OpenID
+    #[serde(default)]
     pub group_openid: String,
     /// Message scene information
+    #[serde(default)]
     pub message_scene: MessageScene,
     /// Open-message type code.
+    #[serde(default)]
     pub message_type: u32,
     /// Event ID from the gateway
     #[serde(skip)]

@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 /// Group management event structure
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GroupManageEvent {
     /// Event ID
     #[serde(skip)]
@@ -16,23 +16,12 @@ pub struct GroupManageEvent {
 
 impl GroupManageEvent {
     /// Builds a group management event from the gateway payload.
-    pub(crate) fn new(event_id: Option<String>, data: &serde_json::Value) -> Self {
-        let wire: GroupManageWire = serde_json::from_value(data.clone()).unwrap_or_default();
-        Self {
-            event_id,
-            timestamp: wire.timestamp,
-            group_openid: wire.group_openid,
-            op_member_openid: wire.op_member_openid,
-        }
+    pub(crate) fn new(
+        event_id: Option<String>,
+        data: serde_json::Value,
+    ) -> serde_json::Result<Self> {
+        let mut event: Self = serde_json::from_value(data)?;
+        event.event_id = event_id;
+        Ok(event)
     }
-}
-
-#[derive(Debug, Default, Deserialize)]
-struct GroupManageWire {
-    #[serde(default)]
-    timestamp: Option<u64>,
-    #[serde(default)]
-    group_openid: Option<String>,
-    #[serde(default)]
-    op_member_openid: Option<String>,
 }

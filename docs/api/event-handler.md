@@ -1,6 +1,6 @@
 # EventHandler
 
-`EventHandler` is the async trait you implement to react to gateway events. Every method has an empty default body, so you only override what you care about — even an empty struct will compile.
+`EventHandler` receives typed events from both WebSocket and Webhook delivery. Implement individual callbacks or override `handle` to match on `Event`.
 
 ```rust
 #[async_trait::async_trait]
@@ -11,7 +11,7 @@ pub trait EventHandler: Send + Sync {
 }
 ```
 
-The framework dispatches whichever method matches the gateway event type. Every public callback receives a session object. Reply-capable message callbacks use specialized reply sessions, while lifecycle and non-reply callbacks use event sessions whose payload is available through `session.event()`. Every method returns `()`; if you need to surface an error, log it locally — gateway-event errors do not interrupt the connection.
+Individual callbacks receive the corresponding session and return `()`. The default `handle` calls those callbacks. A handler closure or a custom `handle` can use `?` to return a `botrs::Result<()>`. To forward remaining events to existing callbacks, call `event.dispatch(self).await`.
 
 ## Method catalogue
 

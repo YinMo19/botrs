@@ -33,7 +33,7 @@ impl EventHandler for MyBot {
     }
 
     async fn message_create(&self, mut session: ChannelReplySession) {
-        let message = session.message().clone();
+        let message = session.message();
         if message.author.bot {
             return;
         }
@@ -70,7 +70,7 @@ impl EventHandler for MyBot {
 
 ## 错误回调
 
-在调用你的 handler 之前，如果分派准备阶段失败，框架会调用一次 `EventHandler::error(&self, error: BotError)` 并继续处理下一个事件。payload 解析失败会被记录并丢弃，handler panic 不会被转换成 `BotError`。需要指标或告警时可以重写 `error`，但重试必须由你的代码自行实现。
+事件解码或 `handle` 返回错误时，框架会调用一次 `EventHandler::error`。WebSocket 会继续处理后续事件。Webhook 返回 `{"op":12,"d":1}`，平台可重试本次投递。
 
 ## 在处理器中派发任务
 

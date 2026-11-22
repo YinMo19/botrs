@@ -18,7 +18,7 @@ pub struct C2CFriendData {
 }
 
 /// C2C (Client-to-Client) management event structure
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct C2CManageEvent {
     /// Event ID
     #[serde(skip)]
@@ -35,26 +35,12 @@ pub struct C2CManageEvent {
 
 impl C2CManageEvent {
     /// Builds a C2C management event from the gateway payload.
-    pub(crate) fn new(event_id: Option<String>, data: &serde_json::Value) -> Self {
-        let wire: C2CManageWire = serde_json::from_value(data.clone()).unwrap_or_default();
-        Self {
-            event_id,
-            timestamp: wire.timestamp,
-            openid: wire.openid,
-            nick: wire.nick,
-            avatar: wire.avatar,
-        }
+    pub(crate) fn new(
+        event_id: Option<String>,
+        data: serde_json::Value,
+    ) -> serde_json::Result<Self> {
+        let mut event: Self = serde_json::from_value(data)?;
+        event.event_id = event_id;
+        Ok(event)
     }
-}
-
-#[derive(Debug, Default, Deserialize)]
-struct C2CManageWire {
-    #[serde(default)]
-    timestamp: Option<u64>,
-    #[serde(default)]
-    openid: Option<String>,
-    #[serde(default)]
-    nick: Option<String>,
-    #[serde(default)]
-    avatar: Option<String>,
 }

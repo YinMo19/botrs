@@ -8,6 +8,8 @@ pub type Result<T> = std::result::Result<T, BotError>;
 
 `BotError` 由 `thiserror::Error` 派生，自动实现了 `std::error::Error`，并提供可读的 `Display` 字符串。
 
+`BotError::response()` 可以读取失败响应的 HTTP 状态、QQ 错误码、trace ID 和响应体文本。非 JSON 响应也会保留原文。
+
 ## 变体一览
 
 | 变体                                          | 来源                                                    |
@@ -17,14 +19,14 @@ pub type Result<T> = std::result::Result<T, BotError>;
 | `WebSocket(Box<tungstenite::Error>)`          | 网关 WebSocket 失败。                                   |
 | `Json(serde_json::Error)`                     | 载荷反序列化失败。                                      |
 | `Url(url::ParseError)`                        | 构造请求 URL 失败。                                     |
-| `Api { code: u32, message: String }`          | 非 2xx 响应及解析后的响应体。                           |
-| `AuthenticationFailed(String)`                | 令牌签名或 `Authorization` 头被拒绝。                   |
-| `NotFound(String)`                            | 404 / 资源不存在。                                      |
-| `MethodNotAllowed(String)`                    | 405。                                                   |
-| `Forbidden(String)`                           | 403 / 权限不足。                                        |
-| `RateLimit { retry_after: u64 }`              | 429，附带解析后的 `Retry-After`（秒）。                 |
+| `Api { code, message, .. }`          | 非 2xx 响应及解析后的响应体。                           |
+| `AuthenticationFailed(Box<HttpFailure>)`                | 令牌签名或 `Authorization` 头被拒绝。                   |
+| `NotFound(Box<HttpFailure>)`                            | 404 / 资源不存在。                                      |
+| `MethodNotAllowed(Box<HttpFailure>)`                    | 405。                                                   |
+| `Forbidden(Box<HttpFailure>)`                           | 403 / 权限不足。                                        |
+| `RateLimit { retry_after, .. }`              | 429，附带解析后的 `Retry-After`（秒）。                 |
 | `SequenceNumber(String)`                      | 低层映射保留的 sequence/order 错误。                    |
-| `Server(String)`                              | 5xx 响应，并携带解析后的平台诊断信息。                  |
+| `Server(Box<HttpFailure>)`                              | 5xx 响应，并携带解析后的平台诊断信息。                  |
 | `Auth(String)`                                | 更高层级的鉴权 / 会话问题。                             |
 | `Connection(String)`                          | 网关生命周期或心跳失败。                                |
 | `Config(String)`                              | 请求开始之前的配置错误。                                |
@@ -52,11 +54,11 @@ use botrs::BotError;
 match api.get_bot_info().await {
     Ok(bot) => println!("{}", bot.username),
     Err(BotError::Http(e)) if e.is_timeout() => warn!("timed out"),
-    Err(BotError::RateLimit { retry_after }) => {
+    Err(BotError::RateLimit { retry_after, .. }) => {
         tokio::time::sleep(Duration::from_secs(retry_after)).await;
     }
     Err(BotError::Forbidden(msg)) => warn!("permission denied: {msg}"),
-    Err(BotError::Api { code, message }) => warn!("qq api error {code}: {message}"),
+    Err(BotError::Api { code, message, .. }) => warn!("qq api error {code}: {message}"),
     Err(other) => return Err(other),
 }
 ```

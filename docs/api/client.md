@@ -22,13 +22,17 @@ client.start().await?;
 ## Lifecycle
 
 - `start().await` — performs startup REST calls, starts gateway sessions, and runs the event loop until the event channel closes.
-Dropping the running `Client` task closes the gateway connection.
+Cancelling the `start()` future closes the gateway connections. Use `abort()` when running it in a spawned Tokio task.
 
 There are no `stop` / `is_connected` / `get_session_info` methods — the framework intentionally exposes a small surface and pushes session details into events instead. Use `EventHandler::ready` and `EventHandler::resumed` to observe lifecycle changes.
 
+## HTTP callbacks
+
+Pass the request headers and original body bytes to `client.handle_webhook(&headers, &body).await`. Serialize the returned `WebhookReply` as JSON with HTTP 200. The client verifies Ed25519 signatures and handles endpoint validation, heartbeats and dispatch acknowledgements. Run `cargo run --example webhook` from the repository for a working server. Webhook delivery works independently of `start()`. Webhook sessions return `None` from `bot_info()`. Use `session.api().get_bot_info().await` when needed.
+
 ## Reconnect behaviour
 
-`start()` propagates startup failures from token validation, `get_bot_info`, and `get_gateway`. After gateway sessions are spawned, transient gateway failures are retried with the throttling described in the [gateway guide](../guide/gateway.md); unrecoverable identify failures stop that shard's reconnect loop and are logged by the session manager.
+`start()` propagates startup failures from token validation, `get_bot_info`, and `get_gateway`. After gateway sessions are spawned, transient gateway failures are retried with the throttling described in the [gateway guide](../guide/gateway.md); a fatal identify error stops all shards and is returned by `start()`.
 
 ## Graceful shutdown
 

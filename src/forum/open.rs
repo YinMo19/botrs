@@ -44,15 +44,15 @@ pub struct ForumAuditResult {
 
 impl ForumAuditResult {
     /// Create a forum audit result from gateway data.
-    pub(crate) fn new(event_id: Option<String>, data: &Value) -> Self {
-        let mut result = serde_json::from_value::<Self>(data.clone()).unwrap_or_default();
+    pub(crate) fn new(event_id: Option<String>, data: Value) -> serde_json::Result<Self> {
+        let mut result = serde_json::from_value::<Self>(data)?;
         result.event_id = event_id;
-        result
+        Ok(result)
     }
 }
 
 /// Open forum thread structure
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OpenThread {
     /// Channel ID
     pub channel_id: Option<String>,
@@ -65,25 +65,11 @@ pub struct OpenThread {
     pub event_id: Option<String>,
 }
 
-#[derive(Debug, Default, Deserialize)]
-struct OpenThreadWire {
-    #[serde(default)]
-    guild_id: Option<String>,
-    #[serde(default)]
-    channel_id: Option<String>,
-    #[serde(default)]
-    author_id: Option<String>,
-}
-
 impl OpenThread {
     /// Builds an open forum event from the gateway payload.
-    pub(crate) fn new(data: &Value) -> Self {
-        let wire: OpenThreadWire = serde_json::from_value(data.clone()).unwrap_or_default();
-        Self {
-            event_id: None,
-            guild_id: wire.guild_id,
-            channel_id: wire.channel_id,
-            author_id: wire.author_id,
-        }
+    pub(crate) fn new(event_id: Option<String>, data: Value) -> serde_json::Result<Self> {
+        let mut event: Self = serde_json::from_value(data)?;
+        event.event_id = event_id;
+        Ok(event)
     }
 }

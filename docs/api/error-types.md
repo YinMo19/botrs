@@ -8,6 +8,8 @@ pub type Result<T> = std::result::Result<T, BotError>;
 
 `BotError` derives `thiserror::Error` (so it implements `std::error::Error`) and produces useful `Display` strings.
 
+`BotError::response()` exposes the HTTP status, QQ error code, trace ID and response text. The original text is available for non-JSON errors too.
+
 ## Variants
 
 | Variant                                      | Source                                                   |
@@ -17,14 +19,14 @@ pub type Result<T> = std::result::Result<T, BotError>;
 | `WebSocket(Box<tungstenite::Error>)`         | Gateway WebSocket failure.                               |
 | `Json(serde_json::Error)`                    | Payload decoding failure.                                |
 | `Url(url::ParseError)`                       | Invalid URL during request building.                     |
-| `Api { code: u32, message: String }`         | Non-2xx HTTP response with parsed body.                  |
-| `AuthenticationFailed(String)`               | Token signing or `Authorization` header rejected.        |
-| `NotFound(String)`                           | 404 / "object missing" responses.                        |
-| `MethodNotAllowed(String)`                   | 405.                                                     |
-| `Forbidden(String)`                          | 403 / permission denied.                                 |
-| `RateLimit { retry_after: u64 }`             | 429 with parsed `Retry-After` (in seconds).              |
+| `Api { code, message, .. }`         | Non-2xx HTTP response with parsed body.                  |
+| `AuthenticationFailed(Box<HttpFailure>)`               | Token signing or `Authorization` header rejected.        |
+| `NotFound(Box<HttpFailure>)`                           | 404 / "object missing" responses.                        |
+| `MethodNotAllowed(Box<HttpFailure>)`                   | 405.                                                     |
+| `Forbidden(Box<HttpFailure>)`                          | 403 / permission denied.                                 |
+| `RateLimit { retry_after, .. }`             | 429 with parsed `Retry-After` (in seconds).              |
 | `SequenceNumber(String)`                     | Reserved sequence/order error from the low-level mapper. |
-| `Server(String)`                             | 5xx responses with the parsed platform diagnostic.       |
+| `Server(Box<HttpFailure>)`                             | 5xx responses with the parsed platform diagnostic.       |
 | `Auth(String)`                               | Higher-level authentication / session issue.             |
 | `Connection(String)`                         | Gateway lifecycle / heartbeat failure.                   |
 | `Config(String)`                             | Invalid configuration before requests run.               |
@@ -52,11 +54,11 @@ use botrs::BotError;
 match api.get_bot_info().await {
     Ok(bot) => println!("{}", bot.username),
     Err(BotError::Http(e)) if e.is_timeout() => warn!("timed out"),
-    Err(BotError::RateLimit { retry_after }) => {
+    Err(BotError::RateLimit { retry_after, .. }) => {
         tokio::time::sleep(Duration::from_secs(retry_after)).await;
     }
     Err(BotError::Forbidden(msg)) => warn!("permission denied: {msg}"),
-    Err(BotError::Api { code, message }) => warn!("qq api error {code}: {message}"),
+    Err(BotError::Api { code, message, .. }) => warn!("qq api error {code}: {message}"),
     Err(other) => return Err(other),
 }
 ```

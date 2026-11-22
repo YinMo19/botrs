@@ -5,29 +5,27 @@ use crate::client::Context;
 use crate::error::Result;
 use crate::models::{
     api::{BotInfo, MessageResponse},
-    message::{Ark, C2CMessage, C2CMessageParams, Embed, KeyboardPayload, Media},
+    message::{Ark, C2CMessage, C2CMessageParams, Embed, Keyboard, Media},
 };
 
-use super::advance_msg_seq;
+use super::{prepare_reply, validate_reply};
 
 /// Stateful API surface for handling one incoming C2C message.
 pub struct C2CReplySession {
     ctx: Context,
     message: C2CMessage,
-    openid: String,
     next_msg_seq: u32,
 }
 
 impl C2CReplySession {
     pub(crate) fn new(ctx: Context, message: C2CMessage) -> Result<Self> {
-        let openid = message.author.user_openid.clone();
-
-        Ok(Self {
+        let session = Self {
             ctx,
             message,
-            openid,
             next_msg_seq: 1,
-        })
+        };
+        validate_reply(&session.message.id, session.openid())?;
+        Ok(session)
     }
 
     /// Returns the API client backing this session.
@@ -42,7 +40,7 @@ impl C2CReplySession {
 
     /// Returns bot information captured when the event was dispatched.
     pub fn bot_info(&self) -> Option<&BotInfo> {
-        self.ctx.bot_info.as_ref()
+        self.ctx.bot_info.as_deref()
     }
 
     /// Returns the incoming message this session is bound to.
@@ -52,7 +50,11 @@ impl C2CReplySession {
 
     /// Returns the target user openid.
     pub fn openid(&self) -> &str {
-        &self.openid
+        if self.message.author.user_openid.is_empty() {
+            &self.message.author.id
+        } else {
+            &self.message.author.user_openid
+        }
     }
 
     /// Sends a text reply in the current C2C reply session.
@@ -96,7 +98,7 @@ impl C2CReplySession {
     pub async fn send_keyboard_message(
         &mut self,
         content: impl Into<String>,
-        keyboard: KeyboardPayload,
+        keyboard: Keyboard,
     ) -> Result<MessageResponse> {
         self.send_message(C2CMessageParams::new_keyboard(content, keyboard))
             .await
@@ -105,7 +107,7 @@ impl C2CReplySession {
     /// Sends a C2C message, filling reply ids and msg_seq when omitted.
     pub async fn send_message(&mut self, mut params: C2CMessageParams) -> Result<MessageResponse> {
         self.prepare_message(&mut params);
-        self.api().send_c2c_message(&self.openid, params).await
+        self.api().send_c2c_message(self.openid(), params).await
     }
 
     /// Uploads a C2C file for this session's user.
@@ -117,21 +119,18 @@ impl C2CReplySession {
     ) -> Result<Media> {
         let url = url.into();
         self.api()
-            .post_c2c_file(&self.openid, file_type, &url, srv_send_msg)
+            .post_c2c_file(self.openid(), file_type, &url, srv_send_msg)
             .await
     }
 
     fn prepare_message(&mut self, params: &mut C2CMessageParams) {
-        if params.msg_id.is_none() {
-            params.msg_id = Some(self.message.id.clone());
-        }
-        if params.event_id.is_none() {
-            params.event_id = self.message.event_id.clone();
-        }
-        if params.msg_seq.is_none() {
-            params.msg_seq = Some(self.next_msg_seq);
-        }
-        advance_msg_seq(&mut self.next_msg_seq, params.msg_seq);
+        prepare_reply(
+            &self.message.id,
+            &mut params.msg_id,
+            params.event_id.as_deref(),
+            &mut self.next_msg_seq,
+            &mut params.msg_seq,
+        );
     }
 }
 

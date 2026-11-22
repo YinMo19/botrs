@@ -5,7 +5,7 @@
 #[path = "../common/mod.rs"]
 mod common;
 
-use botrs::models::message::KeyboardPayload;
+use botrs::models::message::Keyboard;
 use botrs::{C2CReplySession, Client, EventHandler, Intents, ReadySession, Token};
 use common::{Config, init_logging};
 use std::env;
@@ -20,8 +20,9 @@ impl EventHandler for C2CReplyKeyboardHandler {
     }
 
     async fn c2c_message_create(&self, mut session: C2CReplySession) {
-        let keyboard = KeyboardPayload {
-            content: serde_json::json!({ "id": "62" }),
+        let keyboard = Keyboard {
+            id: Some("62".into()),
+            ..Default::default()
         };
 
         match session

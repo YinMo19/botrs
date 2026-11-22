@@ -157,3 +157,9 @@ impl Gateway {
         Duration::from_millis(interval_ms.max(1))
     }
 }
+
+impl Drop for Gateway {
+    fn drop(&mut self) {
+        self.stop_heartbeat_task();
+    }
+}

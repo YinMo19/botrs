@@ -1,6 +1,6 @@
 use std::fmt;
 
-use super::{BotError, CODE_CONN_CLOSE_CANT_IDENTIFY, CODE_CONN_CLOSE_CANT_RESUME};
+use super::{CODE_CONN_CLOSE_CANT_IDENTIFY, CODE_CONN_CLOSE_CANT_RESUME};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SdkError {
@@ -45,16 +45,6 @@ impl fmt::Display for SdkError {
 
 pub(crate) fn sdk_error(code: i32, message: impl Into<String>) -> SdkError {
     SdkError::new(code, message, None::<String>)
-}
-
-pub(crate) fn sdk_error_from_error(err: &(dyn std::error::Error + 'static)) -> SdkError {
-    if let Some(err) = err.downcast_ref::<SdkError>() {
-        return err.clone();
-    }
-    if let Some(BotError::Sdk(err)) = err.downcast_ref::<BotError>() {
-        return err.clone();
-    }
-    SdkError::new(9999, err.to_string(), None::<String>)
 }
 
 pub(crate) fn invalid_session_error() -> SdkError {

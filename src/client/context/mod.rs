@@ -7,7 +7,7 @@ pub(crate) struct Context {
     /// API client for making requests
     api: Arc<BotApi>,
     /// Bot information
-    pub(crate) bot_info: Option<BotInfo>,
+    pub(crate) bot_info: Option<Arc<BotInfo>>,
 }
 
 impl Context {
@@ -30,7 +30,7 @@ impl Context {
 
     /// Sets the bot information.
     pub(crate) fn with_bot_info(mut self, bot_info: BotInfo) -> Self {
-        self.bot_info = Some(bot_info);
+        self.bot_info = Some(Arc::new(bot_info));
         self
     }
 }

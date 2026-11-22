@@ -236,9 +236,17 @@ pub struct KeyboardPayload {
     pub content: serde_json::Value,
 }
 
-impl From<KeyboardPayload> for Keyboard {
-    fn from(payload: KeyboardPayload) -> Self {
-        serde_json::from_value(payload.content).unwrap_or_default()
+impl TryFrom<KeyboardPayload> for Keyboard {
+    type Error = crate::BotError;
+
+    fn try_from(payload: KeyboardPayload) -> crate::Result<Self> {
+        let keyboard: Self = serde_json::from_value(payload.content)?;
+        if keyboard.id.as_deref().is_none_or(str::is_empty) && keyboard.content.is_none() {
+            return Err(crate::BotError::invalid_data(
+                "keyboard requires id or content",
+            ));
+        }
+        Ok(keyboard)
     }
 }
 
@@ -290,6 +298,9 @@ pub struct MarkdownParam {
 /// Media message structure.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct Media {
+    /// Sent message ID when the platform sends the upload immediately.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub id: Option<String>,
     /// Uploaded file ID
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub file_uuid: Option<String>,

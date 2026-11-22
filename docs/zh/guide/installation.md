@@ -4,21 +4,21 @@
 
 ```toml
 [dependencies]
-botrs = "0.13.0"
+botrs = "0.14.0"
 tokio = { version = "1", features = ["full"] }
 async-trait = "0.1"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 ```
 
-`tokio` 必须开启 `features = ["full"]`，因为框架会启动网关／心跳任务并依赖定时器与 I/O 驱动。`async-trait` 也是必需的，`EventHandler` 使用 `#[async_trait::async_trait]` 标注。
+最低支持 Rust 1.88。实现 `EventHandler` 的独立回调时使用 `async-trait`，直接传入异步闭包时只需 `botrs` 和 Tokio。
 
 ## 特性开关
 
 crate 默认不启用任何特性。唯一可能用到的开关是 `examples`，它会引入 `toml` 与 `tracing-subscriber`，用于 `examples/` 目录下的可执行示例。普通使用者不需要它。
 
 ```toml
-botrs = { version = "0.13.0", features = ["examples"] }
+botrs = { version = "0.14.0", features = ["examples"] }
 ```
 
 ## 安装自检

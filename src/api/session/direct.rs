@@ -8,26 +8,24 @@ use crate::models::{
     message::{Ark, DirectMessageParams, Embed, Keyboard, Message},
 };
 
-use super::advance_msg_seq;
+use super::{prepare_reply, validate_reply};
 
 /// Stateful API surface for handling one incoming direct message.
 pub struct DirectReplySession {
     ctx: Context,
     message: Message,
-    guild_id: String,
     next_msg_seq: u32,
 }
 
 impl DirectReplySession {
     pub(crate) fn new(ctx: Context, message: Message) -> Result<Self> {
-        let guild_id = message.guild_id.clone();
-
-        Ok(Self {
+        let session = Self {
             ctx,
             message,
-            guild_id,
             next_msg_seq: 1,
-        })
+        };
+        validate_reply(&session.message.id, session.guild_id())?;
+        Ok(session)
     }
 
     /// Returns the API client backing this session.
@@ -42,7 +40,7 @@ impl DirectReplySession {
 
     /// Returns bot information captured when the event was dispatched.
     pub fn bot_info(&self) -> Option<&BotInfo> {
-        self.ctx.bot_info.as_ref()
+        self.ctx.bot_info.as_deref()
     }
 
     /// Returns the incoming direct message this session is bound to.
@@ -52,7 +50,7 @@ impl DirectReplySession {
 
     /// Returns the direct-message guild session id.
     pub fn guild_id(&self) -> &str {
-        &self.guild_id
+        &self.message.guild_id
     }
 
     /// Sends a text reply in the current direct-message reply session.
@@ -105,20 +103,19 @@ impl DirectReplySession {
         mut params: DirectMessageParams,
     ) -> Result<MessageResponse> {
         self.prepare_message(&mut params);
-        self.api().send_direct_message(&self.guild_id, params).await
+        self.api()
+            .send_direct_message(self.guild_id(), params)
+            .await
     }
 
     fn prepare_message(&mut self, params: &mut DirectMessageParams) {
-        if params.msg_id.is_none() {
-            params.msg_id = Some(self.message.id.clone());
-        }
-        if params.event_id.is_none() {
-            params.event_id = self.message.event_id.clone();
-        }
-        if params.msg_seq.is_none() {
-            params.msg_seq = Some(self.next_msg_seq);
-        }
-        advance_msg_seq(&mut self.next_msg_seq, params.msg_seq);
+        prepare_reply(
+            &self.message.id,
+            &mut params.msg_id,
+            params.event_id.as_deref(),
+            &mut self.next_msg_seq,
+            &mut params.msg_seq,
+        );
     }
 }
 

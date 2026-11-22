@@ -8,6 +8,10 @@ pub struct MessageResponse {
     /// The ID of the sent message
     pub id: Option<Snowflake>,
     /// The timestamp when the message was sent
+    #[serde(
+        default,
+        deserialize_with = "crate::models::serde_helpers::deserialize_string_or_number"
+    )]
     pub timestamp: Option<Timestamp>,
     /// Additional response data
     #[serde(default, flatten, skip_serializing_if = "BTreeMap::is_empty")]

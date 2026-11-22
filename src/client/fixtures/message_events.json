@@ -1,0 +1,98 @@
+[
+  {
+    "op": 0,
+    "t": "C2C_MESSAGE_CREATE",
+    "d": {
+      "author": {
+        "user_openid": "E4F4AEA33253A2797FB897C50B81D7ED"
+      },
+      "content": "123",
+      "id": "ROBOT1.0_.b6nx.CVryAO0nR58RXuU6SC.m92gc19j02qKqdm8ek!",
+      "timestamp": "2023-11-06T13:37:18+08:00"
+    }
+  },
+  {
+    "op": 0,
+    "t": "GROUP_AT_MESSAGE_CREATE",
+    "d": {
+      "author": {
+        "member_openid": "E4F4AEA33253A2797FB897C50B81D7ED"
+      },
+      "content": " 123",
+      "group_openid": "C9F778FE6ADF9D1D1DBE395BF744A33A",
+      "id": "ROBOT1.0_eBIyWnxpmSu6uLQ7u7fU0eGloKGYg4eEa737vRyKnMCgyZjKi7JLYkQ9B0VapbiY",
+      "timestamp": "2023-11-06T13:37:18+08:00"
+    }
+  },
+  {
+    "op": 0,
+    "t": "DIRECT_MESSAGE_CREATE",
+    "d": {
+      "author": {
+        "avatar": "http://thirdqq.qlogo.cn/0",
+        "bot": false,
+        "id": "1234",
+        "username": "abc"
+      },
+      "channel_id": "100010",
+      "content": "ndnnd",
+      "guild_id": "18700000000001",
+      "id": "0812345677890abcdef",
+      "member": {
+        "joined_at": "2021-04-12T16:34:42+08:00",
+        "roles": [
+          "1"
+        ]
+      },
+      "timestamp": "2021-05-20T15:14:58+08:00"
+    }
+  },
+  {
+    "op": 0,
+    "t": "AT_MESSAGE_CREATE",
+    "d": {
+      "author": {
+        "avatar": "http://thirdqq.qlogo.cn/0",
+        "bot": false,
+        "id": "1234",
+        "username": "abc"
+      },
+      "channel_id": "100010",
+      "content": "ndnnd",
+      "guild_id": "18700000000001",
+      "id": "0812345677890abcdef",
+      "member": {
+        "joined_at": "2021-04-12T16:34:42+08:00",
+        "roles": [
+          "1"
+        ]
+      },
+      "timestamp": "2021-05-20T15:14:58+08:00",
+      "seq": 101
+    }
+  },
+  {
+    "op": 0,
+    "t": "MESSAGE_CREATE",
+    "d": {
+      "author": {
+        "avatar": "http://thirdqq.qlogo.cn/0",
+        "bot": false,
+        "id": "1234",
+        "username": "abc"
+      },
+      "channel_id": "100010",
+      "content": "ndnnd",
+      "guild_id": "18700000000001",
+      "id": "0812345677890abcdef",
+      "member": {
+        "joined_at": "2021-04-12T16:34:42+08:00",
+        "roles": [
+          "1"
+        ]
+      },
+      "timestamp": "2021-05-20T15:14:58+08:00",
+      "seq": 101
+    }
+  }
+]

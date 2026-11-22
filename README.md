@@ -2,7 +2,7 @@
 ## Author: YinMo19
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Rust](https://img.shields.io/badge/rust-1.85+-blue.svg)](https://www.rust-lang.org)
+[![Rust](https://img.shields.io/badge/rust-1.88+-blue.svg)](https://www.rust-lang.org)
 [![GitHub](https://img.shields.io/badge/github-YinMo19-blue.svg)](https://github.com/YinMo19)
 [![Crates.io](https://img.shields.io/crates/v/botrs.svg)](https://crates.io/crates/botrs)
 
@@ -18,7 +18,7 @@ BotRS 是一个用 Rust 实现的 QQ 机器人框架，基于 [QQ 频道机器�
 
 ```toml
 [dependencies]
-botrs = "0.13.0"
+botrs = "0.14.0"
 tokio = { version = "1.0", features = ["full"] }
 tracing = "0.1"
 tracing-subscriber = "0.3"
@@ -28,49 +28,28 @@ async-trait = "0.1"
 ### 基础示例
 
 ```rust,no_run
-use botrs::{ChannelReplySession, Client, EventHandler, Intents, ReadySession, Token};
-use tracing::info;
-
-struct MyBot;
-
-#[async_trait::async_trait]
-impl EventHandler for MyBot {
-    async fn ready(&self, session: ReadySession) {
-        info!("Bot {} is ready!", session.event().user.username);
-    }
-
-    async fn message_create(&self, mut session: ChannelReplySession) {
-        let message = session.message().clone();
-        if message.author.bot {
-            return;
-        }
-
-        if message.content.trim() == "!ping" {
-            info!("Received ping command from message ID: {:?}", message.id);
-
-            if let Err(e) = session.reply("Pong! 🏓").await {
-                info!("Failed to reply: {}", e);
-            }
-        }
-    }
-}
+use botrs::{Client, Event, Intents, Token};
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // 创建令牌
-    let token = Token::new("your_app_id", "your_secret");
-
-    // 订阅频道 @ 消息事件
+async fn main() -> botrs::Result<()> {
     let intents = Intents::new().with_public_guild_messages();
-
-    // 创建客户端
-    let mut client = Client::new(token, intents, MyBot, false)?;
-
-    // 启动机器人
-    client.start().await?;
-
-    Ok(())
+    let mut client = Client::new(Token::from_env()?, intents, |event| async move {
+        if let Event::MessageCreate(mut session) = event {
+            let message = session.message();
+            if !message.author.bot && message.content.trim() == "!ping" {
+                session.reply("Pong!").await?;
+            }
+        }
+        Ok(())
+    }, false)?;
+    client.start().await
 }
 ```
+
+设置 `QQ_BOT_APP_ID` 和 `QQ_BOT_SECRET` 后即可运行。也可以实现 `EventHandler`，继续使用 `message_create` 等独立回调。
+
+### Webhook 接入
+
+在仓库中运行 `cargo run --example webhook` 会启动监听于 `127.0.0.1:8080/qq` 的 HTTP 示例。将平台配置的 HTTPS 回调地址转发到这个 POST 路由。框架使用请求头和原始请求体验签，负责地址校验、心跳和事件 ACK。处理器可以通过 `?` 返回错误，由平台按失败 ACK 重试。
 
 我们强烈推荐你查看 [完整文档](https://botrs.yinmo.site/) 来进行开发。这个仓库基于官方网络接口行为和 Rust 的语言特性进行了深度开发。

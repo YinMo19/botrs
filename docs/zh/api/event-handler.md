@@ -1,6 +1,6 @@
 # EventHandler
 
-`EventHandler` 是你需要实现的 async trait，用于响应网关事件。每个方法都有一个空的默认实现，因此只需要重写自己关心的事件——一个空结构体也能编译通过。
+`EventHandler` 接收来自 WebSocket 和 Webhook 的类型化事件。可以实现独立回调，也可以实现 `handle` 统一处理 `Event`。
 
 ```rust
 #[async_trait::async_trait]
@@ -11,7 +11,7 @@ pub trait EventHandler: Send + Sync {
 }
 ```
 
-框架会根据网关事件类型分发到对应方法。所有公开回调都会收到 session 对象；可回复的消息事件使用专用 reply session，生命周期和普通事件使用 event session，并通过 `session.event()` 读取载荷。所有方法返回 `()`；如果需要上报错误，请在本地记录日志——网关事件的回调错误不会中断连接。
+单个事件回调接收对应的 session，返回 `()`。`handle` 的默认实现会调用这些回调。在返回 `botrs::Result<()>` 的闭包或自定义 `handle` 中，可用 `?` 传播错误。重写 `handle` 后，可用 `event.dispatch(self).await` 将其余事件交给已有回调。
 
 ## 方法目录
 

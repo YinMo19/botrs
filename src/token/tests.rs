@@ -8,28 +8,14 @@ fn test_token_creation() {
 }
 
 #[tokio::test]
-async fn test_authorization_header() {
+async fn bot_token_and_header_use_the_same_authorization_format() {
     let token = Token::new("test", "secret");
-
-    // Since we don't have real credentials, this should fail
-    let result = token.authorization_header().await;
-    assert!(
-        result.is_err(),
-        "Expected authorization_header to fail with invalid credentials"
+    token.set_cached_access_token_for_test("access-token").await;
+    assert_eq!(token.bot_token().await.unwrap(), "QQBot access-token");
+    assert_eq!(
+        token.authorization_header().await.unwrap(),
+        "QQBot access-token"
     );
-}
-
-#[tokio::test]
-async fn test_bot_token() {
-    let token = Token::new("test", "secret");
-    // In real usage, both methods would fetch the same access token
-    // For this test, we just verify they both start with "QQBot "
-    let bot_token_result = token.bot_token().await;
-    let auth_header_result = token.authorization_header().await;
-
-    // Both should fail in the same way since we don't have real credentials
-    assert!(bot_token_result.is_err());
-    assert!(auth_header_result.is_err());
 }
 
 #[tokio::test]

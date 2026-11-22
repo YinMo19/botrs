@@ -5,29 +5,27 @@ use crate::client::Context;
 use crate::error::Result;
 use crate::models::{
     api::{BotInfo, MessageResponse},
-    message::{Ark, Embed, GroupMessage, GroupMessageParams, KeyboardPayload, Media},
+    message::{Ark, Embed, GroupMessage, GroupMessageParams, Keyboard, Media},
 };
 
-use super::advance_msg_seq;
+use super::{prepare_reply, validate_reply};
 
 /// Stateful API surface for handling one incoming group message.
 pub struct GroupReplySession {
     ctx: Context,
     message: GroupMessage,
-    group_openid: String,
     next_msg_seq: u32,
 }
 
 impl GroupReplySession {
     pub(crate) fn new(ctx: Context, message: GroupMessage) -> Result<Self> {
-        let group_openid = message.group_openid.clone();
-
-        Ok(Self {
+        let session = Self {
             ctx,
             message,
-            group_openid,
             next_msg_seq: 1,
-        })
+        };
+        validate_reply(&session.message.id, session.group_openid())?;
+        Ok(session)
     }
 
     /// Returns the API client backing this session.
@@ -42,7 +40,7 @@ impl GroupReplySession {
 
     /// Returns bot information captured when the event was dispatched.
     pub fn bot_info(&self) -> Option<&BotInfo> {
-        self.ctx.bot_info.as_ref()
+        self.ctx.bot_info.as_deref()
     }
 
     /// Returns the incoming message this session is bound to.
@@ -52,7 +50,11 @@ impl GroupReplySession {
 
     /// Returns the target group openid.
     pub fn group_openid(&self) -> &str {
-        &self.group_openid
+        if self.message.group_openid.is_empty() {
+            &self.message.group_id
+        } else {
+            &self.message.group_openid
+        }
     }
 
     /// Sends a text reply in the current group reply session.
@@ -99,7 +101,7 @@ impl GroupReplySession {
     pub async fn send_keyboard_message(
         &mut self,
         content: impl Into<String>,
-        keyboard: KeyboardPayload,
+        keyboard: Keyboard,
     ) -> Result<MessageResponse> {
         self.send_message(GroupMessageParams::new_keyboard(content, keyboard))
             .await
@@ -112,7 +114,7 @@ impl GroupReplySession {
     ) -> Result<MessageResponse> {
         self.prepare_message(&mut params);
         self.api()
-            .send_group_message(&self.group_openid, params)
+            .send_group_message(self.group_openid(), params)
             .await
     }
 
@@ -125,21 +127,18 @@ impl GroupReplySession {
     ) -> Result<Media> {
         let url = url.into();
         self.api()
-            .post_group_file(&self.group_openid, file_type, &url, srv_send_msg)
+            .post_group_file(self.group_openid(), file_type, &url, srv_send_msg)
             .await
     }
 
     pub(crate) fn prepare_message(&mut self, params: &mut GroupMessageParams) {
-        if params.msg_id.is_none() {
-            params.msg_id = Some(self.message.id.clone());
-        }
-        if params.event_id.is_none() {
-            params.event_id = self.message.event_id.clone();
-        }
-        if params.msg_seq.is_none() {
-            params.msg_seq = Some(self.next_msg_seq);
-        }
-        advance_msg_seq(&mut self.next_msg_seq, params.msg_seq);
+        prepare_reply(
+            &self.message.id,
+            &mut params.msg_id,
+            params.event_id.as_deref(),
+            &mut self.next_msg_seq,
+            &mut params.msg_seq,
+        );
     }
 }
 

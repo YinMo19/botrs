@@ -15,4 +15,6 @@ pub mod opcodes {
     pub const HELLO: u8 = 10;
     /// Heartbeat ACK
     pub const HEARTBEAT_ACK: u8 = 11;
+    pub const CALLBACK_ACK: u8 = 12;
+    pub const CALLBACK_VALIDATION: u8 = 13;
 }

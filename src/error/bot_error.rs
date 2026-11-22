@@ -1,4 +1,4 @@
-use super::SdkError;
+use super::{HttpFailure, SdkError};
 
 /// The main error type for BotRS operations.
 #[derive(Debug, thiserror::Error)]
@@ -25,23 +25,27 @@ pub enum BotError {
 
     /// API response errors
     #[error("API error: {code} - {message}")]
-    Api { code: u32, message: String },
+    Api {
+        code: u32,
+        message: String,
+        response: Option<Box<HttpFailure>>,
+    },
 
     /// Authentication failed (401)
     #[error("Authentication failed: {0}")]
-    AuthenticationFailed(String),
+    AuthenticationFailed(Box<HttpFailure>),
 
     /// Not found (404)
     #[error("Not found: {0}")]
-    NotFound(String),
+    NotFound(Box<HttpFailure>),
 
     /// Method not allowed (405)
     #[error("Method not allowed: {0}")]
-    MethodNotAllowed(String),
+    MethodNotAllowed(Box<HttpFailure>),
 
     /// Forbidden (403)
     #[error("Forbidden: {0}")]
-    Forbidden(String),
+    Forbidden(Box<HttpFailure>),
 
     /// Sequence number error (429)
     #[error("Sequence number error: {0}")]
@@ -49,7 +53,7 @@ pub enum BotError {
 
     /// Server error (500, 504)
     #[error("Server error: {0}")]
-    Server(String),
+    Server(Box<HttpFailure>),
 
     /// Authentication errors
     #[error("Authentication error: {0}")]
@@ -61,7 +65,10 @@ pub enum BotError {
 
     /// Rate limiting errors
     #[error("Rate limited: retry after {retry_after} seconds")]
-    RateLimit { retry_after: u64 },
+    RateLimit {
+        retry_after: u64,
+        response: Option<Box<HttpFailure>>,
+    },
 
     /// Invalid configuration errors
     #[error("Invalid configuration: {0}")]
@@ -98,6 +105,7 @@ impl BotError {
         Self::Api {
             code,
             message: message.into(),
+            response: None,
         }
     }
 
@@ -138,7 +146,23 @@ impl BotError {
 
     /// Creates a new rate limit error.
     pub fn rate_limit(retry_after: u64) -> Self {
-        Self::RateLimit { retry_after }
+        Self::RateLimit {
+            retry_after,
+            response: None,
+        }
+    }
+
+    /// Returns the original HTTP failure for OpenAPI response errors.
+    pub fn response(&self) -> Option<&HttpFailure> {
+        match self {
+            Self::Api { response, .. } | Self::RateLimit { response, .. } => response.as_deref(),
+            Self::Forbidden(err)
+            | Self::NotFound(err)
+            | Self::AuthenticationFailed(err)
+            | Self::Server(err)
+            | Self::MethodNotAllowed(err) => Some(err),
+            _ => None,
+        }
     }
 
     /// Returns true if this error is retryable.
@@ -157,7 +181,7 @@ impl BotError {
     /// Returns the retry delay in seconds if this error is retryable.
     pub fn retry_after(&self) -> Option<u64> {
         match self {
-            BotError::RateLimit { retry_after } => Some(*retry_after),
+            BotError::RateLimit { retry_after, .. } => Some(*retry_after),
             BotError::Connection(_) => Some(5),
             BotError::Gateway(_) => Some(1),
             BotError::Timeout => Some(3),

@@ -24,10 +24,9 @@ impl Gateway {
         self.stop_heartbeat_task();
 
         let result = self.try_connect(&event_sender).await;
-        if result.is_err() {
-            self.connection_alive.store(false, Ordering::Relaxed);
-            self.is_ready.store(false, Ordering::Relaxed);
-        }
+        self.connection_alive.store(false, Ordering::Relaxed);
+        self.is_ready.store(false, Ordering::Relaxed);
+        self.stop_heartbeat_task();
         result
     }
 

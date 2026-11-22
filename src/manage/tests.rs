@@ -4,11 +4,12 @@ use super::*;
 fn enter_aio_uses_zero_value_omitempty_shape() {
     let event = EnterAioEvent::new(
         Some("event-1".to_string()),
-        &serde_json::json!({
+        serde_json::json!({
             "user_openid": "user-1",
             "from_source": "profile"
         }),
-    );
+    )
+    .unwrap();
 
     assert_eq!(event.user_openid, "user-1");
     assert_eq!(event.from_source, "profile");
@@ -31,7 +32,7 @@ fn enter_aio_uses_zero_value_omitempty_shape() {
 fn subscribe_message_status_uses_required_zero_value_fields() {
     let event = SubscribeMessageStatusData::new(
         Some("event-1".to_string()),
-        &serde_json::json!({
+        serde_json::json!({
             "group_openid": "group-1",
             "openid": "user-1",
             "result": [{
@@ -42,7 +43,8 @@ fn subscribe_message_status_uses_required_zero_value_fields() {
                 "update_ts": 1710000000
             }]
         }),
-    );
+    )
+    .unwrap();
 
     assert_eq!(event.group_openid, "group-1");
     assert_eq!(event.openid, "user-1");
@@ -89,19 +91,21 @@ fn c2c_friend_data_uses_required_zero_value_fields() {
 fn manage_event_ids_are_internal_only() {
     let group = GroupManageEvent::new(
         Some("event-1".to_string()),
-        &serde_json::json!({
+        serde_json::json!({
             "timestamp": 1710000000_u64,
             "group_openid": "group-1",
             "op_member_openid": "member-1"
         }),
-    );
+    )
+    .unwrap();
     let c2c = C2CManageEvent::new(
         Some("event-2".to_string()),
-        &serde_json::json!({
+        serde_json::json!({
             "timestamp": 1710000001_u64,
             "openid": "user-1"
         }),
-    );
+    )
+    .unwrap();
 
     assert_eq!(group.event_id.as_deref(), Some("event-1"));
     assert_eq!(c2c.event_id.as_deref(), Some("event-2"));

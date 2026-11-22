@@ -197,8 +197,9 @@ fn semantic_params_set_expected_message_types() {
 
     let group_keyboard = GroupMessageParams::new_keyboard(
         "# Group keyboard",
-        KeyboardPayload {
-            content: serde_json::json!({ "id": "62" }),
+        Keyboard {
+            id: Some("62".into()),
+            ..Default::default()
         },
     );
     let group_keyboard_value = serde_json::to_value(MessageToCreate::from(group_keyboard)).unwrap();
@@ -217,6 +218,7 @@ fn semantic_params_set_expected_message_types() {
         ..Default::default()
     });
     let c2c_media_value = serde_json::to_value(MessageToCreate::from(c2c_media)).unwrap();
+    assert_eq!(c2c_media_value["content"], " ");
     assert_eq!(c2c_media_value["msg_type"], serde_json::json!(7));
     assert_eq!(
         c2c_media_value["media"],
@@ -246,14 +248,16 @@ fn open_message_manual_params_omit_unspecified_msg_seq() {
 }
 
 #[test]
-fn media_keeps_upload_response_file_uuid() {
+fn media_keeps_upload_response_id_and_file_uuid() {
     let media: Media = serde_json::from_value(serde_json::json!({
+        "id": "sent-message-id",
         "file_uuid": "FILE_UUID_XXXXXX",
         "file_info": "FILE_INFO_XXXXXX",
         "ttl": 3600
     }))
     .unwrap();
 
+    assert_eq!(media.id.as_deref(), Some("sent-message-id"));
     assert_eq!(media.file_uuid.as_deref(), Some("FILE_UUID_XXXXXX"));
     assert_eq!(media.file_info.as_deref(), Some("FILE_INFO_XXXXXX"));
     assert_eq!(media.ttl, Some(3600));
@@ -271,7 +275,7 @@ fn media_keeps_upload_response_file_uuid() {
 fn message_create_omits_go_zero_values() {
     let message = MessageToCreate {
         content: Some(String::new()),
-        msg_type: Some(MessageCreateType::Text),
+        msg_type: None,
         image: Some(String::new()),
         msg_id: Some(String::new()),
         event_id: Some(String::new()),
@@ -829,4 +833,22 @@ fn test_bot_detection() {
 
     message.author.bot = false;
     assert!(!message.author.bot);
+}
+
+#[test]
+fn raw_keyboard_conversion_reports_invalid_payloads() {
+    for content in [
+        serde_json::json!(null),
+        serde_json::json!({}),
+        serde_json::json!({"id": 42}),
+    ] {
+        assert!(Keyboard::try_from(KeyboardPayload { content }).is_err());
+    }
+    let raw = KeyboardPayload {
+        content: serde_json::json!({"id":"template"}),
+    };
+    assert_eq!(
+        Keyboard::try_from(raw).unwrap().id.as_deref(),
+        Some("template")
+    );
 }

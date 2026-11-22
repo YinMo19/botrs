@@ -29,7 +29,7 @@ let params = MessageParams {
 session.send_message(params).await?;
 ```
 
-Reply sessions fill `msg_id`, `event_id`, and `msg_seq` automatically when you leave them unset. Direct messages need the DM `guild_id` from the inbound `Message` or a session created with `BotApi::create_direct_message`.
+Message replies use the incoming `msg_id`. Management-event sessions use the platform `event_id` when available. Both advance `msg_seq` and preserve explicit reply IDs. Direct messages need the DM `guild_id` from the inbound `Message` or a session created with `BotApi::create_direct_message`.
 
 ## See also
 

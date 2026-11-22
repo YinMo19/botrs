@@ -40,6 +40,10 @@ let me = api.get_bot_info().await?;
 | 精华消息 | `put_pin`、`delete_pin`、`clean_pins`、`get_pins` |
 | 音频控制 | `post_audio`、`put_mic`、`delete_mic` |
 
+## 自定义请求地址
+
+`api.with_url(url).send_group_message(...)` 可让一次类型化调用使用完整的可信端点。`HttpClient::with_base_url` 为所有路由设置公共前缀。`api.transport(method, &url, |r| r.json(&payload)).await?` 会附带机器人凭据，成功时返回 `reqwest::Response`，可读取响应头和原始字节。
+
 ## 消息发送
 
 发送消息通过参数结构体完成：

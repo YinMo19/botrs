@@ -9,16 +9,16 @@ pub struct MessageAttachment {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub id: Option<Snowflake>,
     /// The attachment's filename
-    #[serde(skip_serializing_if = "is_default")]
+    #[serde(default, skip_serializing_if = "is_default")]
     pub filename: String,
     /// The attachment's content type
-    #[serde(skip_serializing_if = "is_default")]
+    #[serde(default, skip_serializing_if = "is_default")]
     pub content_type: String,
     /// The attachment's content marker from open-message events.
     #[serde(default, skip_serializing_if = "is_default")]
     pub content: String,
     /// The attachment's size in bytes
-    #[serde(skip_serializing_if = "is_default")]
+    #[serde(default, skip_serializing_if = "is_default")]
     pub size: u64,
     /// The attachment's URL
     #[serde(skip_serializing_if = "is_default")]

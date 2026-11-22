@@ -1,7 +1,7 @@
 use super::prelude::*;
 use super::{Client, Context, EventHandler};
-use crate::gateway::Gateway;
 use crate::http::HttpClient;
+use crate::session_manager::{ChanManager, SessionManager};
 
 impl<H: EventHandler + 'static> Client<H> {
     /// Creates a client using the crate default request timeout.
@@ -34,17 +34,7 @@ impl<H: EventHandler + 'static> Client<H> {
     /// }
     /// ```
     pub fn new(token: Token, intents: Intents, handler: H, is_sandbox: bool) -> Result<Self> {
-        let timeout = crate::DEFAULT_TIMEOUT;
-
-        let http = HttpClient::new(timeout, is_sandbox)?;
-        token.validate()?;
-        let api = Arc::new(BotApi::new(http, token));
-
-        Ok(Self {
-            intents,
-            api,
-            handler: Arc::new(handler),
-        })
+        Self::with_config(token, intents, handler, crate::DEFAULT_TIMEOUT, is_sandbox)
     }
 
     /// Creates a client with an explicit HTTP request timeout.
@@ -57,10 +47,12 @@ impl<H: EventHandler + 'static> Client<H> {
     ) -> Result<Self> {
         let http = HttpClient::new(timeout, is_sandbox)?;
         token.validate()?;
+        let webhook_key = super::webhook::signing_key(token.secret())?;
         let api = Arc::new(BotApi::new(http, token));
 
         Ok(Self {
             intents,
+            webhook_key,
             api,
             handler: Arc::new(handler),
         })
@@ -110,43 +102,22 @@ impl<H: EventHandler + 'static> Client<H> {
         // Set up event channel
         let (event_sender, mut event_receiver) = mpsc::unbounded_channel();
 
-        let start_interval =
-            Gateway::session_start_interval(gateway_info.session_start_limit.max_concurrency);
-        debug!(
-            "Gateway session start interval: {:?} (max_concurrency: {})",
-            start_interval, gateway_info.session_start_limit.max_concurrency
+        let mut manager = ChanManager::new();
+        let run = manager.start(
+            &gateway_info,
+            self.api.token().clone(),
+            self.intents,
+            event_sender,
         );
-
-        info!(
-            "Starting {} gateway shard(s) with interval {:?}",
-            gateway_info.shards, start_interval
-        );
-        let mut session_manager = new_session_manager();
-        tokio::spawn({
-            let gateway_info = gateway_info.clone();
-            let token = self.api.token().clone();
-            let intents = self.intents;
-            let event_sender = event_sender.clone();
-            async move {
-                if let Err(e) = session_manager
-                    .start(&gateway_info, token, intents, event_sender)
-                    .await
-                {
-                    error!("Gateway session manager stopped: {}", e);
+        let dispatch = async {
+            while let Some(event) = event_receiver.recv().await {
+                if let Err(err) = self.handle_event(ctx.clone(), event).await {
+                    self.handler.error(err).await;
                 }
             }
-        });
-        drop(event_sender);
-
-        // Main event processing loop - continue running even if gateway disconnects
-        info!("Bot client started, waiting for events...");
-        while let Some(event) = event_receiver.recv().await {
-            if let Err(e) = self.handle_event(ctx.clone(), event).await {
-                self.handler.error(e).await;
-            }
-        }
-
-        info!("Bot client stopped");
+            Ok(())
+        };
+        tokio::try_join!(run, dispatch)?;
         Ok(())
     }
 }

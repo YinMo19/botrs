@@ -4,21 +4,21 @@ Add `botrs` to your `Cargo.toml` together with an async runtime:
 
 ```toml
 [dependencies]
-botrs = "0.13.0"
+botrs = "0.14.0"
 tokio = { version = "1", features = ["full"] }
 async-trait = "0.1"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 ```
 
-`tokio` with `features = ["full"]` is required because the framework spawns gateway/heartbeat tasks and uses timer/IO drivers internally. `async-trait` is required because `EventHandler` uses `#[async_trait::async_trait]`.
+BotRS requires Rust 1.88 or newer. Use `async-trait` to implement individual `EventHandler` callbacks. Closure handlers only need `botrs` and Tokio.
 
 ## Feature flags
 
 The crate ships with no default features. The only feature you may want to opt into is `examples`, which pulls in `toml` and `tracing-subscriber` for the binaries under `examples/`. Library users do not need it.
 
 ```toml
-botrs = { version = "0.13.0", features = ["examples"] }
+botrs = { version = "0.14.0", features = ["examples"] }
 ```
 
 ## Sanity check

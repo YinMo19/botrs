@@ -1,9 +1,12 @@
+use std::collections::VecDeque;
 use std::future::Future;
 use std::pin::Pin;
 use std::sync::Arc;
 
 use tokio::sync::mpsc;
-use tracing::{debug, error, info};
+use tokio::task::JoinSet;
+use tokio::time::{Instant, sleep_until};
+use tracing::{error, info};
 
 use super::{Session, SessionManager, can_not_identify, can_not_resume, check_session_limit};
 use crate::error::BotError;
@@ -20,7 +23,6 @@ pub(super) type SessionConnectFn =
 /// Local, channel-backed default session manager.
 #[derive(Clone)]
 pub struct ChanManager {
-    session_sender: Option<mpsc::UnboundedSender<Session>>,
     connect_fn: Arc<SessionConnectFn>,
 }
 
@@ -49,7 +51,7 @@ impl ChanManager {
         })
     }
 
-    fn with_connect_fn<F>(connect_fn: F) -> Self
+    pub(super) fn with_connect_fn<F>(connect_fn: F) -> Self
     where
         F: Fn(Session, mpsc::UnboundedSender<GatewayEvent>) -> SessionFuture
             + Send
@@ -57,7 +59,6 @@ impl ChanManager {
             + 'static,
     {
         Self {
-            session_sender: None,
             connect_fn: Arc::new(connect_fn),
         }
     }
@@ -77,11 +78,10 @@ impl ChanManager {
     }
 
     pub(super) async fn new_connect(
-        session_sender: mpsc::UnboundedSender<Session>,
         connect_fn: Arc<SessionConnectFn>,
         event_sender: mpsc::UnboundedSender<GatewayEvent>,
         session: Session,
-    ) {
+    ) -> crate::Result<Session> {
         let (mut reconnect_session, result) = connect_fn(session, event_sender).await;
         if let Err(err) = result {
             error!("[ws/session/local] Listening err {}", err);
@@ -90,13 +90,10 @@ impl ChanManager {
                 reconnect_session.last_seq = 0;
             }
             if can_not_identify(&err) {
-                error!("can not identify because server return {}", err);
-                return;
+                return Err(err);
             }
         }
-        if let Err(err) = session_sender.send(reconnect_session) {
-            debug!("[ws/session/local] session queue closed: {}", err);
-        }
+        Ok(reconnect_session)
     }
 }
 
@@ -117,24 +114,22 @@ impl SessionManager for ChanManager {
             ap_info.shards, start_interval
         );
 
-        let (tx, mut rx) = mpsc::unbounded_channel();
-        self.session_sender = Some(tx.clone());
-
-        for session in Self::sessions(ap_info, token, intents) {
-            tx.send(session)
-                .map_err(|err| BotError::session(format!("produce session failed: {err}")))?;
+        let mut pending = VecDeque::from(Self::sessions(ap_info, token, intents));
+        let mut workers = JoinSet::new();
+        let mut next_start = Instant::now();
+        while !pending.is_empty() || !workers.is_empty() {
+            tokio::select! {
+                Some(result) = workers.join_next(), if !workers.is_empty() => {
+                    let session = result.map_err(|err| BotError::session(format!("shard worker stopped: {err}")))??;
+                    pending.push_back(session);
+                }
+                _ = sleep_until(next_start), if !pending.is_empty() => {
+                    let session = pending.pop_front().expect("pending shard");
+                    workers.spawn(Self::new_connect(self.connect_fn.clone(), event_sender.clone(), session));
+                    next_start = Instant::now() + start_interval;
+                }
+            }
         }
-
-        while let Some(session) = rx.recv().await {
-            tokio::time::sleep(start_interval).await;
-            tokio::spawn(Self::new_connect(
-                tx.clone(),
-                self.connect_fn.clone(),
-                event_sender.clone(),
-                session,
-            ));
-        }
-
         Ok(())
     }
 }

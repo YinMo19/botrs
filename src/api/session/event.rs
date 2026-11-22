@@ -28,7 +28,7 @@ impl<T> EventSession<T> {
 
     /// Returns bot information captured when the event was dispatched.
     pub fn bot_info(&self) -> Option<&BotInfo> {
-        self.ctx.bot_info.as_ref()
+        self.ctx.bot_info.as_deref()
     }
 
     /// Returns the event payload this session is bound to.

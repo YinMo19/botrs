@@ -1,93 +1,27 @@
 use super::HttpClient;
-use crate::error::{BotError, Result, http_error_from_status};
-use crate::models::api::{ApiError, RateLimit};
+use crate::error::{HttpFailure, Result};
+use crate::models::api::RateLimit;
 use reqwest::{Response, StatusCode, header::HeaderMap};
 use serde_json::Value;
-use tracing::{debug, error, warn};
+use tracing::debug;
 
 impl HttpClient {
-    /// Handles the HTTP response and converts it to a JSON value.
-    pub(crate) async fn handle_response(&self, response: Response) -> Result<serde_json::Value> {
+    pub(crate) async fn checked_response(&self, response: Response) -> Result<Response> {
         let status = response.status();
-        let headers = response.headers().clone();
-
-        if status == StatusCode::TOO_MANY_REQUESTS {
-            let retry_after = headers
-                .get("retry-after")
-                .and_then(|h| h.to_str().ok())
-                .and_then(|s| s.parse().ok())
-                .unwrap_or(60);
-
-            warn!("Rate limited, retry after {} seconds", retry_after);
-            return Err(BotError::rate_limit(retry_after));
-        }
-
-        let body = response.text().await.map_err(BotError::Http)?;
-        if is_success_status(status) && body.trim().is_empty() {
-            debug!("Request successful, empty response body");
-            return Ok(Value::Null);
-        }
-
-        let json: serde_json::Value = serde_json::from_str(&body).map_err(|e| {
-            error!("Failed to parse JSON response: {}", e);
-            error!("Response body: {}", body);
-            BotError::Json(e)
-        })?;
-
-        if !is_success_status(status) {
-            let mut api_error = self.parse_api_error(status, &json);
-            if api_error.trace_id.is_none() {
-                api_error.trace_id = response_trace_id(&headers);
+        if is_success_status(status) {
+            if let Some(limit) = self.parse_rate_limit(response.headers()) {
+                debug!("Rate limit info: {:?}", limit);
             }
-            let diagnostic = format_api_error(status, &api_error);
-            error!("API request failed: {}; response: {}", diagnostic, json);
-            return Err(http_error_from_status(status.as_u16(), diagnostic));
+            return Ok(response);
         }
-
-        if let Some(rate_limit) = self.parse_rate_limit(&headers) {
-            debug!("Rate limit info: {:?}", rate_limit);
-        }
-
-        debug!("Request successful, response: {}", json);
-        Ok(json)
-    }
-
-    /// Parses an API error from the response.
-    pub(crate) fn parse_api_error(&self, status: StatusCode, json: &serde_json::Value) -> ApiError {
-        if let Ok(error) = serde_json::from_value::<ApiError>(json.clone()) {
-            return error;
-        }
-
-        let code = json
-            .get("err_code")
-            .or_else(|| json.get("code"))
-            .and_then(|c| c.as_u64())
-            .map(|c| c as u32)
-            .unwrap_or(status.as_u16() as u32);
-        let err_code = json
-            .get("err_code")
-            .and_then(|c| c.as_u64())
-            .map(|c| c as u32);
-
-        let message = json
-            .get("message")
-            .and_then(|m| m.as_str())
-            .or_else(|| json.get("error").and_then(|e| e.as_str()))
-            .unwrap_or_else(|| status.canonical_reason().unwrap_or("Unknown error"))
-            .to_string();
-
-        let trace_id = json
-            .get("trace_id")
-            .and_then(|t| t.as_str())
-            .map(|s| s.to_string());
-
-        ApiError {
-            code,
-            err_code,
-            message,
-            errors: Some(json.clone()),
-            trace_id,
-        }
+        let trace = response_trace_id(response.headers());
+        let retry_after = response
+            .headers()
+            .get("retry-after")
+            .and_then(|v| v.to_str().ok()?.parse().ok());
+        let body = response.text().await?;
+        let failure = parse_failure(status, trace, body);
+        Err(failure.into_error(retry_after))
     }
 
     /// Parses rate limit information from response headers.
@@ -141,24 +75,28 @@ fn response_trace_id(headers: &HeaderMap) -> Option<String> {
         .map(str::to_string)
 }
 
-fn format_api_error(status: StatusCode, api_error: &ApiError) -> String {
-    let reason = status.canonical_reason().unwrap_or("Unknown");
-    let mut message = format!(
-        "HTTP {} {}; API error {}: {}",
-        status.as_u16(),
-        reason,
-        api_error.code,
-        api_error.message
-    );
-
-    if let Some(trace_id) = api_error
-        .trace_id
-        .as_deref()
-        .filter(|trace_id| !trace_id.is_empty())
-    {
-        message.push_str("; trace_id=");
-        message.push_str(trace_id);
+fn parse_failure(status: StatusCode, header_trace: Option<String>, body: String) -> HttpFailure {
+    let json = serde_json::from_str::<Value>(&body).unwrap_or(Value::Null);
+    let platform_code = ["err_code", "code"]
+        .iter()
+        .find_map(|key| u32::try_from(json.get(*key)?.as_u64()?).ok());
+    let message = json
+        .get("message")
+        .and_then(Value::as_str)
+        .or_else(|| json.get("error").and_then(Value::as_str))
+        .unwrap_or_else(|| status.canonical_reason().unwrap_or("Unknown error"))
+        .to_owned();
+    let trace_id = json
+        .get("trace_id")
+        .and_then(Value::as_str)
+        .filter(|id| !id.is_empty())
+        .map(str::to_owned)
+        .or(header_trace);
+    HttpFailure {
+        status,
+        platform_code,
+        message,
+        trace_id,
+        body,
     }
-
-    message
 }

@@ -132,7 +132,17 @@ mod tests {
 
         let request = request.await.unwrap();
         assert!(request.starts_with("PUT /interactions/interaction-1 HTTP/1.1"));
-        assert!(request.contains("x-callback-appid: APPID_XXXXXX"));
+        assert!(
+            request
+                .lines()
+                .take_while(|line| !line.is_empty())
+                .any(|line| {
+                    line.split_once(':').is_some_and(|(name, value)| {
+                        name.eq_ignore_ascii_case("X-Callback-AppID")
+                            && value.trim() == api.token().app_id()
+                    })
+                })
+        );
         assert_eq!(request_body(&request), serde_json::json!({"ok": true}));
         server.await.unwrap();
     }

@@ -14,8 +14,7 @@ impl BotApi {
     where
         B: Serialize + ?Sized,
     {
-        let body = serde_json::to_value(body)?;
-        self.request_json(method, path, None::<&()>, Some(&body))
+        self.request_json(method, path, None::<&()>, Some(body))
             .await
     }
 }

@@ -33,7 +33,7 @@ pub use api_impl::session::{
     ReactionSession, ReadySession, ResumeSession, SubscribeMessageStatusSession, ThreadSession,
     UnknownEventSession,
 };
-pub use client::{Client, EventHandler};
+pub use client::{Client, Event, EventHandler};
 pub use error::{BotError, Result};
 pub use intents::Intents;
 pub use token_impl::Token;

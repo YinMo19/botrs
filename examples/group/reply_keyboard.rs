@@ -5,7 +5,7 @@
 #[path = "../common/mod.rs"]
 mod common;
 
-use botrs::models::message::KeyboardPayload;
+use botrs::models::message::Keyboard;
 use botrs::{Client, EventHandler, GroupReplySession, Intents, ReadySession, Token};
 use common::{Config, init_logging};
 use std::env;
@@ -20,8 +20,9 @@ impl EventHandler for GroupReplyKeyboardHandler {
     }
 
     async fn group_message_create(&self, mut session: GroupReplySession) {
-        let keyboard = KeyboardPayload {
-            content: serde_json::json!({ "id": "62" }),
+        let keyboard = Keyboard {
+            id: Some("62".into()),
+            ..Default::default()
         };
 
         match session

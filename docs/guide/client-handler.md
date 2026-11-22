@@ -33,7 +33,7 @@ impl EventHandler for MyBot {
     }
 
     async fn message_create(&self, mut session: ChannelReplySession) {
-        let message = session.message().clone();
+        let message = session.message();
         if message.author.bot {
             return;
         }
@@ -70,7 +70,7 @@ Use `session.event()` to inspect generic event payloads, and use `session.messag
 
 ## The error callback
 
-If dispatch setup fails before your handler is called, the framework calls `EventHandler::error(&self, error: BotError)` once and continues processing the next event. Payload parse failures are logged and dropped, and handler panics are not converted into `BotError`. Override `error` if you want custom metrics or alerts, but retries must come from your own code.
+A decoding failure or an error returned by `handle` reaches `EventHandler::error` once. WebSocket delivery continues with the next event. Webhook delivery returns `{"op":12,"d":1}` so QQ can retry the event.
 
 ## Spawning work from a handler
 

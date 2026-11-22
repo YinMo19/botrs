@@ -19,10 +19,13 @@ pub struct SubscribeMessageStatusData {
 
 impl SubscribeMessageStatusData {
     /// Creates a subscribe status event from gateway data.
-    pub(crate) fn new(event_id: Option<String>, data: &serde_json::Value) -> Self {
-        let mut event = serde_json::from_value::<Self>(data.clone()).unwrap_or_default();
+    pub(crate) fn new(
+        event_id: Option<String>,
+        data: serde_json::Value,
+    ) -> serde_json::Result<Self> {
+        let mut event = serde_json::from_value::<Self>(data)?;
         event.event_id = event_id;
-        event
+        Ok(event)
     }
 }
 

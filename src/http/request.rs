@@ -36,22 +36,6 @@ impl HttpClient {
         self.request(Method::POST, token, path, query, body).await
     }
 
-    pub(crate) async fn request_json_url<Q, B>(
-        &self,
-        token: &Token,
-        method: Method,
-        url: &str,
-        query: Option<&Q>,
-        body: Option<&B>,
-    ) -> Result<serde_json::Value>
-    where
-        Q: Serialize + ?Sized,
-        B: Serialize + ?Sized,
-    {
-        self.request_json_url_with_headers(method, token, url, query, body, HeaderMap::new())
-            .await
-    }
-
     pub(crate) async fn put<Q, B>(
         &self,
         token: &Token,
@@ -123,51 +107,38 @@ impl HttpClient {
         Q: Serialize + ?Sized,
         B: Serialize + ?Sized,
     {
-        let url = format!("{}{}", self.base_url, path);
-        self.request_json_url_with_headers(method, token, &url, query, body, headers)
+        let url = self.endpoint.as_ref().map_or_else(
+            || std::borrow::Cow::Owned(format!("{}{path}", self.base_url)),
+            |url| std::borrow::Cow::Borrowed(url.as_str()),
+        );
+        let mut request = self.client.request(method, url.as_ref()).headers(headers);
+        if let Some(query) = query {
+            request = request.query(query);
+        }
+        if let Some(body) = body {
+            request = request.json(body);
+        }
+        let response = self.execute(token, request).await?;
+        let bytes = response.bytes().await?;
+        if bytes.iter().all(u8::is_ascii_whitespace) {
+            return Ok(serde_json::Value::Null);
+        }
+        Ok(serde_json::from_slice(&bytes)?)
+    }
+
+    pub(crate) async fn execute(
+        &self,
+        token: &Token,
+        builder: reqwest::RequestBuilder,
+    ) -> Result<reqwest::Response> {
+        let mut request = builder.build()?;
+        debug!("Making {} request to: {}", request.method(), request.url());
+        self.authorize(token, request.headers_mut()).await?;
+        self.checked_response(self.client.execute(request).await?)
             .await
     }
 
-    pub(crate) async fn request_json_url_with_headers<Q, B>(
-        &self,
-        method: Method,
-        token: &Token,
-        url: &str,
-        query: Option<&Q>,
-        body: Option<&B>,
-        headers: HeaderMap,
-    ) -> Result<serde_json::Value>
-    where
-        Q: Serialize + ?Sized,
-        B: Serialize + ?Sized,
-    {
-        debug!("Making {} request to: {}", method, url);
-
-        let mut headers = self.authorized_headers(token, headers).await?;
-        if body.is_some() {
-            headers.insert("Content-Type", "application/json".parse().unwrap());
-        }
-
-        let mut request = self.client.request(method.clone(), url).headers(headers);
-
-        if let Some(q) = query {
-            request = request.query(q);
-        }
-
-        if let Some(b) = body {
-            request = request.json(b);
-        }
-
-        let response = request.send().await.map_err(BotError::Http)?;
-
-        self.handle_response(response).await
-    }
-
-    pub(crate) async fn authorized_headers(
-        &self,
-        token: &Token,
-        mut headers: HeaderMap,
-    ) -> Result<HeaderMap> {
+    pub(crate) async fn authorize(&self, token: &Token, headers: &mut HeaderMap) -> Result<()> {
         headers.insert(
             "Authorization",
             token.authorization_header().await?.parse().map_err(|err| {
@@ -186,6 +157,6 @@ impl HttpClient {
                 })?,
             );
         }
-        Ok(headers)
+        Ok(())
     }
 }

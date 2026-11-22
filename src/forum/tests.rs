@@ -25,10 +25,9 @@ fn thread_info_keeps_title_and_content_as_strings() {
 
 #[test]
 fn forum_events_use_required_zero_value_fields() {
-    let thread = serde_json::to_value(Thread::new(
-        Some("event-1".to_string()),
-        &serde_json::json!({}),
-    ))
+    let thread = serde_json::to_value(
+        Thread::new(Some("event-1".to_string()), serde_json::json!({})).unwrap(),
+    )
     .unwrap();
     assert_eq!(thread["guild_id"], "");
     assert_eq!(thread["channel_id"], "");
@@ -71,7 +70,7 @@ fn forum_audit_result_serializes_zero_value_strings() {
         "err_msg": "",
         "date_time": "2024-01-02T03:04:05+08:00"
     });
-    let parsed = ForumAuditResult::new(Some("event-1".into()), &data);
+    let parsed = ForumAuditResult::new(Some("event-1".into()), data.clone()).unwrap();
 
     assert_eq!(parsed.task_id, "task-1");
     assert_eq!(parsed.publish_type, 1);
@@ -108,10 +107,10 @@ fn forum_wrapper_event_ids_are_internal_only() {
         }
     });
 
-    let thread = Thread::new(Some("event-1".to_string()), &data);
-    let post = Post::new(Some("event-2".to_string()), &data);
-    let reply = Reply::new(Some("event-3".to_string()), &data);
-    let mut open_thread = OpenThread::new(&data);
+    let thread = Thread::new(Some("event-1".to_string()), data.clone()).unwrap();
+    let post = Post::new(Some("event-2".to_string()), data.clone()).unwrap();
+    let reply = Reply::new(Some("event-3".to_string()), data.clone()).unwrap();
+    let mut open_thread = OpenThread::new(None, data.clone()).unwrap();
     open_thread.event_id = Some("event-4".to_string());
 
     assert_eq!(thread.event_id.as_deref(), Some("event-1"));
@@ -149,7 +148,7 @@ fn open_forum_event_matches_platform_shape() {
         }
     });
 
-    let open_thread = OpenThread::new(&data);
+    let open_thread = OpenThread::new(None, data.clone()).unwrap();
 
     assert_eq!(open_thread.guild_id.as_deref(), Some("guild-1"));
     assert_eq!(open_thread.channel_id.as_deref(), Some("channel-1"));

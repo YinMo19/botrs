@@ -17,7 +17,7 @@
 
 ## 心跳与重连
 
-收到 `HELLO` 后，runtime 使用服务端给出的 heartbeat interval 启动心跳任务。心跳会携带最后一次收到的 sequence number。socket 关闭时，runtime 会用缓存的 session id 和 sequence number 尝试 resume。不可 resume 的关闭码会触发新的 identify；致命 identify 错误会停止该 shard 的重连循环，并由 session manager 记录日志。
+runtime 从 `HELLO` 获取心跳间隔，在 `READY` 或 `RESUMED` 后启动心跳任务。心跳会携带最后一次收到的 sequence number。socket 关闭时，runtime 会用缓存的 session id 和 sequence number 尝试 resume。无法恢复会话时会重新 identify。致命 identify 错误会结束所有分片，并从 `Client::start` 返回。取消运行中的 start future 也会停止分片和心跳任务。
 
 session manager 会根据 `session_start_limit.max_concurrency` 间隔启动 shard，避免网络恢复后集中重连。
 
@@ -26,7 +26,7 @@ session manager 会根据 `session_start_limit.max_concurrency` 间隔启动 sha
 已知事件名会解析成类型化 payload。例如：
 
 - `READY` -> `ready(ReadySession)`
-- `AT_MESSAGE_CREATE` -> `message_create(ChannelReplySession)`
+- `MESSAGE_CREATE` / `AT_MESSAGE_CREATE` -> `message_create(ChannelReplySession)`
 - `DIRECT_MESSAGE_CREATE` -> `direct_message_create(DirectReplySession)`
 - `GROUP_AT_MESSAGE_CREATE` -> `group_message_create(GroupReplySession)`
 - `C2C_MESSAGE_CREATE` -> `c2c_message_create(C2CReplySession)`
